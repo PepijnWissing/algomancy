@@ -1,5 +1,5 @@
 [project]
-name = "Algomancy"
+name = "algomancy"
 version = "0.2.0"
 description = "A dashboarding framework for visualizing performances of algorithms or simulations in various scenarios."
 requires-python = ">=3.11"
