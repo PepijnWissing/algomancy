@@ -1,0 +1,135 @@
+"""
+scenario.py - Scenario Management
+
+This module defines the Scenario class and related enums for managing simulation scenarios.
+It provides functionality for creating, processing, and analyzing scenarios with different
+algorithms and parameters.
+"""
+import uuid
+from typing import Dict
+
+from threading import Lock
+
+from algomancy.dashboardlogger.logger import Logger
+from algomancy.scenarioengine.enumtypes import ScenarioStatus
+from algomancy.dataengine.datasource import DataSource
+from algomancy.scenarioengine.keyperformanceindicator import KPI
+from algomancy.scenarioengine.algorithmtemplate import Algorithm
+
+SCENARIO_STATUS_STORE = {}
+SCENARIO_STATUS_LOCK = Lock()
+
+
+class Scenario:
+    """
+    Represents a scenario with input data, algorithm, and results.
+
+    A scenario encapsulates the input data, processing algorithm, parameters,
+    and results of a simulation or analysis run.
+    """
+
+    def __init__(
+            self,
+            tag: str,
+            input_data: DataSource,
+            kpis: Dict[str, KPI],
+            algorithm: Algorithm,
+            provided_id: str = None,
+    ):
+        """
+        Initializes a new Scenario with the specified parameters.
+
+        Args:
+            tag (str): A user-defined label for the scenario
+            input_data (DataSource): The data source to use for the scenario
+            kpis: (Dict[str, KPI]): A dictionary of KPIs to compute for the scenario
+            algorithm (str): The algorithm to use for processing
+            provided_id (str): An optional unique identifier for the scenario. If not provided, a UUID will be generated.
+        """
+        self.id = provided_id if provided_id else str(uuid.uuid4())
+        self.tag = tag  # user-defined label
+        self._input_data = input_data  # includes raw or preprocessed data
+        self._kpis = kpis
+        self._algorithm = algorithm
+
+        self.status = ScenarioStatus.CREATED
+        self.result = None
+
+    def __str__(self):
+        return f"Scenario: {self.tag} ({str(self._algorithm)}"
+
+    @property
+    def input_data_key(self) -> str:
+        return self._input_data.name
+
+    @property
+    def data_source(self) -> DataSource:
+        return self._input_data
+
+    @property
+    def algorithm_description(self) -> str:
+        return self._algorithm.description
+
+    @property
+    def kpis(self) -> Dict[str, KPI]:
+        return self._kpis
+
+    @property
+    def progress(self) -> float:
+        return self._algorithm.get_progress
+
+    def set_queued(self):
+        self.status = ScenarioStatus.QUEUED
+
+    def process(self, logger: Logger = None):
+        """
+        Processes the scenario using the specified algorithm.
+
+        This method runs the algorithm in the background, updates the scenario status,
+        and computes KPIs based on the results.
+
+        Exceptions during processing are caught, and the scenario status is set to FAILED.
+        """
+        if not (self.status == ScenarioStatus.CREATED or self.status == ScenarioStatus.QUEUED):
+            return
+
+        self.status = ScenarioStatus.PROCESSING
+        try:
+            self.result = self._algorithm.run(self._input_data)
+            self.compute_kpis()
+            self.status = ScenarioStatus.COMPLETE
+        except Exception as e:
+            self.status = ScenarioStatus.FAILED
+            if logger:
+                logger.error(f"Scenario '{self.tag}' failed to process: {str(e)}")
+            self.result = {"error": str(e)}
+
+    def compute_kpis(self):
+        """
+        todo add comments
+
+        :return:
+        :raises ValueError: One or more KPI calculations failed:
+        """
+        if not self.result:
+            raise ValueError("Scenario result is not available")
+
+        for kpi in self._kpis.values():
+            kpi.compute(self.result)
+
+    def to_dict(self) -> dict:
+        """
+        Zet het scenario om naar een python dict (voor nette serialisatie).
+        """
+        return {
+            "id": self.id,
+            "tag": self.tag,
+            "input_data_id": self._input_data.id if hasattr(self._input_data, 'id') else None,
+            "kpis": {k: v.to_dict() if hasattr(v, "to_dict") else v for k, v in self._kpis.items()},
+            "algorithm": self._algorithm.to_dict() if hasattr(self._algorithm, 'to_dict') else self._algorithm,
+            "status": self.status,
+            "result": self.result.to_dict() if hasattr(self.result, "to_dict") else self.result
+        }
+
+    def is_completed(self) -> bool:
+        return self.status == ScenarioStatus.COMPLETE
