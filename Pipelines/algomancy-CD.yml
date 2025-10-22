@@ -34,4 +34,4 @@ stages:
     - task: CmdLine@2
       displayName: Upload to feed
       inputs:
-        script: twine upload --config-file $(PYPIRC_PATH) --verbose -r Python dist/*
+        script: twine upload --config-file $(PYPIRC_PATH) --verbose -r WarpPython dist/*
