@@ -1,0 +1,29 @@
+variables:
+  python.version: 3.11
+trigger:
+  - development
+name: $(date:yyyyMMdd)$(rev:.r)
+stages:
+- stage: __default
+  jobs:
+  - job: Phase_1
+    displayName: Build
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - task: UsePythonVersion@0
+      displayName: Use Python $(python.version)
+      inputs:
+        versionSpec: $(python.version)
+    - task: CmdLine@2
+      displayName: Install and update pip
+      inputs:
+        script: python -m pip install --upgrade pip
+    - task: CmdLine@2
+      displayName: Install wheel and build packages
+      inputs:
+        script: pip install wheel build
+    - task: CmdLine@2
+      displayName: Build
+      inputs:
+        script: python -m build

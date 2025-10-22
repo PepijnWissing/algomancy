@@ -1,0 +1,37 @@
+variables:
+  python.version: 3.11
+trigger:
+  - main
+name: $(date:yyyyMMdd)$(rev:.r)
+stages:
+- stage: __default
+  jobs:
+  - job: Phase_1
+    displayName: Publish
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - task: UsePythonVersion@0
+      displayName: Use Python $(python.version)
+      inputs:
+        versionSpec: $(python.version)
+    - task: CmdLine@2
+      displayName: Install and update pip
+      inputs:
+        script: python -m pip install --upgrade pip
+    - task: CmdLine@2
+      displayName: Install build and publish packages
+      inputs:
+        script: python -m pip install twine keyring artifacts-keyring build
+    - task: CmdLine@2
+      displayName: Build
+      inputs:
+        script: python -m build -w
+    - task: TwineAuthenticate@1
+      displayName: 'Twine authenticate'
+      inputs:
+        artifactFeed: WARP/Python
+    - task: CmdLine@2
+      displayName: Upload to feed
+      inputs:
+        script: twine upload --config-file $(PYPIRC_PATH) --verbose -r Python dist/*
