@@ -30,7 +30,7 @@ stages:
     - task: TwineAuthenticate@1
       displayName: 'Twine authenticate'
       inputs:
-        artifactFeed: CQMLibrary/Python
+        artifactFeed: WARP/WarpPython
     - task: CmdLine@2
       displayName: Upload to feed
       inputs:
