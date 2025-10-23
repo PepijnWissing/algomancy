@@ -6,10 +6,10 @@ and scenario simulation. It serves as a central manager for handling interdepend
 and interactions between these subsystems.
 """
 
-__version__ = '0.1.0'
+__version__ = '0.2.2'
 
-from .components import *
-from .contentcreatorlibrary import *
-from .dashboardlogger import *
-from .dataengine import *
-from .scenarioengine import *
+from algomancy import components
+from algomancy import dataengine
+from algomancy import scenarioengine
+from algomancy import dashboardlogger
+from algomancy import contentcreatorlibrary
