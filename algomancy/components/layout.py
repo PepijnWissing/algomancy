@@ -127,6 +127,7 @@ class LayoutCreator:
 
     @staticmethod
     def _create_sidebar_layout(styling: StylingConfigurator) -> html.Div:
+        themed_styling = styling.initiate_theme_colors()
 
         layout = html.Div([
             dcc.Location(id='url', refresh=False),
@@ -138,7 +139,7 @@ class LayoutCreator:
                 className="layout-container",
             )
         ],
-            style=styling.initiate_theme_colors
+            style=themed_styling
         )
 
         return layout

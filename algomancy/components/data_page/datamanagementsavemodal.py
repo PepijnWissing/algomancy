@@ -32,7 +32,7 @@ def create_derived_data_selector(sm: ScenarioManager):
         placeholder = "Select dataset"
     )
 
-def data_management_save_modal(sm: ScenarioManager):
+def data_management_save_modal(sm: ScenarioManager, themed_styling):
     """
     Creates a modal dialog component for saving derived datasets as master data.
 
@@ -53,8 +53,8 @@ def data_management_save_modal(sm: ScenarioManager):
             ]
         ),
         dbc.ModalFooter([
-            dbc.Button("Save", id=DM_SAVE_SUBMIT_BUTTON,color="success"),
-            dbc.Button("Close", id=DM_SAVE_MODAL_CLOSE_BTN, className="ms-auto", n_clicks=0)
+            dbc.Button("Save", id=DM_SAVE_SUBMIT_BUTTON, class_name="dm-save-modal-confirm-btn"),
+            dbc.Button("Close", id=DM_SAVE_MODAL_CLOSE_BTN, class_name="dm-save-modal-cancel-btn ms-auto")
             ]
         ),
-    ], id=DM_SAVE_MODAL, is_open=False, centered=True)
+    ], id=DM_SAVE_MODAL, is_open=False, centered=True, class_name="themed-modal", style=themed_styling)

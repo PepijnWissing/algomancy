@@ -1,0 +1,708 @@
+hr {
+    border-top: 2px solid gray;
+}
+
+.dropdown-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.dropdown-button {
+    width: 100%;
+    margin-top: 5px;
+}
+
+.tabs-group {
+    padding-top: 20px;
+}
+
+.app-div {
+    padding: 10px;
+}
+
+.data-table-div {
+    margin: auto;
+    padding: 10px;
+}
+
+.budget-label {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.budget-text {
+    font-size: 20px;
+}
+
+.budget-text-value {
+    font-size: 20px;
+    font-style: italic;
+}
+
+.budget-progress-bar {
+    height: 20px;
+}
+
+.budget-tooltip {
+    font-size: 18px;
+}
+
+.checklist {
+    text-align: center;
+    padding-top: 10px;
+    padding-bottom: 20px;
+}
+
+@media(max-width: 800px) {
+    .dropdown-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+:root {
+    --background-color: #ffffff;
+    --theme-primary: #FFFFFF;
+    --theme-secondary: #FFFFFF;
+    --theme-tertiary: #FFFFFF;
+    --text-color: #000000;
+    --text-selected: #000000;
+    --text-highlight: #000000;
+    --card-surface: #FFFFFF;
+    --button-text: #FFFFFF;
+
+    /* data management page button colors*/
+    --derive-color: #0078D4;
+    --derive-color-hover: #005a9e;
+    --delete-color: #D13438;
+    --delete-color-hover: #b92629;
+    --save-color: #a6a6a6;
+    --save-color-hover: #8c8c8c;
+    --import-color: #0078D4;
+    --import-color-hover: #005a9e;
+    --upload-color: #26cd0a;
+    --upload-color-hover: #1b9e08;
+    --download-color: #0078D4;
+    --download-color-hover: #005a9e;
+    --disabled_color: #5a5a5a;
+
+    /* derive modal button colors*/
+    --derive-modal-confirm-color: #0078D4;
+    --derive-modal-confirm-color-hover: #005a9e;
+    --derive-modal-cancel-color: #D13438;
+    --derive-modal-cancel-color-hover: #b92629;
+
+    /* delete modal button colors*/
+    --delete-modal-confirm-color: #D13438;
+    --delete-modal-confirm-color-hover: #b92629;
+    --delete-modal-cancel-color: #0078D4;
+    --delete-modal-cancel-color-hover: #005a9e;
+
+    /* save modal button colors*/
+    --save-modal-confirm-color: #a6a6a6;
+    --save-modal-confirm-color-hover: #8c8c8c;
+    --save-modal-cancel-color: #0078D4;
+    --save-modal-cancel-color-hover: #005a9e;
+
+    /* import modal button colors*/
+    --import-modal-confirm-color: #0078D4;
+    --import-modal-confirm-color-hover: #005a9e;
+    --import-modal-cancel-color: #D13438;
+    --import-modal-cancel-color-hover: #b92629;
+
+    /* upload modal button colors*/
+    --upload-modal-confirm-color: #26cd0a;
+    --upload-modal-confirm-color-hover: #1b9e08;
+    --upload-modal-cancel-color: #0078D4;
+    --upload-modal-cancel-color-hover: #005a9e;
+
+    /* download modal button colors*/
+    --download-modal-confirm-color: #0078D4;
+    --download-modal-confirm-color-hover: #005a9e;
+    --download-modal-cancel-color: #D13438;
+    --download-modal-cancel-color-hover: #b92629;
+
+    /* new scenario button colors*/
+    --new-scenario-color: #0078D4;
+    --new-scenario-color-hover: #005a9e;
+
+    /* new scenario modal colors */
+    --new-scenario-modal-confirm-color: #0078D4;
+    --new-scenario-modal-confirm-color-hover: #005a9e;
+    --new-scenario-modal-cancel-color: #D13438;
+    --new-scenario-modal-cancel-color-hover: #b92629;
+
+    /* compare toggle switch colors*/
+    --compare-toggle-color: #0078D4;
+}
+
+.page-content {
+    padding: 2rem;
+    transition: margin-left 0.3s ease-in-out;
+    background-color: var(--background-color);
+    color: var(--text-color);
+}
+
+.page-content.collapsed {
+    margin-left: 80px; /* Width of the collapsed sidebar */
+}
+
+.page-content.expanded {
+    margin-left: 270px; /* Width of the expanded sidebar */
+}
+
+.layout-container {
+    background-color: var(--background-color);
+    min-height: 100vh;
+}
+
+
+/* Update the sidebar-layout class with proper positioning */
+.sidebar-layout {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 250px;
+    padding: 1rem 1rem;
+    background-color: var(--theme-primary);
+    transition: width 0.3s ease-in-out;
+    overflow-x: hidden;
+    z-index: 1030; /* Make sure sidebar appears above content */
+
+}
+
+/* Handle expanded and collapsed states */
+.sidebar-layout.expanded {
+    width: 250px;
+    padding: 1rem 1rem;
+}
+
+.sidebar-layout.collapsed {
+    width: 60px;
+    padding: 1rem 0.5rem;
+}
+
+#sidebar .nav-pills .nav-link {
+    color: var(--theme-secondary) !important;
+}
+#sidebar .nav-pills .nav-link i {
+    color: var(--theme-secondary) !important;
+}
+#sidebar .nav-pills .nav-link.active {
+    background-color: var(--theme-secondary) !important;
+    color: var(--text-selected, #ffffff) !important;
+}
+#sidebar .nav-pills .nav-link.active i {
+    color: var(--text-selected, #ffffff) !important;
+}
+
+/* Sidebar NavLink container stays wide enough for text, shrinks when collapsed */
+.sidebar-layout .nav-link {
+    min-width: 200px;
+    transition: min-width 0.3s cubic-bezier(.4,2,.5,1);
+    justify-content: flex-start;
+}
+.sidebar-layout.collapsed .nav-link {
+    min-width: 56px;     /* Just icon, no text */
+}
+
+/* Text fades and shrinks but remains rendered for the animation */
+.sidebar-content-fade {
+    opacity: 1;
+    max-width: 200px;
+    transition: opacity 0.2s, max-width 0.3s;
+    white-space: nowrap;
+    overflow: hidden;
+    display: inline-block;
+}
+.sidebar-layout.collapsed .sidebar-content-fade {
+    opacity: 0;
+    max-width: 0;
+    pointer-events: none;
+}
+
+
+.sidebar-layout .toggle-sidebar-button {
+    position: absolute;
+    bottom: 16px;
+    right: -20px;
+    z-index: 9999;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    transition: transform 0.3s cubic-bezier(.4,2,.5,1);
+    background-color: var(--background-color) !important;
+    color: var(--theme-primary) !important;
+}
+
+/* When collapsed: rotate 180deg */
+.sidebar-layout.collapsed .toggle-sidebar-button {
+    transform: rotate(180deg);
+}
+
+/* When expanded: normal */
+.sidebar-layout.expanded .toggle-sidebar-button {
+    transform: rotate(0deg);
+}
+
+/* Logo wrapper - expanded state */
+.sidebar-logo-wrapper {
+    height: 72px;             /* or your preferred height */
+    max-height: 72px;
+    transition:
+        opacity 0.18s cubic-bezier(.4,2,.5,1);
+    opacity: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.sidebar-logo-img {
+    max-height: 90%;      /* ensures scaling inside wrapper */
+    max-width: 100%;
+    display: block;
+    margin: 0 auto;
+}
+
+/* Both expanded and collapsed logo classes should always be rendered—don't toggle display! */
+#sidebar .expanded-logo {
+    opacity: 1;
+    transition:
+        height 0.25s cubic-bezier(.4,2,.5,1),
+        opacity 0.2s ease-in-out;
+    overflow: hidden;
+    will-change: opacity;
+    display: block;
+    margin-bottom: 12px; /* or as needed, include for smooth collapse */
+}
+
+#sidebar.collapsed .expanded-logo {
+    opacity: 0;
+    margin-bottom: 0;
+}
+
+/* If you have a "collapsed" version of logo (smaller logo or icon) */
+#sidebar .collapsed-logo {
+    opacity: 0;
+    transition:
+        height 0.2s cubic-bezier(.4,2,.5,1),
+        opacity 0.12s linear;
+    overflow: hidden;
+    display: block;
+}
+
+#sidebar.collapsed .collapsed-logo {
+    opacity: 1;
+    margin-bottom: 12px;
+}
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 0;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    color: #f8f9fa;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.sidebar-link:hover, .sidebar-link.active {
+    background: #343a40;
+    color: #fff;
+}
+
+/* Accordion styling */
+.accordion-button {
+    background-color: var(--card-surface);
+    color: var(--text-color);
+}
+
+.accordion-item {
+    background-color: var(--card-surface);
+    border-radius: 6px;
+    transition: background-color 0.2s ease-in-out;
+    border: 1px solid rgba(0,0,0,0.1);
+    border-left: 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    color: var(--text-color);
+}
+
+/* Styling for dropdown menus */
+.Select-control, .Select-menu-outer, .Select-input {
+    background-color: var(--card-surface);
+    color: var(--text-color);
+}
+
+.Select-value-label, .Select-option {
+    color: var(--text-color);
+}
+
+.Select--single > .Select-control .Select-value, .Select-placeholder {
+    background-color: var(--card-surface);
+    color: var(--text-color);
+}
+
+.VirtualizedSelectOption {
+    background-color: var(--card-surface);
+    color: var(--text-color);
+}
+
+.VirtualizedSelectFocusedOption {
+    background-color: var(--theme-secondary);
+    color: var(--text-selected);
+}
+
+/* styling for input groups */
+.form-control, input.form-control {
+    background-color: var(--card-surface);
+    color: var(--text-color);
+}
+
+.form-control:focus, input.form-control:focus {
+    background-color: var(--card-surface) !important;
+    color: var(--text-color) !important;
+    border-color: var(--theme-secondary) !important;
+    box-shadow: 0 0 0 0.2rem rgba(62, 189, 243, 0.25) !important;
+}
+
+.form-control::placeholder, input.form-control::placeholder {
+    color: var(--text-color) !important;
+    opacity: 0.6 !important;
+}
+
+/* styling for checkboxes */
+.form-check-input {
+    background-color: var(--card-surface);
+    border-color: var(--theme-secondary);
+    color: var(--text-color);
+    transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+    cursor: pointer;
+}
+
+.form-check-input:checked {
+    background-color: var(--theme-secondary);
+    border-color: var(--theme-secondary);
+}
+
+/*
+    Specific element styling
+*/
+.dm-derive-btn {
+    background-color: var(--derive-color);
+    color: var(--text-selected);
+    border-color: var(--derive-color);
+}
+
+.dm-derive-btn:hover, .dm-derive-btn:focus, .dm-derive-btn:active, .dm-derive-btn:active:focus {
+    background-color: var(--derive-color-hover);
+    color: var(--text-selected);
+    border-color: var(--derive-color-hover);
+}
+
+.dm-delete-btn {
+    background-color: var(--delete-color);
+    color: var(--text-selected);
+    border-color: var(--delete-color);
+}
+
+.dm-delete-btn:hover, .dm-delete-btn:focus, .dm-delete-btn:active, .dm-delete-btn:active:focus {
+    background-color: var(--delete-color-hover);
+    color: var(--text-selected);
+    border-color: var(--delete-color-hover);
+}
+
+.dm-save-btn {
+    background-color: var(--save-color);
+    color: var(--text-selected);
+    border-color: var(--save-color);
+}
+
+.dm-save-btn:hover, .dm-save-btn:focus, .dm-save-btn:active, .dm-save-btn:active:focus {
+    background-color: var(--save-color-hover);
+    color: var(--text-selected);
+    border-color: var(--save-color-hover);
+}
+
+.dm-import-btn {
+    background-color: var(--import-color);
+    color: var(--text-selected);
+    border-color: var(--import-color);
+}
+
+.dm-import-btn:hover, .dm-import-btn:focus, .dm-import-btn:active, .dm-import-btn:active:focus {
+    background-color: var(--import-color-hover);
+    color: var(--text-selected);
+    border-color: var(--import-color-hover);
+}
+
+.dm-upload-btn {
+    background-color: var(--upload-color);
+    color: var(--text-selected);
+    border-color: var(--upload-color);
+}
+
+.dm-upload-btn:hover, .dm-upload-btn:focus, .dm-upload-btn:active, .dm-upload-btn:active:focus {
+  background-color: var(--upload-color-hover);
+  color: var(--text-selected);
+  border-color: var(--upload-color-hover);
+}
+
+.dm-download-btn {
+    background-color: var(--download-color);
+    color: var(--text-selected);
+    border-color: var(--download-color);
+}
+
+.dm-download-btn:hover, .dm-download-btn:focus, .dm-download-btn:active, .dm-download-btn:active:focus {
+    background-color: var(--download-color-hover);
+    color: var(--text-selected);
+    border-color: var(--download-color-hover);
+}
+
+.dm-derive-btn:disabled, .dm-delete-btn.disabled, .dm-save-btn.disabled, .dm-import-btn.disabled, .dm-upload-btn.disabled, .dm-download-btn:disabled {
+    background-color: var(--disabled_color);
+    color: var(--text-selected);
+    border-color: var(--disabled_color);
+    opacity: 0.5;
+}
+
+.scenario-card {
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+    background-color: var(--card-surface);
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    padding : 8px 12px;
+    margin-bottom: 10px;
+}
+
+.scenario-card.selected {
+    background-color: var(--theme-secondary);
+    color: var(--text-selected);
+    border-color: var(--theme-secondary);
+    transition: all 0.25s ease-in-out;
+}
+
+.scenario-card.hidden {
+    display: none;
+}
+
+.new-scenario-button {
+    width: 100%;
+    background-color: var(--theme-primary);
+    border-color: var(--theme-primary);
+}
+
+.scenario-progress-bar .progress-bar{
+    background-color: var(--theme-secondary) !important;
+    animation: progress-bar-stripes 1s linear infinite;
+}
+
+.admin-log-card {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 380px); /* Adjust based on other content */
+    min-height: 300px; /* Set a reasonable minimum */
+    overflow-y: auto; /* Allow scrolling if content exceeds height */
+}
+
+
+.admin-log-window {
+    flex: 1;
+    overflow-y: auto;
+    font-family: monospace;
+    white-space: pre-wrap;
+    background-color: #f8f9fa;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.themed-modal {
+    color: var(--text-color);
+}
+
+.themed-modal .modal-header {
+    background-color: var(--theme-primary); /* issue: the modal does not respond to the variable update */
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+.themed-modal .modal-title {
+    color: var(--text-selected);
+    font-weight: 600;
+}
+
+.themed-modal .modal-body, .modal-footer{
+    background-color: var(--background-color);
+    color: var(--text-color);
+}
+
+.dm-derive-modal-confirm-btn {
+    background-color: var(--derive-modal-confirm-color);
+    color: var(--text-selected);
+    border-color: var(--derive-modal-confirm-color);
+}
+
+.dm-derive-modal-confirm-btn:hover, .dm-derive-modal-confirm-btn:focus,
+.dm-derive-modal-confirm-btn:active, .dm-derive-modal-confirm-btn:active:focus {
+    background-color: var(--derive-modal-confirm-color-hover);
+    color: var(--text-selected);
+    border-color: var(--derive-modal-confirm-color-hover);
+}
+
+.dm-derive-modal-cancel-btn {
+    background-color: var(--derive-modal-cancel-color);
+    color: var(--text-selected);
+    border-color: var(--derive-modal-cancel-color);
+}
+
+.dm-derive-modal-cancel-btn:hover, .dm-derive-modal-cancel-btn:focus,
+.dm-derive-modal-cancel-btn:active, .dm-derive-modal-cancel-btn:active:focus {
+    background-color: var(--derive-modal-cancel-color-hover);
+    color: var(--text-selected);
+    border-color: var(--derive-modal-cancel-color-hover);
+}
+
+.dm-delete-modal-confirm-btn {
+    background-color: var(--delete-modal-confirm-color);
+    color: var(--text-selected);
+    border-color: var(--delete-modal-confirm-color);
+}
+
+.dm-delete-modal-confirm-btn:hover, .dm-delete-modal-confirm-btn:focus,
+.dm-delete-modal-confirm-btn:active, .dm-delete-modal-confirm-btn:active:focus {
+    background-color: var(--delete-modal-confirm-color-hover);
+    color: var(--text-selected);
+    border-color: var(--delete-modal-confirm-color-hover);
+}
+
+.dm-delete-modal-cancel-btn {
+    background-color: var(--delete-modal-cancel-color);
+    color: var(--text-selected);
+    border-color: var(--delete-modal-cancel-color);
+}
+
+.dm-delete-modal-cancel-btn:hover, .dm-delete-modal-cancel-btn:focus,
+.dm-delete-modal-cancel-btn:active, .dm-delete-modal-cancel-btn:active:focus {
+    background-color: var(--delete-modal-cancel-color-hover);
+    color: var(--text-selected);
+    border-color: var(--delete-modal-cancel-color-hover);
+}
+
+.dm-save-modal-confirm-btn {
+    background-color: var(--save-modal-confirm-color);
+    color: var(--text-selected);
+    border-color: var(--save-modal-confirm-color);
+}
+
+.dm-save-modal-confirm-btn:hover, .dm-save-modal-confirm-btn:focus,
+.dm-save-modal-confirm-btn:active, .dm-save-modal-confirm-btn:active:focus {
+    background-color: var(--save-modal-confirm-color-hover);
+    color: var(--text-selected);
+    border-color: var(--save-modal-confirm-color-hover);
+}
+
+.dm-save-modal-cancel-btn {
+    background-color: var(--save-modal-cancel-color);
+    color: var(--text-selected);
+    border-color: var(--save-modal-cancel-color);
+}
+
+.dm-save-modal-cancel-btn:hover, .dm-save-modal-cancel-btn:focus,
+.dm-save-modal-cancel-btn:active, .dm-save-modal-cancel-btn:active:focus {
+    background-color: var(--save-modal-cancel-color-hover);
+    color: var(--text-selected);
+    border-color: var(--save-modal-cancel-color-hover);
+}
+
+.dm-import-modal-confirm-btn {
+    background-color: var(--import-modal-confirm-color);
+    color: var(--text-selected);
+    border-color: var(--import-modal-confirm-color);
+}
+
+.dm-import-modal-confirm-btn:hover, .dm-import-modal-confirm-btn:focus,
+.dm-import-modal-confirm-btn:active, .dm-import-modal-confirm-btn:active:focus {
+    background-color: var(--import-modal-confirm-color-hover);
+    color: var(--text-selected);
+    border-color: var(--import-modal-confirm-color-hover);
+}
+
+.dm-import-modal-cancel-btn {
+    background-color: var(--import-modal-cancel-color);
+    color: var(--text-selected);
+    border-color: var(--import-modal-cancel-color);
+}
+
+.dm-import-modal-cancel-btn:hover, .dm-import-modal-cancel-btn:focus,
+.dm-import-modal-cancel-btn:active, .dm-import-modal-cancel-btn:active:focus {
+    background-color: var(--import-modal-cancel-color-hover);
+    color: var(--text-selected);
+    border-color: var(--import-modal-cancel-color-hover);
+}
+
+.dm-upload-modal-confirm-btn {
+    background-color: var(--upload-modal-confirm-color);
+    color: var(--text-selected);
+    border-color: var(--upload-modal-confirm-color);
+}
+
+.dm-upload-modal-confirm-btn:hover, .dm-upload-modal-confirm-btn:focus,
+.dm-upload-modal-confirm-btn:active, .dm-upload-modal-confirm-btn:active:focus {
+    background-color: var(--upload-modal-confirm-color-hover);
+}
+
+.dm-upload-modal-cancel-btn {
+    background-color: var(--upload-modal-cancel-color);
+    color: var(--text-selected);
+    border-color: var(--upload-modal-cancel-color);
+}
+
+.dm-upload-modal-cancel-btn:hover, .dm-upload-modal-cancel-btn:focus,
+.dm-upload-modal-cancel-btn:active, .dm-upload-modal-cancel-btn:active:focus {
+    background-color: var(--upload-modal-cancel-color-hover);
+    color: var(--text-selected);
+    border-color: var(--upload-modal-cancel-color-hover);
+}
+
+.dm-download-modal-confirm-btn {
+    background-color: var(--download-modal-confirm-color);
+    color: var(--text-selected);
+    border-color: var(--download-modal-confirm-color);
+}
+
+.dm-download-modal-confirm-btn:hover, .dm-download-modal-confirm-btn:focus,
+.dm-download-modal-confirm-btn:active, .dm-download-modal-confirm-btn:active:focus {
+    background-color: var(--download-modal-confirm-color-hover);
+    color: var(--text-selected);
+    border-color: var(--download-modal-confirm-color-hover);
+}
+
+.dm-download-modal-cancel-btn {
+    background-color: var(--download-modal-cancel-color);
+    color: var(--text-selected);
+    border-color: var(--download-modal-cancel-color);
+}
+
+.dm-download-modal-cancel-btn:hover, .dm-download-modal-cancel-btn:focus,
+.dm-download-modal-cancel-btn:active, .dm-download-modal-cancel-btn:active:focus {
+    background-color: var(--download-modal-cancel-color-hover);
+    color: var(--text-selected);
+    border-color: var(--download-modal-cancel-color-hover);
+}
