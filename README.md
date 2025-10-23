@@ -5,5 +5,5 @@ This package is designed to facilitate dashboarding and visualizations of the pe
 To install this package, make sure you have the artifacts-keyring package installed. Then, install the algomancy package with the following command:
 
 ```
-pip install --index-url=https://pkgs.dev.azure.com/cqmbv/WARP/_packaging/Python/pypi/simple algomancy
+pip install --index-url=https://pkgs.dev.azure.com/cqmbv/WARP/_packaging/WarpPython/pypi/simple/ algomancy
 ```
