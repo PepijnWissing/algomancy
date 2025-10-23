@@ -1,6 +1,6 @@
 [project]
-name = "algomancy"
-version = "0.2.0"
+name = "Algomancy"
+version = "0.2.3"
 description = "A dashboarding framework for visualizing performances of algorithms or simulations in various scenarios."
 requires-python = ">=3.11"
 dependencies = [
@@ -41,4 +41,17 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["algomancy"]
+packages = [
+    "algomancy",
+    "algomancy.components",
+    "algomancy.components.admin_page",
+    "algomancy.components.data_page",
+    "algomancy.components.home_page",
+    "algomancy.components.overview_page",
+    "algomancy.components.performance_page",
+    "algomancy.components.scenario_page",
+    "algomancy.contentcreatorlibrary",
+    "algomancy.dashboardlogger",
+    "algomancy.dataengine",
+    "algomancy.scenarioengine",
+]

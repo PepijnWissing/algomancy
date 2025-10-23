@@ -1,11 +1,17 @@
 from dash import html, dcc
 import dash_bootstrap_components as dbc
 
+from algomancy.components.data_page.datamanagementdeletemodal import data_management_delete_modal
+from algomancy.components.data_page.datamanagementderivemodal import data_management_derive_modal
+from algomancy.components.data_page.datamanagementdownloadmodal import data_management_download_modal
+from algomancy.components.data_page.datamanagementimportmodal import data_management_import_modal
+from algomancy.components.data_page.datamanagementsavemodal import data_management_save_modal
+from algomancy.components.data_page.datamanagementuploadmodal import data_management_upload_modal
 from algomancy.scenarioengine.scenariomanager import ScenarioManager
 from algomancy.components.componentids import DATA_SELECTOR_DROPDOWN, DATA_MAN_SUCCESS_ALERT, DATA_MAN_ERROR_ALERT, \
     DM_DELETE_OPEN_BUTTON, DM_DERIVE_OPEN_BTN, DM_SAVE_OPEN_BUTTON, DM_IMPORT_OPEN_BUTTON, DM_UPLOAD_OPEN_BUTTON, \
     DM_DOWNLOAD_OPEN_BUTTON, DM_LIST_UPDATER_STORE
-from .dialogs import *
+
 
 
 def top_bar(sm: ScenarioManager):
@@ -25,8 +31,7 @@ def top_bar(sm: ScenarioManager):
             is_open=False,
             dismissable=True,
             duration=4000,
-            class_name="mt-2")
-        ,
+            class_name="mt-2"),
         dbc.Alert(
             id=DATA_MAN_ERROR_ALERT,
             color="danger",
@@ -49,7 +54,7 @@ def create_data_management_toolbar(sm: ScenarioManager):
                        className="me-2 dm-delete-btn"),
             dbc.Button("Save",
                        id=DM_SAVE_OPEN_BUTTON,
-                       disabled = not sm._has_persistent_state,
+                       disabled=not sm.has_persistent_state,
                        className="me-2 dm-save-btn"),
             dbc.Button("Import",
                        id=DM_IMPORT_OPEN_BUTTON,  # adjust callback
