@@ -6,7 +6,7 @@ and scenario simulation. It serves as a central manager for handling interdepend
 and interactions between these subsystems.
 """
 
-__version__ = '0.2.2'
+__version__ = '0.2.3'
 
 from algomancy import components
 from algomancy import dataengine
