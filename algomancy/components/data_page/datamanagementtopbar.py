@@ -25,8 +25,7 @@ def top_bar(sm: ScenarioManager):
             is_open=False,
             dismissable=True,
             duration=4000,
-            class_name="mt-2")
-        ,
+            class_name="mt-2"),
         dbc.Alert(
             id=DATA_MAN_ERROR_ALERT,
             color="danger",
@@ -49,7 +48,7 @@ def create_data_management_toolbar(sm: ScenarioManager):
                        className="me-2 dm-delete-btn"),
             dbc.Button("Save",
                        id=DM_SAVE_OPEN_BUTTON,
-                       disabled = not sm._has_persistent_state,
+                       disabled=not sm.has_persistent_state,
                        className="me-2 dm-save-btn"),
             dbc.Button("Import",
                        id=DM_IMPORT_OPEN_BUTTON,  # adjust callback

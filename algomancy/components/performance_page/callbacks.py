@@ -5,7 +5,7 @@ This module defines the callback functions for the performance dashboard page.
 It handles updating scenario overviews, KPI comparisons, and other interactive elements.
 """
 
-from dash import callback, Input, Output, html, get_app, State
+from dash import callback, Input, Output, html, get_app
 
 from algomancy.components.componentids import *
 from algomancy.components.performance_page.kpicard import kpi_card
