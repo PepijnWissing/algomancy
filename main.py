@@ -15,19 +15,10 @@ from algomancy.stylingconfigurator import (
     LayoutSelection,
     ColorConfiguration,
     CardHighlightMode,
+    ButtonColorMode
 )
 
-from exampleetlfactory import ExampleETLFactory
-
-# from src.data.input_configs import example_input_configs
-# from src.data.factories import ExampleETLFactory
-# from src.pages.HomePageContent import HomePageContentCreator
-# from src.templates import (
-#     debug_create_example_scenarios,
-#     algorithm_templates,
-#     kpi_templates,
-# )
-
+from algomancy.contentcreatorlibrary.placeholderetlfactory import PlaceholderETLFactory
 
 def main(
     host: str | None = None,
@@ -59,12 +50,18 @@ def main(
     scholt_styling = StylingConfigurator(
         layout_selection=LayoutSelection.SIDEBAR,
         color_configuration=ColorConfiguration(
-            background_color=color3,
+            background_color="#E3DBD8FF",
             theme_color_primary=color1,
             theme_color_secondary=color2,
+            theme_color_tertiary=color3,
             text_color="#424242",
             text_color_highlight="#EF7B13",
             text_color_selected="#e3f8ff",
+            button_color_mode=ButtonColorMode.UNIFIED,
+            button_colors={
+                "unified_color": "#D13438",
+                # "unified_hover": "#26cd0a",
+            },
         ),
         logo_url="/assets/cqm-logo-white.png",
         button_url="/assets/cqm-button-white.png",
@@ -83,7 +80,7 @@ def main(
         "data_object_type": DataSource,
         # -
         # === scenario manager configuration ===
-        "etl_factory": ExampleETLFactory,
+        "etl_factory": PlaceholderETLFactory,
         "kpi_templates": {}, # kpi_templates,
         "algo_templates": {}, #algorithm_templates,
         "input_configs": {}, #example_input_configs,
@@ -118,7 +115,7 @@ def main(
             "side",
             # "kpi",
             "compare",
-        ],  # todo pass this as a parameter
+        ],
         # -
         # === authentication ===
         "use_authentication": False,
@@ -126,10 +123,6 @@ def main(
 
     # Build the app
     app = DashLauncher.build(configuration)
-
-    # DEBUGGING: create some scenarios
-    if False:
-        debug_create_example_scenarios(app.server.scenario_manager)
 
     # Run the app
     DashLauncher.run(

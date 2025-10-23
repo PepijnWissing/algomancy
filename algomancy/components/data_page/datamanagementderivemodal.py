@@ -11,7 +11,7 @@ This module provides a modal dialog that allows users to create derived datasets
 by selecting an existing dataset and providing a name for the new derived dataset.
 """
 
-def data_management_derive_modal(sm: ScenarioManager):
+def data_management_derive_modal(sm: ScenarioManager, themed_styling):
     """
     Creates a modal dialog component for deriving new datasets.
 
@@ -53,7 +53,8 @@ def data_management_derive_modal(sm: ScenarioManager):
             ]),
         ])),
         dbc.ModalFooter([
-            dbc.Button("Derive", id=DM_DERIVE_MODAL_SUBMIT_BTN, color="primary"),
-            dbc.Button("Close", id=DM_DERIVE_MODAL_CLOSE_BTN, color="secondary" ,class_name="ms-auto", n_clicks=0)
+            dbc.Button("Derive", id=DM_DERIVE_MODAL_SUBMIT_BTN, class_name = "dm-derive-modal-confirm-btn"),
+            dbc.Button("Close", id=DM_DERIVE_MODAL_CLOSE_BTN, class_name="dm-derive-modal-cancel-btn ms-auto",
+                       n_clicks=0)
         ]),
-    ], id=DM_DERIVE_MODAL, is_open=False, centered=True)
+    ], id=DM_DERIVE_MODAL, is_open=False, centered=True, class_name="themed-modal", style=themed_styling)

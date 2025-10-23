@@ -23,7 +23,7 @@ view file mapping information, and create new datasets from the uploaded files.
 """
 
 
-def data_management_upload_modal(sm: ScenarioManager):
+def data_management_upload_modal(sm: ScenarioManager, themed_styling):
     """
     Creates a modal dialog component for loading data files.
 
@@ -34,9 +34,6 @@ def data_management_upload_modal(sm: ScenarioManager):
     Returns:
         dbc.Modal: A Dash Bootstrap Components modal dialog
     """
-
-    sm = get_app().server.scenario_manager
-
     return dbc.Modal([
         dbc.ModalHeader(dbc.ModalTitle("Upload Cases")),
         dbc.ModalBody([
@@ -79,11 +76,11 @@ def data_management_upload_modal(sm: ScenarioManager):
             )
         ]),
         dbc.ModalFooter([
-            dbc.Button("Upload", id=DM_UPLOAD_SUBMIT_BUTTON, color="primary", n_clicks=0),
-            dbc.Button("Close", id=DM_UPLOAD_MODAL_CLOSE_BTN, color="secondary", class_name="ms-auto")
+            dbc.Button("Upload", id=DM_UPLOAD_SUBMIT_BUTTON, class_name="dm-upload-modal-confirm-btn"),
+            dbc.Button("Close", id=DM_UPLOAD_MODAL_CLOSE_BTN, class_name="dm-upload-modal-cancel-btn ms-auto")
         ]),
     ],
-        id=DM_UPLOAD_MODAL, is_open=False, centered=True
+        id=DM_UPLOAD_MODAL, is_open=False, centered=True, class_name="themed-modal", style=themed_styling,
     )
 
 

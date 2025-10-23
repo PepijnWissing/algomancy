@@ -11,7 +11,8 @@ This module provides a modal dialog that allows users to select and delete
 datasets, with additional confirmation required for master data deletion.
 """
 
-def data_management_delete_modal(sm: ScenarioManager):
+
+def data_management_delete_modal(sm: ScenarioManager, themed_styling):
     """
     Creates a modal dialog component for deleting datasets.
 
@@ -21,6 +22,7 @@ def data_management_delete_modal(sm: ScenarioManager):
 
     Args:
         sm: ScenarioManager instance used to populate the dataset dropdown
+        themed_styling: Dictionary of CSS styling properties
 
     Returns:
         dbc.Modal: A Dash Bootstrap Components modal dialog
@@ -65,12 +67,12 @@ def data_management_delete_modal(sm: ScenarioManager):
                     ],
                     id=DM_DELETE_COLLAPSE,
                     is_open=False,
-                    class_name = "mt-2"
+                    class_name="mt-2"
                 )
             ], className="mb-4"),
         ),
         dbc.ModalFooter([
-            dbc.Button("Delete", id=DM_DELETE_SUBMIT_BUTTON, color="danger"),
-            dbc.Button("Close", id=DM_DELETE_CLOSE_BUTTON, className="ms-auto", n_clicks=0)
+            dbc.Button("Delete", id=DM_DELETE_SUBMIT_BUTTON, class_name="dm-delete-modal-confirm-btn"),
+            dbc.Button("Close", id=DM_DELETE_CLOSE_BUTTON, class_name="dm-delete-modal-cancel-btn ms-auto", n_clicks=0)
         ]),
-    ], id=DM_DELETE_MODAL, is_open=False, centered=True)
+    ], id=DM_DELETE_MODAL, is_open=False, centered=True, class_name="themed-modal", style=themed_styling)
