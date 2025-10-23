@@ -1,6 +1,7 @@
 from typing import Dict, List
 
-from algomancy import ETLFactory, ValidationSequence, Extractor, Transformer, Loader, Logger
+from algomancy.dashboardlogger import Logger
+from algomancy.dataengine import Loader, ETLFactory, Extractor, ValidationSequence, Transformer
 
 
 class PlaceholderLoader(Loader):

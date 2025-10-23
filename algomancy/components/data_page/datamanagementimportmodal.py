@@ -14,7 +14,7 @@ This module provides a modal dialog that allows users to upload CSV files,
 view file mapping information, and create new datasets from the uploaded files.
 """
 
-def data_management_import_modal(sm: ScenarioManager):
+def data_management_import_modal(sm: ScenarioManager, themed_styling):
     """
     Creates a modal dialog component for loading data files.
 
@@ -66,9 +66,9 @@ def data_management_import_modal(sm: ScenarioManager):
             )
         ]),
         dbc.ModalFooter([
-            dbc.Button("Import", id=DM_IMPORT_SUBMIT_BUTTON, color="primary", n_clicks=0),
-            dbc.Button("Close", id=DM_IMPORT_MODAL_CLOSE_BTN, color="secondary", class_name="ms-auto")
+            dbc.Button("Import", id=DM_IMPORT_SUBMIT_BUTTON, class_name="dm-import-modal-confirm-btn"),
+            dbc.Button("Close", id=DM_IMPORT_MODAL_CLOSE_BTN, class_name="dm-import-modal-cancel-btn ms-auto")
         ]),
     ],
-        id=DM_IMPORT_MODAL, is_open=False, centered=True
+        id=DM_IMPORT_MODAL, is_open=False, centered=True, class_name="themed-modal", style=themed_styling
     )

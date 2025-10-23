@@ -1,4 +1,4 @@
-from dash import html, dcc
+from dash import html, dcc, get_app
 import dash_bootstrap_components as dbc
 
 from algomancy.components.data_page.datamanagementdeletemodal import data_management_delete_modal
@@ -12,6 +12,7 @@ from algomancy.components.componentids import DATA_SELECTOR_DROPDOWN, DATA_MAN_S
     DM_DELETE_OPEN_BUTTON, DM_DERIVE_OPEN_BTN, DM_SAVE_OPEN_BUTTON, DM_IMPORT_OPEN_BUTTON, DM_UPLOAD_OPEN_BUTTON, \
     DM_DOWNLOAD_OPEN_BUTTON, DM_LIST_UPDATER_STORE
 
+import algomancy.components.data_page.dialogcallbacks  # necessary for callback registration
 
 
 def top_bar(sm: ScenarioManager):
@@ -44,6 +45,9 @@ def top_bar(sm: ScenarioManager):
 
 
 def create_data_management_toolbar(sm: ScenarioManager):
+
+    themed_styling = get_app().server.styling_config.initiate_theme_colors()
+
     return html.Div([
         dbc.ButtonGroup([
             dbc.Button("Derive",
@@ -68,12 +72,12 @@ def create_data_management_toolbar(sm: ScenarioManager):
             ],
             className="d-flex justify-content-end"
         ),
-        data_management_derive_modal(sm),
-        data_management_delete_modal(sm),
-        data_management_save_modal(sm),
-        data_management_import_modal(sm),
-        data_management_upload_modal(sm),
-        data_management_download_modal(sm),
+        data_management_derive_modal(sm, themed_styling),
+        data_management_delete_modal(sm, themed_styling),
+        data_management_save_modal(sm, themed_styling),
+        data_management_import_modal(sm, themed_styling),
+        data_management_upload_modal(sm, themed_styling),
+        data_management_download_modal(sm, themed_styling),
     ])
 
 

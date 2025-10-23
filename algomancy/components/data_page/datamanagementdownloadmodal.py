@@ -26,7 +26,7 @@ one file for each selected datasource, with the file name based on the datasourc
 """
 
 
-def data_management_download_modal(sm: ScenarioManager):
+def data_management_download_modal(sm: ScenarioManager, themed_styling):
     """
     Creates a modal dialog component for downloading data files.
 
@@ -55,12 +55,12 @@ def data_management_download_modal(sm: ScenarioManager):
             ])
         ]),
         dbc.ModalFooter([
-            dbc.Button("Download", id=DM_DOWNLOAD_SUBMIT_BUTTON, color="primary", n_clicks=0),
-            dbc.Button("Close", id=DM_DOWNLOAD_MODAL_CLOSE_BTN, color="secondary", class_name="ms-auto")
+            dbc.Button("Download", id=DM_DOWNLOAD_SUBMIT_BUTTON,class_name="dm-download-modal-confirm-btn"),
+            dbc.Button("Close", id=DM_DOWNLOAD_MODAL_CLOSE_BTN, class_name="dm-download-modal-cancel-btn ms-auto")
         ]),
         dcc.Download(id="dm-download"),  # persistent Download component
     ],
-        id=DM_DOWNLOAD_MODAL, is_open=False, centered=True
+        id=DM_DOWNLOAD_MODAL, is_open=False, centered=True, class_name="themed-modal", style=themed_styling,
     )
 
 
