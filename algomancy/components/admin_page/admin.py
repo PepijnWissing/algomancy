@@ -2,7 +2,9 @@
 from dash import html, dcc
 import dash_bootstrap_components as dbc
 
-from algomancy.components.componentids import *
+from algomancy.components.componentids import ADMIN_LOG_WINDOW, ADMIN_LOG_INTERVAL, ADMIN_LOG_FILTER
+import algomancy.components.admin_page.callbacks  # necessary to register callbacks
+
 
 def admin_page():
     """

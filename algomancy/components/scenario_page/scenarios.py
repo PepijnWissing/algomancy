@@ -1,11 +1,11 @@
 from dash import html, dcc
 
-import algomancy.components.scenario_page.callbacks
-from algomancy.stylingconfigurator import StylingConfigurator
 from algomancy.components.componentids import *
 from algomancy.components.scenario_page.delete_confirmation import delete_confirmation_modal
 from algomancy.components.scenario_page.new_scenario_creator import new_scenario_creator
 from algomancy.components.scenario_page.scenario_cards import hidden_card
+
+import algomancy.components.scenario_page.callbacks
 
 import dash_bootstrap_components as dbc
 
