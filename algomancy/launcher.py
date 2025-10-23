@@ -71,16 +71,8 @@ class DashLauncher:
 
         # register authentication if enabled
         if cfg["use_authentication"]:
-            env_filename = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env")
-
-            # check if the file exists
-            if not os.path.exists(env_filename):
-                raise FileNotFoundError(f"Environment file '{env_filename}' not found")
-
-            # load the file and check for the required environment variables
-            load_dotenv(env_filename)
             if not os.getenv("APP_USERNAME") or not os.getenv("APP_PASSWORD"):
-                raise ValueError("Environment variables 'APP_USERNAME' and 'APP_PASSWORD' must be set")
+                raise ValueError("Environment variables 'APP_USERNAME' and 'APP_PASSWORD' must be set") #todo document where to set username and password
 
             # add authentication to the app
             dash_auth.BasicAuth(app, [[os.getenv("APP_USERNAME"), os.getenv("APP_PASSWORD")]])
