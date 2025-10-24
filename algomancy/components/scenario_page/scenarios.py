@@ -10,7 +10,6 @@ import algomancy.components.scenario_page.callbacks
 import dash_bootstrap_components as dbc
 
 
-
 def scenario_page():
     """
     Creates the scenarios page layout with scenario management functionality.
