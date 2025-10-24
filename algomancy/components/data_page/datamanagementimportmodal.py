@@ -51,7 +51,7 @@ def data_management_import_modal(sm: ScenarioManager, themed_styling):
                         children=[
                             dbc.Card(dbc.CardBody(
                                 id=DM_IMPORT_MODAL_FILEVIEWER_CARD
-                            )),
+                            ), className="uploaded-files-card"),
                             dbc.Input(id=DM_IMPORT_MODAL_NAME_INPUT, placeholder="Name of new dataset", class_name="mt-2")
                         ],
                         id=DM_IMPORT_MODAL_FILEVIEWER_COLLAPSE,
