@@ -133,9 +133,6 @@ class DataTypeConverter:
     @staticmethod
     def _convert_boolean_column(df: pd.DataFrame, column: str) -> pd.DataFrame:
         """Convert a column to boolean type, handling various representations."""
-        import pandas as pd
-        import numpy as np
-
         try:
             df[column] = df[column].astype(DataType.BOOLEAN)
         except (ValueError, TypeError):
@@ -195,6 +192,7 @@ class Extractor(ABC):
     def extract(self) -> Dict[str, pd.DataFrame]:
         pass
 
+
 class SingleExtractor(Extractor):
     def __init__(
             self,
@@ -224,6 +222,7 @@ class SingleExtractor(Extractor):
         """
         pass
 
+
 class MultiExtractor(Extractor):
     def __init__(
             self,
@@ -241,7 +240,7 @@ class MultiExtractor(Extractor):
     def extract(self) -> Dict[str, pd.DataFrame]:
         """Returns Dict[name, dataframe], so each dataset is identifiable"""
 
-        self.extraction_message()
+        self._extraction_message()
 
         dfs = self._extract_files()
 
@@ -250,7 +249,7 @@ class MultiExtractor(Extractor):
         self._check_schemas(dfs)
         dfs = {name: DataTypeConverter.convert_dtypes(df, self.schemas[name]) for name, df in dfs.items()}
 
-        self.extraction_success_message()
+        self._extraction_success_message()
         return dfs
 
     @abstractmethod
@@ -261,6 +260,7 @@ class MultiExtractor(Extractor):
         :raises FileNotFoundError: handled one level higher
         """
         pass
+
 
 class CSVSingleExtractor(SingleExtractor):
     """
@@ -273,8 +273,10 @@ class CSVSingleExtractor(SingleExtractor):
     is provided in the form of a pandas DataFrame.
 
     Attributes:
-        file_path: str
-            The full path to the CSV file that needs to be processed.
+        file: CSVFile
+            File object that contains the content of the CSV file.
+        schema: Schema
+            contains datatype information for each column in the DataFrame.
         logger: Logger, optional
             An optional logger instance to log messages and errors.
         separator: str
@@ -315,8 +317,10 @@ class JSONSingleExtractor(SingleExtractor):
     to a column in the dataframe. If the value is a list, it is converted to a string.
 
     Attributes:
-        file_path: str
-            Path to the JSON file to be read.
+        file: JSONFile
+            File object that contains the content of the JSON file.
+        schema: Schema
+            contains datatype information for each column in the DataFrame.
         logger: Logger, optional
             Logger instance for logging messages. Defaults to None.
     """
@@ -330,7 +334,6 @@ class JSONSingleExtractor(SingleExtractor):
         super().__init__(file, schema, logger)
 
     def _extract_file(self) -> pd.DataFrame:
-
         json_data = json.load(StringIO(self.file.content))
         df = pd.json_normalize(json_data)
 
@@ -347,7 +350,7 @@ class XLSXSingleExtractor(SingleExtractor):
     SingleExtractor class, providing a specialized implementation for XLSX data.
 
     Attributes:
-        file: File
+        file: XLSXFile
             The file object containing the content of the XLSX file.
         schema: Schema
             The schema object containing the data types for each column in the DataFrame.
@@ -402,6 +405,7 @@ class XLSXSingleExtractor(SingleExtractor):
 
         return df
 
+
 class XLSXMultiExtractor(MultiExtractor):
     """
     Represents an extractor for XLSX files.
@@ -412,7 +416,7 @@ class XLSXMultiExtractor(MultiExtractor):
     MultiExtractor class, providing a specialized implementation for XLSX data.
 
     Attributes:
-        file: File
+        file: XLSXFile
             The file object containing the content of the XLSX file.
         schemas: Schema
             The schema object containing the data types for each column in the DataFrame.
@@ -423,6 +427,7 @@ class XLSXMultiExtractor(MultiExtractor):
 
     Note that the sheet_names should match the keys of the schemas Dict.
     """
+
     def __init__(
             self,
             file: XLSXFile,
@@ -432,7 +437,8 @@ class XLSXMultiExtractor(MultiExtractor):
     ) -> None:
         super().__init__(file, schemas, logger)
         self._sheet_names = sheet_names
-        self._single_sheet_extractors = [XLSXSingleExtractor(file, schemas[sheet_name], sheet_name) for sheet_name in sheet_names]
+        self._single_sheet_extractors = [XLSXSingleExtractor(file, schemas[sheet_name], sheet_name) for sheet_name in
+                                         sheet_names]
 
     def _extract_files(self) -> Dict[str, pd.DataFrame]:
         dfs = {}
