@@ -111,7 +111,7 @@ hr {
     --import-modal-cancel-color-hover: #b92629;
 
     /* upload modal button colors*/
-    --upload-modal-confirm-color: #26cd0a;
+    --upload-modal-confirm-color: rgba(38, 205, 10, 0.52);
     --upload-modal-confirm-color-hover: #1b9e08;
     --upload-modal-cancel-color: #0078D4;
     --upload-modal-cancel-color-hover: #005a9e;
@@ -134,6 +134,9 @@ hr {
 
     /* compare toggle switch colors*/
     --compare-toggle-color: #0078D4;
+    --compare-active-handle-url: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%2326CD0A84'/%3e%3c/svg%3e");
+    --compare-inactive-handle-url: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%2326CD0A84'/%3e%3c/svg%3e");
+    --compare-focussed-handle-url: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%2326CD0A84'/%3e%3c/svg%3e");
 }
 
 .page-content {
@@ -705,4 +708,40 @@ hr {
     background-color: var(--download-modal-cancel-color-hover);
     color: var(--text-selected);
     border-color: var(--download-modal-cancel-color-hover);
+}
+
+/*
+    toggle styling
+*/
+.styled-toggle { /* adjust colors in this section if desired */
+    --toggle-background-color: var(--card-surface);
+    --toggle-shadow-color: rgb(from var(--compare-toggle-color) r g b / 30%);
+    --toggle-border-color: var(--text-color);
+    --toggle-handle-color: var(--text-color);
+    --toggle-active-color: var(--compare-toggle-color);
+    --toggle-handle-selected: var(--compare-active-handle-url);
+    --toggle-handle-primary: var(--compare-focussed-handle-url);
+    --toggle-handle-textcolor: var(--compare-inactive-handle-url);
+}
+
+.styled-toggle .form-check-input {
+    background-color: var(--toggle-background-color);
+    border-color: var(--toggle-border-color);
+    background-image: var(--toggle-handle-textcolor);
+}
+
+.styled-toggle .form-check-input:checked {
+    background-color: var(--toggle-active-color);
+    border-color: var(--toggle-border-color);
+    background-image: var(--toggle-handle-selected);
+}
+
+.styled-toggle .form-check-input:focus, .form-check-input:active{
+    box-shadow: 0 0 0 0.2rem var(--toggle-shadow-color);
+    background-image: var(--toggle-handle-primary)
+}
+
+.styled-toggle .form-check-input:checked:focus {
+    box-shadow: 0 0 0 0.2rem var(--toggle-shadow-color);
+    background-image: var(--toggle-handle-selected)
 }

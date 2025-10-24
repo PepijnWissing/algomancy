@@ -52,9 +52,9 @@ def main(
     if not debug:
         debug = False
 
-    color1 = "#DB001A"
-    color2 = "#4A4342"
-    color3 = "#FFFFFF"
+    color1 = "#DB001A"  # red
+    color2 = "#6610f2"  #"#4A4342" # taupe
+    color3 = "#FFFFFF"  # white
     scholt_styling = StylingConfigurator(
         layout_selection=LayoutSelection.SIDEBAR,
         color_configuration=ColorConfiguration(
