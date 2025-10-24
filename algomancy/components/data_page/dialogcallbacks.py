@@ -395,6 +395,7 @@ def handle_csv_upload(contents):
     Output(DATA_MAN_SUCCESS_ALERT, "is_open", allow_duplicate=True),
     Output(DATA_MAN_ERROR_ALERT, "children", allow_duplicate=True),
     Output(DATA_MAN_ERROR_ALERT, "is_open", allow_duplicate=True),
+    Output('dm-import-modal-dummy-store', 'data', allow_duplicate=True),
 ], [
     Input(DM_IMPORT_SUBMIT_BUTTON, "n_clicks"),
 ], [
@@ -418,7 +419,7 @@ def process_imports(n_clicks, contents, filenames, dataset_name):
     """
     # Guard clause for empty inputs
     if not n_clicks or not contents or not filenames or not dataset_name:
-        return no_update, no_update, "", False, "", False
+        return no_update, no_update, "", False, "", False, ""
 
     # Get scenario manager from app context
     sm = get_app().server.scenario_manager
@@ -433,15 +434,15 @@ def process_imports(n_clicks, contents, filenames, dataset_name):
         sm.dm.etl_data(files, dataset_name)
 
         # Return successful response
-        return datetime.now(), False, "Data loaded successfully!", True, "", False
+        return datetime.now(), False, "Data loaded successfully!", True, "", False, ""
 
     except ValidationError as e:
         sm.log(f"Validation error: {str(e)}")
-        return no_update, False, "", False, f"Validation error: {str(e)}", True
+        return no_update, False, "", False, f"Validation error: {str(e)}", True, ""
 
     except Exception as e:
         sm.log(f"Problem with loading: {str(e)}")
-        return no_update, False, "", False, f"Problem with loading: {str(e)}", True
+        return no_update, False, "", False, f"Problem with loading: {str(e)}", True, ""
 
 
 def prepare_files_from_upload(sm, filenames, contents):

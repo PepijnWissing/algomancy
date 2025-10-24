@@ -36,45 +36,54 @@ def data_management_upload_modal(sm: ScenarioManager, themed_styling):
     """
     return dbc.Modal([
         dbc.ModalHeader(dbc.ModalTitle("Upload Cases")),
-        dbc.ModalBody([
-            dbc.Label("The uploaded file will be uploaded as a new dataset."
-                      "The name of the dataset will be the name of the uploaded file."
-                      f"The file must be in {sm.save_type} format."),
-            dcc.Upload(
-                id=DM_UPLOAD_UPLOADER,
-                children=html.Div([
-                    'Drag and Drop or ',
-                    html.A('Select Files')
-                ]),
-                style={
-                    'width': '100%',
-                    'height': '60px',
-                    'lineHeight': '60px',
-                    'borderWidth': '1px',
-                    'borderStyle': 'dashed',
-                    'borderRadius': '4px',
-                    'textAlign': 'center',
-                },
-                multiple=True
-            ),
-            # dcc.Store(DM_UPLOAD_DATA_STORE, data=""),
-            dbc.Collapse(
-                children=[
-                    dbc.Card(dbc.CardBody(
-                        id=DM_UPLOAD_MODAL_FILEVIEWER_CARD
-                    )),
+        dbc.ModalBody(
+            dcc.Loading(
+                [
+                    dbc.Label("The uploaded file will be uploaded as a new dataset."
+                              "The name of the dataset will be the name of the uploaded file."
+                              f"The file must be in {sm.save_type} format."),
+                    dcc.Upload(
+                        id=DM_UPLOAD_UPLOADER,
+                        children=html.Div([
+                            'Drag and Drop or ',
+                            html.A('Select Files')
+                        ]),
+                        style={
+                            'width': '100%',
+                            'height': '60px',
+                            'lineHeight': '60px',
+                            'borderWidth': '1px',
+                            'borderStyle': 'dashed',
+                            'borderRadius': '4px',
+                            'textAlign': 'center',
+                        },
+                        multiple=True
+                    ),
+                    # dcc.Store(DM_UPLOAD_DATA_STORE, data=""),
+                    dbc.Collapse(
+                        children=[
+                            dbc.Card(dbc.CardBody(
+                                id=DM_UPLOAD_MODAL_FILEVIEWER_CARD
+                            )),
+                        ],
+                        id=DM_UPLOAD_MODAL_FILEVIEWER_COLLAPSE,
+                        is_open=False,
+                        class_name="mt-2 mb-2"
+                    ),
+                    dbc.Alert(
+                        children="Upload successful! Close the modal to continue.",
+                        id=DM_UPLOAD_SUCCESS_ALERT,
+                        color="success",
+                        is_open=False,
+                    ),
+                    dcc.Store('dm-upload-dummy-store', data='')
                 ],
-                id=DM_UPLOAD_MODAL_FILEVIEWER_COLLAPSE,
-                is_open=False,
-                class_name="mt-2 mb-2"
-            ),
-            dbc.Alert(
-                children="Upload successful! Close the modal to continue.",
-                id=DM_UPLOAD_SUCCESS_ALERT,
-                color="success",
-                is_open=False,
+                overlay_style={"visibility": "visible", "opacity": .5, "backgroundColor": "white"},
+                custom_spinner=html.H2(["Importing data... ", dbc.Spinner()]),
+                delay_hide=50,
+                delay_show=50,
             )
-        ]),
+        ),
         dbc.ModalFooter([
             dbc.Button("Upload", id=DM_UPLOAD_SUBMIT_BUTTON, class_name="dm-upload-modal-confirm-btn"),
             dbc.Button("Close", id=DM_UPLOAD_MODAL_CLOSE_BTN, class_name="dm-upload-modal-cancel-btn ms-auto")
@@ -230,6 +239,7 @@ def update_file_viewer(filename):
         Output(DM_LIST_UPDATER_STORE, "data", allow_duplicate=True),
         Output(DM_UPLOAD_SUBMIT_BUTTON, "disabled", allow_duplicate=True),
         Output(DM_UPLOAD_SUCCESS_ALERT, "is_open", allow_duplicate=True),
+        Output('dm-upload-dummy-store', 'data', allow_duplicate=True),
     ],
     Input(DM_UPLOAD_SUBMIT_BUTTON, "n_clicks"),
     State(DM_UPLOAD_UPLOADER, "contents"),
@@ -280,4 +290,4 @@ def process_uploaded_files(n_clicks, contents, filenames):
             sm.logger.error(f"Error processing uploaded file {filename}: {e}")
 
     # Close the modal
-    return datetime.now(), [True], True
+    return datetime.now(), [True], True, ''
