@@ -51,16 +51,50 @@ class ColorConfiguration():
         self.dm_colors = button_colors or {}
 
     @staticmethod
-    def _hex_to_rgb(hex_str: str) -> tuple[int, ...]:
+    def _hex_to_rgba(hex_str: str) -> tuple[int, ...]:
+        """Convert hex color to RGBA tuple. If no alpha is provided, defaults to 255."""
         h = hex_str.lstrip('#')
-        return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
+        if len(h) == 6:
+            return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4)) + (255,)
+        elif len(h) == 8:
+            return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4, 6))
+        else:
+            raise ValueError("Invalid hex color format")
 
     @staticmethod
-    def _rgb_to_hex(rgb: tuple[int, int, int]) -> str:
-        return '#%02x%02x%02x' % rgb
+    def _rgba_to_hex(rgba: tuple[int, int, int, int]) -> str:
+        """Convert RGBA tuple to hex string with an alpha channel."""
+        return '#%02x%02x%02x%02x' % rgba
 
     @staticmethod
-    def _linear_combination_hex(a_hex: str, b_hex: str, t: float) -> str:
+    def reduce_color_opacity(color: str, opacity: float) -> str:
+        """
+        Reduces the opacity of a color by setting its alpha channel.
+
+        Parameters:
+        color: str
+            The hexadecimal color value (e.g., "#RRGGBB" or "#RRGGBBAA").
+        opacity: float
+            The desired opacity level, must be between 0 and 1 inclusive, where
+            0 is fully transparent and 1 is fully opaque.
+
+        Returns:
+        str
+            Hexadecimal representation with alpha channel (e.g., "#RRGGBBAA").
+
+        Raises:
+        AssertionError
+            If the opacity parameter is not within the range [0, 1].
+        ValueError
+            If the color format is invalid.
+        """
+        assert 0 <= opacity <= 1, "opacity must be between 0 and 1"
+        r, g, b, _ = ColorConfiguration._hex_to_rgba(color)
+        alpha = int(opacity * 255)
+        return ColorConfiguration._rgba_to_hex((r, g, b, alpha))
+
+    @staticmethod
+    def linear_combination_hex(a_hex: str, b_hex: str, t: float) -> str:
         """
         Performs a linear combination of two hexadecimal color values based on a given ratio.
 
@@ -74,7 +108,7 @@ class ColorConfiguration():
         b_hex: str
             Second hexadecimal color value in string format (e.g., "#RRGGBB").
         t: float
-            Blend ratio, must be a value between 0 and 1 inclusive, where 0 corresponds
+            Blend ratio must be a value between 0 and 1 inclusive, where 0 corresponds
             to the first color, and 1 corresponds to the second color.
 
         Returns:
@@ -86,23 +120,24 @@ class ColorConfiguration():
             If the `t` parameter is not within the range [0, 1].
         """
         assert 0 <= t <= 1, "t must be between 0 and 1"
-        ar, ag, ab = ColorConfiguration._hex_to_rgb(a_hex)
-        br, bg, bb = ColorConfiguration._hex_to_rgb(b_hex)
+        ar, ag, ab, ao = ColorConfiguration._hex_to_rgba(a_hex)
+        br, bg, bb, bo = ColorConfiguration._hex_to_rgba(b_hex)
         rr = int(ar + (br - ar) * t)
         rg = int(ag + (bg - ag) * t)
         rb = int(ab + (bb - ab) * t)
-        return ColorConfiguration._rgb_to_hex((rr, rg, rb))
+        ro = int(ao + (bo - ao) * t)
+        return ColorConfiguration._rgba_to_hex((rr, rg, rb, ro))
 
     def get_card_surface_shading(self, card_highlight_mode: str = CardHighlightMode.SUBTLE_LIGHT):
         match card_highlight_mode:
             case CardHighlightMode.SUBTLE_LIGHT:
-                return self._linear_combination_hex(self._background_color, "#FFFFFF", 0.1)
+                return self.linear_combination_hex(self._background_color, "#FFFFFF", 0.1)
             case CardHighlightMode.LIGHT:
-                return self._linear_combination_hex(self._background_color, "#FFFFFF", 0.2)
+                return self.linear_combination_hex(self._background_color, "#FFFFFF", 0.2)
             case CardHighlightMode.SUBTLE_DARK:
-                return self._linear_combination_hex(self._background_color, "#000000", 0.1)
+                return self.linear_combination_hex(self._background_color, "#000000", 0.1)
             case CardHighlightMode.DARK:
-                return self._linear_combination_hex(self._background_color, "#000000", 0.2)
+                return self.linear_combination_hex(self._background_color, "#000000", 0.2)
 
         raise ValueError(f"Invalid card highlight mode: {card_highlight_mode}")
 
@@ -121,7 +156,7 @@ class ColorConfiguration():
         bool
             True if the color is light, False otherwise.
         """
-        return self._hex_to_rgb(color)[0] + self._hex_to_rgb(color)[1] + self._hex_to_rgb(color)[2] > 384
+        return self._hex_to_rgba(color)[0] + self._hex_to_rgba(color)[1] + self._hex_to_rgba(color)[2] > 384
 
     def default_hover_highlight(self, color: str) -> str:
         """
@@ -137,9 +172,9 @@ class ColorConfiguration():
             str: A hexadecimal color string representing the hover highlight color.
         """
         if self.is_light_color(color):
-            return self._linear_combination_hex(color, "#FFFFFF", 0.2)
+            return self.linear_combination_hex(color, "#FFFFFF", 0.2)
         else:
-            return self._linear_combination_hex(color, "#000000", 0.2)
+            return self.linear_combination_hex(color, "#000000", 0.2)
 
     @property
     def menu_hover_color(self):
@@ -148,27 +183,27 @@ class ColorConfiguration():
 
     @property
     def status_processing(self):
-        default = self._linear_combination_hex(self._theme_color_secondary, self._theme_color_primary, 0)
+        default = self.linear_combination_hex(self._theme_color_secondary, self._theme_color_primary, 0)
         return self.status_colors.get("processing", default)
 
     @property
     def status_queued(self):
-        default = self._linear_combination_hex(self._theme_color_secondary, self._theme_color_primary, 0.25)
+        default = self.linear_combination_hex(self._theme_color_secondary, self._theme_color_primary, 0.25)
         return self.status_colors.get("queued", default)
 
     @property
     def status_completed(self):
-        default = self._linear_combination_hex(self._theme_color_secondary, self._theme_color_primary, 0.5)
+        default = self.linear_combination_hex(self._theme_color_secondary, self._theme_color_primary, 0.5)
         return self.status_colors.get("completed", default)
 
     @property
     def status_failed(self):
-        default = self._linear_combination_hex(self._theme_color_secondary, self._theme_color_primary, 0.75)
+        default = self.linear_combination_hex(self._theme_color_secondary, self._theme_color_primary, 0.75)
         return self.status_colors.get("failed", default)
 
     @property
     def status_created(self):
-        default = self._linear_combination_hex(self._theme_color_secondary, self._theme_color_primary, 1)
+        default = self.linear_combination_hex(self._theme_color_secondary, self._theme_color_primary, 1)
         return self.status_colors.get("created", default)
 
     def _get_button_color_with_default(self, tag, ratio):
@@ -191,7 +226,7 @@ class ColorConfiguration():
             str: The hex color code of the determined button color.
         """
         if self.button_color_mode == ButtonColorMode.SEPARATE:
-            default = self._linear_combination_hex(self._theme_color_secondary, self._theme_color_primary, ratio)
+            default = self.linear_combination_hex(self._theme_color_secondary, self._theme_color_primary, ratio)
             return self.dm_colors.get(tag, default)
         elif self.button_color_mode == ButtonColorMode.UNIFIED:
             default = self._theme_color_secondary
@@ -407,7 +442,26 @@ class ColorConfiguration():
     # Compare toggle
     @property
     def compare_toggle(self):
-        return self._get_button_color_with_default("compare", 0.60)
+        return self._get_button_color_with_default("compare", 1)
+
+    @staticmethod
+    def _get_handle_url(color):
+        color_no_hex = color.lstrip("#")
+        return (f"url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' "
+                f"viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23{color_no_hex}'/%3e%3c/svg%3e\")"),
+
+    @property
+    def compare_active_handle_url(self):
+        return self._get_handle_url(self.text_color_selected)
+
+    @property
+    def compare_inactive_handle_url(self):
+        return self._get_handle_url(self.text_color)
+
+    @property
+    def compare_focussed_handle_url(self):
+        shadow_color = self.reduce_color_opacity(self._theme_color_primary, 0.3)
+        return self._get_handle_url(shadow_color)
 
     @staticmethod
     def dm_bootstrap_defaults() -> Dict[str, str]:
@@ -495,6 +549,9 @@ class ColorConfiguration():
 
         compare_colors = {
             "--compare-toggle-color": self.compare_toggle,
+            "--compare-active-handle-url": self.compare_active_handle_url,
+            "--compare-inactive-handle-url": self.compare_inactive_handle_url,
+            "--compare-focussed-handle-url": self.compare_focussed_handle_url,
         }
 
         all_colors = {

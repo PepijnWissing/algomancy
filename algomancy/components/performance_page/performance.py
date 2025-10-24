@@ -31,6 +31,7 @@ def performance_page():
                                 {'label': 'Show KPI cards', 'value': 'kpi'},
                             ],
                             id=PERF_TOGGLE_CHECKLIST_LEFT,
+                            class_name="styled-toggle",
                             switch=True,
                             value=default_open
                         ),
@@ -43,6 +44,7 @@ def performance_page():
                                 {'label': 'Show details', 'value': 'details'},
                             ],
                             id=PERF_TOGGLE_CHECKLIST_RIGHT,
+                            class_name="styled-toggle",
                             switch=True,
                             value=default_open
                         ),

@@ -1,3 +1,4 @@
+import time
 from typing import List, Dict, TypeVar, cast
 
 import algomancy.dataengine as de
@@ -44,6 +45,8 @@ class ExampleETLFactory(de.ETLFactory):
         missing_schemas = set(schemas.keys()) - expected_files
         if len(missing_schemas) > 0:
             raise de.ETLConstructionError(f"Missing configurations: {missing_schemas}")
+
+        time.sleep(5)
 
         extractors = {
             sku_data: de.CSVSingleExtractor(

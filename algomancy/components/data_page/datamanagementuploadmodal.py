@@ -13,6 +13,7 @@ from algomancy.components.componentids import (DM_UPLOAD_MODAL_CLOSE_BTN,
                                                DM_UPLOAD_UPLOADER,
                                                DM_UPLOAD_MODAL)
 from algomancy.components.componentids import DM_UPLOAD_SUCCESS_ALERT, DM_LIST_UPDATER_STORE
+from algomancy.components.cqmloader import cqm_loader
 from algomancy.scenarioengine import ScenarioManager
 
 """
@@ -21,6 +22,8 @@ Modal component for loading data files into the application.
 This module provides a modal dialog that allows users to upload CSV files,
 view file mapping information, and create new datasets from the uploaded files.
 """
+
+
 
 
 def data_management_upload_modal(sm: ScenarioManager, themed_styling):
@@ -36,45 +39,55 @@ def data_management_upload_modal(sm: ScenarioManager, themed_styling):
     """
     return dbc.Modal([
         dbc.ModalHeader(dbc.ModalTitle("Upload Cases")),
-        dbc.ModalBody([
-            dbc.Label("The uploaded file will be uploaded as a new dataset."
-                      "The name of the dataset will be the name of the uploaded file."
-                      f"The file must be in {sm.save_type} format."),
-            dcc.Upload(
-                id=DM_UPLOAD_UPLOADER,
-                children=html.Div([
-                    'Drag and Drop or ',
-                    html.A('Select Files')
-                ]),
-                style={
-                    'width': '100%',
-                    'height': '60px',
-                    'lineHeight': '60px',
-                    'borderWidth': '1px',
-                    'borderStyle': 'dashed',
-                    'borderRadius': '4px',
-                    'textAlign': 'center',
-                },
-                multiple=True
-            ),
-            # dcc.Store(DM_UPLOAD_DATA_STORE, data=""),
-            dbc.Collapse(
-                children=[
-                    dbc.Card(dbc.CardBody(
-                        id=DM_UPLOAD_MODAL_FILEVIEWER_CARD
-                    )),
+        dbc.ModalBody(
+            dcc.Loading(
+                [
+                    dbc.Label("The uploaded file will be uploaded as a new dataset."
+                              "The name of the dataset will be the name of the uploaded file."
+                              f"The file must be in {sm.save_type} format."),
+                    dcc.Upload(
+                        id=DM_UPLOAD_UPLOADER,
+                        children=html.Div([
+                            'Drag and Drop or ',
+                            html.A('Select Files')
+                        ]),
+                        style={
+                            'width': '100%',
+                            'height': '60px',
+                            'lineHeight': '60px',
+                            'borderWidth': '1px',
+                            'borderStyle': 'dashed',
+                            'borderRadius': '4px',
+                            'textAlign': 'center',
+                        },
+                        multiple=True
+                    ),
+                    # dcc.Store(DM_UPLOAD_DATA_STORE, data=""),
+                    dbc.Collapse(
+                        children=[
+                            dbc.Card(dbc.CardBody(
+                                id=DM_UPLOAD_MODAL_FILEVIEWER_CARD
+                            ), className="uploaded-files-card"),
+                        ],
+                        id=DM_UPLOAD_MODAL_FILEVIEWER_COLLAPSE,
+                        is_open=False,
+                        class_name="mt-2 mb-2"
+                    ),
+                    dbc.Alert(
+                        children="Upload successful! Close the modal to continue.",
+                        id=DM_UPLOAD_SUCCESS_ALERT,
+                        color="success",
+                        is_open=False,
+                    ),
+                    dcc.Store('dm-upload-dummy-store', data='')
                 ],
-                id=DM_UPLOAD_MODAL_FILEVIEWER_COLLAPSE,
-                is_open=False,
-                class_name="mt-2 mb-2"
-            ),
-            dbc.Alert(
-                children="Upload successful! Close the modal to continue.",
-                id=DM_UPLOAD_SUCCESS_ALERT,
-                color="success",
-                is_open=False,
+                overlay_style={"visibility": "visible", "opacity": .5, "backgroundColor": "white"},
+                # custom_spinner=cqm_loader("Importing data..."),  # requires letter-c.svg, letter-q.svg and letter-m.svg
+                custom_spinner=html.H2(["Importing data... ", dbc.Spinner()]),
+                delay_hide=50,
+                delay_show=50,
             )
-        ]),
+        ),
         dbc.ModalFooter([
             dbc.Button("Upload", id=DM_UPLOAD_SUBMIT_BUTTON, class_name="dm-upload-modal-confirm-btn"),
             dbc.Button("Close", id=DM_UPLOAD_MODAL_CLOSE_BTN, class_name="dm-upload-modal-cancel-btn ms-auto")
@@ -124,7 +137,7 @@ def _render_uploaded_files(filenames, wrong_filenames) -> html.Div:
     file_name_width = 8
     status_width = 12 - file_name_width
 
-    header = dbc.Row([
+    header = html.Div(dbc.Row([
         dbc.Col([
             html.Strong("File name"),
         ],
@@ -135,9 +148,10 @@ def _render_uploaded_files(filenames, wrong_filenames) -> html.Div:
         ],
             width=status_width
         ),
-    ])
+    ]), className="uploaded-files-header")
 
     body = [
+        html.Div(
         dbc.Row([
             dbc.Col([
                 f"{filename}"
@@ -149,30 +163,28 @@ def _render_uploaded_files(filenames, wrong_filenames) -> html.Div:
             ],
                 width=status_width,
             )
-        ])
+        ]), className="uploaded-file-good")
         for filename in filenames
     ] + [
-        dbc.Row([
+        html.Div(dbc.Row([
             dbc.Col([
                 f"{filename}"
             ],
                 width=file_name_width,
-                style={"color": "red",
-                       "text-decoration": "line-through"}
             ),
             dbc.Col([
                 dbc.Spinner(html.Div(id={"type": "dm-upload-status", "index": filename}))
             ],
                 width=status_width,
             )
-        ])
+        ]), className="uploaded-file-bad")
         for filename in wrong_filenames
     ]
 
     table_div = html.Div([
         header,
         *body
-    ])
+    ], className="uploaded-files-table")
 
     return table_div
 
@@ -230,6 +242,7 @@ def update_file_viewer(filename):
         Output(DM_LIST_UPDATER_STORE, "data", allow_duplicate=True),
         Output(DM_UPLOAD_SUBMIT_BUTTON, "disabled", allow_duplicate=True),
         Output(DM_UPLOAD_SUCCESS_ALERT, "is_open", allow_duplicate=True),
+        Output('dm-upload-dummy-store', 'data', allow_duplicate=True),
     ],
     Input(DM_UPLOAD_SUBMIT_BUTTON, "n_clicks"),
     State(DM_UPLOAD_UPLOADER, "contents"),
@@ -280,4 +293,4 @@ def process_uploaded_files(n_clicks, contents, filenames):
             sm.logger.error(f"Error processing uploaded file {filename}: {e}")
 
     # Close the modal
-    return datetime.now(), [True], True
+    return datetime.now(), [True], True, ''

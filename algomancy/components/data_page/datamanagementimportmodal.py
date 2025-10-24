@@ -5,6 +5,7 @@ from algomancy.components.componentids import DM_IMPORT_MODAL_CLOSE_BTN, DM_IMPO
 import dash_bootstrap_components as dbc
 from dash import html, dcc
 
+from algomancy.components.cqmloader import cqm_loader
 from algomancy.scenarioengine import ScenarioManager
 
 """
@@ -27,44 +28,54 @@ def data_management_import_modal(sm: ScenarioManager, themed_styling):
     """
     return dbc.Modal([
         dbc.ModalHeader(dbc.ModalTitle("Import Data")),
-        dbc.ModalBody([
-            dcc.Upload(
-                id=DM_IMPORT_UPLOADER,
-                children=html.Div([
-                    'Drag and Drop or ',
-                    html.A('Select Files')
-                ]),
-                style={
-                    'width': '100%',
-                    'height': '60px',
-                    'lineHeight': '60px',
-                    'borderWidth': '1px',
-                    'borderStyle': 'dashed',
-                    'borderRadius': '4px',
-                    'textAlign': 'center',
-                },
-                multiple=True  # Allow only single file upload
-            ),
-            dbc.Collapse(
-                children=[
-                    dbc.Card(dbc.CardBody(
-                        id=DM_IMPORT_MODAL_FILEVIEWER_CARD
-                    )),
-                    dbc.Input(id=DM_IMPORT_MODAL_NAME_INPUT, placeholder="Name of new dataset", class_name="mt-2")
+        dbc.ModalBody(
+            dcc.Loading(
+                [
+                    dcc.Upload(
+                        id=DM_IMPORT_UPLOADER,
+                        children=html.Div([
+                            'Drag and Drop or ',
+                            html.A('Select Files')
+                        ]),
+                        style={
+                            'width': '100%',
+                            'height': '60px',
+                            'lineHeight': '60px',
+                            'borderWidth': '1px',
+                            'borderStyle': 'dashed',
+                            'borderRadius': '4px',
+                            'textAlign': 'center',
+                        },
+                        multiple=True  # Allow only single file upload
+                    ),
+                    dbc.Collapse(
+                        children=[
+                            dbc.Card(dbc.CardBody(
+                                id=DM_IMPORT_MODAL_FILEVIEWER_CARD
+                            ), className="uploaded-files-card"),
+                            dbc.Input(id=DM_IMPORT_MODAL_NAME_INPUT, placeholder="Name of new dataset", class_name="mt-2")
+                        ],
+                        id=DM_IMPORT_MODAL_FILEVIEWER_COLLAPSE,
+                        is_open=False,
+                        class_name = "mt-2"
+                    ),
+                    dbc.Alert(
+                        id=DM_IMPORT_MODAL_FILEVIEWER_ALERT,
+                        color="danger",
+                        is_open=False,
+                        dismissable=True,
+                        duration=4000,
+                        class_name="mt-2"
+                    ),
+                    dcc.Store(id='dm-import-modal-dummy-store', data=''),
                 ],
-                id=DM_IMPORT_MODAL_FILEVIEWER_COLLAPSE,
-                is_open=False,
-                class_name = "mt-2"
-            ),
-            dbc.Alert(
-                id=DM_IMPORT_MODAL_FILEVIEWER_ALERT,
-                color="danger",
-                is_open=False,
-                dismissable=True,
-                duration=4000,
-                class_name="mt-2"
+                overlay_style={"visibility":"visible", "opacity": .5, "backgroundColor": "white"},
+                custom_spinner=html.H2(["Importing data... ", dbc.Spinner()]),
+                # custom_spinner=cqm_loader("Importing data..."),   # requires letter-c.svg, letter-q.svg and letter-m.svg
+                delay_hide=50,
+                delay_show=50,
             )
-        ]),
+        ),
         dbc.ModalFooter([
             dbc.Button("Import", id=DM_IMPORT_SUBMIT_BUTTON, class_name="dm-import-modal-confirm-btn"),
             dbc.Button("Close", id=DM_IMPORT_MODAL_CLOSE_BTN, class_name="dm-import-modal-cancel-btn ms-auto")

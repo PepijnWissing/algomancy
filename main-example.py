@@ -29,9 +29,9 @@ from example_implementation.templates import (
 
 
 def main(
-    host: str | None = None,
-    port: int | None = None,
-    debug: bool | None = None,
+        host: str | None = None,
+        port: int | None = None,
+        debug: bool | None = None,
 ) -> None:
     """
     Main entry point for the application.
@@ -52,22 +52,26 @@ def main(
     if not debug:
         debug = False
 
-    color1 = "#DB001A"
-    color2 = "#4A4342"
-    color3 = "#FFFFFF"
-    scholt_styling = StylingConfigurator(
+    white = "#EEEEEE"  # white
+    purple = "#3EBDF3"
+    lightblue = "#4C0265"
+    bright_blue = ColorConfiguration.linear_combination_hex(lightblue, purple, 0.5)
+    darkgrey = "#424242"
+    lightgrey = "#E3E3E3"
+
+    styling = StylingConfigurator(
         layout_selection=LayoutSelection.SIDEBAR,
         color_configuration=ColorConfiguration(
-            background_color="#E3DBD8FF",
-            theme_color_primary=color1,
-            theme_color_secondary=color2,
-            theme_color_tertiary=color3,
-            text_color="#424242",
-            text_color_highlight="#EF7B13",
-            text_color_selected="#e3f8ff",
+            background_color=white,
+            theme_color_primary=lightblue,
+            theme_color_secondary=purple,
+            theme_color_tertiary=bright_blue,
+            text_color=darkgrey,
+            text_color_highlight=lightgrey,
+            text_color_selected=white,
             button_color_mode=ButtonColorMode.UNIFIED,
             button_colors={
-                "unified_color": "#D13438",
+                "unified_color": bright_blue,
                 # "unified_hover": "#26cd0a",
             },
         ),
@@ -111,7 +115,7 @@ def main(
         "overview_callbacks": "standard",
         # -
         # === styling configuration ===
-        "styling_config": scholt_styling,
+        "styling_config": styling,
         # -
         # === misc dashboard configurations ===
         "title": "Example implementation of an Algomancy Dashboard",
