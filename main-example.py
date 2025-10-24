@@ -52,7 +52,7 @@ def main(
     if not debug:
         debug = False
 
-    white = "#FFFFFF"  # white
+    white = "#EEEEEE"  # white
     purple = "#3EBDF3"
     lightblue = "#4C0265"
     bright_blue = ColorConfiguration.linear_combination_hex(lightblue, purple, 0.5)

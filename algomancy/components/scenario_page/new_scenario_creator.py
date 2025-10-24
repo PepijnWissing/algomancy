@@ -11,10 +11,12 @@ from algomancy.components.componentids import (
     SCENARIO_CREATOR_MODAL,
 )
 from algomancy.components.scenario_page.new_scenario_parameters_window import create_algo_parameters_window
+from algomancy.stylingconfigurator import StylingConfigurator
 
 
 def new_scenario_creator():
     sm = get_app().server.scenario_manager
+    sc: StylingConfigurator = get_app().server.styling_config
 
     # Modal for creating a new scenario
     return dbc.Modal(
@@ -47,14 +49,18 @@ def new_scenario_creator():
                 dbc.Row([
                     dbc.Col(create_algo_parameters_window(), width=12),
                 ], className="mb-3"),
-                dbc.Row([
-                    dbc.Col(dbc.Button("Create", id=SCENARIO_NEW_BUTTON, color="primary"), width="auto"),
-                    dbc.Col(dbc.Button("Cancel", id=f"{SCENARIO_CREATOR_MODAL}-cancel", color="secondary"), width="auto"),
-                ]),
-                html.Div(id=SCENARIO_CREATE_STATUS, className="mt-2")
+                html.Div(id=SCENARIO_CREATE_STATUS, className="mt-2"),
+            ]),
+            dbc.ModalFooter([
+                dbc.Button("Create", id=SCENARIO_NEW_BUTTON,
+                           class_name="new-scenario-confirm-button"),
+                dbc.Button("Cancel", id=f"{SCENARIO_CREATOR_MODAL}-cancel",
+                           class_name="new-scenario-cancel-button ms-auto")
             ]),
         ],
         id=SCENARIO_CREATOR_MODAL,
         is_open=False,
-        centered=True
+        centered=True,
+        class_name="themed-modal",
+        style=sc.initiate_theme_colors()
     )

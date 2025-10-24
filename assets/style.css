@@ -523,8 +523,39 @@ hr {
 
 .new-scenario-button {
     width: 100%;
-    background-color: var(--theme-primary);
-    border-color: var(--theme-primary);
+    background-color: var(--new-scenario-color);
+    border-color: var(--new-scenario-color);
+}
+
+.new-scenario-button:hover, .new-scenario-button:focus, .new-scenario-button:active, .new-scenario-button:active:focus {
+    background-color: var(--new-scenario-color-hover);
+    border-color: var(--new-scenario-color-hover);
+}
+
+.new-scenario-confirm-button {
+    background-color: var(--new-scenario-modal-confirm-color);
+    color: var(--text-selected);
+    border-color: var(--new-scenario-modal-confirm-color);
+}
+
+.new-scenario-confirm-button:hover, .new-scenario-confirm-button:focus,
+.new-scenario-confirm-button:active, .new-scenario-confirm-button:active:focus {
+    background-color: var(--new-scenario-modal-confirm-color-hover);
+    color: var(--text-selected);
+    border-color: var(--new-scenario-modal-confirm-color-hover);
+}
+
+.new-scenario-cancel-button {
+    background-color: var(--new-scenario-modal-cancel-color);
+    color: var(--text-selected);
+    border-color: var(--new-scenario-modal-cancel-color);
+}
+
+.new-scenario-cancel-button:hover, .new-scenario-cancel-button:focus,
+.new-scenario-cancel-button:active, .new-scenario-cancel-button:active:focus {
+    background-color: var(--new-scenario-modal-cancel-color-hover);
+    color: var(--text-selected);
+    border-color: var(--new-scenario-modal-cancel-color-hover);
 }
 
 .scenario-progress-bar .progress-bar{
