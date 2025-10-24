@@ -63,7 +63,7 @@ hr {
 :root {
     --background-color: #ffffff;
     --theme-primary: #FFFFFF;
-    --theme-secondary: #FFFFFF;
+    --theme-secondary: #0050ff;
     --theme-tertiary: #FFFFFF;
     --text-color: #000000;
     --text-selected: #000000;
@@ -186,18 +186,32 @@ hr {
     padding: 1rem 0.5rem;
 }
 
+
+/* Pills and text color */
 #sidebar .nav-pills .nav-link {
-    color: var(--theme-secondary) !important;
+    color: var(--theme-secondary);
 }
-#sidebar .nav-pills .nav-link i {
-    color: var(--theme-secondary) !important;
-}
-#sidebar .nav-pills .nav-link.active {
+#sidebar .nav-pills .nav-link.active, .nav-link.active:hover{
     background-color: var(--theme-secondary) !important;
     color: var(--text-selected, #ffffff) !important;
 }
+#sidebar .nav-pills .nav-link:hover {
+    background-color: var(--theme-tertiary);
+    color: var(--text-highlight, #ffffff);
+}
+
+/* Icon color */
+#sidebar .nav-pills .nav-link i {
+    color: var(--theme-secondary);
+}
 #sidebar .nav-pills .nav-link.active i {
-    color: var(--text-selected, #ffffff) !important;
+    color: var(--text-selected, #ffffff);
+}
+#sidebar .nav-pills .nav-link.active:hover i {
+    color: var(--text-selected, #ffffff);
+}
+#sidebar .nav-pills .nav-link:hover i {
+    color: var(--text-highlight, #ffffff);
 }
 
 /* Sidebar NavLink container stays wide enough for text, shrinks when collapsed */

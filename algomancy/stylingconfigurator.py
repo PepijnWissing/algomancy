@@ -94,7 +94,7 @@ class ColorConfiguration():
         return ColorConfiguration._rgba_to_hex((r, g, b, alpha))
 
     @staticmethod
-    def _linear_combination_hex(a_hex: str, b_hex: str, t: float) -> str:
+    def linear_combination_hex(a_hex: str, b_hex: str, t: float) -> str:
         """
         Performs a linear combination of two hexadecimal color values based on a given ratio.
 
@@ -131,13 +131,13 @@ class ColorConfiguration():
     def get_card_surface_shading(self, card_highlight_mode: str = CardHighlightMode.SUBTLE_LIGHT):
         match card_highlight_mode:
             case CardHighlightMode.SUBTLE_LIGHT:
-                return self._linear_combination_hex(self._background_color, "#FFFFFF", 0.1)
+                return self.linear_combination_hex(self._background_color, "#FFFFFF", 0.1)
             case CardHighlightMode.LIGHT:
-                return self._linear_combination_hex(self._background_color, "#FFFFFF", 0.2)
+                return self.linear_combination_hex(self._background_color, "#FFFFFF", 0.2)
             case CardHighlightMode.SUBTLE_DARK:
-                return self._linear_combination_hex(self._background_color, "#000000", 0.1)
+                return self.linear_combination_hex(self._background_color, "#000000", 0.1)
             case CardHighlightMode.DARK:
-                return self._linear_combination_hex(self._background_color, "#000000", 0.2)
+                return self.linear_combination_hex(self._background_color, "#000000", 0.2)
 
         raise ValueError(f"Invalid card highlight mode: {card_highlight_mode}")
 
@@ -172,9 +172,9 @@ class ColorConfiguration():
             str: A hexadecimal color string representing the hover highlight color.
         """
         if self.is_light_color(color):
-            return self._linear_combination_hex(color, "#FFFFFF", 0.2)
+            return self.linear_combination_hex(color, "#FFFFFF", 0.2)
         else:
-            return self._linear_combination_hex(color, "#000000", 0.2)
+            return self.linear_combination_hex(color, "#000000", 0.2)
 
     @property
     def menu_hover_color(self):
@@ -183,27 +183,27 @@ class ColorConfiguration():
 
     @property
     def status_processing(self):
-        default = self._linear_combination_hex(self._theme_color_secondary, self._theme_color_primary, 0)
+        default = self.linear_combination_hex(self._theme_color_secondary, self._theme_color_primary, 0)
         return self.status_colors.get("processing", default)
 
     @property
     def status_queued(self):
-        default = self._linear_combination_hex(self._theme_color_secondary, self._theme_color_primary, 0.25)
+        default = self.linear_combination_hex(self._theme_color_secondary, self._theme_color_primary, 0.25)
         return self.status_colors.get("queued", default)
 
     @property
     def status_completed(self):
-        default = self._linear_combination_hex(self._theme_color_secondary, self._theme_color_primary, 0.5)
+        default = self.linear_combination_hex(self._theme_color_secondary, self._theme_color_primary, 0.5)
         return self.status_colors.get("completed", default)
 
     @property
     def status_failed(self):
-        default = self._linear_combination_hex(self._theme_color_secondary, self._theme_color_primary, 0.75)
+        default = self.linear_combination_hex(self._theme_color_secondary, self._theme_color_primary, 0.75)
         return self.status_colors.get("failed", default)
 
     @property
     def status_created(self):
-        default = self._linear_combination_hex(self._theme_color_secondary, self._theme_color_primary, 1)
+        default = self.linear_combination_hex(self._theme_color_secondary, self._theme_color_primary, 1)
         return self.status_colors.get("created", default)
 
     def _get_button_color_with_default(self, tag, ratio):
@@ -226,7 +226,7 @@ class ColorConfiguration():
             str: The hex color code of the determined button color.
         """
         if self.button_color_mode == ButtonColorMode.SEPARATE:
-            default = self._linear_combination_hex(self._theme_color_secondary, self._theme_color_primary, ratio)
+            default = self.linear_combination_hex(self._theme_color_secondary, self._theme_color_primary, ratio)
             return self.dm_colors.get(tag, default)
         elif self.button_color_mode == ButtonColorMode.UNIFIED:
             default = self._theme_color_secondary
