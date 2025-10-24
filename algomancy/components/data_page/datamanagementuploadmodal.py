@@ -64,7 +64,7 @@ def data_management_upload_modal(sm: ScenarioManager, themed_styling):
                         children=[
                             dbc.Card(dbc.CardBody(
                                 id=DM_UPLOAD_MODAL_FILEVIEWER_CARD
-                            )),
+                            ), className="uploaded-files-card"),
                         ],
                         id=DM_UPLOAD_MODAL_FILEVIEWER_COLLAPSE,
                         is_open=False,
@@ -133,7 +133,7 @@ def _render_uploaded_files(filenames, wrong_filenames) -> html.Div:
     file_name_width = 8
     status_width = 12 - file_name_width
 
-    header = dbc.Row([
+    header = html.Div(dbc.Row([
         dbc.Col([
             html.Strong("File name"),
         ],
@@ -144,9 +144,10 @@ def _render_uploaded_files(filenames, wrong_filenames) -> html.Div:
         ],
             width=status_width
         ),
-    ])
+    ]), className="uploaded-files-header")
 
     body = [
+        html.Div(
         dbc.Row([
             dbc.Col([
                 f"{filename}"
@@ -158,30 +159,28 @@ def _render_uploaded_files(filenames, wrong_filenames) -> html.Div:
             ],
                 width=status_width,
             )
-        ])
+        ]), className="uploaded-file-good")
         for filename in filenames
     ] + [
-        dbc.Row([
+        html.Div(dbc.Row([
             dbc.Col([
                 f"{filename}"
             ],
                 width=file_name_width,
-                style={"color": "red",
-                       "text-decoration": "line-through"}
             ),
             dbc.Col([
                 dbc.Spinner(html.Div(id={"type": "dm-upload-status", "index": filename}))
             ],
                 width=status_width,
             )
-        ])
+        ]), className="uploaded-file-bad")
         for filename in wrong_filenames
     ]
 
     table_div = html.Div([
         header,
         *body
-    ])
+    ], className="uploaded-files-table")
 
     return table_div
 

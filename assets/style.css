@@ -601,6 +601,29 @@ hr {
     color: var(--text-color);
 }
 
+.themed-modal .uploaded-files-card{
+    background-color: var(--background-color);
+}
+
+.themed-modal .uploaded-files-table {
+    background-color: var(--background-color);
+    color: var(--text-color);
+}
+
+.themed-modal .uploaded-files-table .uploaded-files-header {
+    color: var(--text-color);
+}
+
+.themed-modal .uploaded-files-table .uploaded-file-good{
+    color: var(--text-color);
+}
+
+.themed-modal .uploaded-files-table .uploaded-file-bad{
+    color: #b92629;
+    text-decoration: line-through;
+}
+
+
 .dm-derive-modal-confirm-btn {
     background-color: var(--derive-modal-confirm-color);
     color: var(--text-selected);
