@@ -5,6 +5,7 @@ from algomancy.components.componentids import DM_IMPORT_MODAL_CLOSE_BTN, DM_IMPO
 import dash_bootstrap_components as dbc
 from dash import html, dcc
 
+from algomancy.components.cqmloader import cqm_loader
 from algomancy.scenarioengine import ScenarioManager
 
 """
@@ -70,6 +71,7 @@ def data_management_import_modal(sm: ScenarioManager, themed_styling):
                 ],
                 overlay_style={"visibility":"visible", "opacity": .5, "backgroundColor": "white"},
                 custom_spinner=html.H2(["Importing data... ", dbc.Spinner()]),
+                # custom_spinner=cqm_loader("Importing data..."),   # requires letter-c.svg, letter-q.svg and letter-m.svg
                 delay_hide=50,
                 delay_show=50,
             )

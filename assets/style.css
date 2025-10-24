@@ -813,3 +813,46 @@ hr {
     box-shadow: 0 0 0 0.2rem var(--toggle-shadow-color);
     background-image: var(--toggle-handle-selected)
 }
+@keyframes cqm-fade {
+  0%, 16.67% { opacity: 0; }
+  33.33%, 50% { opacity: 1; }
+  66.67%, 100% { opacity: 0; }
+}
+
+.cqm-loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.cqm-letter {
+  width: 100px;  /* Increased from 30px */
+  height: 100px; /* Increased from 30px */
+  opacity: 0;
+  /* Use theme-secondary color, will automatically update when theme changes */
+  filter: brightness(0) saturate(100%) invert(14%) sepia(46%) saturate(3086%) hue-rotate(268deg) brightness(93%) contrast(113%);
+    transition: filter 0.3s ease; /* Smooth color transitions when theme changes */
+}
+
+.cqm-letter.c {
+  animation: cqm-fade 3s infinite;
+  animation-delay: 0s;
+}
+
+.cqm-letter.q {
+  animation: cqm-fade 3s infinite;
+  animation-delay: 0.5s;
+}
+
+.cqm-letter.m {
+  animation: cqm-fade 3s infinite;
+  animation-delay: 1s;
+}
+
+.cqm-loader-text {
+  margin-left: 15px;
+  font-weight: 500;
+    font-size: 1.5rem;
+  color: var(--theme-primary); /* Use theme text color */
+}
