@@ -407,7 +407,25 @@ class ColorConfiguration():
     # Compare toggle
     @property
     def compare_toggle(self):
-        return self._get_button_color_with_default("compare", 0.60)
+        return self._get_button_color_with_default("compare", 1)
+
+    @staticmethod
+    def _get_handle_url(color):
+        color_no_hex = color.lstrip("#")
+        return (f"url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' "
+                f"viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23{color_no_hex}'/%3e%3c/svg%3e\")"),
+
+    @property
+    def compare_active_handle_url(self):
+        return self._get_handle_url("#FFFFFFFF")  # todo make configurable
+
+    @property
+    def compare_inactive_handle_url(self):
+        return self._get_handle_url(self.text_color)  # todo make configurable
+
+    @property
+    def compare_focussed_handle_url(self):
+        return self._get_handle_url(self._theme_color_primary)  # todo reduce opacity
 
     @staticmethod
     def dm_bootstrap_defaults() -> Dict[str, str]:
@@ -495,6 +513,9 @@ class ColorConfiguration():
 
         compare_colors = {
             "--compare-toggle-color": self.compare_toggle,
+            "--compare-active-handle-url": self.compare_active_handle_url,
+            "--compare-inactive-handle-url": self.compare_inactive_handle_url,
+            "--compare-focussed-handle-url": self.compare_focussed_handle_url,
         }
 
         all_colors = {
