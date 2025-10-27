@@ -46,22 +46,9 @@ def update_kpi_comparison(left_id, right_id):
             UOM=left_kpi.UOM if left_kpi.UOM else "",
         )
 
-        cards.append(
-            html.Div(
-                card,
-                style={"flex": "1 1 300px", "maxWidth": "400px", "height": "200px",
-                       "margin": "10px", "display": "flex", "flexDirection": "column"}
-            )
-        )
+        cards.append(html.Div(card, className="kpi-card-wrapper"))
 
-    return html.Div(
-        cards,
-        style={
-            "display": "flex",
-            "flexWrap": "wrap",
-            "justifyContent": "flex-start"
-        }
-    )
+    return html.Div(cards, className="kpi-cards")
 
 
 @callback(
