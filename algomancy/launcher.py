@@ -153,15 +153,15 @@ class DashLauncher:
     @staticmethod
     def _register_page_content_callbacks(
             home_content_fn: Callable[[], html.Div],
-            register_home_callbacks_fn: Callable[[],None] | None,
+            register_home_callbacks_fn: Callable[[], None] | None,
             data_content_fn: Callable[[DataSource], html.Div],
             register_data_callbacks_fn: Callable[[],None] | None,
             scenario_content_fn: Callable[[Scenario], html.Div],
-            register_scenario_callbacks_fn: Callable[[],None] | None,
-            performance_content_fn: Callable[[Scenario], html.Div],
-            performance_compare_fn: Callable[[Scenario, Scenario],html.Div] | None,
-            performance_details_fn: Callable[[Scenario, Scenario],html.Div] | None,
-            register_performance_callbacks_fn: Callable[[],None] | None,
+            register_scenario_callbacks_fn: Callable[[], None] | None,
+            compare_side_by_side_content_fn: Callable[[Scenario, str], html.Div],
+            compare_compare_fn: Callable[[Scenario, Scenario], html.Div] | None,
+            compare_details_fn: Callable[[Scenario, Scenario], html.Div] | None,
+            register_performance_callbacks_fn: Callable[[], None] | None,
             overview_content_fn: Callable[[], html.Div],
             register_overview_callbacks_fn: Callable[[],None] | None,
     ) -> None:
@@ -181,11 +181,11 @@ class DashLauncher:
             register_scenario_callbacks_fn()
 
         # performance page
-        DashLauncher._register_perf_page_creation(performance_content_fn)
-        if performance_compare_fn:
-            DashLauncher._register_perf_page_compare(performance_compare_fn)
-        if performance_details_fn:
-            DashLauncher._register_perf_page_details(performance_details_fn)
+        DashLauncher._register_perf_page_creation(compare_side_by_side_content_fn)
+        if compare_compare_fn:
+            DashLauncher._register_perf_page_compare(compare_compare_fn)
+        if compare_details_fn:
+            DashLauncher._register_perf_page_details(compare_details_fn)
         if register_performance_callbacks_fn:
             register_performance_callbacks_fn()
 
@@ -245,7 +245,7 @@ class DashLauncher:
             return no_update, no_update, no_update
 
     @staticmethod
-    def _register_perf_page_creation(content_function: Callable[[Scenario], html.Div]):
+    def _register_perf_page_creation(content_function: Callable[[Scenario, str], html.Div]):
         @callback(
             Output(LEFT_SCENARIO_OVERVIEW, "children"),
             Input(LEFT_SCENARIO_DROPDOWN, "value"),
@@ -258,7 +258,7 @@ class DashLauncher:
             if not s:
                 return "Scenario not found."
 
-            return content_function(s)
+            return content_function(s, "left")
 
         @callback(
             Output(RIGHT_SCENARIO_OVERVIEW, "children"),
@@ -272,7 +272,7 @@ class DashLauncher:
             if not s:
                 return "Scenario not found."
 
-            return content_function(s)
+            return content_function(s, "right")
 
     @staticmethod
     def _register_perf_page_compare(content_function: Callable[[Scenario, Scenario], html.Div]):

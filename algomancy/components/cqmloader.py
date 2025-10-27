@@ -1,6 +1,6 @@
 from dash import html
 
-
+# todo rename to cqm_loading_animation
 def cqm_loader(text="Loading..."):
     """
     Creates a custom CQM animated loader with three letters (C, Q, M) that fade in sequence.
