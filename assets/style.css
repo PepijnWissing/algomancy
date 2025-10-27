@@ -856,3 +856,35 @@ hr {
     font-size: 1.5rem;
   color: var(--theme-primary); /* Use theme text color */
 }
+
+.performance-page {
+
+}
+
+.performance-page .side-by-side-viewer{
+    margin-bottom: 10px;
+}
+
+.performance-page .kpi-cards{
+    margin-bottom: 0px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+}
+
+.performance-page .kpi-cards .kpi-card-wrapper{
+    flex: 1 1 300px;
+    width: 400px;
+    height: 200px;
+    margin: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+.performance-page .compare-view{
+    margin-bottom: 10px;
+}
+
+.performance-page .details-view{
+    margin-bottom: 10px;
+}
