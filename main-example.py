@@ -84,7 +84,7 @@ def main(
     configuration = {
         # === path specifications ===
         "assets_path": "assets",
-        "data_path": "data",
+        "data_path": "tests/data",
         # -
         # === data manager configuration ===
         "has_persistent_state": True,
@@ -125,8 +125,15 @@ def main(
         # === page configurations ===
         "performance_default_open": [
             "side",
-            # "kpi",
+            "kpi",
             "compare",
+            # 'details',
+        ],
+        "performance_ordered_list_components": [
+            'sbs_viewer',
+            'kpis',
+            'compare_section',
+            'details',
         ],
         # -
         # === authentication ===
@@ -137,7 +144,7 @@ def main(
     app = DashLauncher.build(configuration)
 
     # DEBUGGING: create some scenarios
-    if False:
+    if True:
         debug_create_example_scenarios(app.server.scenario_manager)
 
     # Run the app
