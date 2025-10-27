@@ -156,12 +156,12 @@ class LibraryManager:
 
     @staticmethod
     def get_performance_content(
-            performance_content: Callable[[Scenario], html.Div] | str,
+            performance_content: Callable[[Scenario, str], html.Div] | str,
             performance_compare: Callable[[Scenario, Scenario], html.Div] | str,
             performance_details: Callable[[Scenario, Scenario], html.Div] | str,
             performance_callbacks: Callable[[], None] | str | None = None,
     ) -> Tuple[
-        Callable[[Scenario], html.Div],
+        Callable[[Scenario, str], html.Div],
         Callable[[Scenario, Scenario], html.Div],
         Callable[[Scenario, Scenario], html.Div],
         Callable[[], None] | None

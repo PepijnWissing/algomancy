@@ -12,10 +12,10 @@ from algomancy.scenarioengine.scenario import Scenario
 
 class PlaceholderPerformancePageContentCreator:
     @staticmethod
-    def create_content(s: Scenario) -> html.Div:
+    def create_content(s: Scenario, side: str) -> html.Div:
         return html.Div(
             [
-                html.H5(f"Scenario {s.tag}"),
+                html.H5(f"{side.capitalize()} Scenario {s.tag}"),
                 html.P(f"Status: {s.status.capitalize()}"),
                 html.P(f"Algorithm: {s.algorithm_description}"),
             ]
