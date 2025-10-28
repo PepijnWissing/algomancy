@@ -201,6 +201,9 @@ class AlgorithmParameters(ABC):
     def __dict__(self):
         return {p.name: p.value for p in self._parameters.values()}
 
+    def __getitem__(self, key):
+        return self._parameters[key].value
+
     @abstractmethod
     def validate(self):
         """Validates parameters, must be implemented in subclass."""

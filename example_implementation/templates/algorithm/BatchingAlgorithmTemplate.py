@@ -32,15 +32,15 @@ class BatchingAlgorithmParameters(AlgorithmParameters):
 
     @property
     def batch_size(self) -> int:
-        return int(self._parameters["batch_size"].value)
+        return self["batch_size"]
 
     @property
     def search_direction(self):
-        return self._parameters["search_direction"].value
+        return self["search_direction"]
 
     @property
     def use_cache(self):
-        return self._parameters["use_cache"].value
+        return self["use_cache"]
 
     def validate(self):
         pass
