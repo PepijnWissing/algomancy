@@ -1,5 +1,33 @@
 # Change log
 
+## 0.2.8
+_Released at 29-10-2025_
+
+### Summary
+**New features**
+- Added a Waitress WGSI wrapper for production servers
+
+**Interface changes**
+- **[Breaking]** Added additional CLI arguments `threads` and `connections` to the startup sequence 
+- Simplified AlgorithmParameter syntax
+
+### Waitress WSGI wrapper
+The Waitress WSGI wrapper is now used to run the application if `debug` is set to `False`.
+This should relieve issues experienced with the Flask development server, such as the lack of thread safety that could be observed when accessing the app from multiple sources simultaneously.
+
+The wrapper is configured through the CLI arguments; in particular, `threads` and `connections` have been added. 
+They control the number of threads and the maximum number of simultaneous connections, respectively. 
+`threads` defaults to 8, and `connections` defaults to 100.
+
+> **This is a breaking change.** `threads` and `connections` are now required arguments of `Launcher.run(...)`
+
+### AlgorithmParameter syntax
+The `__getitem__` method of the AlgorithmParameters class has been implemented. 
+Instead of accessing a parameter in `key` as `algorithm_parameters._parameters[key].value`, it can now be accessed as `algorithm_parameters[key]`.
+
+Note that this is optional, legacy syntax will still work.
+
+
 ## 0.2.7
 _Released at 27-10-2025_
 
@@ -9,8 +37,8 @@ _Released at 27-10-2025_
 - The order of the main sections (side-by-side, compare, KPI cards, and details) are now configurable through the configuration dictionary
 
 **Interface changes**
-- The side-by-side section of the compare page now passes `"left"` and  `"right"` to the content function. 
-> **This is a breaking change.** Content functions that expect only one argument will need to be updated. 
+- **[Breaking]** The side-by-side section of the compare page now passes `"left"` and  `"right"` to the content function. 
+
 
 **Bug fixes**
 - MultiExtractor no longer uses the (previously renamed) `extraction_message` and `extraction_success_message` functions
@@ -38,7 +66,8 @@ configuration = {
 The side-by-side section of the compare page now passes `"left"` and  `"right"` to the content function, which allows the scenario specific section to contain their own responsive elements, such as dropdown menus. 
 
 The content function signature has changed to include the side argument. 
-Note that this is a breaking change; content functions that expect only one argument will need to be updated. 
+
+> **This is a breaking change.** Content functions that expect only one argument will need to be updated. 
 
 Alternatively, `**kwargs` can be added to the function signature to allow for `side` to be passed and be robust for future expansion. 
 See <a href="https://www.geeksforgeeks.org/python/args-kwargs-python/">here</a> for more details.
