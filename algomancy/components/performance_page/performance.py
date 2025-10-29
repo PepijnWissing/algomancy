@@ -4,7 +4,7 @@ performance.py - Performance Dashboard Page
 This module defines the layout and components for the performance dashboard page.
 It includes scenario selection, KPI improvement displays, and secondary results sections.
 """
-from dash import html, get_app
+from dash import html, get_app, callback, Output, Input
 import dash_bootstrap_components as dbc
 
 from algomancy.components.componentids import *
@@ -12,6 +12,7 @@ from algomancy.components.performance_page.scenarioselector import create_side_b
     create_side_by_side_selector
 
 import algomancy.components.performance_page.callbacks
+from algomancy.contentregistry import ContentRegistry
 from algomancy.scenarioengine import ScenarioManager
 from algomancy.settingsmanager import SettingsManager
 
@@ -119,3 +120,89 @@ def performance_page():
 
     page = html.Div(ordered_components, className="performance-page")
     return page
+
+
+@callback(
+    Output(LEFT_SCENARIO_OVERVIEW, "children"),
+    Input(LEFT_SCENARIO_DROPDOWN, "value"),
+    prevent_initial_call=True,
+)
+def update_left_scenario_overview(scenario_id) -> html.Div | str:
+    if not scenario_id:
+        return "No scenario selected."
+
+    s = get_app().server.scenario_manager.get_by_id(scenario_id)
+    cr: ContentRegistry = get_app().server.content_registry
+
+    if not s:
+        return "Scenario not found."
+
+    return cr.performance_side_by_side(s, "left")
+
+
+@callback(
+    Output(RIGHT_SCENARIO_OVERVIEW, "children"),
+    Input(RIGHT_SCENARIO_DROPDOWN, "value"),
+    prevent_initial_call=True,
+)
+def update_right_scenario_overview(scenario_id) -> html.Div | str:
+    if not scenario_id:
+        return "No scenario selected."
+
+    s = get_app().server.scenario_manager.get_by_id(scenario_id)
+    cr: ContentRegistry = get_app().server.content_registry
+
+    if not s:
+        return "Scenario not found."
+
+    return cr.performance_side_by_side(s, "right")
+
+
+@callback(
+    Output(PERF_PRIMARY_RESULTS, "children"),
+    Input(LEFT_SCENARIO_DROPDOWN, "value"),
+    Input(RIGHT_SCENARIO_DROPDOWN, "value"),
+    prevent_initial_call=True,
+)
+def update_right_scenario_overview(left_scenario_id, right_scenario_id) -> html.Div:
+    sm: ScenarioManager = get_app().server.scenario_manager
+    cr: ContentRegistry = get_app().server.content_registry
+
+    # check the inputs
+    if not left_scenario_id or not right_scenario_id:
+        return html.Div("Select both scenarios to create a detail view.")
+
+    # retrieve the scenarios
+    left_scenario = sm.get_by_id(left_scenario_id)
+    right_scenario = sm.get_by_id(right_scenario_id)
+
+    # check if the scenarios were found
+    if not left_scenario or not right_scenario:
+        return html.Div("One of the scenarios was not found.")
+
+    # apply the function
+    return cr.performance_compare(left_scenario, right_scenario)
+
+
+@callback(
+    Output(PERFORMANCE_DETAIL_VIEW, "children"),
+    Input(LEFT_SCENARIO_DROPDOWN, "value"),
+    Input(RIGHT_SCENARIO_DROPDOWN, "value"),
+    prevent_initial_call=True,
+)
+def update_right_scenario_overview(left_scenario_id, right_scenario_id) -> html.Div | str:
+    sm: ScenarioManager = get_app().server.scenario_manager
+    cr: ContentRegistry = get_app().server.content_registry
+
+    if not left_scenario_id or not right_scenario_id:
+        return "Select both scenarios to create a detail view."
+
+    if left_scenario_id == right_scenario_id:
+        return "Select two different scenarios to create a detail view."
+
+    left_scenario = sm.get_by_id(left_scenario_id)
+    right_scenario = sm.get_by_id(right_scenario_id)
+    if not left_scenario or not right_scenario:
+        return "One of the scenarios was not found."
+
+    return cr.performance_details(left_scenario, right_scenario)

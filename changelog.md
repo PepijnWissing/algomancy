@@ -1,5 +1,21 @@
 # Change log
 
+## 0.2.9
+_Released at 29-10-2025_
+
+### Summary
+**New features**
+- Added internal `ContentRegistry` class, which now manages and distributes the content functions.
+
+**Bug fixes**
+- Fixed issue where `url` callbacks would cause conflicts. 
+- Fixed a bug where the `url` callbacks had multiple listeners, which sometimes caused synchronization issues.
+
+### ContentRegistry
+The `ContentRegistry` class is now used to manage and distribute the content functions.
+These responsibilities were previously handled by the `Launcher` class, which has been refactored to only manage the launch sequence.
+This is a purely internal change, and should not affect the user.
+
 ## 0.2.8
 _Released at 29-10-2025_
 
