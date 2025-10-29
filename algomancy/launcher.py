@@ -4,14 +4,11 @@ import importlib.metadata
 import os
 from waitress import serve
 import dash_auth
-from dash import html, Output, Input, callback, get_app, ALL, ctx, no_update, Dash
+from dash import html, get_app, Dash
 
+from .contentregistry import ContentRegistry
 from .settingsmanager import SettingsManager
 from .stylingconfigurator import StylingConfigurator
-from algomancy.components.componentids import DATA_PAGE_CONTENT, DATA_SELECTOR_DROPDOWN, SCENARIO_LIST_UPDATE_STORE, \
-    SCENARIO_SELECTED, SCENARIO_SELECTED_ID_STORE, SCENARIO_CARD, LEFT_SCENARIO_OVERVIEW, LEFT_SCENARIO_DROPDOWN, \
-    RIGHT_SCENARIO_OVERVIEW, RIGHT_SCENARIO_DROPDOWN, HOME_PAGE_CONTENT, OVERVIEW_PAGE_CONTENT, PERFORMANCE_DETAIL_VIEW, \
-    PERF_PRIMARY_RESULTS
 from algomancy.components.layout import LayoutCreator
 from algomancy.dataengine.datasource import DataSource
 from algomancy.scenarioengine.scenariomanager import ScenarioManager, Scenario
@@ -117,8 +114,9 @@ class DashLauncher:
         # register the settings manager on the app object for access in callbacks
         app.server.settings = settings_manager
 
-        # fill and run the app
-        app.layout = LayoutCreator.create_layout(styling_config)
+        # register the content register functions
+        content_registry = ContentRegistry()
+        app.server.content_registry = content_registry
 
         # retrieve standard content functions
         home_content, home_callbacks = lm.get_home_content(home_content, home_callbacks)
@@ -129,14 +127,15 @@ class DashLauncher:
         )
         overview_content, overview_callbacks = lm.get_overview_content(overview_content, overview_callbacks)
 
-        # register the src page content functions
-        DashLauncher._register_page_content_callbacks(
-            home_content, home_callbacks,
-            data_content, data_callbacks,
-            scenario_content, scenario_callbacks,
-            perf_content, perf_compare, perf_details, perf_callbacks,
-            overview_content, overview_callbacks
-        )
+        # register the content functions for access in page creation
+        content_registry.register_home_content(home_content, home_callbacks)
+        content_registry.register_data_content(data_content, data_callbacks)
+        content_registry.register_scenario_content(scenario_content, scenario_callbacks)
+        content_registry.register_performance_content(perf_content, perf_compare, perf_details, perf_callbacks)
+        content_registry.register_overview_content(overview_content, overview_callbacks)
+
+        # fill and run the app
+        app.layout = LayoutCreator.create_layout(styling_config)
 
         return app
 
@@ -156,221 +155,3 @@ class DashLauncher:
         else:
             sm.log(f"Starting Dashboard server in debug mode on {host}:{port}...", MessageStatus.SUCCESS)
             app.run(debug=debug, host=host, port=port, dev_tools_silence_routes_logging=False)
-
-    @staticmethod
-    def _register_page_content_callbacks(
-            home_content_fn: Callable[[], html.Div],
-            register_home_callbacks_fn: Callable[[], None] | None,
-            data_content_fn: Callable[[DataSource], html.Div],
-            register_data_callbacks_fn: Callable[[],None] | None,
-            scenario_content_fn: Callable[[Scenario], html.Div],
-            register_scenario_callbacks_fn: Callable[[], None] | None,
-            compare_side_by_side_content_fn: Callable[[Scenario, str], html.Div],
-            compare_compare_fn: Callable[[Scenario, Scenario], html.Div] | None,
-            compare_details_fn: Callable[[Scenario, Scenario], html.Div] | None,
-            register_performance_callbacks_fn: Callable[[], None] | None,
-            overview_content_fn: Callable[[], html.Div],
-            register_overview_callbacks_fn: Callable[[],None] | None,
-    ) -> None:
-        # home page
-        DashLauncher._register_home_page_creation(home_content_fn)
-        if register_home_callbacks_fn:
-            register_home_callbacks_fn()
-
-        # data page
-        DashLauncher._register_data_page_creation(data_content_fn)
-        if register_data_callbacks_fn:
-            register_data_callbacks_fn()
-
-        # scenario page
-        DashLauncher._register_scenario_page_creation(scenario_content_fn)
-        if register_scenario_callbacks_fn:
-            register_scenario_callbacks_fn()
-
-        # performance page
-        DashLauncher._register_perf_page_creation(compare_side_by_side_content_fn)
-        if compare_compare_fn:
-            DashLauncher._register_perf_page_compare(compare_compare_fn)
-        if compare_details_fn:
-            DashLauncher._register_perf_page_details(compare_details_fn)
-        if register_performance_callbacks_fn:
-            register_performance_callbacks_fn()
-
-        # overview page
-        DashLauncher._register_overview_page_creation(overview_content_fn)
-        if register_overview_callbacks_fn:
-            register_overview_callbacks_fn()
-
-    @staticmethod
-    def _register_home_page_creation(content_function: Callable[[], html.Div]) -> None:
-        # Handle initial page load
-        @callback(
-            Output(HOME_PAGE_CONTENT, "children"),
-            Input("url", "href"),  # Use href instead of pathname for initial load
-            prevent_initial_call=False,  # Allow initial call for page load
-        )
-        def fill_home_page_content_initial(href):
-            # Extract pathname from href
-            if href:
-                from urllib.parse import urlparse
-                pathname = urlparse(href).path
-                if pathname == "/" or pathname == "":
-                    return content_function()
-            return no_update
-
-        # Handle subsequent navigation (prevents snapping)
-        @callback(
-            Output(HOME_PAGE_CONTENT, "children", allow_duplicate=True),
-            Input("url", "pathname"),
-            prevent_initial_call=True,
-        )
-        def fill_home_page_content_navigation(pathname):
-            if pathname == "/":
-                return content_function()
-            return no_update
-
-    @staticmethod
-    def _register_data_page_creation(content_function: Callable[[DataSource], html.Div]) -> None:
-        @callback(
-            Output(DATA_PAGE_CONTENT, "children"),
-            Input(DATA_SELECTOR_DROPDOWN, "value"),
-            prevent_initial_call=True,
-        )
-        def fill_data_page_content(data_key: str):
-            sm = get_app().server.scenario_manager
-
-            if data_key not in sm.get_data_keys():
-                return [html.P(f"Select a dataset.")]
-
-            data = sm.get_data(data_key)
-            page = content_function(data)
-
-            return page
-
-    @staticmethod
-    def _register_scenario_page_creation(content_function: Callable[[Scenario], html.Div]):
-        @callback(
-            Output(SCENARIO_LIST_UPDATE_STORE, "data", allow_duplicate=True),
-            Output(SCENARIO_SELECTED, "children", allow_duplicate=True),
-            Output(SCENARIO_SELECTED_ID_STORE, "data", allow_duplicate=True),
-            Input({"type": SCENARIO_CARD, "index": ALL}, "n_clicks"),
-            prevent_initial_call=True,
-        )
-        def select_scenario(card_clicks):
-            sm = get_app().server.scenario_manager
-
-            triggered = ctx.triggered_id
-            if isinstance(triggered, dict) and triggered["type"] == SCENARIO_CARD:
-                selected_card_id = triggered["index"]
-                s = sm.get_by_id(selected_card_id)
-                if s:
-                    return "scenario selected", content_function(s), selected_card_id
-
-            return no_update, no_update, no_update
-
-    @staticmethod
-    def _register_perf_page_creation(content_function: Callable[[Scenario, str], html.Div]):
-        @callback(
-            Output(LEFT_SCENARIO_OVERVIEW, "children"),
-            Input(LEFT_SCENARIO_DROPDOWN, "value"),
-            prevent_initial_call=True,
-        )
-        def update_left_scenario_overview(scenario_id) -> html.Div | str:
-            if not scenario_id:
-                return "No scenario selected."
-
-            s = get_app().server.scenario_manager.get_by_id(scenario_id)
-            if not s:
-                return "Scenario not found."
-
-            return content_function(s, "left")
-
-        @callback(
-            Output(RIGHT_SCENARIO_OVERVIEW, "children"),
-            Input(RIGHT_SCENARIO_DROPDOWN, "value"),
-            prevent_initial_call=True,
-        )
-        def update_right_scenario_overview(scenario_id) -> html.Div | str:
-            if not scenario_id:
-                return "No scenario selected."
-
-            s = get_app().server.scenario_manager.get_by_id(scenario_id)
-            if not s:
-                return "Scenario not found."
-
-            return content_function(s, "right")
-
-    @staticmethod
-    def _register_perf_page_compare(content_function: Callable[[Scenario, Scenario], html.Div]):
-        @callback(
-            Output(PERF_PRIMARY_RESULTS, "children"),
-            Input(LEFT_SCENARIO_DROPDOWN, "value"),
-            Input(RIGHT_SCENARIO_DROPDOWN, "value"),
-            prevent_initial_call=True,
-        )
-        def update_right_scenario_overview(left_scenario_id, right_scenario_id) -> html.Div:
-            # check the inputs
-            if not left_scenario_id or not right_scenario_id:
-                return html.Div("Select both scenarios to create a detail view.")
-
-            # retrieve the scenarios
-            left_scenario = get_app().server.scenario_manager.get_by_id(left_scenario_id)
-            right_scenario = get_app().server.scenario_manager.get_by_id(right_scenario_id)
-
-            # check if the scenarios were found
-            if not left_scenario or not right_scenario:
-                return html.Div("One of the scenarios was not found.")
-
-            # apply the function
-            return content_function(left_scenario, right_scenario)
-
-
-
-    @staticmethod
-    def _register_perf_page_details(content_function: Callable[[Scenario, Scenario], html.Div]):
-        @callback(
-            Output(PERFORMANCE_DETAIL_VIEW, "children"),
-            Input(LEFT_SCENARIO_DROPDOWN, "value"),
-            Input(RIGHT_SCENARIO_DROPDOWN, "value"),
-            prevent_initial_call=True,
-        )
-        def update_right_scenario_overview(left_scenario_id, right_scenario_id) -> html.Div | str:
-            if not left_scenario_id or not right_scenario_id:
-                return "Select both scenarios to create a detail view."
-
-            if left_scenario_id == right_scenario_id:
-                return "Select two different scenarios to create a detail view."
-
-            left_scenario = get_app().server.scenario_manager.get_by_id(left_scenario_id)
-            right_scenario = get_app().server.scenario_manager.get_by_id(right_scenario_id)
-            if not left_scenario or not right_scenario:
-                return "One of the scenarios was not found."
-
-            return content_function(left_scenario, right_scenario)
-
-    @staticmethod
-    def _register_overview_page_creation(content_function: Callable[[], html.Div]):
-        @callback(
-            Output(OVERVIEW_PAGE_CONTENT, "children"),
-            Input("url", "href"),  # Use href instead of pathname for initial load
-            prevent_initial_call=False,  # Allow initial call for page load
-        )
-        def fill_overview_page_content_initial(href):
-            # Extract pathname from href
-            if href:
-                from urllib.parse import urlparse
-                pathname = urlparse(href).path
-                if pathname == "/overview" or pathname == "":
-                    return content_function()
-            return no_update
-
-        # Handle subsequent navigation (prevents snapping)
-        @callback(
-            Output(OVERVIEW_PAGE_CONTENT, "children", allow_duplicate=True),
-            Input("url", "pathname"),
-            prevent_initial_call=True,
-        )
-        def fill_overview_page_content_navigation(pathname):
-            if pathname == "/":
-                return content_function()
-            return no_update
