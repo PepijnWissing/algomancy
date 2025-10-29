@@ -203,11 +203,28 @@ class DashLauncher:
 
     @staticmethod
     def _register_home_page_creation(content_function: Callable[[], html.Div]) -> None:
+        # Handle initial page load
         @callback(
             Output(HOME_PAGE_CONTENT, "children"),
-            Input("url", "pathname"),
+            Input("url", "href"),  # Use href instead of pathname for initial load
+            prevent_initial_call=False,  # Allow initial call for page load
         )
-        def fill_home_page_content(pathname):
+        def fill_home_page_content_initial(href):
+            # Extract pathname from href
+            if href:
+                from urllib.parse import urlparse
+                pathname = urlparse(href).path
+                if pathname == "/" or pathname == "":
+                    return content_function()
+            return no_update
+
+        # Handle subsequent navigation (prevents snapping)
+        @callback(
+            Output(HOME_PAGE_CONTENT, "children", allow_duplicate=True),
+            Input("url", "pathname"),
+            prevent_initial_call=True,
+        )
+        def fill_home_page_content_navigation(pathname):
             if pathname == "/":
                 return content_function()
             return no_update
@@ -256,6 +273,7 @@ class DashLauncher:
         @callback(
             Output(LEFT_SCENARIO_OVERVIEW, "children"),
             Input(LEFT_SCENARIO_DROPDOWN, "value"),
+            prevent_initial_call=True,
         )
         def update_left_scenario_overview(scenario_id) -> html.Div | str:
             if not scenario_id:
@@ -270,6 +288,7 @@ class DashLauncher:
         @callback(
             Output(RIGHT_SCENARIO_OVERVIEW, "children"),
             Input(RIGHT_SCENARIO_DROPDOWN, "value"),
+            prevent_initial_call=True,
         )
         def update_right_scenario_overview(scenario_id) -> html.Div | str:
             if not scenario_id:
@@ -287,6 +306,7 @@ class DashLauncher:
             Output(PERF_PRIMARY_RESULTS, "children"),
             Input(LEFT_SCENARIO_DROPDOWN, "value"),
             Input(RIGHT_SCENARIO_DROPDOWN, "value"),
+            prevent_initial_call=True,
         )
         def update_right_scenario_overview(left_scenario_id, right_scenario_id) -> html.Div:
             # check the inputs
@@ -312,6 +332,7 @@ class DashLauncher:
             Output(PERFORMANCE_DETAIL_VIEW, "children"),
             Input(LEFT_SCENARIO_DROPDOWN, "value"),
             Input(RIGHT_SCENARIO_DROPDOWN, "value"),
+            prevent_initial_call=True,
         )
         def update_right_scenario_overview(left_scenario_id, right_scenario_id) -> html.Div | str:
             if not left_scenario_id or not right_scenario_id:
@@ -331,9 +352,25 @@ class DashLauncher:
     def _register_overview_page_creation(content_function: Callable[[], html.Div]):
         @callback(
             Output(OVERVIEW_PAGE_CONTENT, "children"),
-            Input("url", "pathname"),
+            Input("url", "href"),  # Use href instead of pathname for initial load
+            prevent_initial_call=False,  # Allow initial call for page load
         )
-        def fill_overview_page_content(pathname):
-            if pathname == "/overview":
+        def fill_overview_page_content_initial(href):
+            # Extract pathname from href
+            if href:
+                from urllib.parse import urlparse
+                pathname = urlparse(href).path
+                if pathname == "/overview" or pathname == "":
+                    return content_function()
+            return no_update
+
+        # Handle subsequent navigation (prevents snapping)
+        @callback(
+            Output(OVERVIEW_PAGE_CONTENT, "children", allow_duplicate=True),
+            Input("url", "pathname"),
+            prevent_initial_call=True,
+        )
+        def fill_overview_page_content_navigation(pathname):
+            if pathname == "/":
                 return content_function()
             return no_update
