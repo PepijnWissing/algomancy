@@ -5,7 +5,7 @@ _Released at 29-10-2025_
 
 ### Summary
 **New features**
-- Added a Waitress WGSI wrapper for production servers
+- Added a Waitress WSGI wrapper for production servers
 
 **Interface changes**
 - **[Breaking]** Added additional CLI arguments `threads` and `connections` to the startup sequence 
