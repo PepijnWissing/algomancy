@@ -2,7 +2,7 @@ from typing import Callable, Dict, Any
 import importlib.metadata
 
 import os
-from dotenv import load_dotenv
+from waitress import serve
 import dash_auth
 from dash import html, Output, Input, callback, get_app, ALL, ctx, no_update, Dash
 
@@ -141,14 +141,21 @@ class DashLauncher:
         return app
 
     @staticmethod
-    def run(app: Dash, host: str, port: int, debug: bool) -> None:
+    def run(app: Dash, host: str, port: int, threads: int, connection_limit: int, debug: bool) -> None:
         sm = get_app().server.scenario_manager
 
-        sm.log("Dashboard server starting...", MessageStatus.SUCCESS)
         algomancy_version = importlib.metadata.version('algomancy')
-        sm.log(f"Algomancy version: {algomancy_version}", MessageStatus.SUCCESS)
+        sm.log(f"Algomancy version: {algomancy_version}", MessageStatus.INFO)
 
-        app.run(debug=debug, host=host, port=port, dev_tools_silence_routes_logging=True)
+        if not debug:
+            sm.log("--------------------------------------------------------------------", MessageStatus.SUCCESS)
+            sm.log(f"Starting Dashboard server with Waitress on {host}:{port}...", MessageStatus.SUCCESS)
+            sm.log(f"  threads:{threads}, connection limit: {connection_limit}", MessageStatus.SUCCESS)
+            sm.log("--------------------------------------------------------------------", MessageStatus.SUCCESS)
+            serve(app.server, host=host, port=port, threads=threads, connection_limit=connection_limit)
+        else:
+            sm.log(f"Starting Dashboard server in debug mode on {host}:{port}...", MessageStatus.SUCCESS)
+            app.run(debug=debug, host=host, port=port, dev_tools_silence_routes_logging=False)
 
     @staticmethod
     def _register_page_content_callbacks(

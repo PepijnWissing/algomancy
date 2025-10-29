@@ -31,6 +31,8 @@ from example_implementation.templates import (
 def main(
         host: str | None = None,
         port: int | None = None,
+        threads: int | None = None,
+        connection_limit: int | None = None,
         debug: bool | None = None,
 ) -> None:
     """
@@ -49,8 +51,15 @@ def main(
     if not port:
         port = 8050
 
+    if not threads:
+        threads = 8
+
+    if not connection_limit:
+        connection_limit = 100
+
     if not debug:
         debug = False
+
 
     white = "#EEEEEE"  # white
     purple = "#3EBDF3"
@@ -144,12 +153,13 @@ def main(
     app = DashLauncher.build(configuration)
 
     # DEBUGGING: create some scenarios
-    if True:
+    if False:
         debug_create_example_scenarios(app.server.scenario_manager)
 
     # Run the app
     DashLauncher.run(
-        app=app, host=configuration["host"], port=configuration["port"], debug=debug
+        app=app, host=configuration["host"], port=configuration["port"], threads=threads,
+        connection_limit=connection_limit, debug=debug
     )
 
 
@@ -157,10 +167,12 @@ def _parse_cli_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--host", help="Host to bind to", type=str, default=None)
     parser.add_argument("--port", help="Port number", type=int, default=None)
+    parser.add_argument("--threads", help="Number of threads", type=int, default=8)
+    parser.add_argument("--connections", help="Number of connections", type=int, default=100)
     parser.add_argument("--debug", help="Enable debug mode", type=bool, default=None)
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     args = _parse_cli_args()
-    main(host=args.host, port=args.port, debug=args.debug)
+    main(host=args.host, port=args.port, threads=args.threads, connection_limit=args.connections, debug=args.debug)
