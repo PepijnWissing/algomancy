@@ -1,4 +1,4 @@
-from dash import html, dcc
+from dash import html, dcc, callback, Output, Input, ALL, get_app, ctx, no_update
 
 from algomancy.components.componentids import *
 from algomancy.components.scenario_page.delete_confirmation import delete_confirmation_modal
@@ -8,6 +8,9 @@ from algomancy.components.scenario_page.scenario_cards import hidden_card
 import algomancy.components.scenario_page.callbacks
 
 import dash_bootstrap_components as dbc
+
+from algomancy.contentregistry import ContentRegistry
+from algomancy.scenarioengine import ScenarioManager
 
 
 def scenario_page():
@@ -94,3 +97,24 @@ def scenario_page():
     ])
 
     return page
+
+
+@callback(
+    Output(SCENARIO_LIST_UPDATE_STORE, "data", allow_duplicate=True),
+    Output(SCENARIO_SELECTED, "children", allow_duplicate=True),
+    Output(SCENARIO_SELECTED_ID_STORE, "data", allow_duplicate=True),
+    Input({"type": SCENARIO_CARD, "index": ALL}, "n_clicks"),
+    prevent_initial_call=True,
+)
+def select_scenario(card_clicks):
+    sm: ScenarioManager = get_app().server.scenario_manager
+    cr: ContentRegistry = get_app().server.content_registry
+
+    triggered = ctx.triggered_id
+    if isinstance(triggered, dict) and triggered["type"] == SCENARIO_CARD:
+        selected_card_id = triggered["index"]
+        s = sm.get_by_id(selected_card_id)
+        if s:
+            return "scenario selected", cr.scenario_content(s), selected_card_id
+
+    return no_update, no_update, no_update

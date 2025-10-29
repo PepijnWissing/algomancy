@@ -1,6 +1,7 @@
-from dash import html
+from dash import html, get_app
 
 from algomancy.components.componentids import HOME_PAGE_CONTENT
+from algomancy.contentregistry import ContentRegistry
 
 
 def home_page():
@@ -10,4 +11,8 @@ def home_page():
     Returns:
         html.Div: A Dash HTML component representing the home page
     """
-    return html.Div(id=HOME_PAGE_CONTENT)
+    cr: ContentRegistry = get_app().server.content_registry
+    return html.Div(
+        cr.home_content(),
+        id=HOME_PAGE_CONTENT
+    )
