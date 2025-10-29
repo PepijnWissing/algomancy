@@ -55,7 +55,7 @@ def main(
         threads = 8
 
     if not connection_limit:
-        connection_limit = 10
+        connection_limit = 100
 
     if not debug:
         debug = False
@@ -168,7 +168,7 @@ def _parse_cli_args():
     parser.add_argument("--host", help="Host to bind to", type=str, default=None)
     parser.add_argument("--port", help="Port number", type=int, default=None)
     parser.add_argument("--threads", help="Number of threads", type=int, default=8)
-    parser.add_argument("--connections", help="Number of connections", type=int, default=10)
+    parser.add_argument("--connections", help="Number of connections", type=int, default=100)
     parser.add_argument("--debug", help="Enable debug mode", type=bool, default=None)
     return parser.parse_args()
 
