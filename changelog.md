@@ -1,5 +1,11 @@
 # Change log
 
+## 0.2.9
+_Released at 29-10-2025_
+
+**Bug fixes**
+- Fixed issue where `url` callbacks would cause conflicts. 
+
 ## 0.2.8
 _Released at 29-10-2025_
 
