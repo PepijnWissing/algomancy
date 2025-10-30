@@ -350,7 +350,8 @@ def show_uploaded_filename(filename):
     try:
         mapping = match_file_names(sm.input_configurations, filenames)
     except Exception as e:
-        sm.log(f"Problem with loading: {str(e)}")
+        sm.logger.error(f"Problem with loading: {str(e)}")
+        sm.logger.log_exception(e)
         return no_update, False, True, f"Could not match files uniquely. Close and try again"
 
     return html.Div([
@@ -437,11 +438,12 @@ def process_imports(n_clicks, contents, filenames, dataset_name):
         return datetime.now(), False, "Data loaded successfully!", True, "", False, ""
 
     except ValidationError as e:
-        sm.log(f"Validation error: {str(e)}")
+        sm.logger.error(f"Validation error: {str(e)}")
         return no_update, False, "", False, f"Validation error: {str(e)}", True, ""
 
     except Exception as e:
-        sm.log(f"Problem with loading: {str(e)}")
+        sm.logger.error(f"Problem with loading: {str(e)}")
+        sm.logger.log_exception(e)
         return no_update, False, "", False, f"Problem with loading: {str(e)}", True, ""
 
 
@@ -598,8 +600,9 @@ def save_derived_data(n_clicks, set_name: str, ):
     Returns:
         Tuple containing modal state and alert messages
     """
+
+    sm = get_app().server.scenario_manager
     try:
-        sm = get_app().server.scenario_manager
         data = sm.get_data(set_name)
         data.set_to_master_data()
 
@@ -612,4 +615,6 @@ def save_derived_data(n_clicks, set_name: str, ):
 
         return False, "Files saved successfully", True, "", False
     except Exception as e:
+        sm.logger.error(f"Problem with saving: {str(e)}")
+        sm.logger.log_exception(e)
         return False, "", False, f"Problem with saving: {str(e)}", True

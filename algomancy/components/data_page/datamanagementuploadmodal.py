@@ -291,6 +291,7 @@ def process_uploaded_files(n_clicks, contents, filenames):
 
         except Exception as e:
             sm.logger.error(f"Error processing uploaded file {filename}: {e}")
+            sm.logger.log_traceback(e)
 
     # Close the modal
     return datetime.now(), [True], True, ''
