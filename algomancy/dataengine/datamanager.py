@@ -247,7 +247,7 @@ class StatefulDataManager(DataManager):
                     self.load_data_from_file(item_path)
 
                 except Exception as e:
-                    self.log(f"Failed to load file '{item_path}' as a DataSource: {str(e)}")
+                    self.logger.error(f"Failed to load file '{item_path}' as a DataSource: {str(e)}")
                     self.logger.log_traceback(e)
 
             # If it's a directory, run ETL
