@@ -156,7 +156,9 @@ def download_modal_children(n, selected_keys):
     def _cleanup(path):
         try:
             os.remove(path)
-        except Exception:
+        except Exception as e:
+            sm.logger.error("Failed to remove temp file")
+            sm.logger.log_exception(e)
             pass
 
     cleanup_delay_seconds = 30  # file is stored on server for 30 seconds

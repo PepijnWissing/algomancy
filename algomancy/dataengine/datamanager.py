@@ -97,19 +97,25 @@ class DataManager(ABC):
             raise ETLConstructionError("No file data provided.")
 
     @staticmethod
+    def _add_to_files(files, name, extension, content = None, path = None) -> None:
+        assert path or content, "Either path or content must be provided."
+
+        if extension == FileExtension.CSV.lower():
+            files[name] = CSVFile(name=name, content=content, path=path)
+        elif extension == FileExtension.JSON.lower():
+            files[name] = JSONFile(name=name, content=content, path=path)
+        elif extension == FileExtension.XLSX.lower():
+            files[name] = XLSXFile(name=name, content=content, path=path)
+        else:
+            raise ETLConstructionError(f"Unsupported file type: '{extension}'.")
+
+    @staticmethod
     def _prepare_files_from_content(
             file_items: List[Tuple[str, str, str]] = None,
     ) -> Dict[str, File]:
         files = {}
         for name, extension, content in file_items:
-            if extension == FileExtension.CSV.lower():
-                files[name] = CSVFile(name=name, content=content)
-            elif extension == FileExtension.JSON.lower():
-                files[name] = JSONFile(name=name, content=content)
-            elif extension == FileExtension.XLSX.lower():
-                files[name] = XLSXFile(name=name, content=content)
-            else:
-                raise ETLConstructionError(f"Unsupported file type: '{extension}'.")
+            DataManager._add_to_files(files, name, extension, content=content)
 
         return files
 
@@ -121,14 +127,7 @@ class DataManager(ABC):
         files = {}
         for file, path in file_items:
             extension = path.split(".")[-1].lower()
-            if extension == FileExtension.CSV.lower():
-                files[file] = CSVFile(name=file, path=path)
-            elif extension == FileExtension.JSON.lower():
-                files[file] = JSONFile(name=file, path=path)
-            elif extension == FileExtension.XLSX.lower():
-                files[file] = XLSXFile(name=file, path=path)
-            else:
-                raise ETLConstructionError(f"Unsupported file type: '{extension}'.")
+            DataManager._add_to_files(files, file, extension, path=path)
 
         return files
 
@@ -195,7 +194,8 @@ class StatefulDataManager(DataManager):
             self.log(f"Data folder '{self._data_folder}' loaded.")
         except Exception as e:
             if self.logger:
-                self.logger.error(str(e))
+                self.logger.error(f'Data load on startup failed: {str(e)}')
+                self.logger.log_traceback(e)
             print(e)
 
     def load_data_from_file(self, file_path: str) -> None:
@@ -226,7 +226,7 @@ class StatefulDataManager(DataManager):
 
         # Check if the folder exists
         if not os.path.exists(self._data_folder):
-            self.log(f"Data folder '{self._data_folder}' does not exist.")
+            self.logger.warning(f"Data folder '{self._data_folder}' does not exist.")
             return
 
         # List all files in the data folder
@@ -236,10 +236,11 @@ class StatefulDataManager(DataManager):
 
             item_path = os.path.join(self._data_folder, item)
 
-            # If it's a file, try to load it as a parquet file
+            # If it's a file, try to load it as a file of the appropriate type
             if os.path.isfile(item_path):
                 # Verify that item is of the appropriate data format
                 if not item.endswith(f".{self._save_type}"):
+                    self.logger.warning(f"Skipping file '{item_path}' because it is not a {self._save_type} file.")
                     continue
 
                 try:
@@ -247,13 +248,15 @@ class StatefulDataManager(DataManager):
 
                 except Exception as e:
                     self.log(f"Failed to load file '{item_path}' as a DataSource: {str(e)}")
+                    self.logger.log_traceback(e)
 
             # If it's a directory, run ETL
             elif os.path.isdir(item_path):
                 try:
                     self.load_data_from_dir(item)
                 except Exception as e:
-                    self.log(f"Failed to load directory '{item_path}' as a DataSource: {str(e)}")
+                    self.logger.error(f"Failed to load directory '{item_path}' as a DataSource: {str(e)}")
+                    self.logger.log_traceback(e)
 
     def load_data_from_dir(self, directory: str, root: str | None = None) -> None:
         if root is None:
