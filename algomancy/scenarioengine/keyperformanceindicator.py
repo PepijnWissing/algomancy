@@ -1,8 +1,9 @@
 from dataclasses import dataclass
 from typing import Callable, Dict, List
 
-from algomancy.scenarioengine.enumtypes import KpiType, ImprovementDirection, UnitOfMeasurement
+from algomancy.scenarioengine.enumtypes import KpiType, ImprovementDirection
 from algomancy.scenarioengine.result import ScenarioResult
+from algomancy.scenarioengine.unit import BaseMeasurement, Measurement
 
 KPICalculationFunction = Callable[[ScenarioResult], float]
 
@@ -14,7 +15,7 @@ class KpiTemplate:
     type: KpiType
     better_when: ImprovementDirection
     callback: KPICalculationFunction
-    UOM: UnitOfMeasurement | None = None
+    measurement_base: BaseMeasurement
 
     def __post_init__(self):
         if self.name == "":
@@ -23,8 +24,6 @@ class KpiTemplate:
             raise TypeError("Invalid KPI type.")
         if self.better_when not in ImprovementDirection:
             raise TypeError("Invalid KPI direction.")
-        if self.UOM and self.UOM not in UnitOfMeasurement:
-            raise TypeError("Invalid KPI UOM.")
         if not callable(self.callback):
             raise TypeError("Callback function is not callable.")
 
@@ -36,15 +35,17 @@ class KPI:
             type: KpiType,
             better_when: ImprovementDirection,
             callback: KPICalculationFunction,
-            UOM: UnitOfMeasurement = None,
-            value: float = None,
+            bm: BaseMeasurement,
     ) -> None:
         self._name = name
         self._type = type
         self._better_when = better_when
         self._callback = callback
-        self._UOM = UOM
-        self._value = value
+        self._measurement = Measurement(bm)
+
+    @property
+    def measurement(self) -> Measurement:
+        return self._measurement
 
     @property
     def name(self) -> str:
@@ -59,18 +60,15 @@ class KPI:
         return self._better_when
 
     @property
-    def UOM(self) -> UnitOfMeasurement | None:
-        return self._UOM
-
-    @property
     def value(self) -> float | None:
-        return self._value
+        return self._measurement.value
+
+    @value.setter
+    def value(self, value: float):
+        self._measurement.value = value
 
     def __str__(self):
-        if self.value:
-            return f"{self.name}: {self.value}" + (str(self.UOM) if self.UOM else "")
-        else:
-            return f"{self.name}: -"
+        self._measurement.pretty()
 
     def compute(self, result: ScenarioResult) -> None:
         """
@@ -90,7 +88,7 @@ class KPI:
             value = self._callback(result)
             if not isinstance(value, (int, float)):
                 raise TypeError("KPI callback must return a numeric value.")
-            self._value = value
+            self.value = value
         except TypeError as e:
             raise TypeError("KPI callback must return a numeric value.")
         except Exception as e:
@@ -103,7 +101,7 @@ class KPI:
             "type": self.type.name,
             "better_when": self.better_when.name,
             "callback": self._callback.__name__,
-            "UOM": self.UOM.name if self.UOM else None,
+            "basis": self._measurement.base_measurement,
             "value": self.value
         }
 
@@ -137,37 +135,37 @@ def build_kpis(kpi_templates: List[KpiTemplate]) -> Dict[str, KPI]:
             type=template.type,
             better_when=template.better_when,
             callback=template.callback,
-            UOM=template.UOM if template.UOM else None,
+            bm=template.measurement_base,
         )
 
     return kpi_dict
 
 
-def build_kpis_from_file(kpis: Dict, kpi_templates: List[KpiTemplate]) -> Dict[str, KPI]:
-
-    kpi_dict = {}
-    try:
-        for kpi in kpis.values():
-            [template] = [t for t in kpi_templates if t.name == kpi["name"]]
-            assert template, f"KPI template '{kpi['name']}' not found."
-            assert template.type == KpiType[kpi["type"]], \
-                f"Invalid KPI type for '{kpi['name']}'."
-            assert template.better_when == ImprovementDirection[kpi["better_when"]], \
-                f"Invalid KPI direction for '{kpi['name']}'."
-            assert template.UOM == UnitOfMeasurement[kpi["UOM"]] if kpi["UOM"] else True, \
-                f"Invalid KPI UOM for '{kpi['name']}'."
-
-            kpi_dict[template.name] = KPI(
-                name=template.name,
-                type=template.type,
-                better_when=template.better_when,
-                callback=template.callback,
-                UOM=template.UOM if template.UOM else None,
-                value=kpi["value"],
-            )
-    except KeyError:
-        raise ValueError("Invalid KPI name in serialized KPIs.")
-    except AssertionError:
-        raise ValueError("Invalid KPI definition in serialized KPIs.")
-
-    return kpi_dict
+# def build_kpis_from_file(kpis: Dict, kpi_templates: List[KpiTemplate]) -> Dict[str, KPI]:
+#
+#     kpi_dict = {}
+#     try:
+#         for kpi in kpis.values():
+#             [template] = [t for t in kpi_templates if t.name == kpi["name"]]
+#             assert template, f"KPI template '{kpi['name']}' not found."
+#             assert template.type == KpiType[kpi["type"]], \
+#                 f"Invalid KPI type for '{kpi['name']}'."
+#             assert template.better_when == ImprovementDirection[kpi["better_when"]], \
+#                 f"Invalid KPI direction for '{kpi['name']}'."
+#             assert template.UOM == UnitOfMeasurement[kpi["UOM"]] if kpi["UOM"] else True, \
+#                 f"Invalid KPI UOM for '{kpi['name']}'."
+#
+#             kpi_dict[template.name] = KPI(
+#                 name=template.name,
+#                 type=template.type,
+#                 better_when=template.better_when,
+#                 callback=template.callback,
+#                 UOM=template.UOM if template.UOM else None,
+#                 value=kpi["value"],
+#             )
+#     except KeyError:
+#         raise ValueError("Invalid KPI name in serialized KPIs.")
+#     except AssertionError:
+#         raise ValueError("Invalid KPI definition in serialized KPIs.")
+#
+#     return kpi_dict
