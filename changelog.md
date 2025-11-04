@@ -8,6 +8,22 @@ _Released at 04-11-2025_
 - Renamed the remaining "performance" page references to "compare" across modules for consistency.
 - Improved logging: stack traces are now routed to the logger; startup log severity adjusted.
 - Documentation: README updates and minor cleanup.
+- Tests: Added pytest module `tests/test_unit_measurement_examples.py` covering Measurement examples from `unit.py`.
+- New feature: automatic creation of scenarios is now supported.
+
+### New features
+- Added automatic creation of scenarios. This will cause any creation of a `DataSource` (or derived) to spawn a `Scenario` with the same name (suffixed with `[auto]`). The algorithm template must be specified in the configuration dictionary.
+To configure, add the below to the configuration dictionary.
+```python
+# framework configuration
+configuration = {
+    ...,
+    "autocreate": True,             # set to True for autocreate mode
+    "default_algo": "As is",        # select the name of an algorithm template to use for autocreation
+    ...,
+}
+```
+
 
 ### Interface changes
 - **[Breaking]** Replaced `UOM` with `BaseMeasurement` in KPI-related APIs and templates. Update custom KPI code to construct and return `Measurement`/`BaseMeasurement` instead of the old types.
@@ -45,7 +61,6 @@ template = KpiTemplate(
     measurement_base=mass_kg,                   # Pass the measurement to use as a basis for the kpi value
 )
 ```
-
 
 ### Compare page naming cleanup
 All remaining references to the `performance` page were renamed to `compare` for consistency (imports, component IDs, modules). If you import internal modules, update your imports accordingly.
