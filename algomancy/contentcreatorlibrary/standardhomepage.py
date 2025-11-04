@@ -163,9 +163,9 @@ class StandardHomePageContentCreator:
                                         "info",
                                     ),
                                     StandardHomePageContentCreator._create_quick_link(
-                                        "Performance",
-                                        "/performance",
-                                        "View performance metrics",
+                                        "Compare",
+                                        "/compare",
+                                        "Compare two scenarios",
                                         "success",
                                     ),
                                     StandardHomePageContentCreator._create_quick_link(

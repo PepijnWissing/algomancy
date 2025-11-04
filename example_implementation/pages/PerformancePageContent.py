@@ -1,7 +1,7 @@
 """
 PerformancePageContent.py - Secondary Results Component
 
-This module defines the secondary results section component for the performance dashboard page.
+This module defines the secondary results section component for the compare dashboard page.
 It creates a collapsible section that displays additional results for the selected scenarios.
 """
 

@@ -1,7 +1,7 @@
 """
 scenarioselector.py - Scenario Selection Component
 
-This module defines the scenario selector component for the performance dashboard page.
+This module defines the scenario selector component for the compare dashboard page.
 It allows users to select and compare two different scenarios side by side.
 """
 

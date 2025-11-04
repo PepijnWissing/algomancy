@@ -56,10 +56,10 @@ class DashLauncher:
             data_callbacks=cfg["data_callbacks"],
             scenario_content=cfg["scenario_content"],
             scenario_callbacks=cfg["scenario_callbacks"],
-            performance_content=cfg["performance_content"],
-            performance_compare=cfg["performance_compare"],
-            performance_details=cfg["performance_details"],
-            performance_callbacks=cfg["performance_callbacks"],
+            compare_content=cfg["compare_content"],
+            compare_compare=cfg["compare_compare"],
+            compare_details=cfg["compare_details"],
+            compare_callbacks=cfg["compare_callbacks"],
             overview_content=cfg["overview_content"],
             overview_callbacks=cfg["overview_callbacks"],
             title=cfg["title"],
@@ -82,14 +82,14 @@ class DashLauncher:
             home_content: Callable[[], html.Div] | str = "placeholder",
             data_content: Callable[[DataSource], html.Div] | str = "placeholder",
             scenario_content: Callable[[Scenario], html.Div] | str = "placeholder",
-            performance_content: Callable[[Scenario], html.Div] | str = "placeholder",
-            performance_compare: Callable[[Scenario, Scenario], html.Div] | str = "placeholder",
-            performance_details: Callable[[Scenario, Scenario], html.Div] | str = "placeholder",
+            compare_content: Callable[[Scenario], html.Div] | str = "placeholder",
+            compare_compare: Callable[[Scenario, Scenario], html.Div] | str = "placeholder",
+            compare_details: Callable[[Scenario, Scenario], html.Div] | str = "placeholder",
             overview_content: Callable[[], html.Div] | str = "placeholder",
             home_callbacks: Callable[[], None] | str | None = None,
             data_callbacks: Callable[[], None] | str | None = None,
             scenario_callbacks: Callable[[], None] | str | None = None,
-            performance_callbacks: Callable[[], None] | str | None = None,
+            compare_callbacks: Callable[[], None] | str | None = None,
             overview_callbacks: Callable[[], None] | str | None = None,
             assets_path: str = "",
             title: str = "Demo Dashboard",
@@ -122,8 +122,8 @@ class DashLauncher:
         home_content, home_callbacks = lm.get_home_content(home_content, home_callbacks)
         data_content, data_callbacks = lm.get_data_content(data_content, data_callbacks)
         scenario_content, scenario_callbacks = lm.get_scenario_content(scenario_content, scenario_callbacks)
-        perf_content, perf_compare, perf_details, perf_callbacks = lm.get_performance_content(
-            performance_content, performance_compare, performance_details, performance_callbacks
+        perf_content, perf_compare, perf_details, perf_callbacks = lm.get_compare_content(
+            compare_content, compare_compare, compare_details, compare_callbacks
         )
         overview_content, overview_callbacks = lm.get_overview_content(overview_content, overview_callbacks)
 
@@ -131,7 +131,7 @@ class DashLauncher:
         content_registry.register_home_content(home_content, home_callbacks)
         content_registry.register_data_content(data_content, data_callbacks)
         content_registry.register_scenario_content(scenario_content, scenario_callbacks)
-        content_registry.register_performance_content(perf_content, perf_compare, perf_details, perf_callbacks)
+        content_registry.register_compare_content(perf_content, perf_compare, perf_details, perf_callbacks)
         content_registry.register_overview_content(overview_content, overview_callbacks)
 
         # fill and run the app

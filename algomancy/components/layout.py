@@ -1,7 +1,8 @@
 from typing import Any
 
-from dash import html, dcc, Output, Input, State, callback
+
 import dash_bootstrap_components as dbc
+from dash import html, Output, callback, Input, State, dcc
 from dash.html import Div
 
 from algomancy.stylingconfigurator import StylingConfigurator, LayoutSelection
@@ -10,7 +11,7 @@ from algomancy.components.componentids import *
 from algomancy.components.home_page.home import home_page
 from algomancy.components.data_page.data import data_page
 from algomancy.components.scenario_page.scenarios import scenario_page
-from algomancy.components.performance_page.performance import performance_page
+from algomancy.components.compare_page.compare import compare_page
 from algomancy.components.admin_page.admin import admin_page
 from algomancy.components.overview_page.overview import overview_page
 
@@ -99,7 +100,7 @@ class LayoutCreator:
             elif pathname == "/scenarios":
                 return scenario_page()
             elif pathname == "/compare":
-                return performance_page()
+                return compare_page()
             elif pathname == "/overview":
                 return overview_page()
             elif pathname == "/admin":

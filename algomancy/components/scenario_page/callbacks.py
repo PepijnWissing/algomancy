@@ -142,7 +142,7 @@ def open_algo_params_window(algo_name):
         try:
             return True, create_algo_parameters_entry_card_body(algo_name)
         except AssertionError as ae:
-            get_app().server.scenario_manager.logger.log_exception(ae)
+            # get_app().server.scenario_manager.logger.log_traceback(ae)
             return False, ""
     return False, ""
 
@@ -181,7 +181,7 @@ def create_scenario(create_clicks, tag, dataset, algorithm, algo_param_values, s
         scenario_manager.create_scenario(tag, dataset, algorithm, param_dict)
         return "new scenario created", "", False, False
     except Exception as e:
-        get_app().server.scenario_manager.logger.log_exception(e)
+        get_app().server.scenario_manager.logger.log_traceback(e)
         return no_update, f'Error: {e}', True, False
 
 
