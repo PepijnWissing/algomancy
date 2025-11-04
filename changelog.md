@@ -1,7 +1,7 @@
 # Change log
 
 ## 0.2.10
-_Released at 04-11-2025_
+_Released at 05-11-2025_
 
 ### Summary
 - Introduced a unified KPI measurement framework with `BaseMeasurement`, replacing `UOM`. This allows for automatic unit conversion and consistent representation in the UI.
@@ -10,6 +10,7 @@ _Released at 04-11-2025_
 - Documentation: README updates and minor cleanup.
 - Tests: Added pytest module `tests/test_unit_measurement_examples.py` covering Measurement examples from `unit.py`.
 - New feature: automatic creation of scenarios is now supported.
+- New feature: Added `refresh` functionality to the `Scenario` component.
 
 ### New features
 - Added automatic creation of scenarios. This will cause any creation of a `DataSource` (or derived) to spawn a `Scenario` with the same name (suffixed with `[auto]`). The algorithm template must be specified in the configuration dictionary.
@@ -23,7 +24,9 @@ configuration = {
     ...,
 }
 ```
-
+- Added `refresh` functionality to the `Scenario` component. This will cause the `Scenario` to reset its status and discard the `ScenarioResult`. 
+To refresh a scenario, the `Scenario.refresh()` method is called from the Scenario management screen. The process scenario button is now context-aware. 
+At a later time, this button will also support a cancel operation. 
 
 ### Interface changes
 - **[Breaking]** Replaced `UOM` with `BaseMeasurement` in KPI-related APIs and templates. Update custom KPI code to construct and return `Measurement`/`BaseMeasurement` instead of the old types.
