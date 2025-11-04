@@ -8,7 +8,7 @@ performance metrics and comparisons between scenarios.
 from dash import html, dcc
 import dash_bootstrap_components as dbc
 
-from algomancy.scenarioengine.keyperformanceindicator import ImprovementDirection, KpiType
+from algomancy.scenarioengine.keyperformanceindicator import ImprovementDirection
 from algomancy.scenarioengine.unit import Measurement
 
 

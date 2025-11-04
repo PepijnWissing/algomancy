@@ -1,7 +1,6 @@
 import random
 
 from algomancy.scenarioengine import (
-    KpiType,
     ImprovementDirection,
     KpiTemplate,
     ScenarioResult,
@@ -18,7 +17,6 @@ def create_throughput_template():
 
     return KpiTemplate(
         name="Throughput",
-        type=KpiType.NUMERIC,
         better_when=ImprovementDirection.HIGHER,
         callback=throughput_calculation,
         measurement_base=mass_kg,
