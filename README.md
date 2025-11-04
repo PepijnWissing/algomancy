@@ -156,3 +156,11 @@ High-level layout (non-exhaustive):
 ### Support
 - Maintainers: See pyproject.toml authors/maintainers fields.
 - For private package feed access or deployment, contact project maintainers.
+
+# Update version
+Option A: Update Pipfile to point to the existing wheel (preferred)
+In Pipfile, replace the algomancy source pointing to 0.2.5 with the local 0.2.6 wheel path:
+Example: algomancy = {path = "dist/algomancy-0.2.6-py3-none-any.whl"}
+Then regenerate lockfile and install:
+pipenv lock --clear
+pipenv install
