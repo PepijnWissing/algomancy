@@ -10,7 +10,7 @@ from algomancy.contentcreatorlibrary.placeholderhomepagecontentcreator import Pl
 from algomancy.contentcreatorlibrary.standardhomepage import StandardHomePageContentCreator
 from algomancy.contentcreatorlibrary.exampledatapage import ExampleDataPageContentCreator
 from algomancy.contentcreatorlibrary.placeholderdatapage import PlaceholderDataPageContentCreator
-from algomancy.contentcreatorlibrary.placeholderperformancepage import PlaceholderPerformancePageContentCreator
+from algomancy.contentcreatorlibrary.placeholdercomparepage import PlaceholderComparePageContentCreator
 from algomancy.contentcreatorlibrary.placeholderscenariopage import PlaceholderScenarioPageContentCreator
 from algomancy.contentcreatorlibrary.standardoverviewpage import StandardOverviewPageContentCreator
 
@@ -155,60 +155,60 @@ class LibraryManager:
         return content, callbacks
 
     @staticmethod
-    def get_performance_content(
-            performance_content: Callable[[Scenario, str], html.Div] | str,
-            performance_compare: Callable[[Scenario, Scenario], html.Div] | str,
-            performance_details: Callable[[Scenario, Scenario], html.Div] | str,
-            performance_callbacks: Callable[[], None] | str | None = None,
+    def get_compare_content(
+            compare_content: Callable[[Scenario, str], html.Div] | str,
+            compare_compare: Callable[[Scenario, Scenario], html.Div] | str,
+            compare_details: Callable[[Scenario, Scenario], html.Div] | str,
+            compare_callbacks: Callable[[], None] | str | None = None,
     ) -> Tuple[
         Callable[[Scenario, str], html.Div],
         Callable[[Scenario, Scenario], html.Div],
         Callable[[Scenario, Scenario], html.Div],
         Callable[[], None] | None
     ]:
-        if isinstance(performance_content, Callable):
-            content = performance_content
-        elif isinstance(performance_content, str):
-            if performance_content == "placeholder":
-                content = PlaceholderPerformancePageContentCreator.create_content
+        if isinstance(compare_content, Callable):
+            content = compare_content
+        elif isinstance(compare_content, str):
+            if compare_content == "placeholder":
+                content = PlaceholderComparePageContentCreator.create_content
             else:
                 raise ValueError("Prepared component choices are: 'placeholder'")
         else:
-            raise ValueError("performance_content_fn must be a string or a callable")
+            raise ValueError("compare_content_fn must be a string or a callable")
 
-        if isinstance(performance_compare, Callable):
-            compare = performance_compare
-        elif isinstance(performance_compare, str):
-            if performance_compare == "placeholder":
-                compare = PlaceholderPerformancePageContentCreator.create_compare
-            else:
-                raise ValueError("Prepared component choices are: 'placeholder'")
-
-        else:
-            raise ValueError("performance_details_fn must be a string or a callable")
-
-        if isinstance(performance_details, Callable):
-            details = performance_details
-        elif isinstance(performance_details, str):
-            if performance_details == "placeholder":
-                details = PlaceholderPerformancePageContentCreator.create_details
+        if isinstance(compare_compare, Callable):
+            compare = compare_compare
+        elif isinstance(compare_compare, str):
+            if compare_compare == "placeholder":
+                compare = PlaceholderComparePageContentCreator.create_compare
             else:
                 raise ValueError("Prepared component choices are: 'placeholder'")
 
         else:
-            raise ValueError("performance_details_fn must be a string or a callable")
+            raise ValueError("compare_details_fn must be a string or a callable")
 
-        if isinstance(performance_callbacks, Callable):
-            callbacks = performance_callbacks
-        elif performance_callbacks is None:
+        if isinstance(compare_details, Callable):
+            details = compare_details
+        elif isinstance(compare_details, str):
+            if compare_details == "placeholder":
+                details = PlaceholderComparePageContentCreator.create_details
+            else:
+                raise ValueError("Prepared component choices are: 'placeholder'")
+
+        else:
+            raise ValueError("compare_details_fn must be a string or a callable")
+
+        if isinstance(compare_callbacks, Callable):
+            callbacks = compare_callbacks
+        elif compare_callbacks is None:
             callbacks = None
-        elif isinstance(performance_callbacks, str):
-            if performance_callbacks == "placeholder":
-                callbacks = PlaceholderPerformancePageContentCreator.register_callbacks
+        elif isinstance(compare_callbacks, str):
+            if compare_callbacks == "placeholder":
+                callbacks = PlaceholderComparePageContentCreator.register_callbacks
             else:
                 raise ValueError("Prepared component choices are: 'placeholder'")
         else:
-            raise ValueError("performance_callbacks must be a string or a callable or None")
+            raise ValueError("compare_callbacks must be a string or a callable or None")
 
         return content, compare, details, callbacks
 

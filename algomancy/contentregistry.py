@@ -11,9 +11,9 @@ class ContentRegistry:
         self._home_content: Callable[[],html.Div] | None = None
         self._data_content: Callable[[DataSource],html.Div] | None = None
         self._scenario_content: Callable[[Scenario],html.Div] | None = None
-        self._performance_side_by_side: Callable[[Scenario, str],html.Div] | None = None
-        self._performance_compare: Callable[[Scenario,Scenario],html.Div] | None = None
-        self._performance_details: Callable[[Scenario,Scenario],html.Div] | None = None
+        self._compare_side_by_side: Callable[[Scenario, str],html.Div] | None = None
+        self._compare_compare: Callable[[Scenario, Scenario],html.Div] | None = None
+        self._compare_details: Callable[[Scenario, Scenario],html.Div] | None = None
         self._overview_content: Callable[[],html.Div] | None = None
 
     def register_home_content(
@@ -43,16 +43,16 @@ class ContentRegistry:
         if callbacks:
             callbacks()
 
-    def register_performance_content(
+    def register_compare_content(
             self,
             content_fn: Callable[[Scenario, str], html.Div],
             compare_fn: Callable[[Scenario,Scenario], html.Div] | None,
             details_fn: Callable[[Scenario,Scenario], html.Div] | None,
             callbacks: Callable[[], None] | None = None
     ):
-        self._performance_side_by_side = content_fn
-        self._performance_compare = compare_fn
-        self._performance_details = details_fn
+        self._compare_side_by_side = content_fn
+        self._compare_compare = compare_fn
+        self._compare_details = details_fn
         if callbacks:
             callbacks()
 
@@ -101,35 +101,35 @@ class ContentRegistry:
             return default_content
 
     @property
-    def performance_side_by_side(self) -> Callable[[Scenario, str], html.Div]:
-        if self._performance_side_by_side:
-            return self._performance_side_by_side
+    def compare_side_by_side(self) -> Callable[[Scenario, str], html.Div]:
+        if self._compare_side_by_side:
+            return self._compare_side_by_side
         else:
             def default_content(scenario: Scenario, side: str):
                 return html.Div([
-                    html.H1("Performance side by side content was not filled."),
+                    html.H1("Compare side by side content was not filled."),
                 ])
             return default_content
 
     @property
-    def performance_compare(self) -> Callable[[Scenario,Scenario], html.Div]:
-        if self._performance_compare:
-            return self._performance_compare
+    def compare_compare(self) -> Callable[[Scenario, Scenario], html.Div]:
+        if self._compare_compare:
+            return self._compare_compare
         else:
             def default_content(scenario1: Scenario, scenario2: Scenario):
                 return html.Div([
-                    html.H1("Performance compare content was not filled."),
+                    html.H1("Compare content was not filled."),
                 ])
             return default_content
 
     @property
-    def performance_details(self) -> Callable[[Scenario,Scenario], html.Div]:
-        if self._performance_details:
-            return self._performance_details
+    def compare_details(self) -> Callable[[Scenario, Scenario], html.Div]:
+        if self._compare_details:
+            return self._compare_details
         else:
             def default_content(scenario1: Scenario, scenario2: Scenario):
                 return html.Div([
-                    html.H1("Performance details content was not filled."),
+                    html.H1("Compare details content was not filled."),
                 ])
             return default_content
 

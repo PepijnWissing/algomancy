@@ -1,14 +1,14 @@
 """
-callbacks.py - Performance Page Callbacks
+callbacks.py - Compare Page Callbacks
 
-This module defines the callback functions for the performance dashboard page.
+This module defines the callback functions for the compare dashboard page.
 It handles updating scenario overviews, KPI comparisons, and other interactive elements.
 """
 
 from dash import callback, Input, Output, html, get_app
 
 from algomancy.components.componentids import *
-from algomancy.components.performance_page.kpicard import kpi_card
+from algomancy.components.compare_page.kpicard import kpi_card
 
 
 @callback(
@@ -39,11 +39,9 @@ def update_kpi_comparison(left_id, right_id):
 
         card = kpi_card(
             kpi_name=left_kpi.name,
-            kpi_type=left_kpi.type,
             better_when=left_kpi.better_when,
-            left_value=left_kpi.value,
-            right_value=right_kpi.value,
-            UOM=left_kpi.UOM if left_kpi.UOM else "",
+            left_measurement=left_kpi.measurement,
+            right_measurement=right_kpi.measurement,
         )
 
         cards.append(html.Div(card, className="kpi-card-wrapper"))

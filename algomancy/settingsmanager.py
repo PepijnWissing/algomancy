@@ -9,10 +9,10 @@ class SettingsManager:
         return self._configurations.get(item, [])
 
     @property
-    def performance_default_open(self) -> List[str]:
-        return self["performance_default_open"]
+    def compare_default_open(self) -> List[str]:
+        return self["compare_default_open"]
 
     @property
-    def performance_ordered_list_components(self) -> List[str]:
-        return self["performance_ordered_list_components"]
+    def compare_ordered_list_components(self) -> List[str]:
+        return self["compare_ordered_list_components"]
 

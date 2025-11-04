@@ -111,16 +111,16 @@ def main(
         "home_content": HomePageContentCreator.create_home_page_content,
         "data_content": "example",
         "scenario_content": "placeholder",
-        "performance_content": "placeholder",
-        "performance_compare": "placeholder",
-        "performance_details": "placeholder",
+        "compare_content": "placeholder",
+        "compare_compare": "placeholder",
+        "compare_details": "placeholder",
         "overview_content": "standard",
         # -
         # === callbacks ===
         "home_callbacks": "standard",
         "data_callbacks": "example",
         "scenario_callbacks": "placeholder",
-        "performance_callbacks": "placeholder",
+        "compare_callbacks": "placeholder",
         "overview_callbacks": "standard",
         # -
         # === styling configuration ===
@@ -132,13 +132,13 @@ def main(
         "port": port,
         # -
         # === page configurations ===
-        "performance_default_open": [
+        "compare_default_open": [
             "side",
             "kpi",
             "compare",
             # 'details',
         ],
-        "performance_ordered_list_components": [
+        "compare_ordered_list_components": [
             'sbs_viewer',
             'kpis',
             'compare_section',

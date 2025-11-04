@@ -4,6 +4,8 @@ componentids.py - Component ID Constants
 This module defines constants for all component IDs used in the dashboard application.
 These IDs are used for callbacks and to reference components in the Dash application.
 """
+from jinja2.nodes import Compare
+
 # === Styling ===
 GLOBAL_STYLING_STORE = "global-styling"
 PAGE_CONTENT = 'page-content'
@@ -136,8 +138,8 @@ PERF_KPI_COLLAPSE = "perf-kpi-collapse"
 PERF_COMPARE_COLLAPSE = "perf-compare-collapse"
 
 
-# === Performance Page IDs ===
-PERFORMANCE_DETAIL_VIEW = "performance-detail-view"
+# === Compare Page IDs ===
+COMPARE_DETAIL_VIEW = "compare-detail-view"
 
 # === Overview Page IDs ===
 # OVERVIEW_TABLE = "overview-table"

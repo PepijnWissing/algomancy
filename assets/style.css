@@ -857,22 +857,23 @@ hr {
   color: var(--theme-primary); /* Use theme text color */
 }
 
-.performance-page {
+/* Compare page mirrors performance page styles */
+.compare-page {
 
 }
 
-.performance-page .side-by-side-viewer{
+.compare-page .side-by-side-viewer{
     margin-bottom: 10px;
 }
 
-.performance-page .kpi-cards{
+.compare-page .kpi-cards{
     margin-bottom: 0px;
     display: flex;
     flex-wrap: wrap;
     justify-content: flex-start;
 }
 
-.performance-page .kpi-cards .kpi-card-wrapper{
+.compare-page .kpi-cards .kpi-card-wrapper{
     flex: 1 1 300px;
     width: 400px;
     height: 200px;
@@ -881,10 +882,10 @@ hr {
     flex-direction: column;
 }
 
-.performance-page .compare-view{
+.compare-page .compare-view{
     margin-bottom: 10px;
 }
 
-.performance-page .details-view{
+.compare-page .details-view{
     margin-bottom: 10px;
 }

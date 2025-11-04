@@ -1,7 +1,7 @@
 """
-PerformancePageContent.py - Secondary Results Component
+Placeholder content for the Compare page - Secondary Results Component
 
-This module defines the secondary results section component for the performance dashboard page.
+This module defines the secondary results section component for the compare dashboard page.
 It creates a collapsible section that displays additional results for the selected scenarios.
 """
 
@@ -10,7 +10,7 @@ from dash import html
 from algomancy.scenarioengine.scenario import Scenario
 
 
-class PlaceholderPerformancePageContentCreator:
+class PlaceholderComparePageContentCreator:
     @staticmethod
     def create_content(s: Scenario, side: str) -> html.Div:
         return html.Div(
