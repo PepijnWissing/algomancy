@@ -1,7 +1,6 @@
 import random
 
 from algomancy.scenarioengine import (
-    KpiType,
     ImprovementDirection,
     KpiTemplate,
     ScenarioResult,
@@ -18,7 +17,6 @@ def create_delay_template():
 
     return KpiTemplate(
         name="Average Delay",
-        type=KpiType.TIME,
         better_when=ImprovementDirection.LOWER,
         callback=average_delay_calculation,
         measurement_base=time_s,

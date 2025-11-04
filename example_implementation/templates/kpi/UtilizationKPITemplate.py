@@ -1,7 +1,6 @@
 import random
 
 from algomancy.scenarioengine import (
-    KpiType,
     ImprovementDirection,
     KpiTemplate,
     ScenarioResult,
@@ -18,7 +17,6 @@ def create_utilization_template():
 
     return KpiTemplate(
         name="Utilization",
-        type=KpiType.PERCENT,
         better_when=ImprovementDirection.HIGHER,
         callback=utilization_calculation,
         measurement_base=percent_percent,

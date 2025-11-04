@@ -1,7 +1,6 @@
 import random
 
 from algomancy.scenarioengine import (
-    KpiType,
     ImprovementDirection,
     KpiTemplate,
     ScenarioResult,
@@ -18,7 +17,6 @@ def create_error_template():
 
     return KpiTemplate(
         name="Error Rate",
-        type=KpiType.RATIO,
         better_when=ImprovementDirection.LOWER,
         callback=error_rate_calculation,
         measurement_base=default_unit,
