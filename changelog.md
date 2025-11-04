@@ -1,5 +1,66 @@
 # Change log
 
+## 0.2.10
+_Released at 04-11-2025_
+
+### Summary
+- Introduced a unified KPI measurement framework with `BaseMeasurement`, replacing `UOM`. This allows for automatic unit conversion and consistent representation in the UI.
+- Renamed the remaining "performance" page references to "compare" across modules for consistency.
+- Improved logging: stack traces are now routed to the logger; startup log severity adjusted.
+- Documentation: README updates and minor cleanup.
+
+### Interface changes
+- **[Breaking]** Replaced `UOM` with `BaseMeasurement` in KPI-related APIs and templates. Update custom KPI code to construct and return `Measurement`/`BaseMeasurement` instead of the old types.
+- **[Breaking]** Removed obsolete `KpiType` enum.
+
+### Measurement framework
+- New `BaseUnit`, `Quantity`, `BaseMeasurement`, and `Measurement` types in `algomancy\\scenarioengine\\unit.py` provide consistent formatting, auto-scaling, and unit chaining.
+- KPI templates should be migrated to `BaseMeasurement`/`Measurement`. See `algomancy\\scenarioengine\\keyperformanceindicator.py` for how KPIs surface measurements.
+- Extensive examples are available in `algomancy\\scenarioengine\\unit.py\\example_usage()`.
+- KPI Template creation should now follow the following pattern:
+```python
+import random
+
+from algomancy.scenarioengine import ImprovementDirection, KpiTemplate, ScenarioResult
+from algomancy.scenarioengine.unit import QUANTITIES, BaseMeasurement
+
+def throughput_calculation(result: ScenarioResult) -> float:
+    return 100 * (1 + 0.5 * random.random())  # placeholder
+
+mass = QUANTITIES["mass"]
+mass_kg = BaseMeasurement(
+    mass["kg"],                                 # the default unit is kg; the associated quantity is mass
+    min_digits=1,                               # the minimum number of nonzero digits before the decimal point
+    max_digits=3,                               # the maximum number of nonzero digits before the decimal point
+    decimals=2,                                 # the number of decimal places to display
+    smallest_unit = "g",                        # the smallest unit to display - overrides min_digits
+    largest_unit = "ton",                       # the largest unit to display - overrides max_digits
+)
+
+template = KpiTemplate(
+    name="Throughput",
+    # type=KpiType.NUMERIC,                     # KpiType has become redundant, formatting is now handled by Measurement
+    better_when=ImprovementDirection.HIGHER,    
+    callback=throughput_calculation,
+    measurement_base=mass_kg,                   # Pass the measurement to use as a basis for the kpi value
+)
+```
+
+
+### Compare page naming cleanup
+All remaining references to the `performance` page were renamed to `compare` for consistency (imports, component IDs, modules). If you import internal modules, update your imports accordingly.
+
+> Note: css classes are also affected, so you may need to update your style.css file.
+
+### Logging
+- Exceptions now include full stack traces in the central logger.
+- The startup message severity has been adjusted for better signal in production logs.
+
+### Docs
+- README refreshed to reflect the new measurement framework and naming.
+
+
+
 ## 0.2.9
 _Released at 29-10-2025_
 
@@ -68,7 +129,7 @@ The expected keys are `sbs_viewer`, `kpis`, `compare_section`, and `details`. An
 # framework configuration
 configuration = {
     ...,
-    "performance_ordered_list_components": [
+    "compare_ordered_list_components": [
         'sbs_viewer',
         'kpis',
         'compare_section',
