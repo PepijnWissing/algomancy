@@ -104,6 +104,15 @@ class Scenario:
                 logger.error(f"Scenario '{self.tag}' failed to process: {str(e)}")
             self.result = {"error": str(e)}
 
+    def cancel(self, logger: Logger = None):
+        logger.warning(f'Not Yet Implemented: Scenario {self.tag} cancel')
+        pass
+
+    def refresh(self, logger: Logger = None):
+        self.status = ScenarioStatus.CREATED
+        self.result = None
+        logger.log(f"Refreshed scenario {self.tag}")
+
     def compute_kpis(self):
         """
         todo add comments

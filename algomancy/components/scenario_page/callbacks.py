@@ -50,22 +50,36 @@ def process_scenario(process_clicks):
     """
     Processes a scenario when the process button is clicked.
 
+    Depending on the scenario's status, this will:
+    - CREATED: enqueue processing
+    - QUEUED/PROCESSING: request cancel
+    - COMPLETE/FAILED: refresh (reset to CREATED)
+
     Args:
         process_clicks (list): List of click counts for process buttons
-        selected_id (str): ID of currently selected scenario
 
     Returns:
-        Updated scenario cards component
+        bool | dash.no_update: Whether the progress interval should be disabled.
     """
     sm = get_app().server.scenario_manager
 
     triggered = ctx.triggered_id
     if isinstance(triggered, dict) and triggered["type"] == SCENARIO_PROCESS_BUTTON and sum(process_clicks) > 0:
         scenario = sm.get_by_id(triggered["index"])
-        if scenario and scenario.status == ScenarioStatus.CREATED:
+        if not scenario:
+            return no_update
+
+        if scenario.status == ScenarioStatus.CREATED:
             sm.process_scenario_async(scenario)
             print(" -- Activating interval")
-            return False
+            return False  # enable progress interval
+        elif scenario.status in (ScenarioStatus.QUEUED, ScenarioStatus.PROCESSING):
+            scenario.cancel(logger=sm.logger)
+            return no_update
+        elif scenario.status in (ScenarioStatus.COMPLETE, ScenarioStatus.FAILED):
+            scenario.refresh(logger=sm.logger)
+            return no_update
+
     return no_update
 
 
