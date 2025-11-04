@@ -41,9 +41,10 @@ class DashLauncher:
             has_persistent_state=cfg["has_persistent_state"],
             save_type=cfg["save_type"],
             data_object_type=cfg["data_object_type"],
+            autocreate=cfg["autocreate"],
+            default_algo_name=cfg["default_algo"],
+            autorun=cfg["autorun"]
         )
-
-        sm.toggle_autorun(cfg["autorun"])
 
         # Create the app
         app = DashLauncher._construct(

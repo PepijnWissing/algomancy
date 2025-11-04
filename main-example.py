@@ -105,7 +105,9 @@ def main(
         "kpi_templates": kpi_templates,
         "algo_templates": algorithm_templates,
         "input_configs": example_input_configs,
-        "autorun": False,
+        "autocreate": True,
+        "default_algo": "As is",
+        "autorun": True,
         # -
         # === content functions ===
         "home_content": HomePageContentCreator.create_home_page_content,

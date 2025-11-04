@@ -9,6 +9,7 @@ from dash import Input, Output, State, callback, no_update, get_app, html
 from algomancy.dataengine.datamanager import ValidationError, DataManager
 from algomancy.components.componentids import *
 from algomancy.components.data_page.filenamematcher import match_file_names
+from algomancy.scenarioengine import ScenarioManager
 
 """
 Callback functions for data management dialogs in the dashboard application.
@@ -85,7 +86,7 @@ def derive_data_callback(n_clicks, selected_data_key, derived_name):
     """
     if not selected_data_key or not derived_name:
         return no_update, "", False, "Choose a dataset and enter a name!", True, False
-    sm = get_app().server.scenario_manager
+    sm: ScenarioManager = get_app().server.scenario_manager
     try:
         sanitized_name = _sanitize(derived_name)
         sm.derive_data(selected_data_key, sanitized_name)
@@ -432,7 +433,7 @@ def process_imports(n_clicks, contents, filenames, dataset_name):
         files = prepare_files_from_upload(sm, filenames, contents)
 
         # Load the data
-        sm.dm.etl_data(files, dataset_name)
+        sm.etl_data(files, dataset_name)
 
         # Return successful response
         return datetime.now(), False, "Data loaded successfully!", True, "", False, ""
@@ -601,15 +602,13 @@ def save_derived_data(n_clicks, set_name: str, ):
         Tuple containing modal state and alert messages
     """
 
-    sm = get_app().server.scenario_manager
+    sm: ScenarioManager = get_app().server.scenario_manager
     try:
         data = sm.get_data(set_name)
         data.set_to_master_data()
 
-        if sm.save_type == "parquet":
-            sm.dm.store_data_source_as_parquet(set_name)
-        elif sm.save_type == "json":
-            sm.dm.store_data_source_as_json(set_name)
+        if sm.save_type == "json":
+            sm.store_data_as_json(set_name)
         else:
             raise ValueError(f"Unknown save type: {sm.save_type}")
 

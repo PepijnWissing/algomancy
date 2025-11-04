@@ -190,7 +190,7 @@ class StatefulDataManager(DataManager):
 
     def startup(self):
         try:
-            self.load_data_from_data_folder()
+            self._load_data_from_data_folder()
             self.log(f"Data folder '{self._data_folder}' loaded.")
         except Exception as e:
             if self.logger:
@@ -217,7 +217,7 @@ class StatefulDataManager(DataManager):
 
         self.add_data_source(data_source)
 
-    def load_data_from_data_folder(self) -> None:
+    def _load_data_from_data_folder(self) -> None:
         """
         Loads all parquet files from the data folder and creates DataSource objects.
         Each parquet file is expected to be a serialized DataSource.
@@ -248,7 +248,7 @@ class StatefulDataManager(DataManager):
 
                 except Exception as e:
                     self.logger.error(f"Failed to load file '{item_path}' as a DataSource: {str(e)}")
-                    self.logger.log_traceback(e)
+                    self.traceback = self.logger.log_traceback(e)
 
             # If it's a directory, run ETL
             elif os.path.isdir(item_path):

@@ -113,18 +113,14 @@ def download_modal_children(n, selected_keys):
         # nothing selected -> ignore
         raise PreventUpdate
 
-    sm = get_app().server.scenario_manager
+    sm: ScenarioManager = get_app().server.scenario_manager
 
     # Build file contents mapping
     files = {}
     if sm.save_type == "json":
         for key in selected_keys:
             name = _sanitize_filename(key) + ".json"
-            files[name] = sm.dm.get_data(key).to_json()
-    elif sm.save_type == "parquet":
-        for key in selected_keys:
-            name = _sanitize_filename(key) + ".parquet"
-            files[name] = sm.dm.get_data(key).to_parquet_bytes()
+            files[name] = sm.get_data_as_json(key)
     else:
         # unknown save type
         raise PreventUpdate
