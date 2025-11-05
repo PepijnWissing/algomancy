@@ -1,25 +1,25 @@
 """
-performance.py - Performance Dashboard Page
+compare.py - Compare Dashboard Page
 
-This module defines the layout and components for the performance dashboard page.
+This module defines the layout and components for the compare dashboard page.
 It includes scenario selection, KPI improvement displays, and secondary results sections.
 """
 from dash import html, get_app, callback, Output, Input
 import dash_bootstrap_components as dbc
 
 from algomancy.components.componentids import *
-from algomancy.components.performance_page.scenarioselector import create_side_by_side_viewer, \
+from algomancy.components.compare_page.scenarioselector import create_side_by_side_viewer, \
     create_side_by_side_selector
 
-import algomancy.components.performance_page.callbacks
+import algomancy.components.compare_page.callbacks
 from algomancy.contentregistry import ContentRegistry
 from algomancy.scenarioengine import ScenarioManager
 from algomancy.settingsmanager import SettingsManager
 
 
-def performance_page():
+def compare_page():
     sm: ScenarioManager = get_app().server.scenario_manager
-    default_open = get_app().server.settings.performance_default_open
+    default_open = get_app().server.settings.compare_default_open
 
     header = dbc.Row([
         dbc.Col(
@@ -31,8 +31,8 @@ def performance_page():
                 dbc.Col(
                     dbc.Checklist(
                         options=[
-                            {'label': 'Show side-by-side', 'value': 'side'},
-                            {'label': 'Show KPI cards', 'value': 'kpi'},
+                            {'label': 'Show side-by-side', 'value': 'side-by-side'},
+                            {'label': 'Show KPI cards', 'value': 'kpis'},
                         ],
                         id=PERF_TOGGLE_CHECKLIST_LEFT,
                         class_name="styled-toggle",
@@ -60,9 +60,9 @@ def performance_page():
     ])
     selector = create_side_by_side_selector(sm)
 
-    sbs_id = 'sbs_viewer'
+    sbs_id = 'side-by-side'
     kpis_id = 'kpis'
-    compare_id = 'compare_section'
+    compare_id = 'compare'
     details_id = 'details'
 
     orderable_components = {
@@ -85,7 +85,7 @@ def performance_page():
             id=PERF_DETAILS_COLLAPSE,
             children=[
                 html.H5("Detail view"),
-                html.Div(id=PERFORMANCE_DETAIL_VIEW, className="details-view")
+                html.Div(id=COMPARE_DETAIL_VIEW, className="details-view")
             ]
         ),
     }
@@ -95,13 +95,13 @@ def performance_page():
 
     # retrieve any custom setting
     settings: SettingsManager = get_app().server.settings
-    configured_order = settings.performance_ordered_list_components
+    configured_order = settings.compare_ordered_list_components
 
     # verify the custom setting is valid
     if configured_order:
         for comp_id in configured_order:
             if comp_id not in orderable_components:
-                sm.logger.warning(f"Invalid component id '{comp_id}' in performance page order list.")
+                sm.logger.warning(f"Invalid component id '{comp_id}' in compare page order list.")
                 sm.logger.warning(f"Expected (possibly a a subset of) {list(orderable_components.keys())}.")
                 sm.logger.warning(f"Reverting to default component order.")
                 configured_order = None
@@ -118,7 +118,7 @@ def performance_page():
     for comp_id in used_order:
         ordered_components.append(orderable_components[comp_id])
 
-    page = html.Div(ordered_components, className="performance-page")
+    page = html.Div(ordered_components, className="compare-page")
     return page
 
 
@@ -137,7 +137,7 @@ def update_left_scenario_overview(scenario_id) -> html.Div | str:
     if not s:
         return "Scenario not found."
 
-    return cr.performance_side_by_side(s, "left")
+    return cr.compare_side_by_side(s, "left")
 
 
 @callback(
@@ -155,7 +155,7 @@ def update_right_scenario_overview(scenario_id) -> html.Div | str:
     if not s:
         return "Scenario not found."
 
-    return cr.performance_side_by_side(s, "right")
+    return cr.compare_side_by_side(s, "right")
 
 
 @callback(
@@ -181,11 +181,11 @@ def update_right_scenario_overview(left_scenario_id, right_scenario_id) -> html.
         return html.Div("One of the scenarios was not found.")
 
     # apply the function
-    return cr.performance_compare(left_scenario, right_scenario)
+    return cr.compare_compare(left_scenario, right_scenario)
 
 
 @callback(
-    Output(PERFORMANCE_DETAIL_VIEW, "children"),
+    Output(COMPARE_DETAIL_VIEW, "children"),
     Input(LEFT_SCENARIO_DROPDOWN, "value"),
     Input(RIGHT_SCENARIO_DROPDOWN, "value"),
     prevent_initial_call=True,
@@ -205,4 +205,4 @@ def update_right_scenario_overview(left_scenario_id, right_scenario_id) -> html.
     if not left_scenario or not right_scenario:
         return "One of the scenarios was not found."
 
-    return cr.performance_details(left_scenario, right_scenario)
+    return cr.compare_details(left_scenario, right_scenario)

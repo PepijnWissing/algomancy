@@ -50,22 +50,36 @@ def process_scenario(process_clicks):
     """
     Processes a scenario when the process button is clicked.
 
+    Depending on the scenario's status, this will:
+    - CREATED: enqueue processing
+    - QUEUED/PROCESSING: request cancel
+    - COMPLETE/FAILED: refresh (reset to CREATED)
+
     Args:
         process_clicks (list): List of click counts for process buttons
-        selected_id (str): ID of currently selected scenario
 
     Returns:
-        Updated scenario cards component
+        bool | dash.no_update: Whether the progress interval should be disabled.
     """
     sm = get_app().server.scenario_manager
 
     triggered = ctx.triggered_id
     if isinstance(triggered, dict) and triggered["type"] == SCENARIO_PROCESS_BUTTON and sum(process_clicks) > 0:
         scenario = sm.get_by_id(triggered["index"])
-        if scenario and scenario.status == ScenarioStatus.CREATED:
+        if not scenario:
+            return no_update
+
+        if scenario.status == ScenarioStatus.CREATED:
             sm.process_scenario_async(scenario)
             print(" -- Activating interval")
-            return False
+            return False  # enable progress interval
+        elif scenario.status in (ScenarioStatus.QUEUED, ScenarioStatus.PROCESSING):
+            scenario.cancel(logger=sm.logger)
+            return no_update
+        elif scenario.status in (ScenarioStatus.COMPLETE, ScenarioStatus.FAILED):
+            scenario.refresh(logger=sm.logger)
+            return no_update
+
     return no_update
 
 
@@ -141,7 +155,8 @@ def open_algo_params_window(algo_name):
     if algo_name:
         try:
             return True, create_algo_parameters_entry_card_body(algo_name)
-        except AssertionError:
+        except AssertionError as ae:
+            # get_app().server.scenario_manager.logger.log_traceback(ae)
             return False, ""
     return False, ""
 
@@ -180,6 +195,7 @@ def create_scenario(create_clicks, tag, dataset, algorithm, algo_param_values, s
         scenario_manager.create_scenario(tag, dataset, algorithm, param_dict)
         return "new scenario created", "", False, False
     except Exception as e:
+        get_app().server.scenario_manager.logger.log_traceback(e)
         return no_update, f'Error: {e}', True, False
 
 

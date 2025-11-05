@@ -16,7 +16,7 @@ class HomePageContentCreator:
             html.Div: A Dash HTML component representing the home page content
         """
         # Get scenario information
-        all_scenarios = get_app().server.scenario_manager.registry.list()
+        all_scenarios = get_app().server.scenario_manager.list_scenarios()
 
         # Count scenarios in each status
         processing_count = sum(

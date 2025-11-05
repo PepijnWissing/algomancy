@@ -8,6 +8,8 @@ creates the Dash application, and starts the web server.
 import argparse
 import platform
 
+from flask.globals import app_ctx
+
 from algomancy.dataengine import DataSource
 from algomancy.launcher import DashLauncher
 from algomancy.stylingconfigurator import (
@@ -17,6 +19,7 @@ from algomancy.stylingconfigurator import (
     CardHighlightMode,
     ButtonColorMode,
 )
+from algomancy.appconfiguration import AppConfiguration
 
 from example_implementation.data_handling.input_configs import example_input_configs
 from example_implementation.data_handling.factories import ExampleETLFactory
@@ -41,25 +44,6 @@ def main(
     Loads data from CSV files, initializes the data source, creates the Dash application,
     and starts the web server.
     """
-
-    if not host:
-        if platform.system() == "Windows":
-            host = "127.0.0.1"  # default host for windows
-        else:
-            host = "0.0.0.1"  # default host for linux
-
-    if not port:
-        port = 8050
-
-    if not threads:
-        threads = 8
-
-    if not connection_limit:
-        connection_limit = 100
-
-    if not debug:
-        debug = False
-
 
     white = "#EEEEEE"  # white
     purple = "#3EBDF3"
@@ -89,76 +73,48 @@ def main(
         card_highlight_mode=CardHighlightMode.SUBTLE_DARK,
     )
 
-    # framework configuration
-    configuration = {
-        # === path specifications ===
-        "assets_path": "assets",
-        "data_path": "tests/data",
-        # -
-        # === data manager configuration ===
-        "has_persistent_state": True,
-        "save_type": "json",
-        "data_object_type": DataSource,
-        # -
-        # === scenario manager configuration ===
-        "etl_factory": ExampleETLFactory,
-        "kpi_templates": kpi_templates,
-        "algo_templates": algorithm_templates,
-        "input_configs": example_input_configs,
-        "autorun": False,
-        # -
-        # === content functions ===
-        "home_content": HomePageContentCreator.create_home_page_content,
-        "data_content": "example",
-        "scenario_content": "placeholder",
-        "performance_content": "placeholder",
-        "performance_compare": "placeholder",
-        "performance_details": "placeholder",
-        "overview_content": "standard",
-        # -
-        # === callbacks ===
-        "home_callbacks": "standard",
-        "data_callbacks": "example",
-        "scenario_callbacks": "placeholder",
-        "performance_callbacks": "placeholder",
-        "overview_callbacks": "standard",
-        # -
-        # === styling configuration ===
-        "styling_config": styling,
-        # -
-        # === misc dashboard configurations ===
-        "title": "Example implementation of an Algomancy Dashboard",
-        "host": host,
-        "port": port,
-        # -
-        # === page configurations ===
-        "performance_default_open": [
-            "side",
-            "kpi",
+    # framework configuration via AppConfiguration
+    app_cfg = AppConfiguration(
+        data_path="tests/data",
+        has_persistent_state=True,
+        etl_factory=ExampleETLFactory,
+        kpi_templates=kpi_templates,
+        algo_templates=algorithm_templates,
+        input_configs=example_input_configs,
+        autocreate=True,
+        default_algo="As is",
+        autorun=True,
+        home_content="standard",
+        data_content="example",
+        overview_content="standard",
+        home_callbacks="standard",
+        data_callbacks="example",
+        overview_callbacks="standard",
+        styling_config=styling,
+        title="Example implementation of an Algomancy Dashboard",
+        host=host,
+        port=port,
+        compare_default_open=[
+            "side-by-side",
+            "kpis",
             "compare",
             # 'details',
         ],
-        "performance_ordered_list_components": [
-            'sbs_viewer',
+        compare_ordered_list_components=[
+            'side-by-side',
             'kpis',
-            'compare_section',
+            'compare',
             'details',
         ],
-        # -
-        # === authentication ===
-        "use_authentication": False,
-    }
+        use_authentication=False,
+    )
 
-    # Build the app
-    app = DashLauncher.build(configuration)
-
-    # DEBUGGING: create some scenarios
-    if False:
-        debug_create_example_scenarios(app.server.scenario_manager)
+    # Build the app with AppConfiguration object directly
+    app = DashLauncher.build(app_cfg)
 
     # Run the app
     DashLauncher.run(
-        app=app, host=configuration["host"], port=configuration["port"], threads=threads,
+        app=app, host=app_cfg.host, port=app_cfg.port, threads=threads,
         connection_limit=connection_limit, debug=debug
     )
 

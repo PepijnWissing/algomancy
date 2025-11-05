@@ -1,5 +1,123 @@
 # Change log
 
+## 0.2.10
+_Released at 05-11-2025_
+
+### Summary
+- Introduced a unified KPI measurement framework with `BaseMeasurement`, replacing `UOM`. This allows for automatic unit conversion and consistent representation in the UI.
+- Renamed the remaining "performance" page references to "compare" across modules for consistency.
+- Improved logging: stack traces are now routed to the logger; startup log severity adjusted.
+- Documentation: README updates and minor cleanup.
+- Tests: Added pytest module `tests/test_unit_measurement_examples.py` covering Measurement examples from `unit.py`.
+- New feature: automatic creation of scenarios is now supported.
+- New feature: Added `refresh` functionality to the `Scenario` component.
+- **[Breaking]** New feature: `AppConfiguration` class now manages and validates the launch configuration
+
+### AppConfiguration
+>**This is a breaking change.**
+
+Added `AppConfiguration` class to manage and validate the launch configuration. Conceptually, this class is a wrapper that provides a consistent interface for the configuration fields and their validation.
+This class is now used to manage the launch sequence. In particular, DashLauncher.build(...) now takes an `AppConfiguration` object as an argument, instead of a dictionary.
+Your main method must be migrated to use the new class. An example is shown below:
+```python
+# main method: preferred version
+
+from algomancy.launcher import DashLauncher
+from algomancy.appconfiguration import AppConfiguration
+
+def main():
+    app_cfg = AppConfiguration(
+        data_path="data",
+        has_persistent_state=True,
+#       ...
+    )
+    app = DashLauncher.build(app_cfg)
+    DashLauncher.run(app=app, host=app_cfg.host, port=app_cfg.port)
+```
+For migration, the `AppConfiguration.from_dict(...)` method can be used to create an `AppConfiguration` object from a dictionary. Note that this is not advised, as this will not allow for IDE support. 
+```python
+# main method: migration alternative
+
+from algomancy.launcher import DashLauncher
+from algomancy.appconfiguration import AppConfiguration
+
+def main():
+    configuration = {
+        "data_path": "data",
+        "has_persistent_state": True,
+#       ...   
+    }
+    app_cfg = AppConfiguration.from_dict(configuration)   
+    app = DashLauncher.build(app_cfg)
+    DashLauncher.run(app=app, host=app_cfg.host, port=app_cfg.port)
+```
+### Autocreate
+Added automatic creation of scenarios. This will cause any creation of a `DataSource` (or derived) to spawn a `Scenario` with the same name (suffixed with `[auto]`). The algorithm template must be specified in the configuration dictionary.
+To configure, add the below to the configuration.
+```python
+# framework configuration
+app_cfg = AppConfiguration(
+#    ...,
+    autocreate= True,             # set to True for autocreate mode
+    default_algo= "As is",        # select the name of an algorithm template to use for autocreation
+#    ...,
+)
+```
+- Added `refresh` functionality to the `Scenario` component. This will cause the `Scenario` to reset its status and discard the `ScenarioResult`. 
+To refresh a scenario, the `Scenario.refresh()` method is called from the Scenario management screen. The process scenario button is now context-aware. 
+At a later time, this button will also support a cancel operation. 
+
+### Interface changes
+- **[Breaking]** Replaced `UOM` with `BaseMeasurement` in KPI-related APIs and templates. Update custom KPI code to construct and return `Measurement`/`BaseMeasurement` instead of the old types.
+- **[Breaking]** Removed obsolete `KpiType` enum.
+
+### Measurement framework
+- New `BaseUnit`, `Quantity`, `BaseMeasurement`, and `Measurement` types in `algomancy\\scenarioengine\\unit.py` provide consistent formatting, auto-scaling, and unit chaining.
+- KPI templates should be migrated to `BaseMeasurement`/`Measurement`. See `algomancy\\scenarioengine\\keyperformanceindicator.py` for how KPIs surface measurements.
+- Extensive examples are available in `algomancy\\scenarioengine\\unit.py\\example_usage()`.
+- KPI Template creation should now follow the following pattern:
+```python
+import random
+
+from algomancy.scenarioengine import ImprovementDirection, KpiTemplate, ScenarioResult
+from algomancy.scenarioengine.unit import QUANTITIES, BaseMeasurement
+
+def throughput_calculation(result: ScenarioResult) -> float:
+    return 100 * (1 + 0.5 * random.random())  # placeholder
+
+mass = QUANTITIES["mass"]
+mass_kg = BaseMeasurement(
+    mass["kg"],                                 # the default unit is kg; the associated quantity is mass
+    min_digits=1,                               # the minimum number of nonzero digits before the decimal point
+    max_digits=3,                               # the maximum number of nonzero digits before the decimal point
+    decimals=2,                                 # the number of decimal places to display
+    smallest_unit = "g",                        # the smallest unit to display - overrides min_digits
+    largest_unit = "ton",                       # the largest unit to display - overrides max_digits
+)
+
+template = KpiTemplate(
+    name="Throughput",
+    # type=KpiType.NUMERIC,                     # KpiType has become redundant, formatting is now handled by Measurement
+    better_when=ImprovementDirection.HIGHER,    
+    callback=throughput_calculation,
+    measurement_base=mass_kg,                   # Pass the measurement to use as a basis for the kpi value
+)
+```
+
+### Compare page naming cleanup
+All remaining references to the `performance` page were renamed to `compare` for consistency (imports, component IDs, modules). If you import internal modules, update your imports accordingly.
+
+> Note: css classes are also affected, so you may need to update your style.css file.
+
+### Logging
+- Exceptions now include full stack traces in the central logger.
+- The startup message severity has been adjusted for better signal in production logs.
+
+### Docs
+- README refreshed to reflect the new measurement framework and naming.
+
+
+
 ## 0.2.9
 _Released at 29-10-2025_
 
@@ -62,16 +180,16 @@ _Released at 27-10-2025_
 ### Compare page configuration
 The order of the main sections (side-by-side, compare, KPI cards, and details) are now configurable through the configuration dictionary.
 To configure, specify the list of component keys in the order you want them to appear in the compare page, and add it to the configuration dictionary with key `performance_ordered_list_components`.
-The expected keys are `sbs_viewer`, `kpis`, `compare_section`, and `details`. An example is shown below:
+The expected keys are `side-by-side`, `kpis`, `compare`, and `details`. An example is shown below:
 
 ```python
 # framework configuration
 configuration = {
     ...,
-    "performance_ordered_list_components": [
-        'sbs_viewer',
+    "compare_ordered_list_components": [
+        'side-by-side',
         'kpis',
-        'compare_section',
+        'compare',
         'details',
     ],
     ...

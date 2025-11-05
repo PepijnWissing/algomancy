@@ -280,17 +280,15 @@ def process_uploaded_files(n_clicks, contents, filenames):
             decoded = base64.b64decode(content_string)
             json_string = decoded.decode('utf-8')
 
-            # Create data source from JSON
-            datasource = sm.dm.data_object_type.from_json(json_string)
-
-            # Add data source to datamanager
-            sm.dm.add_data_source(datasource)
+            # Add data source to scenario manager
+            sm.add_datasource_from_json(json_string)
 
             # Log
             sm.logger.success(f"Successfully uploaded {filename} to data manager.")
 
         except Exception as e:
             sm.logger.error(f"Error processing uploaded file {filename}: {e}")
+            sm.logger.log_traceback(e)
 
     # Close the modal
     return datetime.now(), [True], True, ''

@@ -23,6 +23,24 @@ def hidden_card():
 
 
 def scenario_card(s: Scenario, is_hidden: bool=False):
+    # Determine process button appearance based on scenario status
+    if s.status == ScenarioStatus.CREATED:
+        btn_text = "Process"
+        btn_color = "success"
+        btn_disabled = False
+    elif s.status in (ScenarioStatus.QUEUED, ScenarioStatus.PROCESSING):
+        btn_text = "Cancel"
+        btn_color = "danger"
+        btn_disabled = False
+    elif s.status in (ScenarioStatus.COMPLETE, ScenarioStatus.FAILED):
+        btn_text = "Refresh"
+        btn_color = "info"
+        btn_disabled = False
+    else:
+        btn_text = "Process"
+        btn_color = "secondary"
+        btn_disabled = True
+
     return html.Div(
         [
             # Top row: Scenario tag
@@ -51,12 +69,12 @@ def scenario_card(s: Scenario, is_hidden: bool=False):
                 dbc.Col(
                     dbc.ButtonGroup([
                         dbc.Button(
-                            "Process",
+                            btn_text,
                             id={"type": SCENARIO_PROCESS_BUTTON, "index": s.id},
-                            color="success",
+                            color=btn_color,
                             size="sm",
                             n_clicks=0,
-                            disabled=s.status != ScenarioStatus.CREATED,
+                            disabled=btn_disabled,
                             style={"minWidth": "80px"}
                         ),
                         dbc.Button(

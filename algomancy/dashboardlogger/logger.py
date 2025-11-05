@@ -1,4 +1,5 @@
 import datetime
+import traceback
 from enum import StrEnum, auto
 from typing import List, Optional
 
@@ -95,3 +96,10 @@ class Logger:
         Verwijdert alle opgeslagen logs.
         """
         self._logs.clear()
+
+    def log_traceback(self, e: Exception):
+        self.error(
+            f"An error occurred: {e.__class__.__name__}: {e}"
+        )
+        for msg in traceback.format_tb(e.__traceback__):
+            self.error(msg)

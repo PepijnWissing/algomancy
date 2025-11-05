@@ -2,7 +2,7 @@ from .exampledatapage import ExampleDataPageContentCreator
 from .librarymanager import LibraryManager
 from .placeholderdatapage import PlaceholderDataPageContentCreator
 from .placeholderhomepagecontentcreator import PlaceholderHomePageContentCreator
-from .placeholderperformancepage import PlaceholderPerformancePageContentCreator
+from .placeholdercomparepage import PlaceholderComparePageContentCreator
 from .placeholderscenariopage import PlaceholderScenarioPageContentCreator
 from .standarddatapage import StandardDataPageContentCreator
 from .standardhomepage import StandardHomePageContentCreator
@@ -14,7 +14,7 @@ __all__ = [
     "ExampleDataPageContentCreator",
     "PlaceholderDataPageContentCreator",
     "PlaceholderHomePageContentCreator",
-    "PlaceholderPerformancePageContentCreator",
+    "PlaceholderComparePageContentCreator",
     "PlaceholderScenarioPageContentCreator",
     "StandardDataPageContentCreator",
     "StandardHomePageContentCreator",

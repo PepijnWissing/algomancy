@@ -16,7 +16,7 @@ class StandardHomePageContentCreator:
             html.Div: A Dash HTML component representing the home page content
         """
         # Get scenario information
-        all_scenarios = get_app().server.scenario_manager.registry.list()
+        all_scenarios = get_app().server.scenario_manager.list_scenarios()
 
         # Count scenarios in each status
         processing_count = sum(
@@ -163,9 +163,9 @@ class StandardHomePageContentCreator:
                                         "info",
                                     ),
                                     StandardHomePageContentCreator._create_quick_link(
-                                        "Performance",
-                                        "/performance",
-                                        "View performance metrics",
+                                        "Compare",
+                                        "/compare",
+                                        "Compare two scenarios",
                                         "success",
                                     ),
                                     StandardHomePageContentCreator._create_quick_link(
