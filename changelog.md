@@ -1,4 +1,15 @@
 # Change log
+## 0.2.11
+_Released at 05-11-2025_
+### Summary
+- Several minor bug fixes and documentation updates.
+- implemented `__eq__` for `DataSource`, checking the internal uuid. 
+
+### Bug fixes
+- Removed redundant message from internal logging
+- `Scenario.cancel()` and `Scenario.refresh()` now act properly when no logger is passed
+- Secret key is now set on `BasicAuth`
+- data path is no longer validated for configurations without persistent state. 
 
 ## 0.2.10
 _Released at 05-11-2025_

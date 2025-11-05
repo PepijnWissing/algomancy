@@ -37,6 +37,9 @@ class DataSource:
         else:
             self._name = name
 
+    def __eq__(self, other):
+        return self.id == other.id
+
     @property
     def name(self):
         return self._name

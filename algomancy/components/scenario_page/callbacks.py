@@ -71,7 +71,6 @@ def process_scenario(process_clicks):
 
         if scenario.status == ScenarioStatus.CREATED:
             sm.process_scenario_async(scenario)
-            print(" -- Activating interval")
             return False  # enable progress interval
         elif scenario.status in (ScenarioStatus.QUEUED, ScenarioStatus.PROCESSING):
             scenario.cancel(logger=sm.logger)
