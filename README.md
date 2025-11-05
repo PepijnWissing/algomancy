@@ -52,6 +52,8 @@ You can embed Algomancy into your own app using the DashLauncher helper.
 ```python
 from algomancy.dataengine import DataSource
 from algomancy.launcher import DashLauncher
+from algomancy.appconfiguration import AppConfiguration
+
 
 configuration = {
   "assets_path": "assets",
@@ -80,9 +82,10 @@ configuration = {
   "title": "My Algomancy Dashboard",
   "use_authentication": False,
 }
+app_cfg = AppConfiguration.from_dict(configuration)  # or AppConfiguration(asset_path=...)
 
-app = DashLauncher.build(configuration)
-DashLauncher.run(app, host="127.0.0.1", port=8050, threads=8, connection_limit=100, debug=False)
+app = DashLauncher.build(app_cfg)
+DashLauncher.run(app, host=app_cfg.host, port=app_cfg.port)
 ```
 ### Environment Variables
 - Authentication (optional): If configuration["use_authentication"] is True, set these before launching:
