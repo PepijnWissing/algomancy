@@ -159,13 +159,14 @@ class AppConfiguration:
     def _validate_paths(self) -> None:
         if self.assets_path is None or self.assets_path == "":
             raise ValueError("assets_path must be provided")
-        if self.data_path is None or self.data_path == "":
-            raise ValueError("data_path must be provided")
-
         if not os.path.isdir(self.assets_path):
             raise ValueError(f"assets_path does not exist or is not a directory: {self.assets_path}")
-        if not os.path.isdir(self.data_path):
-            raise ValueError(f"data_path does not exist or is not a directory: {self.data_path}")
+
+        if self.has_persistent_state:
+            if not os.path.isdir(self.data_path):
+                raise ValueError(f"data_path does not exist or is not a directory: {self.data_path}")
+            if self.data_path is None or self.data_path == "":
+                raise ValueError("data_path must be provided")
 
     def _validate_values(self) -> None:
         # required non-null entries for scenario/data managers

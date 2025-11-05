@@ -47,7 +47,7 @@ class DashLauncher:
                 raise ValueError("Environment variables 'APP_USERNAME' and 'APP_PASSWORD' must be set") #todo document where to set username and password
 
             # add authentication to the app
-            dash_auth.BasicAuth(app, [[os.getenv("APP_USERNAME"), os.getenv("APP_PASSWORD")]])
+            dash_auth.BasicAuth(app, [[os.getenv("APP_USERNAME"), os.getenv("APP_PASSWORD")]], secret_key="secret-key")
 
         return app
 
