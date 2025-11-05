@@ -18,10 +18,10 @@ To configure, add the below to the configuration dictionary.
 ```python
 # framework configuration
 configuration = {
-    ...,
+#    ...,
     "autocreate": True,             # set to True for autocreate mode
     "default_algo": "As is",        # select the name of an algorithm template to use for autocreation
-    ...,
+#    ...,
 }
 ```
 - Added `refresh` functionality to the `Scenario` component. This will cause the `Scenario` to reset its status and discard the `ScenarioResult`. 

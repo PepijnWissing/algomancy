@@ -1,4 +1,4 @@
-from typing import Callable, Dict, Any
+from typing import Callable, Dict, Any, Union
 import importlib.metadata
 
 import os
@@ -14,61 +14,35 @@ from algomancy.dataengine.datasource import DataSource
 from algomancy.scenarioengine.scenariomanager import ScenarioManager, Scenario
 from algomancy.contentcreatorlibrary.librarymanager import LibraryManager as lm
 from algomancy.dashboardlogger.logger import MessageStatus
+from algomancy.appconfiguration import AppConfiguration
 
 from dash_bootstrap_components.themes import BOOTSTRAP
 
 
 class DashLauncher:
     @staticmethod
-    def _check_and_fill_configuration(configuration: Dict[str, Any]) -> Dict[str, Any]:
-        print("TO DO: Check configuration")
-        return configuration
-
-    @staticmethod
     def build(
-            cfg: Dict[str, Any]
+            cfg: Union[AppConfiguration, Dict[str, Any]]
     ) -> Dash:
-        # check for required configuration entries
-        cfg = DashLauncher._check_and_fill_configuration(cfg)
+        # Normalize configuration to AppConfiguration for a single source of truth
+        if isinstance(cfg, dict):
+            cfg_obj = AppConfiguration(**cfg)
+        elif isinstance(cfg, AppConfiguration):
+            cfg_obj = cfg
+        else:
+            raise TypeError("DashLauncher.build expects AppConfiguration or dict")
 
-        # initialize Scenario Manager
-        sm = ScenarioManager(
-            etl_factory=cfg["etl_factory"],
-            kpi_templates=cfg["kpi_templates"],
-            algo_templates=cfg["algo_templates"],
-            data_folder=cfg["data_path"],
-            input_configs=cfg["input_configs"],
-            has_persistent_state=cfg["has_persistent_state"],
-            save_type=cfg["save_type"],
-            data_object_type=cfg["data_object_type"],
-            autocreate=cfg["autocreate"],
-            default_algo_name=cfg["default_algo"],
-            autorun=cfg["autorun"]
-        )
+        # initialize Scenario Manager using the configuration
+        sm = ScenarioManager.from_config(cfg_obj)
 
         # Create the app
         app = DashLauncher._construct(
+            cfg=cfg_obj,
             scenario_manager=sm,
-            assets_path=cfg["assets_path"],
-            styling_config=cfg["styling_config"],
-            home_content=cfg["home_content"],
-            home_callbacks=cfg["home_callbacks"],
-            data_content=cfg["data_content"],
-            data_callbacks=cfg["data_callbacks"],
-            scenario_content=cfg["scenario_content"],
-            scenario_callbacks=cfg["scenario_callbacks"],
-            compare_content=cfg["compare_content"],
-            compare_compare=cfg["compare_compare"],
-            compare_details=cfg["compare_details"],
-            compare_callbacks=cfg["compare_callbacks"],
-            overview_content=cfg["overview_content"],
-            overview_callbacks=cfg["overview_callbacks"],
-            title=cfg["title"],
-            settings_manager=SettingsManager(cfg),
         )
 
         # register authentication if enabled
-        if cfg["use_authentication"]:
+        if cfg_obj.use_authentication:
             if not os.getenv("APP_USERNAME") or not os.getenv("APP_PASSWORD"):
                 raise ValueError("Environment variables 'APP_USERNAME' and 'APP_PASSWORD' must be set") #todo document where to set username and password
 
@@ -79,54 +53,39 @@ class DashLauncher:
 
     @staticmethod
     def _construct(
+            cfg: AppConfiguration,
             scenario_manager: ScenarioManager,
-            home_content: Callable[[], html.Div] | str = "placeholder",
-            data_content: Callable[[DataSource], html.Div] | str = "placeholder",
-            scenario_content: Callable[[Scenario], html.Div] | str = "placeholder",
-            compare_content: Callable[[Scenario], html.Div] | str = "placeholder",
-            compare_compare: Callable[[Scenario, Scenario], html.Div] | str = "placeholder",
-            compare_details: Callable[[Scenario, Scenario], html.Div] | str = "placeholder",
-            overview_content: Callable[[], html.Div] | str = "placeholder",
-            home_callbacks: Callable[[], None] | str | None = None,
-            data_callbacks: Callable[[], None] | str | None = None,
-            scenario_callbacks: Callable[[], None] | str | None = None,
-            compare_callbacks: Callable[[], None] | str | None = None,
-            overview_callbacks: Callable[[], None] | str | None = None,
-            assets_path: str = "",
-            title: str = "Demo Dashboard",
-            styling_config: StylingConfigurator = StylingConfigurator(),
-            settings_manager: SettingsManager = None,
     ) -> Dash:
         # Initialize the app
         external_stylesheets = [BOOTSTRAP, "https://use.fontawesome.com/releases/v5.15.4/css/all.css", ]
         app = Dash(
             external_stylesheets=external_stylesheets,
             suppress_callback_exceptions=True,
-            assets_folder=assets_path,
+            assets_folder=cfg.assets_path,
         )
-        app.title = title
+        app.title = cfg.title
 
         # register the scenario manager on the app object
         app.server.scenario_manager = scenario_manager
 
         # register the styling configuration on the app object
-        app.server.styling_config = styling_config
+        app.server.styling_config = cfg.styling_config
 
         # register the settings manager on the app object for access in callbacks
-        app.server.settings = settings_manager
+        app.server.settings = SettingsManager(cfg)
 
         # register the content register functions
         content_registry = ContentRegistry()
         app.server.content_registry = content_registry
 
         # retrieve standard content functions
-        home_content, home_callbacks = lm.get_home_content(home_content, home_callbacks)
-        data_content, data_callbacks = lm.get_data_content(data_content, data_callbacks)
-        scenario_content, scenario_callbacks = lm.get_scenario_content(scenario_content, scenario_callbacks)
+        home_content, home_callbacks = lm.get_home_content(cfg.home_content, cfg.home_callbacks)
+        data_content, data_callbacks = lm.get_data_content(cfg.data_content, cfg.data_callbacks)
+        scenario_content, scenario_callbacks = lm.get_scenario_content(cfg.scenario_content, cfg.scenario_callbacks)
         perf_content, perf_compare, perf_details, perf_callbacks = lm.get_compare_content(
-            compare_content, compare_compare, compare_details, compare_callbacks
+            cfg.compare_content, cfg.compare_compare, cfg.compare_details, cfg.compare_callbacks
         )
-        overview_content, overview_callbacks = lm.get_overview_content(overview_content, overview_callbacks)
+        overview_content, overview_callbacks = lm.get_overview_content(cfg.overview_content, cfg.overview_callbacks)
 
         # register the content functions for access in page creation
         content_registry.register_home_content(home_content, home_callbacks)
@@ -136,12 +95,12 @@ class DashLauncher:
         content_registry.register_overview_content(overview_content, overview_callbacks)
 
         # fill and run the app
-        app.layout = LayoutCreator.create_layout(styling_config)
+        app.layout = LayoutCreator.create_layout(cfg.styling_config)
 
         return app
 
     @staticmethod
-    def run(app: Dash, host: str, port: int, threads: int, connection_limit: int, debug: bool) -> None:
+    def run(app: Dash, host: str, port: int, threads: int = 8, connection_limit: int = 100, debug: bool = False) -> None:
         sm = get_app().server.scenario_manager
 
         algomancy_version = importlib.metadata.version('algomancy')

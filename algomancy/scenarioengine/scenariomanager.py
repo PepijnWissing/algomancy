@@ -24,6 +24,26 @@ class ScenarioManager:
     E = TypeVar("E", bound=ETLFactory)
     DOT = TypeVar("DOT", bound=DataSource)
 
+    @classmethod
+    def from_config(cls, cfg: "AppConfiguration") -> "ScenarioManager":
+        # Local import to avoid heavy top-level coupling
+        from algomancy.appconfiguration import AppConfiguration  # type: ignore
+        if not isinstance(cfg, AppConfiguration):
+            raise TypeError("from_config expects an AppConfiguration instance")
+        return cls(
+            etl_factory=cfg.etl_factory,
+            kpi_templates=cfg.kpi_templates,
+            algo_templates=cfg.algo_templates,
+            input_configs=cfg.input_configs,
+            data_object_type=cfg.data_object_type,
+            data_folder=cfg.data_path,
+            has_persistent_state=cfg.has_persistent_state,
+            save_type=cfg.save_type,
+            autocreate=cfg.autocreate,
+            default_algo_name=cfg.default_algo,
+            autorun=cfg.autorun,
+        )
+
     def __init__(
             self,
             etl_factory: type[E],
