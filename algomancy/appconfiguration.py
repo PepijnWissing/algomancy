@@ -2,6 +2,8 @@ import platform
 from typing import Any, Callable, Dict, List
 import os
 
+from algomancy.dataengine import DataSource
+
 
 class AppConfiguration:
     """
@@ -19,8 +21,8 @@ class AppConfiguration:
             data_path: str = "data",
             # === data manager configuration ===
             has_persistent_state: bool = False,
-            save_type: str | None = None,
-            data_object_type: Any | None = None,
+            save_type: str | None = "json",
+            data_object_type: Any | None = DataSource,
             # === scenario manager configuration ===
             etl_factory: Any | None = None,
             kpi_templates: Dict[str, Any] | None = None,
@@ -28,6 +30,7 @@ class AppConfiguration:
             input_configs: List[Any] | None = None,
             autocreate: bool | None = None,
             default_algo: str | None = None,
+            default_algo_params: Dict[str, Any] | None = None,
             autorun: bool | None = None,
             # === content functions ===
             home_content: Callable[..., Any] | str = "placeholder",
@@ -38,11 +41,11 @@ class AppConfiguration:
             compare_details: Callable[..., Any] | str = "placeholder",
             overview_content: Callable[..., Any] | str = "placeholder",
             # === callbacks ===
-            home_callbacks: Callable[..., Any] | str | None = None,
-            data_callbacks: Callable[..., Any] | str | None = None,
-            scenario_callbacks: Callable[..., Any] | str | None = None,
-            compare_callbacks: Callable[..., Any] | str | None = None,
-            overview_callbacks: Callable[..., Any] | str | None = None,
+            home_callbacks: Callable[..., Any] | str | None = "placeholder",
+            data_callbacks: Callable[..., Any] | str | None = "placeholder",
+            scenario_callbacks: Callable[..., Any] | str | None = "placeholder",
+            compare_callbacks: Callable[..., Any] | str | None = "placeholder",
+            overview_callbacks: Callable[..., Any] | str | None = "placeholder",
             # === styling configuration ===
             styling_config: Any | None = None,
             # === misc dashboard configurations ===
@@ -151,6 +154,7 @@ class AppConfiguration:
     def _validate(self) -> None:
         self._validate_paths()
         self._validate_values()
+        self._validate_page_configurations()
 
     def _validate_paths(self) -> None:
         if self.assets_path is None or self.assets_path == "":
@@ -201,11 +205,33 @@ class AppConfiguration:
             if not isinstance(self.port, int) or not (1 <= self.port <= 65535):
                 raise ValueError("port must be an integer between 1 and 65535")
 
+    def _validate_page_configurations(self) -> None:
         # basic type checks for collections
         if not isinstance(self.compare_default_open, list):
             raise ValueError("compare_default_open must be a list of strings")
         if not isinstance(self.compare_ordered_list_components, list):
             raise ValueError("compare_ordered_list_components must be a list of strings")
+
+        # ensure all strings are valid
+        admissible_values = ['side-by-side', 'kpis', 'compare', 'details']
+        for component in self.compare_default_open:
+            if not isinstance(component, str):
+                raise ValueError(f"compare_default_open must be a list of strings, but contains {component}")
+            if component not in admissible_values:
+                raise ValueError(f"compare_default_open contains invalid component: {component}")
+
+        for component in self.compare_ordered_list_components:
+            if not isinstance(component, str):
+                raise ValueError(f"compare_ordered_list_components must be a list of strings, but contains {component}")
+            if component not in admissible_values:
+                raise ValueError(f"compare_ordered_list_components contains invalid component: {component}")
+
+        # ensure all strings are unique
+        if len(self.compare_default_open) != len(set(self.compare_default_open)):
+            raise ValueError("compare_default_open contains duplicate values")
+        if len(self.compare_ordered_list_components) != len(set(self.compare_ordered_list_components)):
+            raise ValueError("compare_ordered_list_components contains duplicate values")
+
 
     def _get_default_host(self) -> str:
         if platform.system() == "Windows":
@@ -213,3 +239,7 @@ class AppConfiguration:
         else:
             host = "0.0.0.1"  # default host for linux
         return host
+
+    @classmethod
+    def from_dict(cls, config: Dict[str, Any]) -> "AppConfiguration":
+        return cls(**config)

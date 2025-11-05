@@ -75,14 +75,8 @@ def main(
 
     # framework configuration via AppConfiguration
     app_cfg = AppConfiguration(
-        # === path specifications ===
-        assets_path="assets",
         data_path="tests/data",
-        # === data manager configuration ===
         has_persistent_state=True,
-        save_type="json",
-        data_object_type=DataSource,
-        # === scenario manager configuration ===
         etl_factory=ExampleETLFactory,
         kpi_templates=kpi_templates,
         algo_templates=algorithm_templates,
@@ -90,40 +84,28 @@ def main(
         autocreate=True,
         default_algo="As is",
         autorun=True,
-        # === content functions ===
-        home_content=HomePageContentCreator.create_home_page_content,
+        home_content="standard",
         data_content="example",
-        scenario_content="placeholder",
-        compare_content="placeholder",
-        compare_compare="placeholder",
-        compare_details="placeholder",
         overview_content="standard",
-        # === callbacks ===
         home_callbacks="standard",
         data_callbacks="example",
-        scenario_callbacks="placeholder",
-        compare_callbacks="placeholder",
         overview_callbacks="standard",
-        # === styling configuration ===
         styling_config=styling,
-        # === misc dashboard configurations ===
         title="Example implementation of an Algomancy Dashboard",
         host=host,
         port=port,
-        # === page configurations ===
         compare_default_open=[
-            "side",
-            "kpi",
+            "side-by-side",
+            "kpis",
             "compare",
             # 'details',
         ],
         compare_ordered_list_components=[
-            'sbs_viewer',
+            'side-by-side',
             'kpis',
-            'compare_section',
+            'compare',
             'details',
         ],
-        # === authentication ===
         use_authentication=False,
     )
 

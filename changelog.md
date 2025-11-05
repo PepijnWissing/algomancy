@@ -11,18 +11,57 @@ _Released at 05-11-2025_
 - Tests: Added pytest module `tests/test_unit_measurement_examples.py` covering Measurement examples from `unit.py`.
 - New feature: automatic creation of scenarios is now supported.
 - New feature: Added `refresh` functionality to the `Scenario` component.
+- **[Breaking]** New feature: `AppConfiguration` class now manages and validates the launch configuration
 
-### New features
-- Added automatic creation of scenarios. This will cause any creation of a `DataSource` (or derived) to spawn a `Scenario` with the same name (suffixed with `[auto]`). The algorithm template must be specified in the configuration dictionary.
-To configure, add the below to the configuration dictionary.
+### AppConfiguration
+>**This is a breaking change.**
+
+Added `AppConfiguration` class to manage and validate the launch configuration. Conceptually, this class is a wrapper that provides a consistent interface for the configuration fields and their validation.
+This class is now used to manage the launch sequence. In particular, DashLauncher.build(...) now takes an `AppConfiguration` object as an argument, instead of a dictionary.
+Your main method must be migrated to use the new class. An example is shown below:
+```python
+# main method: preferred version
+
+from algomancy.launcher import DashLauncher
+from algomancy.appconfiguration import AppConfiguration
+
+def main():
+    app_cfg = AppConfiguration(
+        data_path="data",
+        has_persistent_state=True,
+#       ...
+    )
+    app = DashLauncher.build(app_cfg)
+    DashLauncher.run(app=app, host=app_cfg.host, port=app_cfg.port)
+```
+For migration, the `AppConfiguration.from_dict(...)` method can be used to create an `AppConfiguration` object from a dictionary. Note that this is not advised, as this will not allow for IDE support. 
+```python
+# main method: migration alternative
+
+from algomancy.launcher import DashLauncher
+from algomancy.appconfiguration import AppConfiguration
+
+def main():
+    configuration = {
+        "data_path": "data",
+        "has_persistent_state": True,
+#       ...   
+    }
+    app_cfg = AppConfiguration.from_dict(configuration)   
+    app = DashLauncher.build(app_cfg)
+    DashLauncher.run(app=app, host=app_cfg.host, port=app_cfg.port)
+```
+### Autocreate
+Added automatic creation of scenarios. This will cause any creation of a `DataSource` (or derived) to spawn a `Scenario` with the same name (suffixed with `[auto]`). The algorithm template must be specified in the configuration dictionary.
+To configure, add the below to the configuration.
 ```python
 # framework configuration
-configuration = {
+app_cfg = AppConfiguration(
 #    ...,
-    "autocreate": True,             # set to True for autocreate mode
-    "default_algo": "As is",        # select the name of an algorithm template to use for autocreation
+    autocreate= True,             # set to True for autocreate mode
+    default_algo= "As is",        # select the name of an algorithm template to use for autocreation
 #    ...,
-}
+)
 ```
 - Added `refresh` functionality to the `Scenario` component. This will cause the `Scenario` to reset its status and discard the `ScenarioResult`. 
 To refresh a scenario, the `Scenario.refresh()` method is called from the Scenario management screen. The process scenario button is now context-aware. 
@@ -141,16 +180,16 @@ _Released at 27-10-2025_
 ### Compare page configuration
 The order of the main sections (side-by-side, compare, KPI cards, and details) are now configurable through the configuration dictionary.
 To configure, specify the list of component keys in the order you want them to appear in the compare page, and add it to the configuration dictionary with key `performance_ordered_list_components`.
-The expected keys are `sbs_viewer`, `kpis`, `compare_section`, and `details`. An example is shown below:
+The expected keys are `side-by-side`, `kpis`, `compare`, and `details`. An example is shown below:
 
 ```python
 # framework configuration
 configuration = {
     ...,
     "compare_ordered_list_components": [
-        'sbs_viewer',
+        'side-by-side',
         'kpis',
-        'compare_section',
+        'compare',
         'details',
     ],
     ...

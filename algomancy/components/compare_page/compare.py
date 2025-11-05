@@ -31,8 +31,8 @@ def compare_page():
                 dbc.Col(
                     dbc.Checklist(
                         options=[
-                            {'label': 'Show side-by-side', 'value': 'side'},
-                            {'label': 'Show KPI cards', 'value': 'kpi'},
+                            {'label': 'Show side-by-side', 'value': 'side-by-side'},
+                            {'label': 'Show KPI cards', 'value': 'kpis'},
                         ],
                         id=PERF_TOGGLE_CHECKLIST_LEFT,
                         class_name="styled-toggle",
@@ -60,9 +60,9 @@ def compare_page():
     ])
     selector = create_side_by_side_selector(sm)
 
-    sbs_id = 'sbs_viewer'
+    sbs_id = 'side-by-side'
     kpis_id = 'kpis'
-    compare_id = 'compare_section'
+    compare_id = 'compare'
     details_id = 'details'
 
     orderable_components = {

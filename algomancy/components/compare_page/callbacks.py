@@ -56,8 +56,8 @@ def update_kpi_comparison(left_id, right_id):
     Input(PERF_TOGGLE_CHECKLIST_LEFT, "value"),
 )
 def listen_to_left_checklist(checked):
-    sbs_open = True if 'side' in checked else False
-    kpi_open = True if 'kpi' in checked else False
+    sbs_open = True if 'side-by-side' in checked else False
+    kpi_open = True if 'kpis' in checked else False
     return sbs_open, sbs_open, kpi_open
 
 
