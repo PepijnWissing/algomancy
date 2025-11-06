@@ -92,6 +92,7 @@ def main(
         data_callbacks="example",
         overview_callbacks="standard",
         styling_config=styling,
+        use_cqm_loader=True,
         title="Example implementation of an Algomancy Dashboard",
         host=host,
         port=port,

@@ -49,6 +49,7 @@ class AppConfiguration:
             overview_callbacks: Callable[..., Any] | str | None = "placeholder",
             # === styling configuration ===
             styling_config: Any | None = None,
+            use_cqm_loader: bool = False,
             # === misc dashboard configurations ===
             title: str = "Algomancy Dashboard",
             host: str | None = None,
@@ -93,6 +94,7 @@ class AppConfiguration:
 
         # styling + misc
         self.styling_config = styling_config
+        self.use_cqm_loader = use_cqm_loader
         self.title = title
         self.host = host or self._get_default_host()
         self.port = port or 8050
@@ -124,6 +126,7 @@ class AppConfiguration:
             "input_configs": self.input_configs,
             "autocreate": self.autocreate,
             "default_algo": self.default_algo,
+            "default_algo_params_values": self.default_algo_params_values,
             "autorun": self.autorun,
             # === content functions ===
             "home_content": self.home_content,
@@ -141,6 +144,7 @@ class AppConfiguration:
             "overview_callbacks": self.overview_callbacks,
             # === styling configuration ===
             "styling_config": self.styling_config,
+            "use_cqm_loader": self.use_cqm_loader,
             # === misc dashboard configurations ===
             "title": self.title,
             "host": self.host,

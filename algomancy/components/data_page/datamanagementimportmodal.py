@@ -3,10 +3,11 @@ from algomancy.components.componentids import DM_IMPORT_MODAL_CLOSE_BTN, DM_IMPO
     DM_IMPORT_MODAL_FILEVIEWER_ALERT
 
 import dash_bootstrap_components as dbc
-from dash import html, dcc
+from dash import html, dcc, get_app
 
 from algomancy.components.cqmloader import cqm_loader
 from algomancy.scenarioengine import ScenarioManager
+from algomancy.settingsmanager import SettingsManager
 
 """
 Modal component for loading data files into the application.
@@ -26,6 +27,13 @@ def data_management_import_modal(sm: ScenarioManager, themed_styling):
     Returns:
         dbc.Modal: A Dash Bootstrap Components modal dialog
     """
+    settings: SettingsManager = get_app().server.settings
+
+    if settings.use_cqm_loader:
+        spinner = cqm_loader("Importing data..."),  # requires letter-c.svg, letter-q.svg and letter-m.svg
+    else:
+        spinner = html.H2(["Importing data... ", dbc.Spinner()]),
+
     return dbc.Modal([
         dbc.ModalHeader(dbc.ModalTitle("Import Data")),
         dbc.ModalBody(
@@ -70,8 +78,7 @@ def data_management_import_modal(sm: ScenarioManager, themed_styling):
                     dcc.Store(id='dm-import-modal-dummy-store', data=''),
                 ],
                 overlay_style={"visibility":"visible", "opacity": .5, "backgroundColor": "white"},
-                custom_spinner=html.H2(["Importing data... ", dbc.Spinner()]),
-                # custom_spinner=cqm_loader("Importing data..."),   # requires letter-c.svg, letter-q.svg and letter-m.svg
+                custom_spinner=spinner,
                 delay_hide=50,
                 delay_show=50,
             )
