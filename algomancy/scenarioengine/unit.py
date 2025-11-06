@@ -73,6 +73,44 @@ Notes
 # ============================================================================
 # Scaling unit framework
 # ============================================================================
+class Unit:
+    """A single unit in a quantity (e.g., m, s, B)
+
+    A `Unit` knows its textual `name` and printable `symbol` and can be linked to
+    an adjacent smaller or larger unit with known conversion factors. These
+    links are used by `Measurement` to automatically scale values up or down to
+    keep within the configured digit bounds.
+
+    Notes
+    - Links are set when units are added to a `Quantity` via
+      `Quantity.add_unit(...)`. You generally don't set them manually.
+    - `conversion_factor_to_larger` represents how many of the current unit make
+      one of the larger unit. The reverse factor is stored on the larger unit to
+      point back to the smaller.
+    - `__str__` prints a human-readable description for debugging.
+    """
+    def __init__(self, name: str, symbol: str):
+        self.name: str = name
+        self.symbol: str = symbol
+        self.smaller_unit: 'Unit | None' = None
+        self.conversion_factor_to_smaller: float | None = None
+        self.larger_unit: 'Unit | None' = None
+        self.conversion_factor_to_larger: float | None = None
+
+    def __str__(self):
+        return f'Unit: {self.name}, ({self.symbol})'
+
+    def _set_smaller_unit(self, smaller_unit: 'Unit', conversion_factor: float):
+        self.smaller_unit = smaller_unit
+        self.conversion_factor_to_smaller = conversion_factor
+
+    def set_larger_unit(self, larger_unit: 'Unit', conversion_factor: float):
+        self.larger_unit = larger_unit
+        self.conversion_factor_to_larger = conversion_factor
+
+        larger_unit._set_smaller_unit(self, 1 / conversion_factor)
+
+
 class Quantity:
     """A domain of measurement that owns and links units
 
@@ -129,44 +167,6 @@ class Quantity:
                 next_unit,
                 factor / next_factor
             )
-
-
-class Unit:
-    """A single unit in a quantity (e.g., m, s, B)
-
-    A `Unit` knows its textual `name` and printable `symbol` and can be linked to
-    an adjacent smaller or larger unit with known conversion factors. These
-    links are used by `Measurement` to automatically scale values up or down to
-    keep within the configured digit bounds.
-
-    Notes
-    - Links are set when units are added to a `Quantity` via
-      `Quantity.add_unit(...)`. You generally don't set them manually.
-    - `conversion_factor_to_larger` represents how many of the current unit make
-      one of the larger unit. The reverse factor is stored on the larger unit to
-      point back to the smaller.
-    - `__str__` prints a human-readable description for debugging.
-    """
-    def __init__(self, name: str, symbol: str):
-        self.name: str = name
-        self.symbol: str = symbol
-        self.smaller_unit: 'Unit | None' = None
-        self.conversion_factor_to_smaller: float | None = None
-        self.larger_unit: 'Unit | None' = None
-        self.conversion_factor_to_larger: float | None = None
-
-    def __str__(self):
-        return f'Unit: {self.name}, ({self.symbol})'
-
-    def _set_smaller_unit(self, smaller_unit: 'Unit', conversion_factor: float):
-        self.smaller_unit = smaller_unit
-        self.conversion_factor_to_smaller = conversion_factor
-
-    def set_larger_unit(self, larger_unit: 'Unit', conversion_factor: float):
-        self.larger_unit = larger_unit
-        self.conversion_factor_to_larger = conversion_factor
-
-        larger_unit._set_smaller_unit(self, 1 / conversion_factor)
 
 
 class BaseMeasurement:
