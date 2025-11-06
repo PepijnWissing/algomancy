@@ -1,4 +1,13 @@
 # Change log
+## 0.2.12
+_Released at 05-11-2025_
+
+### Summary
+- Bug fixes
+
+### Bug fixes
+- Fixed an issue where `unit.py` would cause crashes in python pre-3.14. 
+
 ## 0.2.11
 _Released at 05-11-2025_
 ### Summary
