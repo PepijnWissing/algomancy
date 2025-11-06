@@ -1,9 +1,11 @@
 import platform
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, TypeVar
 import os
 
 from algomancy.dataengine import DataSource
+from algomancy.scenarioengine import AlgorithmParameters
 
+AP = TypeVar("AP", bound=AlgorithmParameters)
 
 class AppConfiguration:
     """
@@ -30,7 +32,8 @@ class AppConfiguration:
             input_configs: List[Any] | None = None,
             autocreate: bool | None = None,
             default_algo: str | None = None,
-            default_algo_params: Dict[str, Any] | None = None,
+            default_algo_param_type: AP | None = None,
+            default_algo_params_values: Dict[str, Any] | None = None,
             autorun: bool | None = None,
             # === content functions ===
             home_content: Callable[..., Any] | str = "placeholder",
@@ -233,6 +236,16 @@ class AppConfiguration:
         if len(self.compare_ordered_list_components) != len(set(self.compare_ordered_list_components)):
             raise ValueError("compare_ordered_list_components contains duplicate values")
 
+    def _set_algorithm_parameters(self) -> None:
+        # only validate if autocreate is True
+        if self.autocreate:
+            try:
+                for algo_name, algo_params in self.algo_templates.items():
+                    for param_name, param_value in algo_params.items():
+                        if param_value is not None:
+                            param_value.set_validated_value(param_value.value)
+            except Exception as e:
+                raise ValueError(f"Failed to set algorithm parameters: {str(e)}")
 
     def _get_default_host(self) -> str:
         if platform.system() == "Windows":
