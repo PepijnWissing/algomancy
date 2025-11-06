@@ -4,6 +4,7 @@ _Released at 06-11-2025_
 
 ### Summary
 - Autocreate now supports algorithms with parameters. 
+- Delete button is now disabled while a scenario is queued or running.
 
 ## 0.2.12
 _Released at 06-11-2025_

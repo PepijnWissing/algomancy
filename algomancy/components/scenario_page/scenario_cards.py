@@ -7,6 +7,7 @@ These cards display scenario information and provide buttons for processing and 
 
 from dash import html, dcc
 import dash_bootstrap_components as dbc
+from tabulate import multiline_formats
 
 from algomancy.scenarioengine.scenariomanager import ScenarioManager, Scenario
 from algomancy.scenarioengine.enumtypes import ScenarioStatus
@@ -27,19 +28,23 @@ def scenario_card(s: Scenario, is_hidden: bool=False):
     if s.status == ScenarioStatus.CREATED:
         btn_text = "Process"
         btn_color = "success"
-        btn_disabled = False
+        multi_btn_disabled = False
+        delete_btn_disabled = False
     elif s.status in (ScenarioStatus.QUEUED, ScenarioStatus.PROCESSING):
         btn_text = "Cancel"
         btn_color = "danger"
-        btn_disabled = False
+        multi_btn_disabled = False
+        delete_btn_disabled = True
     elif s.status in (ScenarioStatus.COMPLETE, ScenarioStatus.FAILED):
         btn_text = "Refresh"
         btn_color = "info"
-        btn_disabled = False
-    else:
+        multi_btn_disabled = False
+        delete_btn_disabled = False
+    else:                           # never
         btn_text = "Process"
         btn_color = "secondary"
-        btn_disabled = True
+        multi_btn_disabled = True
+        delete_btn_disabled = False
 
     return html.Div(
         [
@@ -74,7 +79,7 @@ def scenario_card(s: Scenario, is_hidden: bool=False):
                             color=btn_color,
                             size="sm",
                             n_clicks=0,
-                            disabled=btn_disabled,
+                            disabled=multi_btn_disabled,
                             style={"minWidth": "80px"}
                         ),
                         dbc.Button(
@@ -83,6 +88,7 @@ def scenario_card(s: Scenario, is_hidden: bool=False):
                             color="danger",
                             size="sm",
                             n_clicks=0,
+                            disabled=delete_btn_disabled,
                             style={"minWidth": "80px"}
                         ),
                     ]),
