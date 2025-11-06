@@ -1,6 +1,4 @@
-from typing import Dict, List, Optional, TypeVar, Type
-
-from tabulate import tabulate
+from typing import Dict, List, Optional, TypeVar
 
 from algomancy.dataengine.datamanager import (ETLFactory,
                            InputFileConfiguration,
@@ -41,6 +39,7 @@ class ScenarioManager:
             save_type=cfg.save_type,
             autocreate=cfg.autocreate,
             default_algo_name=cfg.default_algo,
+            default_param_values=cfg.default_algo_params_values,
             autorun=cfg.autorun,
         )
 
@@ -58,6 +57,7 @@ class ScenarioManager:
             save_type: str = "json",  # adjusts the format
             autocreate: bool = False,
             default_algo_name: str = None,
+            default_param_values: Dict[str, any] = None,
             autorun: bool = False,
     ) -> None:
         self.logger = logger if logger else Logger()
@@ -65,6 +65,7 @@ class ScenarioManager:
         self._has_persistent_state = has_persistent_state
         self._auto_create_scenario = autocreate
         self._default_algo_name = default_algo_name
+        self._default_param_values = default_param_values
 
         assert save_type in ["json"], "Save type must be parquet or json."
         self._save_type = save_type
@@ -236,7 +237,8 @@ class ScenarioManager:
             self.create_scenario(
                 tag=f"{key} [auto]",
                 dataset_key=key,
-                algo_name=self._default_algo_name
+                algo_name=self._default_algo_name,
+                algo_params=self._default_param_values,
             )
 
     def get_data_as_json(self, key: str) -> str:

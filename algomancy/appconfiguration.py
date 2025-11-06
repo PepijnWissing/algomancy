@@ -2,10 +2,9 @@ import platform
 from typing import Any, Callable, Dict, List, TypeVar
 import os
 
-from algomancy.dataengine import DataSource
-from algomancy.scenarioengine import AlgorithmParameters
+from algomancy.dataengine import DataSource, InputFileConfiguration
+from algomancy.scenarioengine import AlgorithmParameters, AlgorithmFactory, Algorithm, KpiTemplate, AlgorithmTemplate
 
-AP = TypeVar("AP", bound=AlgorithmParameters)
 
 class AppConfiguration:
     """
@@ -27,12 +26,11 @@ class AppConfiguration:
             data_object_type: Any | None = DataSource,
             # === scenario manager configuration ===
             etl_factory: Any | None = None,
-            kpi_templates: Dict[str, Any] | None = None,
-            algo_templates: Dict[str, Any] | None = None,
-            input_configs: List[Any] | None = None,
+            kpi_templates: List[KpiTemplate] | None = None,
+            algo_templates: Dict[str, AlgorithmTemplate] | None = None,
+            input_configs: List[InputFileConfiguration] | None = None,
             autocreate: bool | None = None,
             default_algo: str | None = None,
-            default_algo_param_type: AP | None = None,
             default_algo_params_values: Dict[str, Any] | None = None,
             autorun: bool | None = None,
             # === content functions ===
@@ -75,6 +73,7 @@ class AppConfiguration:
         self.input_configs = input_configs
         self.autocreate = autocreate
         self.default_algo = default_algo
+        self.default_algo_params_values = default_algo_params_values
         self.autorun = autorun
 
         # content + callbacks
@@ -158,6 +157,7 @@ class AppConfiguration:
         self._validate_paths()
         self._validate_values()
         self._validate_page_configurations()
+        self._validate_algorithm_parameters()
 
     def _validate_paths(self) -> None:
         if self.assets_path is None or self.assets_path == "":
@@ -236,18 +236,16 @@ class AppConfiguration:
         if len(self.compare_ordered_list_components) != len(set(self.compare_ordered_list_components)):
             raise ValueError("compare_ordered_list_components contains duplicate values")
 
-    def _set_algorithm_parameters(self) -> None:
-        # only validate if autocreate is True
+    def _validate_algorithm_parameters(self) -> None:
         if self.autocreate:
-            try:
-                for algo_name, algo_params in self.algo_templates.items():
-                    for param_name, param_value in algo_params.items():
-                        if param_value is not None:
-                            param_value.set_validated_value(param_value.value)
-            except Exception as e:
-                raise ValueError(f"Failed to set algorithm parameters: {str(e)}")
+            tmp_factory = AlgorithmFactory(self.algo_templates)
+            test_algorithm = tmp_factory.create(self.default_algo, self.default_algo_params_values)
+            assert isinstance(test_algorithm, Algorithm), "Failed to create default algorithm"
+        else:
+            pass
 
-    def _get_default_host(self) -> str:
+    @staticmethod
+    def _get_default_host() -> str:
         if platform.system() == "Windows":
             host = "127.0.0.1"  # default host for windows
         else:
