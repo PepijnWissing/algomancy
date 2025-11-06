@@ -4,6 +4,7 @@ import os
 
 from algomancy.dataengine import DataSource, InputFileConfiguration
 from algomancy.scenarioengine import AlgorithmParameters, AlgorithmFactory, Algorithm, KpiTemplate, AlgorithmTemplate
+from algomancy.stylingconfigurator import StylingConfigurator
 
 
 class AppConfiguration:
@@ -48,7 +49,7 @@ class AppConfiguration:
             compare_callbacks: Callable[..., Any] | str | None = "placeholder",
             overview_callbacks: Callable[..., Any] | str | None = "placeholder",
             # === styling configuration ===
-            styling_config: Any | None = None,
+            styling_config: Any | None = StylingConfigurator.get_cqm_config(),
             use_cqm_loader: bool = False,
             # === misc dashboard configurations ===
             title: str = "Algomancy Dashboard",
