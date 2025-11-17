@@ -41,7 +41,7 @@ def data_management_download_modal(sm: ScenarioManager, themed_styling):
         dbc.Modal: A Dash Bootstrap Components modal dialog
     """
     return dbc.Modal([
-        dbc.ModalHeader(dbc.ModalTitle("Download Data")),
+        dbc.ModalHeader(dbc.ModalTitle("Download Data"), close_button=False),
         dbc.ModalBody([
             html.Div([
                 dbc.Label("Select datasets to download"),
@@ -61,6 +61,7 @@ def data_management_download_modal(sm: ScenarioManager, themed_styling):
         dcc.Download(id="dm-download"),  # persistent Download component
     ],
         id=DM_DOWNLOAD_MODAL, is_open=False, centered=True, class_name="themed-modal", style=themed_styling,
+        keyboard=False,  backdrop="static",
     )
 
 

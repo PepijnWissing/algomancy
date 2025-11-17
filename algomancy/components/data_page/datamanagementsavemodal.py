@@ -46,7 +46,7 @@ def data_management_save_modal(sm: ScenarioManager, themed_styling):
         dbc.Modal: A Dash Bootstrap Components modal dialog
     """
     return dbc.Modal([
-        dbc.ModalHeader(dbc.ModalTitle("Save")),
+        dbc.ModalHeader(dbc.ModalTitle("Save"), close_button=False),
         dbc.ModalBody([
             "Select derived data to save.",
             create_derived_data_selector(sm)
@@ -57,4 +57,6 @@ def data_management_save_modal(sm: ScenarioManager, themed_styling):
             dbc.Button("Close", id=DM_SAVE_MODAL_CLOSE_BTN, class_name="dm-save-modal-cancel-btn ms-auto")
             ]
         ),
-    ], id=DM_SAVE_MODAL, is_open=False, centered=True, class_name="themed-modal", style=themed_styling)
+    ], id=DM_SAVE_MODAL, is_open=False, centered=True, class_name="themed-modal", style=themed_styling,
+        keyboard=False, backdrop="static",
+    )

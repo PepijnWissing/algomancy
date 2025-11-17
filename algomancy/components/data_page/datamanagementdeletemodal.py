@@ -28,7 +28,7 @@ def data_management_delete_modal(sm: ScenarioManager, themed_styling):
         dbc.Modal: A Dash Bootstrap Components modal dialog
     """
     return dbc.Modal([
-        dbc.ModalHeader(dbc.ModalTitle("Delete")),
+        dbc.ModalHeader(dbc.ModalTitle("Delete"), close_button=False),
         dbc.ModalBody(
             dbc.Row([
                 dbc.Col(
@@ -75,4 +75,6 @@ def data_management_delete_modal(sm: ScenarioManager, themed_styling):
             dbc.Button("Delete", id=DM_DELETE_SUBMIT_BUTTON, class_name="dm-delete-modal-confirm-btn"),
             dbc.Button("Close", id=DM_DELETE_CLOSE_BUTTON, class_name="dm-delete-modal-cancel-btn ms-auto", n_clicks=0)
         ]),
-    ], id=DM_DELETE_MODAL, is_open=False, centered=True, class_name="themed-modal", style=themed_styling)
+    ], id=DM_DELETE_MODAL, is_open=False, centered=True, class_name="themed-modal", style=themed_styling,
+        keyboard=False, backdrop="static",
+    )

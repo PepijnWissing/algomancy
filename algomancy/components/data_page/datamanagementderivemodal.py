@@ -26,7 +26,7 @@ def data_management_derive_modal(sm: ScenarioManager, themed_styling):
     """
 
     return dbc.Modal([
-        dbc.ModalHeader(dbc.ModalTitle("Derive")),
+        dbc.ModalHeader(dbc.ModalTitle("Derive"), close_button=False),
         dbc.ModalBody(html.Div([
             dbc.Row([
                 dbc.Col(
@@ -57,4 +57,6 @@ def data_management_derive_modal(sm: ScenarioManager, themed_styling):
             dbc.Button("Close", id=DM_DERIVE_MODAL_CLOSE_BTN, class_name="dm-derive-modal-cancel-btn ms-auto",
                        n_clicks=0)
         ]),
-    ], id=DM_DERIVE_MODAL, is_open=False, centered=True, class_name="themed-modal", style=themed_styling)
+    ], id=DM_DERIVE_MODAL, is_open=False, centered=True, class_name="themed-modal", style=themed_styling,
+        keyboard=False,  backdrop="static",
+    )
