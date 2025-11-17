@@ -1,37 +1,52 @@
-from typing import Dict, List
+from typing import Dict, cast
 
-from algomancy.dashboardlogger import Logger
-from algomancy.dataengine import Loader, ETLFactory, Extractor, ValidationSequence, Transformer
+import algomancy.dataengine as de
 
 
-class PlaceholderLoader(Loader):
-    def __init__(self):
-        super().__init__(
-            Logger(),
+class PlaceholderETLFactory(de.ETLFactory):
+    def __init__(self, configs, logger=None):
+        super().__init__(configs, logger)
+
+    def create_extractors(self, files: Dict[str, de.File]) -> Dict[str, de.Extractor]:
+        # define file name(s) for convenient access
+        placeholder = "placeholder_data"
+
+        # compile a convenient mapping of file names to schemas
+        schemas = {cfg.file_name: cfg.file_schema for cfg in self.input_configurations}
+
+        # create an extractor for each file
+        extractors = {
+            placeholder: de.CSVSingleExtractor(
+                file=cast(de.CSVFile, files[placeholder]),
+                schema=schemas[placeholder],
+                logger=self.logger,
+                separator=","
+            )
+        }
+
+        # output the extractors
+        return extractors
+
+    def create_validation_sequence(self) -> de.ValidationSequence:
+        # construct the empty sequence
+        vs = de.ValidationSequence(logger=self.logger)
+
+        # add a validator to check for successful extraction
+        vs.add_validator(de.ExtractionSuccessVerification())
+
+        # add a validator to check datatypes of the extracted data
+        vs.add_validator(
+            de.InputConfigurationValidator(
+                configs=self.input_configurations,
+                severity=de.ValidationSeverity.CRITICAL,
+            )
         )
 
-    def load(
-            self,
-            name,
-            data,
-            validation_messages,
-            ds_type
-    ):
-        return None
+        # output the sequence
+        return vs
 
-
-class PlaceholderETLFactory(ETLFactory):
-    def __init__(self, input_configurations, logger):
-        super().__init__(input_configurations, logger)
-
-    def create_extractors(self, files) -> Dict[str, Extractor]:
+    def create_transformers(self) -> Dict[str, de.Transformer]:
         return {}
 
-    def create_validation_sequence(self) -> ValidationSequence:
-        return ValidationSequence()
-
-    def create_transformers(self) -> List[Transformer]:
-        return []
-
-    def create_loader(self) -> Loader:
-        return PlaceholderLoader()
+    def create_loader(self) -> de.Loader:
+        return de.DataSourceLoader(self.logger)

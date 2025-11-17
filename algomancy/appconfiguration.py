@@ -2,10 +2,10 @@ import platform
 from typing import Any, Callable, Dict, List, TypeVar
 import os
 
-from algomancy.dataengine import DataSource
-from algomancy.scenarioengine import AlgorithmParameters
+from algomancy.dataengine import DataSource, InputFileConfiguration
+from algomancy.scenarioengine import AlgorithmParameters, AlgorithmFactory, Algorithm, KpiTemplate, AlgorithmTemplate
+from algomancy.stylingconfigurator import StylingConfigurator
 
-AP = TypeVar("AP", bound=AlgorithmParameters)
 
 class AppConfiguration:
     """
@@ -27,12 +27,11 @@ class AppConfiguration:
             data_object_type: Any | None = DataSource,
             # === scenario manager configuration ===
             etl_factory: Any | None = None,
-            kpi_templates: Dict[str, Any] | None = None,
-            algo_templates: Dict[str, Any] | None = None,
-            input_configs: List[Any] | None = None,
+            kpi_templates: List[KpiTemplate] | None = None,
+            algo_templates: Dict[str, AlgorithmTemplate] | None = None,
+            input_configs: List[InputFileConfiguration] | None = None,
             autocreate: bool | None = None,
             default_algo: str | None = None,
-            default_algo_param_type: AP | None = None,
             default_algo_params_values: Dict[str, Any] | None = None,
             autorun: bool | None = None,
             # === content functions ===
@@ -50,7 +49,8 @@ class AppConfiguration:
             compare_callbacks: Callable[..., Any] | str | None = "placeholder",
             overview_callbacks: Callable[..., Any] | str | None = "placeholder",
             # === styling configuration ===
-            styling_config: Any | None = None,
+            styling_config: Any | None = StylingConfigurator.get_cqm_config(),
+            use_cqm_loader: bool = False,
             # === misc dashboard configurations ===
             title: str = "Algomancy Dashboard",
             host: str | None = None,
@@ -75,6 +75,7 @@ class AppConfiguration:
         self.input_configs = input_configs
         self.autocreate = autocreate
         self.default_algo = default_algo
+        self.default_algo_params_values = default_algo_params_values
         self.autorun = autorun
 
         # content + callbacks
@@ -94,6 +95,7 @@ class AppConfiguration:
 
         # styling + misc
         self.styling_config = styling_config
+        self.use_cqm_loader = use_cqm_loader
         self.title = title
         self.host = host or self._get_default_host()
         self.port = port or 8050
@@ -125,6 +127,7 @@ class AppConfiguration:
             "input_configs": self.input_configs,
             "autocreate": self.autocreate,
             "default_algo": self.default_algo,
+            "default_algo_params_values": self.default_algo_params_values,
             "autorun": self.autorun,
             # === content functions ===
             "home_content": self.home_content,
@@ -142,6 +145,7 @@ class AppConfiguration:
             "overview_callbacks": self.overview_callbacks,
             # === styling configuration ===
             "styling_config": self.styling_config,
+            "use_cqm_loader": self.use_cqm_loader,
             # === misc dashboard configurations ===
             "title": self.title,
             "host": self.host,
@@ -158,6 +162,7 @@ class AppConfiguration:
         self._validate_paths()
         self._validate_values()
         self._validate_page_configurations()
+        self._validate_algorithm_parameters()
 
     def _validate_paths(self) -> None:
         if self.assets_path is None or self.assets_path == "":
@@ -236,18 +241,16 @@ class AppConfiguration:
         if len(self.compare_ordered_list_components) != len(set(self.compare_ordered_list_components)):
             raise ValueError("compare_ordered_list_components contains duplicate values")
 
-    def _set_algorithm_parameters(self) -> None:
-        # only validate if autocreate is True
+    def _validate_algorithm_parameters(self) -> None:
         if self.autocreate:
-            try:
-                for algo_name, algo_params in self.algo_templates.items():
-                    for param_name, param_value in algo_params.items():
-                        if param_value is not None:
-                            param_value.set_validated_value(param_value.value)
-            except Exception as e:
-                raise ValueError(f"Failed to set algorithm parameters: {str(e)}")
+            tmp_factory = AlgorithmFactory(self.algo_templates)
+            test_algorithm = tmp_factory.create(self.default_algo, self.default_algo_params_values)
+            assert isinstance(test_algorithm, Algorithm), "Failed to create default algorithm"
+        else:
+            pass
 
-    def _get_default_host(self) -> str:
+    @staticmethod
+    def _get_default_host() -> str:
         if platform.system() == "Windows":
             host = "127.0.0.1"  # default host for windows
         else:

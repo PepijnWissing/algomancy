@@ -1,5 +1,6 @@
 from dash import html
 
+
 # todo rename to cqm_loading_animation
 def cqm_loader(text="Loading..."):
     """

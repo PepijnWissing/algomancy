@@ -14,7 +14,9 @@ from algomancy.components.componentids import (DM_UPLOAD_MODAL_CLOSE_BTN,
                                                DM_UPLOAD_MODAL)
 from algomancy.components.componentids import DM_UPLOAD_SUCCESS_ALERT, DM_LIST_UPDATER_STORE
 from algomancy.components.cqmloader import cqm_loader
+from algomancy.components.defaultloader import default_loader
 from algomancy.scenarioengine import ScenarioManager
+from algomancy.settingsmanager import SettingsManager
 
 """
 Modal component for loading data files into the application.
@@ -22,8 +24,6 @@ Modal component for loading data files into the application.
 This module provides a modal dialog that allows users to upload CSV files,
 view file mapping information, and create new datasets from the uploaded files.
 """
-
-
 
 
 def data_management_upload_modal(sm: ScenarioManager, themed_styling):
@@ -37,6 +37,13 @@ def data_management_upload_modal(sm: ScenarioManager, themed_styling):
     Returns:
         dbc.Modal: A Dash Bootstrap Components modal dialog
     """
+    settings: SettingsManager = get_app().server.settings
+
+    if settings.use_cqm_loader:
+        spinner = cqm_loader("Importing data...")  # requires letter-c.svg, letter-q.svg and letter-m.svg
+    else:
+        spinner = default_loader("Importing data...")
+
     return dbc.Modal([
         dbc.ModalHeader(dbc.ModalTitle("Upload Cases")),
         dbc.ModalBody(
@@ -82,8 +89,7 @@ def data_management_upload_modal(sm: ScenarioManager, themed_styling):
                     dcc.Store('dm-upload-dummy-store', data='')
                 ],
                 overlay_style={"visibility": "visible", "opacity": .5, "backgroundColor": "white"},
-                # custom_spinner=cqm_loader("Importing data..."),  # requires letter-c.svg, letter-q.svg and letter-m.svg
-                custom_spinner=html.H2(["Importing data... ", dbc.Spinner()]),
+                custom_spinner=spinner,
                 delay_hide=50,
                 delay_show=50,
             )

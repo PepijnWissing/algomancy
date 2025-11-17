@@ -22,3 +22,7 @@ class SettingsManager:
     def compare_ordered_list_components(self) -> List[str]:
         return self["compare_ordered_list_components"]
 
+    @property
+    def use_cqm_loader(self) -> bool:
+        return self["use_cqm_loader"]
+
