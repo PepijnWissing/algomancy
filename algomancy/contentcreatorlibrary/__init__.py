@@ -7,7 +7,7 @@ from .placeholderscenariopage import PlaceholderScenarioPageContentCreator
 from .standarddatapage import StandardDataPageContentCreator
 from .standardhomepage import StandardHomePageContentCreator
 from .standardoverviewpage import StandardOverviewPageContentCreator
-from .placeholderetlfactory import PlaceholderLoader, PlaceholderETLFactory
+from .placeholderetlfactory import PlaceholderETLFactory
 
 __all__ = [
     "LibraryManager",
@@ -19,5 +19,5 @@ __all__ = [
     "StandardDataPageContentCreator",
     "StandardHomePageContentCreator",
     "StandardOverviewPageContentCreator",
-    "PlaceholderLoader", "PlaceholderETLFactory"
+    "PlaceholderETLFactory"
 ]

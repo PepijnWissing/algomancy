@@ -14,6 +14,7 @@ from algomancy.components.componentids import (DM_UPLOAD_MODAL_CLOSE_BTN,
                                                DM_UPLOAD_MODAL)
 from algomancy.components.componentids import DM_UPLOAD_SUCCESS_ALERT, DM_LIST_UPDATER_STORE
 from algomancy.components.cqmloader import cqm_loader
+from algomancy.components.defaultloader import default_loader
 from algomancy.scenarioengine import ScenarioManager
 from algomancy.settingsmanager import SettingsManager
 
@@ -39,9 +40,9 @@ def data_management_upload_modal(sm: ScenarioManager, themed_styling):
     settings: SettingsManager = get_app().server.settings
 
     if settings.use_cqm_loader:
-        spinner = cqm_loader("Importing data..."),  # requires letter-c.svg, letter-q.svg and letter-m.svg
+        spinner = cqm_loader("Importing data...")  # requires letter-c.svg, letter-q.svg and letter-m.svg
     else:
-        spinner = html.H2(["Importing data... ", dbc.Spinner()]),
+        spinner = default_loader("Importing data...")
 
     return dbc.Modal([
         dbc.ModalHeader(dbc.ModalTitle("Upload Cases")),

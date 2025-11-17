@@ -1,4 +1,5 @@
-from algomancy.components.componentids import DM_IMPORT_MODAL_CLOSE_BTN, DM_IMPORT_MODAL, DM_IMPORT_SUBMIT_BUTTON, DM_IMPORT_UPLOADER, \
+from algomancy.components.componentids import DM_IMPORT_MODAL_CLOSE_BTN, DM_IMPORT_MODAL, DM_IMPORT_SUBMIT_BUTTON, \
+    DM_IMPORT_UPLOADER, \
     DM_IMPORT_MODAL_FILEVIEWER_COLLAPSE, DM_IMPORT_MODAL_FILEVIEWER_CARD, DM_IMPORT_MODAL_NAME_INPUT, \
     DM_IMPORT_MODAL_FILEVIEWER_ALERT
 
@@ -6,6 +7,7 @@ import dash_bootstrap_components as dbc
 from dash import html, dcc, get_app
 
 from algomancy.components.cqmloader import cqm_loader
+from algomancy.components.defaultloader import default_loader
 from algomancy.scenarioengine import ScenarioManager
 from algomancy.settingsmanager import SettingsManager
 
@@ -15,6 +17,7 @@ Modal component for loading data files into the application.
 This module provides a modal dialog that allows users to upload CSV files,
 view file mapping information, and create new datasets from the uploaded files.
 """
+
 
 def data_management_import_modal(sm: ScenarioManager, themed_styling):
     """
@@ -30,9 +33,9 @@ def data_management_import_modal(sm: ScenarioManager, themed_styling):
     settings: SettingsManager = get_app().server.settings
 
     if settings.use_cqm_loader:
-        spinner = cqm_loader("Importing data..."),  # requires letter-c.svg, letter-q.svg and letter-m.svg
+        spinner = cqm_loader("Importing data...")  # requires letter-c.svg, letter-q.svg and letter-m.svg
     else:
-        spinner = html.H2(["Importing data... ", dbc.Spinner()]),
+        spinner = default_loader("Importing data...")
 
     return dbc.Modal([
         dbc.ModalHeader(dbc.ModalTitle("Import Data")),
@@ -61,11 +64,12 @@ def data_management_import_modal(sm: ScenarioManager, themed_styling):
                             dbc.Card(dbc.CardBody(
                                 id=DM_IMPORT_MODAL_FILEVIEWER_CARD
                             ), className="uploaded-files-card"),
-                            dbc.Input(id=DM_IMPORT_MODAL_NAME_INPUT, placeholder="Name of new dataset", class_name="mt-2")
+                            dbc.Input(id=DM_IMPORT_MODAL_NAME_INPUT, placeholder="Name of new dataset",
+                                      class_name="mt-2")
                         ],
                         id=DM_IMPORT_MODAL_FILEVIEWER_COLLAPSE,
                         is_open=False,
-                        class_name = "mt-2"
+                        class_name="mt-2"
                     ),
                     dbc.Alert(
                         id=DM_IMPORT_MODAL_FILEVIEWER_ALERT,
@@ -77,7 +81,7 @@ def data_management_import_modal(sm: ScenarioManager, themed_styling):
                     ),
                     dcc.Store(id='dm-import-modal-dummy-store', data=''),
                 ],
-                overlay_style={"visibility":"visible", "opacity": .5, "backgroundColor": "white"},
+                overlay_style={"visibility": "visible", "opacity": .5, "backgroundColor": "white"},
                 custom_spinner=spinner,
                 delay_hide=50,
                 delay_show=50,
