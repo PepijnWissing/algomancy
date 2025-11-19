@@ -1,0 +1,82 @@
+/* =========================
+   Theme variables
+   Note: using ::root here intentionally unchanged to preserve current behavior
+   ========================= */
+:root {
+    --background-color: #ffffff;
+    --theme-primary: #FFFFFF;
+    --theme-secondary: #0050ff;
+    --theme-tertiary: #FFFFFF;
+    --text-color: #000000;
+    --text-selected: #000000;
+    --text-highlight: #000000;
+    --card-surface: #FFFFFF;
+    --button-text: #FFFFFF;
+
+    /* data management page button colors*/
+    --derive-color: #0078D4;
+    --derive-color-hover: #005a9e;
+    --delete-color: #D13438;
+    --delete-color-hover: #b92629;
+    --save-color: #a6a6a6;
+    --save-color-hover: #8c8c8c;
+    --import-color: #0078D4;
+    --import-color-hover: #005a9e;
+    --upload-color: #26cd0a;
+    --upload-color-hover: #1b9e08;
+    --download-color: #0078D4;
+    --download-color-hover: #005a9e;
+    --disabled_color: #5a5a5a;
+
+    /* derive modal button colors*/
+    --derive-modal-confirm-color: #0078D4;
+    --derive-modal-confirm-color-hover: #005a9e;
+    --derive-modal-cancel-color: #D13438;
+    --derive-modal-cancel-color-hover: #b92629;
+
+    /* delete modal button colors*/
+    --delete-modal-confirm-color: #D13438;
+    --delete-modal-confirm-color-hover: #b92629;
+    --delete-modal-cancel-color: #0078D4;
+    --delete-modal-cancel-color-hover: #005a9e;
+
+    /* save modal button colors*/
+    --save-modal-confirm-color: #a6a6a6;
+    --save-modal-confirm-color-hover: #8c8c8c;
+    --save-modal-cancel-color: #0078D4;
+    --save-modal-cancel-color-hover: #005a9e;
+
+    /* import modal button colors*/
+    --import-modal-confirm-color: #0078D4;
+    --import-modal-confirm-color-hover: #005a9e;
+    --import-modal-cancel-color: #D13438;
+    --import-modal-cancel-color-hover: #b92629;
+
+    /* upload modal button colors*/
+    --upload-modal-confirm-color: rgba(38, 205, 10, 0.52);
+    --upload-modal-confirm-color-hover: #1b9e08;
+    --upload-modal-cancel-color: #0078D4;
+    --upload-modal-cancel-color-hover: #005a9e;
+
+    /* download modal button colors*/
+    --download-modal-confirm-color: #0078D4;
+    --download-modal-confirm-color-hover: #005a9e;
+    --download-modal-cancel-color: #D13438;
+    --download-modal-cancel-color-hover: #b92629;
+
+    /* new scenario button colors*/
+    --new-scenario-color: #0078D4;
+    --new-scenario-color-hover: #005a9e;
+
+    /* new scenario modal colors */
+    --new-scenario-modal-confirm-color: #0078D4;
+    --new-scenario-modal-confirm-color-hover: #005a9e;
+    --new-scenario-modal-cancel-color: #D13438;
+    --new-scenario-modal-cancel-color-hover: #b92629;
+
+    /* compare toggle switch colors*/
+    --compare-toggle-color: #0078D4;
+    --compare-active-handle-url: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%2326CD0A84'/%3e%3c/svg%3e");
+    --compare-inactive-handle-url: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%2326CD0A84'/%3e%3c/svg%3e");
+    --compare-focussed-handle-url: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%2326CD0A84'/%3e%3c/svg%3e");
+}

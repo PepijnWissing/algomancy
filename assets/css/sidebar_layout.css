@@ -1,0 +1,187 @@
+
+/* Update the sidebar-layout class with proper positioning */
+/* Sidebar layout */
+.sidebar-layout {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 250px;
+    padding: 1rem 1rem;
+    background-color: var(--theme-primary);
+    transition: width 0.3s ease-in-out;
+    overflow-x: hidden;
+    z-index: 1030; /* Make sure sidebar appears above content */
+
+}
+
+/* Handle expanded and collapsed states */
+.sidebar-layout.expanded {
+    width: 250px;
+    padding: 1rem 1rem;
+}
+
+.sidebar-layout.collapsed {
+    width: 60px;
+    padding: 1rem 0.5rem;
+}
+
+
+/* Pills and text color */
+.sidebar-layout .nav-pills .nav-link {
+    color: var(--theme-secondary);
+}
+.sidebar-layout .nav-pills .nav-link.active, .nav-link.active:hover{
+    background-color: var(--theme-secondary) !important;
+    color: var(--text-selected, #ffffff) !important;
+}
+.sidebar-layout .nav-pills .nav-link:hover {
+    background-color: var(--theme-tertiary);
+    color: var(--text-highlight, #ffffff);
+}
+
+/* Icon color */
+.sidebar-layout .nav-pills .nav-link i {
+    color: var(--theme-secondary);
+}
+.sidebar-layout .nav-pills .nav-link.active i {
+    color: var(--text-selected, #ffffff);
+}
+.sidebar-layout .nav-pills .nav-link.active:hover i {
+    color: var(--text-selected, #ffffff);
+}
+.sidebar-layout .nav-pills .nav-link:hover i {
+    color: var(--text-highlight, #ffffff);
+}
+
+/* Sidebar NavLink container stays wide enough for text, shrinks when collapsed */
+.sidebar-layout .nav-link {
+    min-width: 200px;
+    transition: min-width 0.3s cubic-bezier(.4,2,.5,1);
+    justify-content: flex-start;
+}
+.sidebar-layout.collapsed .nav-link {
+    min-width: 56px;     /* Just icon, no text */
+}
+
+/* Text fades and shrinks but remains rendered for the animation */
+.sidebar-content-fade {
+    opacity: 1;
+    max-width: 200px;
+    transition: opacity 0.2s, max-width 0.3s;
+    white-space: nowrap;
+    overflow: hidden;
+    display: inline-block;
+}
+.sidebar-layout.collapsed .sidebar-content-fade {
+    opacity: 0;
+    max-width: 0;
+    pointer-events: none;
+}
+
+
+/* Sidebar toggle button */
+.sidebar-layout .toggle-sidebar-button {
+    position: absolute;
+    bottom: 16px;
+    right: -20px;
+    z-index: 9999;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    transition: transform 0.3s cubic-bezier(.4,2,.5,1);
+    background-color: var(--background-color) !important;
+    color: var(--theme-primary) !important;
+}
+
+/* When collapsed: rotate 180deg */
+.sidebar-layout.collapsed .toggle-sidebar-button {
+    transform: rotate(180deg);
+}
+
+/* When expanded: normal */
+.sidebar-layout.expanded .toggle-sidebar-button {
+    transform: rotate(0deg);
+}
+
+/* Logo wrapper - expanded state */
+.sidebar-logo-wrapper {
+    height: 72px;             /* or your preferred height */
+    max-height: 72px;
+    transition:
+        opacity 0.18s cubic-bezier(.4,2,.5,1);
+    opacity: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.sidebar-logo-img {
+    max-height: 90%;      /* ensures scaling inside wrapper */
+    max-width: 100%;
+    display: block;
+    margin: 0 auto;
+}
+
+/* Both expanded and collapsed logo classes should always be rendered—don't toggle display! */
+.sidebar-layout .expanded-logo {
+    opacity: 1;
+    transition:
+        height 0.25s cubic-bezier(.4,2,.5,1),
+        opacity 0.2s ease-in-out;
+    overflow: hidden;
+    will-change: opacity;
+    display: block;
+    margin-bottom: 12px; /* or as needed, include for smooth collapse */
+}
+
+.sidebar-layout.collapsed .expanded-logo {
+    opacity: 0;
+    margin-bottom: 0;
+}
+
+/* If you have a "collapsed" version of logo (smaller logo or icon) */
+.sidebar-layout .collapsed-logo {
+    opacity: 0;
+    transition:
+        height 0.2s cubic-bezier(.4,2,.5,1),
+        opacity 0.12s linear;
+    overflow: hidden;
+    display: block;
+}
+
+.sidebar-layout.collapsed .collapsed-logo {
+    opacity: 1;
+    margin-bottom: 12px;
+}
+
+/* Sidebar nav/link styling */
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 0;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    color: #f8f9fa;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.sidebar-link:hover, .sidebar-link.active {
+    background: #343a40;
+    color: #fff;
+}
