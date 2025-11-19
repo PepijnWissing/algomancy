@@ -13,7 +13,7 @@ def cqm_loader(text="Loading...", scale: float | None = None):
     Returns:
         html.Div: A div containing the animated loader
     """
-    assert 0.5 <= scale <= 5, f"Invalid scale for loader: {scale}. (min: 0.5, max: 5)"
+    assert not scale or 0.5 <= scale <= 5, f"Invalid scale for loader: {scale}. (min: 0.5, max: 5)"
 
     default_height = 100
     default_width = 100
