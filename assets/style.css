@@ -188,29 +188,29 @@ hr {
 
 
 /* Pills and text color */
-#sidebar .nav-pills .nav-link {
+.sidebar-layout .nav-pills .nav-link {
     color: var(--theme-secondary);
 }
-#sidebar .nav-pills .nav-link.active, .nav-link.active:hover{
+.sidebar-layout .nav-pills .nav-link.active, .nav-link.active:hover{
     background-color: var(--theme-secondary) !important;
     color: var(--text-selected, #ffffff) !important;
 }
-#sidebar .nav-pills .nav-link:hover {
+.sidebar-layout .nav-pills .nav-link:hover {
     background-color: var(--theme-tertiary);
     color: var(--text-highlight, #ffffff);
 }
 
 /* Icon color */
-#sidebar .nav-pills .nav-link i {
+.sidebar-layout .nav-pills .nav-link i {
     color: var(--theme-secondary);
 }
-#sidebar .nav-pills .nav-link.active i {
+.sidebar-layout .nav-pills .nav-link.active i {
     color: var(--text-selected, #ffffff);
 }
-#sidebar .nav-pills .nav-link.active:hover i {
+.sidebar-layout .nav-pills .nav-link.active:hover i {
     color: var(--text-selected, #ffffff);
 }
-#sidebar .nav-pills .nav-link:hover i {
+.sidebar-layout .nav-pills .nav-link:hover i {
     color: var(--text-highlight, #ffffff);
 }
 
@@ -291,7 +291,7 @@ hr {
 }
 
 /* Both expanded and collapsed logo classes should always be rendered—don't toggle display! */
-#sidebar .expanded-logo {
+.sidebar-layout .expanded-logo {
     opacity: 1;
     transition:
         height 0.25s cubic-bezier(.4,2,.5,1),
@@ -302,13 +302,13 @@ hr {
     margin-bottom: 12px; /* or as needed, include for smooth collapse */
 }
 
-#sidebar.collapsed .expanded-logo {
+.sidebar-layout.collapsed .expanded-logo {
     opacity: 0;
     margin-bottom: 0;
 }
 
 /* If you have a "collapsed" version of logo (smaller logo or icon) */
-#sidebar .collapsed-logo {
+.sidebar-layout .collapsed-logo {
     opacity: 0;
     transition:
         height 0.2s cubic-bezier(.4,2,.5,1),
@@ -317,7 +317,7 @@ hr {
     display: block;
 }
 
-#sidebar.collapsed .collapsed-logo {
+.sidebar-layout.collapsed .collapsed-logo {
     opacity: 1;
     margin-bottom: 12px;
 }
@@ -867,7 +867,7 @@ hr {
 }
 
 .compare-page .kpi-cards{
-    margin-bottom: 0px;
+    margin-bottom: 0;
     display: flex;
     flex-wrap: wrap;
     justify-content: flex-start;
