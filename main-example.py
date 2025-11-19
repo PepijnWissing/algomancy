@@ -25,6 +25,7 @@ from example_implementation.data_handling.input_configs import example_input_con
 from example_implementation.data_handling.factories import ExampleETLFactory
 from example_implementation.pages.HomePageContent import HomePageContentCreator
 from example_implementation.pages.DataPageContent import DataPageContentCreator
+from example_implementation.pages.ScenarioPageContent import ScenarioPageContentCreator
 from example_implementation.templates import (
     debug_create_example_scenarios,
     algorithm_templates,
@@ -88,12 +89,13 @@ def main(
         default_algo_params_values={"duration": 30},
         home_content="standard",
         data_content=DataPageContentCreator.create_data_page_content,
+        scenario_content=ScenarioPageContentCreator.create_scenario_page_content,
         overview_content="standard",
         home_callbacks="standard",
         data_callbacks="example",
         overview_callbacks="standard",
         styling_config=styling,
-        use_cqm_loader=True,
+        use_cqm_loader=False,
         title="Example implementation of an Algomancy Dashboard",
         host=host,
         port=port,

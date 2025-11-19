@@ -1,9 +1,8 @@
 from dash import html, get_app, callback, Output, Input, dcc
 
 from algomancy.components.componentids import DATA_PAGE_CONTENT, DATA_SELECTOR_DROPDOWN
-from algomancy.components.cqmloader import cqm_loader
 from algomancy.components.data_page.datamanagementtopbar import top_bar
-from algomancy.components.defaultloader import default_loader
+from algomancy.components.layouthelpers import create_wrapped_content_div
 from algomancy.contentregistry import ContentRegistry
 from algomancy.scenarioengine import ScenarioManager
 from algomancy.settingsmanager import SettingsManager
@@ -18,24 +17,24 @@ def data_page() -> html.Div:
     """
     sm = get_app().server.scenario_manager
     settings: SettingsManager = get_app().server.settings
-    loader = cqm_loader() if settings.use_cqm_loader else default_loader()
+    main_div = create_wrapped_content_div(
+        content_div(),
+        settings.show_loading_on_datapage,
+        settings.use_cqm_loader,
+    )
 
     return html.Div([
         html.H1("Data"),
         top_bar(sm),
-        html.Div(
-            dcc.Loading(
-                [
-                    html.Div(id=DATA_PAGE_CONTENT),
-                ],
-                overlay_style={"visibility": "visible", "opacity": .5, "backgroundColor": "white"},
-                custom_spinner=loader,
-                delay_hide=50,
-                delay_show=50,
-            ),
-            style={"height": "100%", "min-height": "100%"},
-        )
-    ], style={"height": "100%", "min-height": "100%"})
+        main_div,
+    ],)
+
+
+def content_div() -> html.Div:
+    return html.Div(
+        html.Div(className='data-page-content'),  # placeholder
+        id=DATA_PAGE_CONTENT
+    )
 
 
 @callback(

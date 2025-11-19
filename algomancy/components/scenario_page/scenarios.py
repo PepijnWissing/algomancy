@@ -1,6 +1,7 @@
 from dash import html, dcc, callback, Output, Input, ALL, get_app, ctx, no_update
 
 from algomancy.components.componentids import *
+from algomancy.components.layouthelpers import create_wrapped_content_div
 from algomancy.components.scenario_page.delete_confirmation import delete_confirmation_modal
 from algomancy.components.scenario_page.new_scenario_creator import new_scenario_creator
 from algomancy.components.scenario_page.scenario_cards import hidden_card
@@ -11,6 +12,7 @@ import dash_bootstrap_components as dbc
 
 from algomancy.contentregistry import ContentRegistry
 from algomancy.scenarioengine import ScenarioManager
+from algomancy.settingsmanager import SettingsManager
 
 
 def scenario_page():
@@ -22,13 +24,21 @@ def scenario_page():
     Returns:
         html.Div: A Dash HTML component representing the scenarios page
     """
+
+    settings: SettingsManager = get_app().server.settings
+    content = create_wrapped_content_div(
+        content_div(),
+        settings.show_loading_on_scenariopage,
+        settings.use_cqm_loader
+    )
+
     page = html.Div([
         html.H2("Manage Scenarios"),
         new_scenario_creator(),
+        delete_confirmation_modal(),
         dcc.Store(id=SCENARIO_LIST_UPDATE_STORE),
         dcc.Store(id=SCENARIO_TO_DELETE),
         dcc.Store(id=SCENARIO_SELECTED_ID_STORE),
-        delete_confirmation_modal(),
         dbc.Alert(id=SCENARIO_ALERT, dismissable=True, is_open=False, color="danger"),
 
         # Two-column main content area:
@@ -52,10 +62,10 @@ def scenario_page():
                                 dbc.Progress(id=SCENARIO_PROG_BAR,
                                              className="mt-2 scenario-progress-bar",
                                              label="",
-                                             value=0,)
+                                             value=0, )
                             ]
                         )],
-                        id = SCENARIO_PROG_COLLAPSE,
+                        id=SCENARIO_PROG_COLLAPSE,
                         is_open=False
                     ),
                     html.H4("Scenarios", className="mt-2"),
@@ -87,9 +97,7 @@ def scenario_page():
 
             # Right: Selected scenario details
             dbc.Col(
-                [
-                    html.Div(id=SCENARIO_SELECTED, className="mt-2")
-                ],
+                content,
                 width=10,
                 style={"paddingLeft": "24px"}
             ),
@@ -97,6 +105,13 @@ def scenario_page():
     ])
 
     return page
+
+
+def content_div() -> html.Div:
+    return html.Div(
+        id=SCENARIO_SELECTED,
+        className="mt-2 scenario-page-content",
+    )
 
 
 @callback(

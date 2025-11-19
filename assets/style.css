@@ -889,3 +889,11 @@ hr {
 .compare-page .details-view{
     margin-bottom: 10px;
 }
+
+.data-page-content {
+    min-height: 500px;
+}
+
+.scenario-page-content {
+    min-height: 500px;
+}

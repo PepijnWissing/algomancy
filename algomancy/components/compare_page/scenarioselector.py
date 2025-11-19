@@ -7,10 +7,12 @@ It allows users to select and compare two different scenarios side by side.
 
 import dash_bootstrap_components as dbc
 
-from dash import html, dcc
+from dash import html, dcc, get_app
 
+from algomancy.components.layouthelpers import create_wrapped_content_div
 from algomancy.scenarioengine.scenariomanager import ScenarioManager
 from algomancy.components.componentids import *
+from algomancy.settingsmanager import SettingsManager
 
 
 # === Helper ===
@@ -47,17 +49,31 @@ def create_side_by_side_selector(scenario_manager: ScenarioManager):
 
 
 def create_side_by_side_viewer():
+    settings: SettingsManager = get_app().server.settings
+    left_overview = create_wrapped_content_div(
+        html.Div(id=LEFT_SCENARIO_OVERVIEW, className="mt-3 compare-sbs-content"),
+        show_loading=settings.show_loading_on_comparepage,
+        cqm=settings.use_cqm_loader,
+        spinner_scale=1.5,
+    )
+    right_overview = create_wrapped_content_div(
+        html.Div(id=RIGHT_SCENARIO_OVERVIEW, className="mt-3"),
+        show_loading=settings.show_loading_on_comparepage,
+        cqm=settings.use_cqm_loader,
+        spinner_scale=1.5,
+    )
+
     viewer = dbc.Row([
         dbc.Col([
             dbc.Collapse(
-                html.Div(id=LEFT_SCENARIO_OVERVIEW, className="mt-3"),
+                left_overview,
                 id=PERF_SBS_LEFT_COLLAPSE
             ),
         ], width=6),
 
         dbc.Col([
             dbc.Collapse(
-                html.Div(id=RIGHT_SCENARIO_OVERVIEW, className="mt-3"),
+                right_overview,
                 id=PERF_SBS_RIGHT_COLLAPSE
             ),
         ], width=6),

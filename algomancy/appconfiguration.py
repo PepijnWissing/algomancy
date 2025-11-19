@@ -1,6 +1,9 @@
 import platform
+from idlelib.pyshell import use_subprocess
 from typing import Any, Callable, Dict, List, TypeVar
 import os
+
+from setuptools.command.build_ext import use_stubs
 
 from algomancy.dataengine import DataSource, InputFileConfiguration
 from algomancy.scenarioengine import AlgorithmParameters, AlgorithmFactory, Algorithm, KpiTemplate, AlgorithmTemplate
@@ -58,6 +61,9 @@ class AppConfiguration:
             # === page configurations ===
             compare_default_open: List[str] | None = None,
             compare_ordered_list_components: List[str] | None = None,
+            use_data_page_spinner: bool = True,
+            use_scenario_page_spinner: bool = True,
+            use_compare_page_spinner: bool = True,
             # === authentication ===
             use_authentication: bool = False,
     ):
@@ -103,6 +109,9 @@ class AppConfiguration:
         # settings pages
         self.compare_default_open = compare_default_open or []
         self.compare_ordered_list_components = compare_ordered_list_components or []
+        self.show_loading_on_datapage = use_data_page_spinner
+        self.show_loading_on_scenariopage = use_scenario_page_spinner
+        self.show_loading_on_comparepage = use_compare_page_spinner
 
         # auth
         self.use_authentication = use_authentication
@@ -153,6 +162,9 @@ class AppConfiguration:
             # === page configurations ===
             "compare_default_open": self.compare_default_open,
             "compare_ordered_list_components": self.compare_ordered_list_components,
+            "show_loading_on_datapage": self.show_loading_on_datapage,
+            "show_loading_on_scenariopage": self.show_loading_on_scenariopage,
+            "show_loading_on_comparepage": self.show_loading_on_comparepage,
             # === authentication ===
             "use_authentication": self.use_authentication,
         }
