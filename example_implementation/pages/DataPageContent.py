@@ -3,6 +3,8 @@ import pandas as pd
 from dash import html, dcc, dash_table, callback, Output, Input, State
 import plotly.express as px
 
+import time
+
 from algomancy.dataengine import DataSource
 from ..IDs import (
     DATA_TABLE_ITEMS_STORE,
@@ -135,8 +137,7 @@ class DataPageContentCreator:
         data_view = DataPageContentCreator._create_raw_data_view(data, table_page_size)
         layout = DataPageContentCreator._create_layout_plot(data)
 
-        # DataPageContentCreator.register_callbacks_on_data_page()
-
+        # time.sleep(5) # uncomment to test spinners
         return [
             data_view,
             html.Hr(),

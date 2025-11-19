@@ -1,3 +1,5 @@
+import time
+
 from dash import html
 
 from algomancy.scenarioengine import Scenario
@@ -10,6 +12,7 @@ class ScenarioPageContentCreator:
 
     @staticmethod
     def create_scenario_page_content(s: Scenario) -> html.Div:
+        # time.sleep(5)  # uncomment to test spinners
         page = html.Div(
             [
                 html.H5("Selected Scenario"),
