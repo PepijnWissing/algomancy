@@ -30,6 +30,7 @@
 /* Pills and text color */
 .sidebar-layout .nav-pills .nav-link {
     color: var(--theme-secondary);
+    transition: background-color, color 0.2s ease-in-out;
 }
 .sidebar-layout .nav-pills .nav-link.active, .nav-link.active:hover{
     background-color: var(--theme-secondary) !important;
@@ -43,6 +44,7 @@
 /* Icon color */
 .sidebar-layout .nav-pills .nav-link i {
     color: var(--theme-secondary);
+    transition: background-color, color 0.2s ease-in-out;
 }
 .sidebar-layout .nav-pills .nav-link.active i {
     color: var(--text-selected, #ffffff);

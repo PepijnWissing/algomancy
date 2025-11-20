@@ -10,6 +10,53 @@ hr {
     border-top: 2px solid gray;
 }
 
+/*todo buttons on scenario page should be styled separately*/
+
+.btn {
+    border-color: var(--theme-secondary);   /* todo this should respond to unified button colors */
+    background-color: var(--theme-secondary);
+    color: var(--text-selected)
+}
+
+.btn:hover {
+    border-color: var(--theme-tertiary);
+    background-color: var(--theme-tertiary);
+    color: var(--text-highlight);
+}
+
+.rc-slider-track {
+    background-color: var(--theme-secondary);
+}
+
+.rc-slider-dot-active, .rc-slider-handle, .rc-slider-handle:focus {
+    border-color: var(--theme-secondary);
+}
+
+.rc-slider-handle:active {
+    border-color: var(--theme-secondary);
+    box-shadow: 0 0 0 2px rgb(from var(--theme-secondary) r g b /0.3) ;
+}
+
+.CalendarDay__selected, .CalendarDay__selected:active, .CalendarDay__selected:hover {
+    background: var(--theme-primary);
+    border: 1px double var(--theme-primary);
+    color: var(--text-selected);
+}
+
+.CalendarDay__selected_span {
+    background: var(--theme-secondary);
+    border: 1px double var(--theme-secondary);
+    color: var(--text-selected);
+}
+
+.DayPickerKeyboardShortcuts_show {
+  display: none;
+}
+
+.DateInput_input__focused {
+    border-bottom: 2px solid var(--theme-primary);
+}
+
 /* =========================
    Layout containers
    ========================= */
@@ -56,6 +103,7 @@ hr {
 .Select-control, .Select-menu-outer, .Select-input {
     background-color: var(--card-surface);
     color: var(--text-color);
+    transition: box-shadow 0.2s ease-in-out;
 }
 
 .Select-value-label, .Select-option {
@@ -77,6 +125,34 @@ hr {
     color: var(--text-selected);
 }
 
+.Select--multi .Select-value-icon {
+    color: var(--text-color);
+    /*background-color: rgb(from var(--theme-secondary) r g b /0.2);*/
+    border-right-color: var(--theme-secondary);
+}
+
+.Select--multi .Select-value-icon:hover {
+    color: var(--text-selected);
+    background-color: rgb(from var(--theme-secondary) r g b /0.5);
+    border-right-color: var(--theme-secondary);
+    transition: background-color 0.2s ease-in-out;
+}
+
+.Select--multi .Select-value {
+    color: var(--text-color);
+    background-color: rgb(from var(--theme-secondary) r g b /0.2);
+    border-color: var(--theme-secondary);
+}
+
+.is-focused:not(.is-open)>.Select-control {
+    border-color: var(--theme-secondary);
+    box-shadow: 0 0 0 2px rgb(from var(--theme-secondary) r g b /0.3) ;
+}
+
+.is-open>.Select-control {
+    background-color: var(--card-surface);
+}
+
 /* styling for input groups */
 .form-control, input.form-control {
     background-color: var(--card-surface);
@@ -84,31 +160,58 @@ hr {
 }
 
 .form-control:focus, input.form-control:focus {
-    background-color: var(--card-surface) !important;
-    color: var(--text-color) !important;
-    border-color: var(--theme-secondary) !important;
-    box-shadow: 0 0 0 0.2rem rgba(62, 189, 243, 0.25) !important;
+    background-color: var(--card-surface);
+    color: var(--text-color);
+    border-color: var(--theme-secondary);
+    box-shadow: 0 0 0 0.2rem rgb(from var(--theme-secondary) r g b /0.3);
 }
 
 .form-control::placeholder, input.form-control::placeholder {
-    color: var(--text-color) !important;
-    opacity: 0.6 !important;
+    color: var(--text-color);
+    opacity: 0.6;
 }
-
-/*todo control Select--multi stuff and box shadows*/
 
 /* styling for checkboxes */
 .form-check-input {
     background-color: var(--card-surface);
-    border-color: var(--theme-secondary);
+    border-color: var(--toggle-border-color);
     color: var(--text-color);
     transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
     cursor: pointer;
 }
 
 .form-check-input:checked {
-    background-color: var(--theme-secondary);
-    border-color: var(--theme-secondary);
+    background-color: var(--toggle-active-color);
+    border-color: var(--toggle-active-color);
+}
+
+.form-check-input:focus {
+    box-shadow: 0 0 0 0.2rem var(--toggle-shadow-color);
+    border-color: var(--toggle-active-color);
+}
+
+.form-switch .form-check-input {
+    background-color: var(--toggle-background-color);
+    background-image: var(--toggle-handle-inactive);
+}
+
+.form-switch .form-check-input:checked {
+    background-color: var(--toggle-active-color);
+    background-image: var(--toggle-handle-selected);
+}
+
+.form-switch .form-check-input:focus, .form-check-input:active{
+    background-image: var(--toggle-handle-focussed)
+}
+
+.form-switch .form-check-input:checked:focus {
+    box-shadow: 0 0 0 0.2rem var(--toggle-shadow-color);
+    background-image: var(--toggle-handle-selected)
+}
+
+/* daq.BooleanSwitch background color */
+.gJuplL {
+    background-color: var(--toggle-active-color) !important;
 }
 
 /* =========================
@@ -220,13 +323,13 @@ hr {
     --toggle-active-color: var(--compare-toggle-color);
     --toggle-handle-selected: var(--compare-active-handle-url);
     --toggle-handle-primary: var(--compare-focussed-handle-url);
-    --toggle-handle-textcolor: var(--compare-inactive-handle-url);
+    --toggle-handle-inactive: var(--compare-inactive-handle-url);
 }
 
 .styled-toggle .form-check-input {
     background-color: var(--toggle-background-color);
     border-color: var(--toggle-border-color);
-    background-image: var(--toggle-handle-textcolor);
+    background-image: var(--toggle-handle-inactive);
 }
 
 .styled-toggle .form-check-input:checked {

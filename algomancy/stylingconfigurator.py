@@ -21,7 +21,7 @@ class ButtonColorMode(StrEnum):
     SEPARATE = "separate"
 
 
-class ColorConfiguration():
+class ColorConfiguration:
     def __init__(
             self,
             background_color: str = "#000000",
@@ -128,7 +128,7 @@ class ColorConfiguration():
         ro = int(ao + (bo - ao) * t)
         return ColorConfiguration._rgba_to_hex((rr, rg, rb, ro))
 
-    def get_card_surface_shading(self, card_highlight_mode: str = CardHighlightMode.SUBTLE_LIGHT):
+    def get_card_surface_shading(self, card_highlight_mode: str = CardHighlightMode.SUBTLE_DARK):
         match card_highlight_mode:
             case CardHighlightMode.SUBTLE_LIGHT:
                 return self.linear_combination_hex(self._background_color, "#FFFFFF", 0.1)
@@ -463,6 +463,30 @@ class ColorConfiguration():
         shadow_color = self.reduce_color_opacity(self._theme_color_primary, 0.3)
         return self._get_handle_url(shadow_color)
 
+    @property
+    def toggle_background_color(self):
+        return self.get_card_surface_shading()
+
+    @property
+    def toggle_shadow_color(self):
+        return self.reduce_color_opacity(self.toggle_active_color, 0.3)
+
+    @property
+    def toggle_active_color(self):
+        return self._get_button_color_with_default("standard", 1)
+
+    @property
+    def toggle_handle_selected(self):
+        return self._get_handle_url(self.text_color_selected)
+
+    @property
+    def toggle_handle_focussed(self):
+        return self._get_handle_url(self.toggle_shadow_color)
+
+    @property
+    def toggle_handle_inactive(self):
+        return self._get_handle_url(self.text_color)
+
     @staticmethod
     def dm_bootstrap_defaults() -> Dict[str, str]:
         return {
@@ -554,12 +578,22 @@ class ColorConfiguration():
             "--compare-focussed-handle-url": self.compare_focussed_handle_url,
         }
 
+        toggle_colors = {
+            "--toggle-background-color": self.toggle_background_color,
+            "--toggle-shadow-color": self.toggle_shadow_color,
+            "--toggle-active-color": self.toggle_active_color,
+            "--toggle-handle-selected": self.toggle_handle_selected,
+            "--toggle-handle-focussed": self.toggle_handle_focussed,
+            "--toggle-handle-inactive": self.toggle_handle_inactive,
+        }
+
         all_colors = {
             **main_colors,
             **data_management_colors,
             **data_modal_colors,
             **scenarios_colors,
             **compare_colors,
+            **toggle_colors,
         }
 
         return all_colors

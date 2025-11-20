@@ -10,6 +10,7 @@ import platform
 
 from flask.globals import app_ctx
 
+from algomancy.contentcreatorlibrary import PlaceholderHomePageContentCreator
 from algomancy.dataengine import DataSource
 from algomancy.launcher import DashLauncher
 from algomancy.stylingconfigurator import (
@@ -46,8 +47,15 @@ def main(
     Loads data from CSV files, initializes the data source, creates the Dash application,
     and starts the web server.
     """
+    rich_mahogany = "#400406"  # p
+    spicy_paprika = "#CF5C36"  # s
+    dark_garnet = "#73070B"    # t
 
-    white = "#EEEEEE"  # white
+    dark_green = "#1F271B"
+    sage_green = "#6DA34D"
+    cornsilk = "#FEFAE0"
+
+    white = "#FFFFFF"  # white
     purple = "#3EBDF3"
     lightblue = "#4C0265"
     bright_blue = ColorConfiguration.linear_combination_hex(lightblue, purple, 0.5)
@@ -58,16 +66,16 @@ def main(
         layout_selection=LayoutSelection.SIDEBAR,
         color_configuration=ColorConfiguration(
             background_color=white,
-            theme_color_primary=lightblue,
-            theme_color_secondary=purple,
-            theme_color_tertiary=bright_blue,
+            theme_color_primary=dark_green,
+            theme_color_secondary=sage_green,
+            theme_color_tertiary=cornsilk,
             text_color=darkgrey,
-            text_color_highlight=lightgrey,
+            text_color_highlight=sage_green,
             text_color_selected=white,
             button_color_mode=ButtonColorMode.UNIFIED,
             button_colors={
-                "unified_color": bright_blue,
-                # "unified_hover": "#26cd0a",
+                "unified_color": sage_green,
+                "unified_hover": "#8FBE74",
             },
         ),
         logo_url="/assets/cqm-logo-white.png",
@@ -87,7 +95,7 @@ def main(
         default_algo="Slow",
         autorun=True,
         default_algo_params_values={"duration": 30},
-        home_content="standard",
+        home_content=PlaceholderHomePageContentCreator.create_default_elements_showcase,
         data_content=DataPageContentCreator.create_data_page_content,
         scenario_content=ScenarioPageContentCreator.create_scenario_page_content,
         overview_content="standard",
