@@ -174,7 +174,7 @@ hr {
 /* styling for checkboxes */
 .form-check-input {
     background-color: var(--card-surface);
-    border-color: var(--toggle-border-color);
+    border-color: var(--text-color);
     color: var(--text-color);
     transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
     cursor: pointer;
@@ -310,43 +310,61 @@ hr {
     text-decoration: line-through;
 }
 
-
-
 /* =========================
-   Toggle styling
+   Scenario page specifics
    ========================= */
-.styled-toggle { /* adjust colors in this section if desired */
-    --toggle-background-color: var(--card-surface);
-    --toggle-shadow-color: rgb(from var(--compare-toggle-color) r g b / 30%);
-    --toggle-border-color: var(--text-color);
-    --toggle-handle-color: var(--text-color);
-    --toggle-active-color: var(--compare-toggle-color);
-    --toggle-handle-selected: var(--compare-active-handle-url);
-    --toggle-handle-primary: var(--compare-focussed-handle-url);
-    --toggle-handle-inactive: var(--compare-inactive-handle-url);
+
+.scenario-multi-btn-created { /* process */
+    background-color: #1b9e08;
+    border: 0;
+    color: #FFFFFF;
+    min-width: 80px;
+    pointer-events: all;
+    transition: background-color 0.2s ease-in-out;
 }
 
-.styled-toggle .form-check-input {
-    background-color: var(--toggle-background-color);
-    border-color: var(--toggle-border-color);
-    background-image: var(--toggle-handle-inactive);
+.scenario-multi-btn-created:hover { /* process */
+    background-color: #105906;
+    color: #FFFFFF;
 }
 
-.styled-toggle .form-check-input:checked {
-    background-color: var(--toggle-active-color);
-    border-color: var(--toggle-border-color);
-    background-image: var(--toggle-handle-selected);
+
+.scenario-multi-btn-completed { /* refresh */
+    background-color: #4487d5;
+    border: 0;
+    color: #FFFFFF;
+    min-width: 80px;
+    pointer-events: all;
 }
 
-.styled-toggle .form-check-input:focus, .form-check-input:active{
-    box-shadow: 0 0 0 0.2rem var(--toggle-shadow-color);
-    background-image: var(--toggle-handle-primary)
+.scenario-multi-btn-completed:hover, .scenario-multi-btn-completed:focus {
+    background-color: #2b5688;
+    color: #FFFFFF;
 }
 
-.styled-toggle .form-check-input:checked:focus {
-    box-shadow: 0 0 0 0.2rem var(--toggle-shadow-color);
-    background-image: var(--toggle-handle-selected)
+.scenario-multi-btn-queued, .scenario-delete-btn-created, .scenario-delete-btn-completed { /* cancel */
+    background-color: #bd1414;
+    border: 0;
+    color: #FFFFFF;
+    min-width: 80px;
+    pointer-events: all;
 }
+
+.scenario-multi-btn-queued:hover, .scenario-multi-btn-queued:focus,
+.scenario-delete-btn-created:hover, .scenario-delete-btn-created:focus,
+.scenario-delete-btn-completed:hover, .scenario-delete-btn-completed:focus {
+    background-color: #770d0d;
+    color: #FFFFFF;
+}
+
+.scenario-delete-btn-queued { /* delete */
+    background-color: #a14a4a;
+    border: 0;
+    color: #FFFFFF;
+    min-width: 80px;
+    pointer-events: none;
+}
+
 
 /* =========================
    Compare page (mirrors performance page styles)

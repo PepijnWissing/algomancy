@@ -94,7 +94,7 @@ def main(
         autocreate=True,
         default_algo="Slow",
         autorun=True,
-        default_algo_params_values={"duration": 30},
+        default_algo_params_values={"duration": 10},
         home_content=PlaceholderHomePageContentCreator.create_default_elements_showcase,
         data_content=DataPageContentCreator.create_data_page_content,
         scenario_content=ScenarioPageContentCreator.create_scenario_page_content,
