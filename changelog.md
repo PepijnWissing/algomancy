@@ -1,4 +1,89 @@
 # Change log
+## 0.2.14
+_Released at 21-11-2025_
+
+### Summary
+- Styling and UX improvements across default components and pages.
+- Restructured CSS and refined component defaults; added/updated animated spinners and modal behavior.
+- Data engine: improvements to extractors.
+- Logging and reliability fixes.
+
+### Details
+- UI/UX
+  - Restyled default components and performed multiple styling updates.
+  - Restructured CSS and applied small CSS tweaks to polish visuals.
+  - Disabled page background when modals are open for better focus.
+  - Wrapped Data page in a spinner and added further updates to animated spinners with better customizability.
+- Data Engine
+  - Multiple extractor-related improvements and refactors.
+- Examples
+  - Updated tests and example implementation for alignment with UI and engine changes.
+
+### Bug fixes
+- Fixed a scale assertion bug in the measurement formatting logic.
+- Replaced erroneous `log_exception` usage with the correct `log_traceback` in logging.
+
+### Multi extractor update
+> **This is a breaking change**
+> 
+`InputFileConfiguration` is now an abstract class; its uses should be replaced by `SingelInputFileConfiguration`, which 
+is a drop-in replacement. Its counterpart, the `MultiInputFileConfiguration` is used by the MultiExtractor.
+Its use should be clear from the example below. 
+
+```python
+class StedenSchema(Schema):
+    COUNTRY = "Country"
+    CITY = "City"
+
+    @property
+    def datatypes(self) -> Dict[str, DataType]:
+        return {
+            StedenSchema.COUNTRY: DataType.STRING,
+            StedenSchema.CITY: DataType.STRING,
+        }
+
+
+class KlantenSchema(Schema):
+    ID = 'ID'
+    Name = "Naam"
+
+    @property
+    def datatypes(self) -> Dict[str, DataType]:
+        return {
+            KlantenSchema.ID: DataType.INTEGER,
+            KlantenSchema.Name: DataType.STRING,
+        }
+
+
+multisheet_config = MultiInputFileConfiguration(
+    extension=FileExtension.XLSX,
+    file_name="multisheet",
+    file_schemas={
+        "Steden": StedenSchema(),
+        "Klanten": KlantenSchema(),
+    }
+)
+```
+
+```python
+class ExampleETLFactory(de.ETLFactory):
+    def __init__(self, configs, logger=None):
+        super().__init__(configs, logger)
+
+    def create_extractors(
+        self,
+        files: Dict[str, F],  # name to path format
+    ) -> Dict[str, de.Extractor]:
+        ...
+        multisheet_extractor = de.XLSXMultiExtractor(  # -- this is new
+            file=cast(de.XLSXFile, files[multisheet]),
+            schemas=self.get_schemas(multisheet),
+            logger=self.logger,
+        ),
+```
+
+**Note**: the resulting DataFrames show up with keys `multisheet.Steden` and `multisheet.Klanten` in the ETL internal dictionary. 
+
 ## 0.2.13
 _Released at 06-11-2025_
 
