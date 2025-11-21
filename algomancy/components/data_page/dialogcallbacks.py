@@ -352,7 +352,7 @@ def show_uploaded_filename(filename):
         mapping = match_file_names(sm.input_configurations, filenames)
     except Exception as e:
         sm.logger.error(f"Problem with loading: {str(e)}")
-        sm.logger.log_exception(e)
+        sm.logger.log_traceback(e)
         return no_update, False, True, f"Could not match files uniquely. Close and try again"
 
     return html.Div([
@@ -444,7 +444,7 @@ def process_imports(n_clicks, contents, filenames, dataset_name):
 
     except Exception as e:
         sm.logger.error(f"Problem with loading: {str(e)}")
-        sm.logger.log_exception(e)
+        sm.logger.log_traceback(e)
         return no_update, False, "", False, f"Problem with loading: {str(e)}", True, ""
 
 
@@ -615,5 +615,5 @@ def save_derived_data(n_clicks, set_name: str, ):
         return False, "Files saved successfully", True, "", False
     except Exception as e:
         sm.logger.error(f"Problem with saving: {str(e)}")
-        sm.logger.log_exception(e)
+        sm.logger.log_traceback(e)
         return False, "", False, f"Problem with saving: {str(e)}", True

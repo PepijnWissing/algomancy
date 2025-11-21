@@ -5,7 +5,8 @@ from typing import List, Dict
 import pandas as pd
 
 from algomancy.dashboardlogger.logger import Logger
-from algomancy.dataengine.inputfileconfiguration import InputFileConfiguration
+from algomancy.dataengine.inputfileconfiguration import InputFileConfiguration, SingleInputFileConfiguration, \
+    MultiInputFileConfiguration
 
 
 class ValidationSeverity(StrEnum):
@@ -135,21 +136,22 @@ class InputConfigurationValidator(Validator):
             )
             return self.messages
 
+        schemas = {}
+        for cfg in self._configs.values():
+            if isinstance(cfg, SingleInputFileConfiguration):
+                schemas[cfg.file_name] = cfg.file_schema
+            elif isinstance(cfg, MultiInputFileConfiguration):
+                for sub_cfg, schema in cfg.file_schemas.items():
+                    schemas[f'{cfg.file_name}.{sub_cfg}'] = schema
+
         for name, df in data.items():
-            if name not in self._configs:
+            if name not in schemas:
                 self.buffer_message(
-                    self._severity, f"No configuration found for {name}."
+                    self._severity, f"No schema found for {name}."
                 )
                 continue
 
-            config = self._configs[name]
-            if not isinstance(config, InputFileConfiguration):
-                self.buffer_message(
-                    self._severity, f"Schema for {name} is not a Schema object."
-                )
-                continue
-
-            schema = config.file_schema
+            schema = schemas[name]
             for col in df.columns:
                 if col not in schema.datatypes:
                     self.buffer_message(

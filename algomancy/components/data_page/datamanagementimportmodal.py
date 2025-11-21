@@ -38,7 +38,7 @@ def data_management_import_modal(sm: ScenarioManager, themed_styling):
         spinner = default_loader("Importing data...")
 
     return dbc.Modal([
-        dbc.ModalHeader(dbc.ModalTitle("Import Data")),
+        dbc.ModalHeader(dbc.ModalTitle("Import Data"), close_button=False),
         dbc.ModalBody(
             dcc.Loading(
                 [
@@ -92,5 +92,6 @@ def data_management_import_modal(sm: ScenarioManager, themed_styling):
             dbc.Button("Close", id=DM_IMPORT_MODAL_CLOSE_BTN, class_name="dm-import-modal-cancel-btn ms-auto")
         ]),
     ],
-        id=DM_IMPORT_MODAL, is_open=False, centered=True, class_name="themed-modal", style=themed_styling
+        id=DM_IMPORT_MODAL, is_open=False, centered=True, class_name="themed-modal", style=themed_styling,
+        keyboard=False,  backdrop="static",
     )

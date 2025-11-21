@@ -1,9 +1,11 @@
-from dash import html, get_app, callback, Output, Input
+from dash import html, get_app, callback, Output, Input, dcc
 
 from algomancy.components.componentids import DATA_PAGE_CONTENT, DATA_SELECTOR_DROPDOWN
 from algomancy.components.data_page.datamanagementtopbar import top_bar
+from algomancy.components.layouthelpers import create_wrapped_content_div
 from algomancy.contentregistry import ContentRegistry
 from algomancy.scenarioengine import ScenarioManager
+from algomancy.settingsmanager import SettingsManager
 
 
 def data_page() -> html.Div:
@@ -14,12 +16,25 @@ def data_page() -> html.Div:
         html.Div: A Dash HTML component representing the data page
     """
     sm = get_app().server.scenario_manager
+    settings: SettingsManager = get_app().server.settings
+    main_div = create_wrapped_content_div(
+        content_div(),
+        settings.show_loading_on_datapage,
+        settings.use_cqm_loader,
+    )
 
     return html.Div([
         html.H1("Data"),
         top_bar(sm),
-        html.Div(id=DATA_PAGE_CONTENT),
-    ])
+        main_div,
+    ],)
+
+
+def content_div() -> html.Div:
+    return html.Div(
+        html.Div(className='data-page-content'),  # placeholder
+        id=DATA_PAGE_CONTENT
+    )
 
 
 @callback(

@@ -1,8 +1,10 @@
 from typing import Dict, Any, List
 
+from algomancy.appconfiguration import AppConfiguration
+
 
 class SettingsManager:
-    def __init__(self, configurations: Any):
+    def __init__(self, configurations: AppConfiguration | Dict):
         # Accept either AppConfiguration or dict; store as dict internally
         if hasattr(configurations, "as_dict") and callable(getattr(configurations, "as_dict")):
             self._configurations: Dict[str, Any] = configurations.as_dict()
@@ -14,6 +16,9 @@ class SettingsManager:
     def __getitem__(self, item):
         return self._configurations.get(item, [])
 
+    # ===================================
+    # Properties for convenient access
+    # ===================================
     @property
     def compare_default_open(self) -> List[str]:
         return self["compare_default_open"]
@@ -25,4 +30,16 @@ class SettingsManager:
     @property
     def use_cqm_loader(self) -> bool:
         return self["use_cqm_loader"]
+
+    @property
+    def show_loading_on_datapage(self):
+        return self["show_loading_on_datapage"]
+
+    @property
+    def show_loading_on_scenariopage(self):
+        return self["show_loading_on_scenariopage"]
+
+    @property
+    def show_loading_on_comparepage(self):
+        return self["show_loading_on_comparepage"]
 

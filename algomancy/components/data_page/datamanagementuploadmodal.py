@@ -45,7 +45,7 @@ def data_management_upload_modal(sm: ScenarioManager, themed_styling):
         spinner = default_loader("Importing data...")
 
     return dbc.Modal([
-        dbc.ModalHeader(dbc.ModalTitle("Upload Cases")),
+        dbc.ModalHeader(dbc.ModalTitle("Upload Cases"), close_button=False),
         dbc.ModalBody(
             dcc.Loading(
                 [
@@ -100,6 +100,7 @@ def data_management_upload_modal(sm: ScenarioManager, themed_styling):
         ]),
     ],
         id=DM_UPLOAD_MODAL, is_open=False, centered=True, class_name="themed-modal", style=themed_styling,
+        keyboard=False,  backdrop="static",
     )
 
 

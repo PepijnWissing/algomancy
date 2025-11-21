@@ -26,25 +26,17 @@ def hidden_card():
 def scenario_card(s: Scenario, is_hidden: bool=False):
     # Determine process button appearance based on scenario status
     if s.status == ScenarioStatus.CREATED:
+        status = "created"
         btn_text = "Process"
-        btn_color = "success"
-        multi_btn_disabled = False
-        delete_btn_disabled = False
     elif s.status in (ScenarioStatus.QUEUED, ScenarioStatus.PROCESSING):
+        status = "queued"
         btn_text = "Cancel"
-        btn_color = "danger"
-        multi_btn_disabled = False
-        delete_btn_disabled = True
     elif s.status in (ScenarioStatus.COMPLETE, ScenarioStatus.FAILED):
+        status = "completed"
         btn_text = "Refresh"
-        btn_color = "info"
-        multi_btn_disabled = False
-        delete_btn_disabled = False
     else:                           # never
+        status = "standard"
         btn_text = "Process"
-        btn_color = "secondary"
-        multi_btn_disabled = True
-        delete_btn_disabled = False
 
     return html.Div(
         [
@@ -76,20 +68,16 @@ def scenario_card(s: Scenario, is_hidden: bool=False):
                         dbc.Button(
                             btn_text,
                             id={"type": SCENARIO_PROCESS_BUTTON, "index": s.id},
-                            color=btn_color,
                             size="sm",
                             n_clicks=0,
-                            disabled=multi_btn_disabled,
-                            style={"minWidth": "80px"}
+                            class_name="scenario-multi-btn-" + status,
                         ),
                         dbc.Button(
                             "Delete",
                             id={"type": SCENARIO_DELETE_BUTTON, "index": s.id},
-                            color="danger",
                             size="sm",
                             n_clicks=0,
-                            disabled=delete_btn_disabled,
-                            style={"minWidth": "80px"}
+                            class_name="scenario-delete-btn-" + status,
                         ),
                     ]),
                     width=6,

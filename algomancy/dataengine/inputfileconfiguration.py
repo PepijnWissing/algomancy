@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 from enum import StrEnum
+from typing import List, Dict
+from abc import ABC
 
 from algomancy.dataengine.schema import Schema
 
@@ -11,11 +13,25 @@ class FileExtension(StrEnum):
 
 
 @dataclass(frozen=True)
-class InputFileConfiguration:
+class InputFileConfiguration(ABC):
     extension: FileExtension
     file_name: str
-    file_schema: Schema
 
     @property
     def file_name_with_extension(self) -> str:
         return self.file_name + "." + self.extension
+
+
+@dataclass(frozen=True)
+class SingleInputFileConfiguration(InputFileConfiguration):
+    file_schema: Schema
+
+
+@dataclass(frozen=True)
+class MultiInputFileConfiguration(InputFileConfiguration):
+    file_schemas: Dict[str, Schema]
+
+    @property
+    def sub_names(self) -> List[str]:
+        return list(self.file_schemas.keys())
+

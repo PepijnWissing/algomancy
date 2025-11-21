@@ -1,0 +1,285 @@
+
+/* =========================
+   Data management page buttons
+   ========================= */
+
+.dm-derive-btn {
+    background-color: var(--derive-color);
+    color: var(--text-selected);
+    border-color: var(--derive-color);
+}
+
+.dm-derive-btn:hover, .dm-derive-btn:focus, .dm-derive-btn:active, .dm-derive-btn:active:focus {
+    background-color: var(--derive-color-hover);
+    color: var(--text-selected);
+    border-color: var(--derive-color-hover);
+}
+
+.dm-delete-btn {
+    background-color: var(--delete-color);
+    color: var(--text-selected);
+    border-color: var(--delete-color);
+}
+
+.dm-delete-btn:hover, .dm-delete-btn:focus, .dm-delete-btn:active, .dm-delete-btn:active:focus {
+    background-color: var(--delete-color-hover);
+    color: var(--text-selected);
+    border-color: var(--delete-color-hover);
+}
+
+.dm-save-btn {
+    background-color: var(--save-color);
+    color: var(--text-selected);
+    border-color: var(--save-color);
+}
+
+.dm-save-btn:hover, .dm-save-btn:focus, .dm-save-btn:active, .dm-save-btn:active:focus {
+    background-color: var(--save-color-hover);
+    color: var(--text-selected);
+    border-color: var(--save-color-hover);
+}
+
+.dm-import-btn {
+    background-color: var(--import-color);
+    color: var(--text-selected);
+    border-color: var(--import-color);
+}
+
+.dm-import-btn:hover, .dm-import-btn:focus, .dm-import-btn:active, .dm-import-btn:active:focus {
+    background-color: var(--import-color-hover);
+    color: var(--text-selected);
+    border-color: var(--import-color-hover);
+}
+
+.dm-upload-btn {
+    background-color: var(--upload-color);
+    color: var(--text-selected);
+    border-color: var(--upload-color);
+}
+
+.dm-upload-btn:hover, .dm-upload-btn:focus, .dm-upload-btn:active, .dm-upload-btn:active:focus {
+  background-color: var(--upload-color-hover);
+  color: var(--text-selected);
+  border-color: var(--upload-color-hover);
+}
+
+.dm-download-btn {
+    background-color: var(--download-color);
+    color: var(--text-selected);
+    border-color: var(--download-color);
+}
+
+.dm-download-btn:hover, .dm-download-btn:focus, .dm-download-btn:active, .dm-download-btn:active:focus {
+    background-color: var(--download-color-hover);
+    color: var(--text-selected);
+    border-color: var(--download-color-hover);
+}
+
+.dm-derive-btn:disabled, .dm-delete-btn.disabled, .dm-save-btn.disabled, .dm-import-btn.disabled, .dm-upload-btn.disabled, .dm-download-btn:disabled {
+    background-color: var(--disabled_color);
+    color: var(--text-selected);
+    border-color: var(--disabled_color);
+    opacity: 0.5;
+}
+
+/* =========================
+    Data modal buttons
+   ========================= */
+.dm-derive-modal-confirm-btn {
+    background-color: var(--derive-modal-confirm-color);
+    color: var(--text-selected);
+    border-color: var(--derive-modal-confirm-color);
+}
+
+.dm-derive-modal-confirm-btn:hover, .dm-derive-modal-confirm-btn:focus,
+.dm-derive-modal-confirm-btn:active, .dm-derive-modal-confirm-btn:active:focus {
+    background-color: var(--derive-modal-confirm-color-hover);
+    color: var(--text-selected);
+    border-color: var(--derive-modal-confirm-color-hover);
+}
+
+.dm-derive-modal-cancel-btn {
+    background-color: var(--derive-modal-cancel-color);
+    color: var(--text-selected);
+    border-color: var(--derive-modal-cancel-color);
+}
+
+.dm-derive-modal-cancel-btn:hover, .dm-derive-modal-cancel-btn:focus,
+.dm-derive-modal-cancel-btn:active, .dm-derive-modal-cancel-btn:active:focus {
+    background-color: var(--derive-modal-cancel-color-hover);
+    color: var(--text-selected);
+    border-color: var(--derive-modal-cancel-color-hover);
+}
+
+/* Delete modal buttons */
+.dm-delete-modal-confirm-btn {
+    background-color: var(--delete-modal-confirm-color);
+    color: var(--text-selected);
+    border-color: var(--delete-modal-confirm-color);
+}
+
+.dm-delete-modal-confirm-btn:hover, .dm-delete-modal-confirm-btn:focus,
+.dm-delete-modal-confirm-btn:active, .dm-delete-modal-confirm-btn:active:focus {
+    background-color: var(--delete-modal-confirm-color-hover);
+    color: var(--text-selected);
+    border-color: var(--delete-modal-confirm-color-hover);
+}
+
+.dm-delete-modal-cancel-btn {
+    background-color: var(--delete-modal-cancel-color);
+    color: var(--text-selected);
+    border-color: var(--delete-modal-cancel-color);
+}
+
+.dm-delete-modal-cancel-btn:hover, .dm-delete-modal-cancel-btn:focus,
+.dm-delete-modal-cancel-btn:active, .dm-delete-modal-cancel-btn:active:focus {
+    background-color: var(--delete-modal-cancel-color-hover);
+    color: var(--text-selected);
+    border-color: var(--delete-modal-cancel-color-hover);
+}
+
+/* Save modal buttons */
+.dm-save-modal-confirm-btn {
+    background-color: var(--save-modal-confirm-color);
+    color: var(--text-selected);
+    border-color: var(--save-modal-confirm-color);
+}
+
+.dm-save-modal-confirm-btn:hover, .dm-save-modal-confirm-btn:focus,
+.dm-save-modal-confirm-btn:active, .dm-save-modal-confirm-btn:active:focus {
+    background-color: var(--save-modal-confirm-color-hover);
+    color: var(--text-selected);
+    border-color: var(--save-modal-confirm-color-hover);
+}
+
+.dm-save-modal-cancel-btn {
+    background-color: var(--save-modal-cancel-color);
+    color: var(--text-selected);
+    border-color: var(--save-modal-cancel-color);
+}
+
+.dm-save-modal-cancel-btn:hover, .dm-save-modal-cancel-btn:focus,
+.dm-save-modal-cancel-btn:active, .dm-save-modal-cancel-btn:active:focus {
+    background-color: var(--save-modal-cancel-color-hover);
+    color: var(--text-selected);
+    border-color: var(--save-modal-cancel-color-hover);
+}
+
+/* Import modal buttons */
+.dm-import-modal-confirm-btn {
+    background-color: var(--import-modal-confirm-color);
+    color: var(--text-selected);
+    border-color: var(--import-modal-confirm-color);
+}
+
+.dm-import-modal-confirm-btn:hover, .dm-import-modal-confirm-btn:focus,
+.dm-import-modal-confirm-btn:active, .dm-import-modal-confirm-btn:active:focus {
+    background-color: var(--import-modal-confirm-color-hover);
+    color: var(--text-selected);
+    border-color: var(--import-modal-confirm-color-hover);
+}
+
+.dm-import-modal-cancel-btn {
+    background-color: var(--import-modal-cancel-color);
+    color: var(--text-selected);
+    border-color: var(--import-modal-cancel-color);
+}
+
+.dm-import-modal-cancel-btn:hover, .dm-import-modal-cancel-btn:focus,
+.dm-import-modal-cancel-btn:active, .dm-import-modal-cancel-btn:active:focus {
+    background-color: var(--import-modal-cancel-color-hover);
+    color: var(--text-selected);
+    border-color: var(--import-modal-cancel-color-hover);
+}
+
+/* Upload modal buttons */
+.dm-upload-modal-confirm-btn {
+    background-color: var(--upload-modal-confirm-color);
+    color: var(--text-selected);
+    border-color: var(--upload-modal-confirm-color);
+}
+
+.dm-upload-modal-confirm-btn:hover, .dm-upload-modal-confirm-btn:focus,
+.dm-upload-modal-confirm-btn:active, .dm-upload-modal-confirm-btn:active:focus {
+    background-color: var(--upload-modal-confirm-color-hover);
+}
+
+.dm-upload-modal-cancel-btn {
+    background-color: var(--upload-modal-cancel-color);
+    color: var(--text-selected);
+    border-color: var(--upload-modal-cancel-color);
+}
+
+.dm-upload-modal-cancel-btn:hover, .dm-upload-modal-cancel-btn:focus,
+.dm-upload-modal-cancel-btn:active, .dm-upload-modal-cancel-btn:active:focus {
+    background-color: var(--upload-modal-cancel-color-hover);
+    color: var(--text-selected);
+    border-color: var(--upload-modal-cancel-color-hover);
+}
+
+/* Download modal buttons */
+.dm-download-modal-confirm-btn {
+    background-color: var(--download-modal-confirm-color);
+    color: var(--text-selected);
+    border-color: var(--download-modal-confirm-color);
+}
+
+.dm-download-modal-confirm-btn:hover, .dm-download-modal-confirm-btn:focus,
+.dm-download-modal-confirm-btn:active, .dm-download-modal-confirm-btn:active:focus {
+    background-color: var(--download-modal-confirm-color-hover);
+    color: var(--text-selected);
+    border-color: var(--download-modal-confirm-color-hover);
+}
+
+.dm-download-modal-cancel-btn {
+    background-color: var(--download-modal-cancel-color);
+    color: var(--text-selected);
+    border-color: var(--download-modal-cancel-color);
+}
+
+.dm-download-modal-cancel-btn:hover, .dm-download-modal-cancel-btn:focus,
+.dm-download-modal-cancel-btn:active, .dm-download-modal-cancel-btn:active:focus {
+    background-color: var(--download-modal-cancel-color-hover);
+    color: var(--text-selected);
+    border-color: var(--download-modal-cancel-color-hover);
+}
+/* =========================
+   Scenario management page buttons
+   ========================= */
+
+.new-scenario-button {
+    width: 100%;
+    background-color: var(--new-scenario-color);
+    border-color: var(--new-scenario-color);
+}
+
+.new-scenario-button:hover, .new-scenario-button:focus, .new-scenario-button:active, .new-scenario-button:active:focus {
+    background-color: var(--new-scenario-color-hover);
+    border-color: var(--new-scenario-color-hover);
+}
+
+.new-scenario-confirm-button {
+    background-color: var(--new-scenario-modal-confirm-color);
+    color: var(--text-selected);
+    border-color: var(--new-scenario-modal-confirm-color);
+}
+
+.new-scenario-confirm-button:hover, .new-scenario-confirm-button:focus,
+.new-scenario-confirm-button:active, .new-scenario-confirm-button:active:focus {
+    background-color: var(--new-scenario-modal-confirm-color-hover);
+    color: var(--text-selected);
+    border-color: var(--new-scenario-modal-confirm-color-hover);
+}
+
+.new-scenario-cancel-button {
+    background-color: var(--new-scenario-modal-cancel-color);
+    color: var(--text-selected);
+    border-color: var(--new-scenario-modal-cancel-color);
+}
+
+.new-scenario-cancel-button:hover, .new-scenario-cancel-button:focus,
+.new-scenario-cancel-button:active, .new-scenario-cancel-button:active:focus {
+    background-color: var(--new-scenario-modal-cancel-color-hover);
+    color: var(--text-selected);
+    border-color: var(--new-scenario-modal-cancel-color-hover);
+}

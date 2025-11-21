@@ -21,7 +21,7 @@ def new_scenario_creator():
     # Modal for creating a new scenario
     return dbc.Modal(
         [
-            dbc.ModalHeader(dbc.ModalTitle("Create New Scenario")),
+            dbc.ModalHeader(dbc.ModalTitle("Create New Scenario"), close_button=False),
             dbc.ModalBody([
                 dbc.Row([
                     dbc.Col(dbc.Input(id=SCENARIO_TAG_INPUT, placeholder="Scenario tag"), width=12),
@@ -62,5 +62,7 @@ def new_scenario_creator():
         is_open=False,
         centered=True,
         class_name="themed-modal",
-        style=sc.initiate_theme_colors()
+        style=sc.initiate_theme_colors(),
+        keyboard=False,
+        backdrop="static",
     )
