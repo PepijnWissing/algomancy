@@ -1,48 +1,50 @@
 from .datamanager import (DataManager,
-                              StatelessDataManager,
-                              StatefulDataManager)
+                          StatelessDataManager,
+                          StatefulDataManager)
 from .dataslicer import slice_data
 from .datasource import (DataSource,
-                             DataSourceType)
+                         DataSourceType)
 from .schema import (Schema,
-                         DataType)
+                     DataType)
 from .etl import (ETLFactory,
-                      ETLConstructionError,
-                      ETLPipeline)
+                  ETLConstructionError,
+                  ETLPipeline)
 from .extractor import (Extractor,
-                            SingleExtractor,
-                            MultiExtractor,
-                            CSVSingleExtractor,
-                            XLSXSingleExtractor,
-                            JSONSingleExtractor)
+                        SingleExtractor,
+                        MultiExtractor,
+                        CSVSingleExtractor,
+                        XLSXSingleExtractor,
+                        XLSXMultiExtractor,
+                        JSONSingleExtractor,
+                        )
 from .transformer import (Transformer,
-                              NoopTransformer,
-                              CleanTransformer,
-                              JoinTransformer)
+                          NoopTransformer,
+                          CleanTransformer,
+                          JoinTransformer)
 from .validator import (Validator,
-                            DefaultValidator,
-                            ExtractionSuccessVerification,
-                            InputConfigurationValidator,
-                            ValidationMessage,
-                            ValidationError,
-                            ValidationSeverity,
-                            ValidationSequence)
+                        DefaultValidator,
+                        ExtractionSuccessVerification,
+                        InputConfigurationValidator,
+                        ValidationMessage,
+                        ValidationError,
+                        ValidationSeverity,
+                        ValidationSequence)
 from .loader import Loader, DataSourceLoader
 from .inputfileconfiguration import (InputFileConfiguration,
-                                         FileExtension)
+                                     FileExtension)
 from .file import (File,
-                       CSVFile,
-                       JSONFile,
-                       XLSXFile)
+                   CSVFile,
+                   JSONFile,
+                   XLSXFile)
 
 __all__ = [
     'DataManager', 'StatefulDataManager', 'StatelessDataManager',
     'slice_data',
-    'DataSource','DataSourceType',
+    'DataSource', 'DataSourceType',
     'Schema', 'DataType',
     'ETLFactory', 'ETLPipeline', 'ETLConstructionError',
     'Extractor', 'SingleExtractor', 'MultiExtractor',
-    'CSVSingleExtractor', 'XLSXSingleExtractor', 'JSONSingleExtractor',
+    'CSVSingleExtractor', 'XLSXSingleExtractor', 'XLSXMultiExtractor', 'JSONSingleExtractor',
     'Transformer', 'NoopTransformer', 'CleanTransformer', 'JoinTransformer',
     'Validator', 'DefaultValidator', 'ExtractionSuccessVerification', 'InputConfigurationValidator',
     'ValidationMessage', 'ValidationError', 'ValidationSeverity',

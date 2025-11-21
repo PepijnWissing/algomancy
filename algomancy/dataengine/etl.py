@@ -2,13 +2,15 @@
 from abc import ABC, abstractmethod
 from typing import Dict, List
 
+from algomancy.dataengine.schema import Schema
 from algomancy.dataengine.datasource import DataSource, DataSourceType
 from algomancy.dataengine.extractor import Extractor
 from algomancy.dataengine.file import File
 from algomancy.dataengine.loader import Loader
 from algomancy.dataengine.transformer import Transformer
 from algomancy.dataengine.validator import Validator, ValidationError, ValidationSequence
-from algomancy.dataengine.inputfileconfiguration import InputFileConfiguration
+from algomancy.dataengine.inputfileconfiguration import InputFileConfiguration, SingleInputFileConfiguration, \
+    MultiInputFileConfiguration
 from algomancy.dashboardlogger.logger import Logger
 
 
@@ -80,8 +82,25 @@ class ETLConstructionError(Exception):
 class ETLFactory(ABC):
     def __init__(self, input_configurations: List[InputFileConfiguration], logger):
         self.input_configurations = input_configurations
-        self.schemas = {cfg.file_name: cfg.file_schema for cfg in input_configurations}
+        # self.schemas = {cfg.file_name: cfg.file_schema for cfg in input_configurations} # todo is this used?
         self.logger = logger
+
+    @property
+    def configs_dct(self) -> Dict[str, InputFileConfiguration]:
+        return {cfg.file_name: cfg for cfg in self.input_configurations}
+
+    def get_schemas(self, file_name: str) -> Dict[str, Schema] | Schema:
+        try:
+            cfg = self.configs_dct[file_name]
+        except KeyError:
+            raise ETLConstructionError(f"No input configuration available for {file_name}.")
+
+        if isinstance(cfg, SingleInputFileConfiguration):
+            return cfg.file_schema
+        elif isinstance(cfg, MultiInputFileConfiguration):
+            return cfg.file_schemas
+        else:
+            raise ETLConstructionError(f"{file_name} does not have a valid input file configuration")
 
     @abstractmethod
     def create_extractors(self, files: Dict[str, File]) -> Dict[str, Extractor]:

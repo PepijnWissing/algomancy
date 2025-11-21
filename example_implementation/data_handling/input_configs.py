@@ -1,6 +1,7 @@
 from typing import Dict
 
 from algomancy.dataengine import Schema, InputFileConfiguration, FileExtension, DataType
+from algomancy.dataengine.inputfileconfiguration import SingleInputFileConfiguration, MultiInputFileConfiguration
 
 
 class WarehouseLayoutSchema(Schema):
@@ -131,25 +132,57 @@ class InventorySchema(Schema):
         }
 
 
+class StedenSchema(Schema):
+    COUNTRY = "Country"
+    CITY = "City"
+
+    @property
+    def datatypes(self) -> Dict[str, DataType]:
+        return {
+            StedenSchema.COUNTRY: DataType.STRING,
+            StedenSchema.CITY: DataType.STRING,
+        }
+
+
+class KlantenSchema(Schema):
+    ID = 'ID'
+    Name = "Naam"
+
+    @property
+    def datatypes(self) -> Dict[str, DataType]:
+        return {
+            KlantenSchema.ID: DataType.INTEGER,
+            KlantenSchema.Name: DataType.STRING,
+        }
+
+
 example_input_configs = [
-    InputFileConfiguration(
+    SingleInputFileConfiguration(
         extension=FileExtension.CSV,
         file_name="warehouse_layout",
         file_schema=WarehouseLayoutSchema(),
     ),
-    InputFileConfiguration(
+    SingleInputFileConfiguration(
         extension=FileExtension.CSV,
         file_name="sku_data",
         file_schema=ItemDataSchema(),
     ),
-    InputFileConfiguration(
+    SingleInputFileConfiguration(
         extension=FileExtension.XLSX,
         file_name="inventory",
         file_schema=InventorySchema(),
     ),
-    InputFileConfiguration(
+    SingleInputFileConfiguration(
         extension=FileExtension.JSON,
         file_name="employees",
         file_schema=EmployeeDataSchema(),
     ),
+    MultiInputFileConfiguration(
+        extension=FileExtension.XLSX,
+        file_name="multisheet",
+        file_schemas={
+            "Steden": StedenSchema(),
+            "Klanten": KlantenSchema(),
+        }
+    )
 ]

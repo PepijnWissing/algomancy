@@ -234,7 +234,7 @@ class MultiExtractor(Extractor):
         self.schemas = schemas
 
     def _check_schemas(self, dfs: Dict[str, pd.DataFrame]):
-        missing_keys = set(dfs.keys()) - set(self.schemas.keys())
+        missing_keys = set(dfs.keys()) - set([self.get_extraction_key(name) for name in self.schemas.keys()])
         assert len(missing_keys) == 0, f"Missing schemas for keys: {missing_keys}"
 
     def extract(self) -> Dict[str, pd.DataFrame]:
@@ -247,10 +247,20 @@ class MultiExtractor(Extractor):
         # Attemting to convert all dataframes with the corresponing schema
         # Before this we check if the keys of the schemas and the names of the extracted dataframes match
         self._check_schemas(dfs)
-        dfs = {name: DataTypeConverter.convert_dtypes(df, self.schemas[name]) for name, df in dfs.items()}
+        dfs = {key: DataTypeConverter.convert_dtypes(df, self.schemas[self.get_schema_name(key)]) for key, df in dfs.items()}
 
         self._extraction_success_message()
         return dfs
+
+    def get_extraction_key(self, name: str) -> str:
+        return f'{self.file.name}.{name}'
+
+    def get_schema_name(self, extraction_key: str) -> str:
+        prefix = f"{self.file.name}."
+        if extraction_key.startswith(prefix):
+            rval = extraction_key[len(prefix):]
+            return extraction_key[len(prefix):]
+        return extraction_key
 
     @abstractmethod
     def _extract_files(self) -> Dict[str, pd.DataFrame]:
@@ -432,16 +442,15 @@ class XLSXMultiExtractor(MultiExtractor):
             self,
             file: XLSXFile,
             schemas: Dict[str, Schema],
-            sheet_names: List[str],
             logger: Logger = None,
     ) -> None:
         super().__init__(file, schemas, logger)
-        self._sheet_names = sheet_names
-        self._single_sheet_extractors = [XLSXSingleExtractor(file, schemas[sheet_name], sheet_name) for sheet_name in
-                                         sheet_names]
+        self._sheet_names = list(self.schemas.keys())
+        self._single_sheet_extractors = {sheet_name: XLSXSingleExtractor(file, schemas[sheet_name], sheet_name) for sheet_name in
+                                         self._sheet_names}
 
     def _extract_files(self) -> Dict[str, pd.DataFrame]:
         dfs = {}
-        for extractor in self._single_sheet_extractors:
-            dfs.update(extractor.extract())
+        for name, extractor in self._single_sheet_extractors.items():
+            dfs[self.get_extraction_key(name)] = list(extractor.extract().values())[0]
         return dfs
