@@ -40,6 +40,12 @@ class DataSource:
     def __eq__(self, other):
         return self.id == other.id
 
+    # -- should be overwritten by derived classes
+    def to_ai_ctx(self):
+        return {
+            key: df.head() for key, df in self.tables.items()
+        }
+
     @property
     def name(self):
         return self._name
