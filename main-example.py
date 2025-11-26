@@ -11,6 +11,7 @@ import platform
 from flask.globals import app_ctx
 
 from algomancy.contentcreatorlibrary import PlaceholderHomePageContentCreator
+from algomancy.contentcreatorlibrary.standardinsightspage import StandardInsightsPageContentCreator
 from algomancy.dataengine import DataSource
 from algomancy.launcher import DashLauncher
 from algomancy.stylingconfigurator import (
@@ -47,20 +48,13 @@ def main(
     Loads data from CSV files, initializes the data source, creates the Dash application,
     and starts the web server.
     """
-    rich_mahogany = "#400406"  # p
-    spicy_paprika = "#CF5C36"  # s
-    dark_garnet = "#73070B"    # t
 
     dark_green = "#1F271B"
     sage_green = "#6DA34D"
     cornsilk = "#FEFAE0"
 
     white = "#FFFFFF"  # white
-    purple = "#3EBDF3"
-    lightblue = "#4C0265"
-    bright_blue = ColorConfiguration.linear_combination_hex(lightblue, purple, 0.5)
     darkgrey = "#424242"
-    lightgrey = "#E3E3E3"
 
     styling = StylingConfigurator(
         layout_selection=LayoutSelection.SIDEBAR,
@@ -95,7 +89,7 @@ def main(
         default_algo="Slow",
         autorun=True,
         default_algo_params_values={"duration": 10},
-        home_content=PlaceholderHomePageContentCreator.create_default_elements_showcase,
+        home_content= StandardInsightsPageContentCreator.create_insights_page_content, #PlaceholderHomePageContentCreator.create_default_elements_showcase,
         data_content=DataPageContentCreator.create_data_page_content,
         scenario_content=ScenarioPageContentCreator.create_scenario_page_content,
         overview_content="standard",
