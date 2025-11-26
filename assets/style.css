@@ -265,18 +265,32 @@ hr {
     padding: 10px;
     border-radius: 5px;
 }
-
+/* ==========================
+   Insights page
+   ========================== */
 
 .insights-main-content {
     /*max-width: 800px;*/
 }
 
-.ai-chat {
+.ai-chat-window {
     display: flex;
     flex-direction: column;
-    /*align-items: flex-end;   !* place children at the right edge *!*/
+    height: calc(100vh - 150px);
+}
+
+.ai-chat {
+    overflow-y: auto;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
     gap: 0.5rem;
     padding: 1rem;
+}
+
+.ai-chat-inputgroup {
+    padding: 1rem;
+    flex: 0 0 auto
 }
 
 .ai-chat .question {
@@ -286,6 +300,7 @@ hr {
     max-width: 80%;          /* prevents message from spanning full width */
     padding: 0.4rem 0.8rem;
     border-radius: 6px;
+    background-color: var(--card-surface);
 }
 
 .ai-chat .response{
@@ -296,8 +311,69 @@ hr {
     padding: 0.4rem 0.8rem;
     border-radius: 6px;
     background-color: var(--theme-secondary);
-    color: var(--text-color);
+    color: var(--text-selected);
 }
+
+/* =========================
+  Chat message row + time
+  ========================= */
+
+/* container used by the Python to_dash_component: displays time + content in one row */
+.ai-chat .message-row {
+       display: flex;
+       align-items: center;
+       gap: 0.5rem;
+       max-width: 80%;
+   }
+
+   /* small timestamp element */
+.ai-chat .message-time {
+       font-size: 0.75rem;
+       color: var(--text-color);
+       opacity: 0.7;
+       white-space: nowrap;
+   }
+
+   /* wrapper around the message content so we can style bubbles separately */
+.ai-chat .message-content {
+       display: inline-block;
+       padding: 0.4rem 0.8rem;
+       border-radius: 6px;
+       max-width: 100%;
+   }
+
+/* For question (user) messages: time should appear to the right */
+.ai-chat .question.message-row {
+       align-self: flex-end;
+       flex-direction: row; /* content then time */
+   }
+
+.ai-chat .question.message-row .message-content {
+       background-color: var(--card-surface);
+       color: var(--text-color);
+       text-align: right;
+   }
+
+.ai-chat .question.message-row .message-time {
+       margin-left: 0.5rem;
+   }
+
+/* For response (AI) messages: time should appear to the left */
+.ai-chat .response.message-row {
+       align-self: flex-start;
+       flex-direction: row; /* time then content */
+   }
+
+.ai-chat .response.message-row .message-content {
+       background-color: var(--theme-secondary);
+       color: var(--text-selected);
+       text-align: left;
+   }
+
+.ai-chat .response.message-row .message-time {
+       margin-right: 0.5rem;
+   }
+
 
 /* =========================
    Themed modals & their contents

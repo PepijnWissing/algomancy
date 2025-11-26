@@ -5,6 +5,7 @@ import dash_bootstrap_components as dbc
 from dash import html, Output, callback, Input, State, dcc
 from dash.html import Div
 
+from algomancy.components.insights_page import insights
 from algomancy.stylingconfigurator import StylingConfigurator, LayoutSelection
 from algomancy.components.componentids import *
 
@@ -49,10 +50,11 @@ class LayoutCreator:
         nav_items = [
             {"icon": "fas fa-home", "label": "Home", "href": "/", "index": 1},
             {"icon": "fas fa-database", "label": "Data", "href": "/data", "index": 2},
-            {"icon": "fas fa-project-diagram", "label": "Scenarios", "href": "/scenarios", "index": 3},
-            {"icon": "fas fa-chart-line", "label": "Compare", "href": "/compare", "index": 4},
-            {"icon": "fas fa-table", "label": "Overview", "href": "/overview", "index": 5},
-            {"icon": "fas fa-user-shield", "label": "Admin", "href": "/admin", "index": 6},
+            {"icon": "fas fa-comments", "label": "Insights", "href": "/insights", "index": 3},
+            {"icon": "fas fa-project-diagram", "label": "Scenarios", "href": "/scenarios", "index": 4},
+            {"icon": "fas fa-chart-line", "label": "Compare", "href": "/compare", "index": 5},
+            {"icon": "fas fa-table", "label": "Overview", "href": "/overview", "index": 6},
+            {"icon": "fas fa-user-shield", "label": "Admin", "href": "/admin", "index": 7},
         ]
 
         sidebar_nav = dbc.Nav(
@@ -97,6 +99,8 @@ class LayoutCreator:
                 return home_page()
             elif pathname == "/data":
                 return data_page()
+            elif pathname == "/insights":
+                return insights.insights_page()
             elif pathname == "/scenarios":
                 return scenario_page()
             elif pathname == "/compare":

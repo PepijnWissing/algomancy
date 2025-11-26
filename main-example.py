@@ -6,13 +6,8 @@ creates the Dash application, and starts the web server.
 """
 
 import argparse
-import platform
-
-from flask.globals import app_ctx
 
 from algomancy.contentcreatorlibrary import PlaceholderHomePageContentCreator
-from algomancy.contentcreatorlibrary.standardinsightspage import StandardInsightsPageContentCreator
-from algomancy.dataengine import DataSource
 from algomancy.launcher import DashLauncher
 from algomancy.stylingconfigurator import (
     StylingConfigurator,
@@ -89,7 +84,7 @@ def main(
         default_algo="Slow",
         autorun=True,
         default_algo_params_values={"duration": 10},
-        home_content= StandardInsightsPageContentCreator.create_insights_page_content, #PlaceholderHomePageContentCreator.create_default_elements_showcase,
+        home_content= PlaceholderHomePageContentCreator.create_default_elements_showcase,
         data_content=DataPageContentCreator.create_data_page_content,
         scenario_content=ScenarioPageContentCreator.create_scenario_page_content,
         overview_content="standard",
