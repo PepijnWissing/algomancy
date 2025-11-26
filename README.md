@@ -3,12 +3,12 @@
 A lightweight framework for building interactive dashboards to visualize the performance of algorithms and/or simulations across scenarios. It provides data ingestion (ETL), scenario orchestration, KPI computation, and a Dash-based UI with modular pages.
 
 ### Overview
-- Language/stack: Python 3.11+, Dash (frontend/server), Waitress (production WSGI), PyTest (tests), Ruff (lint). Optional: uv as package manager (uv.lock present).
+- Language/stack: Python 3.14+, Dash (frontend/server), Waitress (production WSGI), PyTest (tests), Ruff (lint). Optional: uv as package manager (uv.lock present).
 - Package layout: Installable Python package (setuptools/pyproject). Library entry points are in algomancy/, with an example executable script main-example.py.
 - Use cases: Rapid prototyping of algorithm scenario experiments and visual inspection of results.
 
 ### Requirements
-- Python: 3.11+
+- Python: 3.14+
 - OS: Windows, macOS, or Linux
 - Dependencies (core): dash, dash-bootstrap-components, dash-auth (optional), dash-extensions, dash-iconify, pandas, fastparquet, openpyxl, diskcache, strenum, tabulate, waitress, python-dotenv
 - Dev/test tools: pytest, ruff, wheel
