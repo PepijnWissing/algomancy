@@ -73,12 +73,13 @@ Its value is a member of the `DataSourceType` enum, which defines the type of da
 ### **Usage**
 A standard `DataSource` stores data exclusively in its `tables` attribute, which expects to be filled by pandas DataFrames.
 The following example demonstrates basic usage:
+
 ```python
-from algomancy.dataengine import DataSource, DataSourceType
+from algomancy.dataengine import BaseDataSource, DataClassification
 import pandas as pd
 
 # Create a DataSource instance
-ds = DataSource(DataSourceType.MASTER_DATA, name="MyDataSource")
+ds = BaseDataSource(DataClassification.MASTER_DATA, name="MyDataSource")
 
 # Add a table
 df = pd.DataFrame({'col1': [1, 2], 'col2': ['A', 'B']})
@@ -108,10 +109,11 @@ Consider the example of a custom data source that includes a set of locations, e
 and geographic coordinates (longitude and latitude). The custom data source class would look like this:
 
 ```python 
-from algomancy.dataengine import DataSource
+from algomancy.dataengine import BaseDataSource
 from typing import Dict
 from dataclasses import dataclass
 import json
+
 
 @dataclass
 class Location:
@@ -120,12 +122,13 @@ class Location:
     longitude: float
     latitude: float
 
-class MyCustomSource(DataSource):
+
+class MyCustomSource(BaseDataSource):
     def __init__(self, ds_type, name, locations: Dict[str, Location]):
         super().__init__(ds_type, name)
         self._locations = locations
         # Additional initialization as needed
-    
+
     def to_dict(self):
         """ Convert custom attributes to a dictionary for serialization """
         return {
@@ -134,9 +137,9 @@ class MyCustomSource(DataSource):
             'locations': self._locations,
             # Add other custom attributes here
         }
-    
+
     def to_json(self) -> str:
-        """ Custom serialization to JSON including custom attributes """        
+        """ Custom serialization to JSON including custom attributes """
         return json.dumps(self.to_dict(), indent=2)  # Modify as needed
 
     @classmethod
@@ -623,11 +626,13 @@ The above simply creates an instance of the `MyCustomSourceLoader` class, which 
 implemented as follows.
 
 ### Creating a Loader
+
 ```python
 import algomancy.dataengine as de
 import pandas as pd
 from algomancy.dashboardlogger import Logger
 from typing import Dict, List
+
 
 # suppose that the MyCustomSource example, from the DataSource section, is imported here
 
@@ -637,25 +642,27 @@ from typing import Dict, List
 class MyCustomSourceLoader(de.Loader):
     def __init__(self, logger: Logger) -> None:
         super().__init__(logger=logger)
-        
+
     def load(
-            self, name: str, data: Dict[str, pd.DataFrame], messages: List[de.ValidationMessage], ds_type: de.DataSourceType
+            self, name: str, data: Dict[str, pd.DataFrame], messages: List[de.ValidationMessage],
+            ds_type: de.DataClassification
     ) -> MyCustomSource:
         """ Combines the transformed data into a DataSource. """
         customers = data['customers']
         suppliers = data['suppliers']
-        
+
         locations = {}
         for customer in customers.iterrows():
-            locations[customer['name']] = Location(name=customer['name'], type="customer", longitude=customer['longitude'],
+            locations[customer['name']] = Location(name=customer['name'], type="customer",
+                                                   longitude=customer['longitude'],
                                                    latitude=customer['latitude'])
-            
+
         for supplier in suppliers.iterrows():
             locations[supplier['id']] = Location(name=supplier['id'], type="supplier", longitude=supplier['lat'],
-                                                   latitude=supplier['lon'])
-        
-        return MyCustomSource(ds_type=de.DataSourceType.MASTER_DATA, name="example", locations=locations)
-        
-        
+                                                 latitude=supplier['lon'])
+
+        return MyCustomSource(ds_type=de.DataClassification.MASTER_DATA, name="example", locations=locations)
+
+
 
 ```

@@ -6,7 +6,7 @@ import base64
 import pandas as pd
 from dash import Input, Output, State, callback, no_update, get_app, html
 
-from algomancy.dataengine.datamanager import ValidationError, DataManager
+from algomancy.dataengine import ValidationError, DataManager
 from algomancy.components.componentids import *
 from algomancy.components.data_page.filenamematcher import match_file_names
 from algomancy.scenarioengine import ScenarioManager

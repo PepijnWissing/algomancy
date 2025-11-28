@@ -6,9 +6,6 @@ creates the Dash application, and starts the web server.
 """
 
 import argparse
-import platform
-
-from flask.globals import app_ctx
 
 from algomancy.contentcreatorlibrary import PlaceholderHomePageContentCreator
 from algomancy.dataengine import DataSource
@@ -24,7 +21,6 @@ from algomancy.appconfiguration import AppConfiguration
 
 from example_implementation.data_handling.input_configs import example_input_configs
 from example_implementation.data_handling.factories import ExampleETLFactory
-from example_implementation.pages.HomePageContent import HomePageContentCreator
 from example_implementation.pages.DataPageContent import DataPageContentCreator
 from example_implementation.pages.ScenarioPageContent import ScenarioPageContentCreator
 from example_implementation.templates import (
@@ -91,10 +87,11 @@ def main(
         kpi_templates=kpi_templates,
         algo_templates=algorithm_templates,
         input_configs=example_input_configs,
+        data_object_type=DataSource,
         autocreate=True,
         default_algo="Slow",
-        autorun=True,
         default_algo_params_values={"duration": 10},
+        autorun=True,
         home_content=PlaceholderHomePageContentCreator.create_default_elements_showcase,
         data_content=DataPageContentCreator.create_data_page_content,
         scenario_content=ScenarioPageContentCreator.create_scenario_page_content,

@@ -1,38 +1,53 @@
-import io
+"""
+A module for representing and managing data sources. It defines an abstract
+base class for data sources as well as concrete implementations with
+serialization and deserialization functionality.
+"""
 import json
 import uuid
+from abc import ABC, abstractmethod
 from datetime import datetime
 from enum import StrEnum, auto
-from typing import List
+from typing import List, TypeVar
 
 import pandas as pd
 
 from algomancy.dataengine.validator import ValidationMessage
 
 
-class DataSourceType(StrEnum):
-    MASTER_DATA= auto()
+class DataClassification(StrEnum):
+    MASTER_DATA = auto()
     DERIVED_DATA = auto()
     DUMMY_DATA = auto()
 
 
-class DataSource:
+class BaseDataSource(ABC):
+    """
+    Base class for data sources.
+
+    This class serves as a base for defining different types of data sources. It provides basic
+    attributes and methods to handle data source IDs, creation timestamps, names, and
+    validation messages. It also defines abstract methods that should be implemented by
+    derived classes to handle data serialization and derivation.
+
+    Attributes:
+        validation_messages (List[ValidationMessage] | None): List of validation messages for the data source.
+    """
 
     def __init__(self,
-                 ds_type: DataSourceType,
+                 ds_type: DataClassification,
                  name: str = None,
                  validation_messages: List[ValidationMessage] = None,
                  ds_id: str | None = None,
                  creation_datetime: datetime | None = None
                  ) -> None:
-        self.tables: dict[str, pd.DataFrame] = {}
         self._ds_type = ds_type
         self._id: str = ds_id if ds_id else str(uuid.uuid4())
         self._creation_datetime = creation_datetime if creation_datetime else datetime.now()
         self.validation_messages = validation_messages
-        if not name and ds_type == DataSourceType.MASTER_DATA:
+        if not name and ds_type == DataClassification.MASTER_DATA:
             self._name = "Master Data"
-        elif not name and ds_type == DataSourceType.DERIVED_DATA:
+        elif not name and ds_type == DataClassification.DERIVED_DATA:
             raise ValueError("Name is required for derived data")
         else:
             self._name = name
@@ -41,8 +56,11 @@ class DataSource:
         return self.id == other.id
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self._name
+
+    def _set_name(self, new_name):
+        self._name = new_name
 
     @property
     def id(self):
@@ -53,128 +71,52 @@ class DataSource:
         return self._creation_datetime
 
     def is_master_data(self):
-        return self._ds_type == DataSourceType.MASTER_DATA
+        return self._ds_type == DataClassification.MASTER_DATA
 
     def set_to_master_data(self):
-        self._ds_type = DataSourceType.MASTER_DATA
+        self._ds_type = DataClassification.MASTER_DATA
 
-    def add_table(self, name: str, df: pd.DataFrame, logger=None):
-        if logger:
-            logger._log(f"Adding table '{name}' to DataSource")
-        self.tables[name] = df
-
-    def get_table(self, name: str) -> pd.DataFrame:
-        return self.tables[name]
-
-    def list_tables(self):
-        return list(self.tables.keys())
-
-    def copy_contents_from(self, ds_to_copy: 'DataSource') -> None:
-        for name, df in ds_to_copy.tables.items():
-            self.add_table(name, df.copy())
-
-    # to be overwritten by derived classes
-    def to_parquet_bytes(self) -> bytes:
+    def derive(self, new_data_key: str):
         """
-        Serializes the DataSource object to parquet format as bytes.
-        This is useful for creating downloadable content in a Dash app.
+        Creates a derived object with a given new key.
 
-        Returns:
-            bytes: The serialized DataSource as parquet bytes
-        """
-        # Create a combined DataFrame with a 'table_name' column to identify the source
-        combined_data = []
-
-        for table_name, df in self.tables.items():
-            # Create a copy of the DataFrame to avoid modifying the original
-            temp_df = df.copy()
-
-            # Add table_name as a column
-            temp_df['_table_name'] = table_name
-
-            # Add to list for concatenation
-            combined_data.append(temp_df)
-
-        if not combined_data:
-            # Create an empty DataFrame if there are no tables
-            combined_df = pd.DataFrame({'_table_name': [], '_metadata': []})
-        else:
-            # Concatenate all tables
-            combined_df = pd.concat(combined_data, ignore_index=True)
-
-        # Add metadata as a separate row
-        metadata = {
-            'id': self.id,
-            'name': self._name,
-            'type': str(self._ds_type),
-            'creation_datetime': str(self.creation_datetime),
-            'tables': self.list_tables()
-        }
-
-        # Create a metadata DataFrame
-        metadata_df = pd.DataFrame({
-            '_table_name': ['_metadata'],
-            '_metadata': [json.dumps(metadata)]
-        })
-
-        # Append metadata to the combined DataFrame
-        final_df = pd.concat([combined_df, metadata_df], ignore_index=True)
-
-        # Serialize to parquet
-        buffer = io.BytesIO()
-        final_df.to_parquet(buffer)
-        buffer.seek(0)
-
-        return buffer.getvalue()
-
-    # to be overwritten by derived classes
-    @classmethod
-    def from_parquet_bytes(cls, parquet_bytes: bytes) -> 'DataSource':
-        """
-        Creates a DataSource object from serialized parquet bytes.
+        This method generates a duplicate of the current object with the same data
+        and sets a new key for it, effectively creating a derived object with a
+        different identifier.
 
         Args:
-            parquet_bytes (bytes): The serialized DataSource as parquet bytes
+            new_data_key (str): The new key to assign to the derived object.
 
         Returns:
-            DataSource: A new DataSource object with the loaded data
+            Type of the calling class: A new instance of the same class with the
+            derived data and updated key.
         """
-        # Read the parquet bytes into a DataFrame
-        buffer = io.BytesIO(parquet_bytes)
-        combined_df = pd.read_parquet(buffer)
+        new_data = type(self).from_json(self.to_json())
+        new_data._set_name(new_data_key)
+        return new_data
 
-        # Extract metadata
-        metadata_row = combined_df[combined_df['_table_name'] == '_metadata']
-        if not metadata_row.empty:
-            metadata = json.loads(metadata_row['_metadata'].iloc[0])
+    @abstractmethod
+    def to_json(self) -> str:
+        raise NotImplementedError('Abstract method')
 
-            # Remove metadata row
-            combined_df = combined_df[combined_df['_table_name'] != '_metadata']
+    @classmethod
+    @abstractmethod
+    def from_json(cls, json_string: str) -> 'BaseDataSource':
+        raise NotImplementedError('Abstract method')
 
-            # Create the DataSource instance
-            ds_type = DataSourceType(metadata['type'])
-            ds = cls(
-                ds_type=ds_type,
-                name=metadata['name'],
-                ds_id=metadata["id"],
-                creation_datetime=metadata["creation_datetime"]
-            )
+    def debug_mutate(self):
+        raise NotImplementedError("Abstract method")
 
-            # Process each table
-            for table_name in metadata['tables']:
-                table_df = combined_df[combined_df['_table_name'] == table_name].copy()
 
-                # Remove the _table_name column
-                table_df = table_df.drop(columns=['_table_name'])
+BASE_DATA_BOUND = TypeVar("BASE_DATA_BOUND", bound=BaseDataSource)
 
-                # Add the table to the DataSource
-                ds.add_table(table_name, table_df)
+# todo: consider excluding from package
+class DataSource(BaseDataSource):
+    def __init__(self, ds_type: DataClassification, name: str = None, validation_messages: List[ValidationMessage] = None,
+                 ds_id: str | None = None, creation_datetime: datetime | None = None) -> None:
+        super().__init__(ds_type, name, validation_messages, ds_id, creation_datetime)
+        self.tables: dict[str, pd.DataFrame] = {}
 
-            return ds
-        else:
-            raise ValueError("No metadata found in the parquet data")
-
-    # to be overwritten by derived classes
     def to_json(self) -> str:
         """
         Serializes the DataSource object to JSON format.
@@ -239,7 +181,6 @@ class DataSource:
         # Serialize to JSON using the custom encoder
         return json.dumps(data_dict, indent=2, cls=CustomJSONEncoder)
 
-    # to be overwritten by derived classes
     @classmethod
     def from_json(cls, json_string: str) -> 'DataSource':
         """
@@ -249,7 +190,7 @@ class DataSource:
             json_string (str): The serialized DataSource as JSON string
 
         Returns:
-            DataSource: A new DataSource object with the loaded data
+            BaseDataSource: A new DataSource object with the loaded data
         """
         # Parse the JSON string
         data_dict = json.loads(json_string)
@@ -260,7 +201,7 @@ class DataSource:
             raise ValueError("No metadata found in the JSON data")
 
         # Create DataSource instance
-        ds_type = DataSourceType(metadata['type'])
+        ds_type = DataClassification(metadata['type'])
         ds = cls(
             ds_type=ds_type,
             name=metadata['name'],
@@ -305,5 +246,13 @@ class DataSource:
 
         return ds
 
-    def debug_mutate(self):
-        raise NotImplementedError("To be overwritten by derived classes")
+    def add_table(self, name: str, df: pd.DataFrame, logger=None):
+        if logger:
+            logger.log(f"Adding table '{name}' to DataSource")
+        self.tables[name] = df
+
+    def get_table(self, name: str) -> pd.DataFrame:
+        return self.tables[name]
+
+    def list_tables(self):
+        return list(self.tables.keys())

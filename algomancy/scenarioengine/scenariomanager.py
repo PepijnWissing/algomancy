@@ -1,11 +1,11 @@
 from typing import Dict, List, Optional, TypeVar
 
-from algomancy.dataengine.datamanager import (ETLFactory,
-                           InputFileConfiguration,
-                           StatefulDataManager,
-                           StatelessDataManager,
-                           DataSource)
-from algomancy.dashboardlogger.logger import Logger,MessageStatus
+from algomancy.dataengine import (ETLFactory,
+                                  InputFileConfiguration,
+                                  StatefulDataManager,
+                                  StatelessDataManager,
+                                  BASE_DATA_BOUND)
+from algomancy.dashboardlogger.logger import Logger, MessageStatus
 
 from .algorithmtemplate import AlgorithmTemplate
 from .keyperformanceindicator import KpiTemplate
@@ -13,6 +13,7 @@ from .scenario import Scenario
 from .scenarioregistry import ScenarioRegistry
 from .scenariofactory import ScenarioFactory
 from .scenarioprocessor import ScenarioProcessor
+from ..appconfiguration import AppConfiguration
 
 
 class ScenarioManager:
@@ -20,7 +21,6 @@ class ScenarioManager:
     Facade that coordinates data management, scenario creation/registry, and processing.
     """
     E = TypeVar("E", bound=ETLFactory)
-    DOT = TypeVar("DOT", bound=DataSource)
 
     @classmethod
     def from_config(cls, cfg: "AppConfiguration") -> "ScenarioManager":
@@ -49,7 +49,7 @@ class ScenarioManager:
             kpi_templates: List[KpiTemplate],
             algo_templates: Dict[str, AlgorithmTemplate],
             input_configs: List[InputFileConfiguration],
-            data_object_type: type[DOT],  # for extensions of datasource
+            data_object_type: type[BASE_DATA_BOUND],  # for extensions of datasource
             data_folder: str = None,
             logger: Logger = None,
             scenario_save_location: str = "scenarios.json",

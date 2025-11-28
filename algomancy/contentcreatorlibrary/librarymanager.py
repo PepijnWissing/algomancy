@@ -3,7 +3,7 @@ from typing import Tuple, Callable
 from dash import html
 
 from algomancy.contentcreatorlibrary.standarddatapage import StandardDataPageContentCreator
-from algomancy.dataengine.datasource import DataSource
+from algomancy.dataengine.datasource import BASE_DATA_BOUND
 from algomancy.scenarioengine.scenario import Scenario
 
 from algomancy.contentcreatorlibrary.placeholderhomepagecontentcreator import PlaceholderHomePageContentCreator
@@ -71,11 +71,11 @@ class LibraryManager:
 
     @staticmethod
     def get_data_content(
-            data_content: Callable[[DataSource], html.Div] | str ,
+            data_content: Callable[[BASE_DATA_BOUND], html.Div] | str ,
             data_callbacks: Callable[[], None] | str | None = None,
     ) -> Tuple[
-        Callable[[DataSource], html.Div],
-        Callable[[DataSource], html.Div] | None
+        Callable[[BASE_DATA_BOUND], html.Div],
+        Callable[[BASE_DATA_BOUND], html.Div] | None
     ]:
         # If the input is a custom function, return the function
         if isinstance(data_content, Callable):
