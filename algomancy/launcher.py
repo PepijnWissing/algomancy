@@ -4,14 +4,12 @@ import importlib.metadata
 import os
 from waitress import serve
 import dash_auth
-from dash import html, get_app, Dash
+from dash import get_app, Dash
 
 from .contentregistry import ContentRegistry
 from .settingsmanager import SettingsManager
-from .stylingconfigurator import StylingConfigurator
 from algomancy.components.layout import LayoutCreator
-from algomancy.dataengine.datasource import DataSource
-from algomancy.scenarioengine.scenariomanager import ScenarioManager, Scenario
+from algomancy.scenarioengine.scenariomanager import ScenarioManager
 from algomancy.contentcreatorlibrary.librarymanager import LibraryManager as lm
 from algomancy.dashboardlogger.logger import MessageStatus
 from algomancy.appconfiguration import AppConfiguration

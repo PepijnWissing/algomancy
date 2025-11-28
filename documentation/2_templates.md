@@ -107,13 +107,15 @@ def slow_sample_algorithm(
 ```
 
 ### Complete example
+
 ```python
 from time import sleep
 from typing import Callable
 
-from algomancy.dataengine import DataSource
+from algomancy.dataengine import BaseDataSource
 from algomancy.scenarioengine import ScenarioResult, AlgorithmTemplate
 from algomancy.scenarioengine.algorithmparameters import *
+
 
 # Define the parameters for the algorithm
 class SlowSampleAlgorithmParams(AlgorithmParameters):
@@ -134,11 +136,12 @@ class SlowSampleAlgorithmParams(AlgorithmParameters):
     def validate(self):
         pass
 
+
 # Define the main method of the algorithm
 def slow_sample_algorithm(
-    data: DataSource,
-    parameters: SlowSampleAlgorithmParams,
-    set_progress: Callable[[float], None],
+        data: BaseDataSource,
+        parameters: SlowSampleAlgorithmParams,
+        set_progress: Callable[[float], None],
 ) -> ScenarioResult:
     for i in range(int(parameters.duration)):
         set_progress(100 * i / parameters.duration)

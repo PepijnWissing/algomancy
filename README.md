@@ -49,38 +49,38 @@ This repo includes an example application that exercises the framework component
 ### Programmatic Usage (library)
 You can embed Algomancy into your own app using the DashLauncher helper.
 - Minimal sketch:
+
 ```python
-from algomancy.dataengine import DataSource
+from algomancy.dataengine import BaseDataSource
 from algomancy.launcher import DashLauncher
 from algomancy.appconfiguration import AppConfiguration
 
-
 configuration = {
-  "assets_path": "assets",
-  "data_path": "tests/data",
-  "has_persistent_state": True,
-  "save_type": "json",
-  "data_object_type": DataSource,
-  "etl_factory": YourETLFactory,
-  "kpi_templates": your_kpi_templates,
-  "algo_templates": your_algorithm_templates,
-  "input_configs": your_input_configs,
-  "autorun": False,
-  "home_content": "placeholder",
-  "data_content": "placeholder",
-  "scenario_content": "placeholder",
-  "compare_content": "placeholder",
-  "compare_compare": "placeholder",
-  "compare_details": "placeholder",
-  "overview_content": "placeholder",
-  "home_callbacks": None,
-  "data_callbacks": None,
-  "scenario_callbacks": None,
-  "compare_callbacks": None,
-  "overview_callbacks": None,
-  "styling_config": None,  # see StylingConfigurator for options
-  "title": "My Algomancy Dashboard",
-  "use_authentication": False,
+    "assets_path": "assets",
+    "data_path": "tests/data",
+    "has_persistent_state": True,
+    "save_type": "json",
+    "data_object_type": BaseDataSource,
+    "etl_factory": YourETLFactory,
+    "kpi_templates": your_kpi_templates,
+    "algo_templates": your_algorithm_templates,
+    "input_configs": your_input_configs,
+    "autorun": False,
+    "home_content": "placeholder",
+    "data_content": "placeholder",
+    "scenario_content": "placeholder",
+    "compare_content": "placeholder",
+    "compare_compare": "placeholder",
+    "compare_details": "placeholder",
+    "overview_content": "placeholder",
+    "home_callbacks": None,
+    "data_callbacks": None,
+    "scenario_callbacks": None,
+    "compare_callbacks": None,
+    "overview_callbacks": None,
+    "styling_config": None,  # see StylingConfigurator for options
+    "title": "My Algomancy Dashboard",
+    "use_authentication": False,
 }
 app_cfg = AppConfiguration.from_dict(configuration)  # or AppConfiguration(asset_path=...)
 

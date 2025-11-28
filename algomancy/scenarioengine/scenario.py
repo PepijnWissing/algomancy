@@ -11,8 +11,8 @@ from typing import Dict
 from threading import Lock
 
 from algomancy.dashboardlogger.logger import Logger
+from algomancy.dataengine import BASE_DATA_BOUND
 from algomancy.scenarioengine.enumtypes import ScenarioStatus
-from algomancy.dataengine.datasource import DataSource
 from algomancy.scenarioengine.keyperformanceindicator import KPI
 from algomancy.scenarioengine.algorithmtemplate import Algorithm
 
@@ -31,7 +31,7 @@ class Scenario:
     def __init__(
             self,
             tag: str,
-            input_data: DataSource,
+            input_data: BASE_DATA_BOUND,
             kpis: Dict[str, KPI],
             algorithm: Algorithm,
             provided_id: str = None,
@@ -41,7 +41,7 @@ class Scenario:
 
         Args:
             tag (str): A user-defined label for the scenario
-            input_data (DataSource): The data source to use for the scenario
+            input_data (BASE_DATA_BOUND): The data source to use for the scenario. Derived from BaseDataSource.
             kpis: (Dict[str, KPI]): A dictionary of KPIs to compute for the scenario
             algorithm (str): The algorithm to use for processing
             provided_id (str): An optional unique identifier for the scenario. If not provided, a UUID will be generated.
@@ -63,7 +63,7 @@ class Scenario:
         return self._input_data.name
 
     @property
-    def data_source(self) -> DataSource:
+    def data_source(self) -> BASE_DATA_BOUND:
         return self._input_data
 
     @property
