@@ -53,7 +53,7 @@ def batching_algorithm(
 ) -> ScenarioResult:
     sleep(parameters.batch_size)
     set_progress(1)
-    return ScenarioResult(master_data_id=data.id)  # placeholder
+    return ScenarioResult(data_id=data.id)  # placeholder
 
 
 batching_algorithm_template = AlgorithmTemplate(

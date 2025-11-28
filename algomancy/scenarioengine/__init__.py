@@ -3,7 +3,7 @@ from .algorithmparameters import AlgorithmParameters
 from .algorithmfactory import AlgorithmFactory
 from .enumtypes import ScenarioStatus, ImprovementDirection
 from .keyperformanceindicator import KpiTemplate, KPI, build_kpis
-from .result import ScenarioResult
+from .result import BaseScenarioResult, BASE_RESULT_BOUND, ScenarioResult
 from .scenario import Scenario
 from .scenariomanager import ScenarioManager
 
@@ -14,7 +14,7 @@ __all__ = [
     "AlgorithmFactory",
     "ScenarioStatus", "ImprovementDirection",
     "KpiTemplate", "KPI", "build_kpis",
-    "ScenarioResult",
+    "BaseScenarioResult", "BASE_RESULT_BOUND", "ScenarioResult",
     "Scenario",
     "ScenarioManager",
 ]
