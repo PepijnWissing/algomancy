@@ -1,4 +1,10 @@
 # Change log
+## 0.2.15
+_Released at 28-11-2025_
+
+### Summary
+- `DataSource` and `ScenarioResult` are now derived from the abstract `BaseDataSource` and `BaseScenarioResult`, which are used for internal typing and should be extended for custom containers rather than DataSource and ScenarioResult. This change **is** backwards-compatible, and should not break existing projects
+
 ## 0.2.14
 _Released at 21-11-2025_
 
