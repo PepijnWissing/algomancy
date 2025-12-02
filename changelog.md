@@ -10,7 +10,7 @@ _Released at 05-12-2025_
 To align the development patterns, the template pattern has been substituted for a basemodel pattern, similarly to the
 creation of custom `DataSource`s. Below is an example of the before and after. 
 
-Old version
+**Old version**
 ```python
 def batching_algorithm(
     data: DataSource,
@@ -29,7 +29,7 @@ batching_algorithm_template = AlgorithmTemplate(
 )
 ```
 
-New version
+**New version**
 ```python
 class BatchingAlgorithm(BaseAlgorithm):
     """ From v0.3.1, create your own algorithm by deriving BaseAlgorithm """
@@ -51,13 +51,40 @@ class BatchingAlgorithm(BaseAlgorithm):
 ### Migration to BaseKPI
 Similarly, the KPI creation has also been moved to the basemodel pattern. 
 
-Old version
+**Old version**
 ```python
-old
+default = QUANTITIES["default"]
+default_unit = BaseMeasurement(default["unit"], min_digits=1, max_digits=3, decimals=1)
+
+def create_error_template():
+    def error_rate_calculation(result: ScenarioResult) -> float:
+        return 0.1 * (1 + 0.5 * random.random())  # placeholder
+    
+    return KpiTemplate(
+        name="Error Rate",
+        better_when=ImprovementDirection.LOWER,
+        callback=error_rate_calculation,
+        measurement_base=default_unit,
+    )
 ```
 
+**New version**
 ```python
-new
+default = QUANTITIES["default"]
+default_unit = BaseMeasurement(default["unit"], min_digits=1, max_digits=3, decimals=1)
+
+class ErrorKPI(BaseKPI):
+    def __init__(self):
+        """ Basic configurations are now made by passing them to the base object """
+        super().__init__(
+            name             = "Error Rate",
+            better_when      = ImprovementDirection.LOWER,
+            base_measurement = default_unit,
+        )
+
+    def compute(self, result: ScenarioResult) -> float:
+        """ The user defines the compute function, as before"""
+        return 0.1 * (1 + 0.5 * random.random())  # placeholder
 ```
 
 ## 0.2.15

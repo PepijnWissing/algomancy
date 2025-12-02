@@ -6,21 +6,21 @@ It provides functionality for creating, processing, and analyzing scenarios with
 algorithms and parameters.
 """
 import uuid
-from typing import Dict
+from typing import Dict, Generic
 
 from threading import Lock
 
 from algomancy.dashboardlogger.logger import Logger
 from algomancy.dataengine import BASE_DATA_BOUND
-from algomancy.scenarioengine.basealgorithm import ALGORITHM
-from algomancy.scenarioengine.enumtypes import ScenarioStatus
-from algomancy.scenarioengine.keyperformanceindicator import KPI
+from .basealgorithm import ALGORITHM
+from .enumtypes import ScenarioStatus
+from .keyperformanceindicator import BASE_KPI
 
-SCENARIO_STATUS_STORE = {}
-SCENARIO_STATUS_LOCK = Lock()
+SCENARIO_STATUS_STORE = {}  # todo probably remove?
+SCENARIO_STATUS_LOCK = Lock()  # todo probably remove?
 
 
-class Scenario:
+class Scenario(Generic[BASE_KPI]):
     """
     Represents a scenario with input data, algorithm, and results.
 
@@ -32,7 +32,7 @@ class Scenario:
             self,
             tag: str,
             input_data: BASE_DATA_BOUND,
-            kpis: Dict[str, KPI],
+            kpis: Dict[str, BASE_KPI],
             algorithm: ALGORITHM,
             provided_id: str = None,
     ):
@@ -71,7 +71,7 @@ class Scenario:
         return self._algorithm.description
 
     @property
-    def kpis(self) -> Dict[str, KPI]:
+    def kpis(self) -> Dict[str, BASE_KPI]:
         return self._kpis
 
     @property
@@ -117,20 +117,29 @@ class Scenario:
 
     def compute_kpis(self):
         """
-        todo add comments
+        Calculates key performance indicators (KPIs) for the given scenario.
 
-        :return:
-        :raises ValueError: One or more KPI calculations failed:
+        Raises:
+            ValueError: If there is no result available for the scenario.
+            KpiError: If one or more KPI calculations fail.
         """
         if not self.result:
             raise ValueError("Scenario result is not available")
 
         for kpi in self._kpis.values():
-            kpi.compute(self.result)
+            kpi.compute_and_check(self.result)
 
     def to_dict(self) -> dict:
         """
-        Zet het scenario om naar een python dict (voor nette serialisatie).
+        Converts the attributes of the instance into a dictionary representation.
+
+        This method creates a dictionary containing the key attributes of the instance by
+        converting them into a serializable format. Attributes that have a `to_dict` method
+        are recursively processed. If some attributes do not exist or cannot be accessed,
+        they may return `None`.
+
+        Returns:
+            dict: A dictionary representation of the instance's attributes.
         """
         return {
             "id": self.id,

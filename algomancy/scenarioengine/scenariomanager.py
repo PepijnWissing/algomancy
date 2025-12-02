@@ -9,7 +9,7 @@ from algomancy.dashboardlogger.logger import Logger, MessageStatus
 from .basealgorithm import ALGORITHM
 from .basealgorithmparameters import BASE_PARAMS_BOUND
 
-from .keyperformanceindicator import KpiTemplate
+from .keyperformanceindicator import BASE_KPI
 from .scenario import Scenario
 from .scenarioregistry import ScenarioRegistry
 from .scenariofactory import ScenarioFactory
@@ -47,7 +47,7 @@ class ScenarioManager:
     def __init__(
             self,
             etl_factory: type[E],
-            kpi_templates: List[KpiTemplate],
+            kpi_templates: Dict[str, Type[BASE_KPI]],
             algo_templates: Dict[str, Type[ALGORITHM]],
             input_configs: List[InputFileConfiguration],
             data_object_type: type[BASE_DATA_BOUND],  # for extensions of datasource

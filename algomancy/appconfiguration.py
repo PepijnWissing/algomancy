@@ -3,8 +3,9 @@ from typing import Any, Callable, Dict, List, Type
 import os
 
 from algomancy.dataengine import InputFileConfiguration, BASE_DATA_BOUND
-from algomancy.scenarioengine import AlgorithmFactory, KpiTemplate
+from algomancy.scenarioengine import AlgorithmFactory
 from algomancy.scenarioengine.basealgorithm import ALGORITHM
+from algomancy.scenarioengine.keyperformanceindicator import BASE_KPI
 from algomancy.stylingconfigurator import StylingConfigurator
 
 
@@ -28,7 +29,7 @@ class AppConfiguration:
             data_object_type: type[BASE_DATA_BOUND] | None = None,
             # === scenario manager configuration ===
             etl_factory: Any | None = None,
-            kpi_templates: List[KpiTemplate] | None = None,
+            kpi_templates: Dict[str, Type[BASE_KPI]] | None = None,
             algo_templates: Dict[str, Type[ALGORITHM]] | None = None,
             input_configs: List[InputFileConfiguration] | None = None,
             autocreate: bool | None = None,

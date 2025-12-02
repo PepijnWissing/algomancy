@@ -3,9 +3,9 @@ from .batchingalgorithm import BatchingAlgorithm
 from .randomalgorithm import RandomAlgorithm
 from .slowalgorithm import SlowAlgorithm
 
-__all__ = [
-    "AsIsAlgorithm",
-    "BatchingAlgorithm",
-    "RandomAlgorithm",
-    "SlowAlgorithm",
-]
+algorithm_templates = {
+    "As is": AsIsAlgorithm,
+    "Batching": BatchingAlgorithm,
+    "Random": RandomAlgorithm,
+    "Slow": SlowAlgorithm,
+}

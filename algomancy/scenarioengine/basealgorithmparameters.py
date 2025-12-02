@@ -209,8 +209,7 @@ class BaseAlgorithmParameters(ABC):
         """Validates parameters, must be implemented in subclass."""
         pass
 
-    @property
-    def parameters(self) -> Dict[str, TypedParameter]:
+    def get_parameters(self) -> Dict[str, TypedParameter]:
         return self._parameters
 
     def serialize(self):

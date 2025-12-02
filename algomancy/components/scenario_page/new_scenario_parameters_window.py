@@ -73,7 +73,7 @@ def create_algo_parameters_entry_card_body(template_name: str) -> CardBody:
     sm: ScenarioManager = get_app().server.scenario_manager
     algo_params = sm.get_algorithm_parameters(template_name)
     assert algo_params.has_inputs(), "No parameters found for algorithm template."
-    input_group = create_input_group(algo_params.parameters)
+    input_group = create_input_group(algo_params.get_parameters())
 
     return dbc.CardBody(
         input_group

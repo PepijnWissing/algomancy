@@ -25,8 +25,7 @@ from example_implementation.pages.DataPageContent import DataPageContentCreator
 from example_implementation.pages.ScenarioPageContent import ScenarioPageContentCreator
 from example_implementation.templates import (
     debug_create_example_scenarios,
-    AsIsAlgorithm, BatchingAlgorithm, RandomAlgorithm, SlowAlgorithm,
-    kpi_templates,
+    kpi_templates, algorithm_templates,
 )
 
 
@@ -50,10 +49,10 @@ def main(
         has_persistent_state=True,
         etl_factory=ExampleETLFactory,
         kpi_templates=kpi_templates,
-        algo_templates=algorithm_templates(),
+        algo_templates=algorithm_templates,
         input_configs=example_input_configs,
         data_object_type=DataSource,
-        autocreate=True, default_algo="Slow", default_algo_params_values={"duration": 10},
+        autocreate=True, default_algo="Slow", default_algo_params_values={"duration": 1},
         autorun=True,
         home_content=PlaceholderHomePageContentCreator.create_default_elements_showcase,
         data_content=DataPageContentCreator.create_data_page_content,
@@ -90,16 +89,6 @@ def main(
         app=app, host=app_cfg.host, port=app_cfg.port, threads=threads,
         connection_limit=connection_limit, debug=debug
     )
-
-
-def algorithm_templates():
-    return {
-        "As is": AsIsAlgorithm,
-        "Batching": BatchingAlgorithm,
-        "Random": RandomAlgorithm,
-        "Slow": SlowAlgorithm,
-    }
-
 
 def configure_styling() -> StylingConfigurator:
     dark_green = "#1F271B"
