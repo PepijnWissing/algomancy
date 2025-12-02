@@ -8,16 +8,11 @@ algorithms and parameters.
 import uuid
 from typing import Dict, Generic
 
-from threading import Lock
-
 from algomancy.dashboardlogger.logger import Logger
 from algomancy.dataengine import BASE_DATA_BOUND
 from .basealgorithm import ALGORITHM
 from .enumtypes import ScenarioStatus
 from .keyperformanceindicator import BASE_KPI
-
-SCENARIO_STATUS_STORE = {}  # todo probably remove?
-SCENARIO_STATUS_LOCK = Lock()  # todo probably remove?
 
 
 class Scenario(Generic[BASE_KPI]):
