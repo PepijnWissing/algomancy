@@ -25,7 +25,7 @@ from example_implementation.pages.DataPageContent import DataPageContentCreator
 from example_implementation.pages.ScenarioPageContent import ScenarioPageContentCreator
 from example_implementation.templates import (
     debug_create_example_scenarios,
-    algorithm_templates,
+    AsIsAlgorithm, BatchingAlgorithm, RandomAlgorithm, SlowAlgorithm,
     kpi_templates,
 )
 
@@ -43,41 +43,6 @@ def main(
     Loads data from CSV files, initializes the data source, creates the Dash application,
     and starts the web server.
     """
-    rich_mahogany = "#400406"  # p
-    spicy_paprika = "#CF5C36"  # s
-    dark_garnet = "#73070B"    # t
-
-    dark_green = "#1F271B"
-    sage_green = "#6DA34D"
-    cornsilk = "#FEFAE0"
-
-    white = "#FFFFFF"  # white
-    purple = "#3EBDF3"
-    lightblue = "#4C0265"
-    bright_blue = ColorConfiguration.linear_combination_hex(lightblue, purple, 0.5)
-    darkgrey = "#424242"
-    lightgrey = "#E3E3E3"
-
-    styling = StylingConfigurator(
-        layout_selection=LayoutSelection.SIDEBAR,
-        color_configuration=ColorConfiguration(
-            background_color=white,
-            theme_color_primary=dark_green,
-            theme_color_secondary=sage_green,
-            theme_color_tertiary=cornsilk,
-            text_color=darkgrey,
-            text_color_highlight=sage_green,
-            text_color_selected=white,
-            button_color_mode=ButtonColorMode.UNIFIED,
-            button_colors={
-                "unified_color": sage_green,
-                "unified_hover": "#8FBE74",
-            },
-        ),
-        logo_url="/assets/cqm-logo-white.png",
-        button_url="/assets/cqm-button-white.png",
-        card_highlight_mode=CardHighlightMode.SUBTLE_DARK,
-    )
 
     # framework configuration via AppConfiguration
     app_cfg = AppConfiguration(
@@ -85,12 +50,10 @@ def main(
         has_persistent_state=True,
         etl_factory=ExampleETLFactory,
         kpi_templates=kpi_templates,
-        algo_templates=algorithm_templates,
+        algo_templates=algorithm_templates(),
         input_configs=example_input_configs,
         data_object_type=DataSource,
-        autocreate=True,
-        default_algo="Slow",
-        default_algo_params_values={"duration": 10},
+        autocreate=True, default_algo="Slow", default_algo_params_values={"duration": 10},
         autorun=True,
         home_content=PlaceholderHomePageContentCreator.create_default_elements_showcase,
         data_content=DataPageContentCreator.create_data_page_content,
@@ -99,7 +62,7 @@ def main(
         home_callbacks="standard",
         data_callbacks="example",
         overview_callbacks="standard",
-        styling_config=styling,
+        styling_config=configure_styling(),
         use_cqm_loader=False,
         title="Example implementation of an Algomancy Dashboard",
         host=host,
@@ -127,6 +90,50 @@ def main(
         app=app, host=app_cfg.host, port=app_cfg.port, threads=threads,
         connection_limit=connection_limit, debug=debug
     )
+
+
+def algorithm_templates():
+    return {
+        "As is": AsIsAlgorithm,
+        "Batching": BatchingAlgorithm,
+        "Random": RandomAlgorithm,
+        "Slow": SlowAlgorithm,
+    }
+
+
+def configure_styling() -> StylingConfigurator:
+    dark_green = "#1F271B"
+    sage_green = "#6DA34D"
+    cornsilk = "#FEFAE0"
+
+    white = "#FFFFFF"
+    purple = "#3EBDF3"
+    lightblue = "#4C0265"
+    bright_blue = ColorConfiguration.linear_combination_hex(lightblue, purple, 0.5)
+    darkgrey = "#424242"
+    lightgrey = "#E3E3E3"
+
+    styling = StylingConfigurator(
+        layout_selection=LayoutSelection.SIDEBAR,
+        color_configuration=ColorConfiguration(
+            background_color=white,
+            theme_color_primary=dark_green,
+            theme_color_secondary=sage_green,
+            theme_color_tertiary=cornsilk,
+            text_color=darkgrey,
+            text_color_highlight=sage_green,
+            text_color_selected=white,
+            button_color_mode=ButtonColorMode.UNIFIED,
+            button_colors={
+                "unified_color": sage_green,
+                "unified_hover": "#8FBE74",
+            },
+        ),
+        logo_url="/assets/cqm-logo-white.png",
+        button_url="/assets/cqm-button-white.png",
+        card_highlight_mode=CardHighlightMode.SUBTLE_DARK,
+    )
+    return styling
 
 
 def _parse_cli_args():

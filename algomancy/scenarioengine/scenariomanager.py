@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, TypeVar
+from typing import Dict, List, Optional, TypeVar, Type
 
 from algomancy.dataengine import (ETLFactory,
                                   InputFileConfiguration,
@@ -6,8 +6,9 @@ from algomancy.dataengine import (ETLFactory,
                                   StatelessDataManager,
                                   BASE_DATA_BOUND)
 from algomancy.dashboardlogger.logger import Logger, MessageStatus
+from .basealgorithm import ALGORITHM
+from .basealgorithmparameters import BASE_PARAMS_BOUND
 
-from .algorithmtemplate import AlgorithmTemplate
 from .keyperformanceindicator import KpiTemplate
 from .scenario import Scenario
 from .scenarioregistry import ScenarioRegistry
@@ -47,7 +48,7 @@ class ScenarioManager:
             self,
             etl_factory: type[E],
             kpi_templates: List[KpiTemplate],
-            algo_templates: Dict[str, AlgorithmTemplate],
+            algo_templates: Dict[str, Type[ALGORITHM]],
             input_configs: List[InputFileConfiguration],
             data_object_type: type[BASE_DATA_BOUND],  # for extensions of datasource
             data_folder: str = None,
@@ -87,7 +88,7 @@ class ScenarioManager:
         self.toggle_autorun(autorun)
 
         # Keep inputs for accessors
-        self._algo_templates = algo_templates
+        # self._algo_templates = algo_templates
         self._input_configs = input_configs
 
         # Load initial data
@@ -130,8 +131,8 @@ class ScenarioManager:
     def currently_processing(self) -> Optional[Scenario]:
         return self._processor.currently_processing
 
-    def get_algorithm_template(self, key) -> AlgorithmTemplate:
-        return self._algo_templates.get(key)
+    def get_algorithm_parameters(self, key) -> BASE_PARAMS_BOUND:
+        return self._factory.algo_templates.get(key).initialize_parameters()
 
     # Data operations (delegated)
     def get_data_keys(self) -> List[str]:

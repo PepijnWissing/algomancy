@@ -1,14 +1,13 @@
 from time import sleep
-from typing import Callable
 
 from algomancy.dataengine import DataSource
 from algomancy.scenarioengine import (
-    AlgorithmTemplate,
     ScenarioResult,
 )
+from algomancy.scenarioengine.basealgorithm import BaseAlgorithm
 from algomancy.scenarioengine.basealgorithmparameters import (
     BaseAlgorithmParameters,
-    FloatParameter,
+    FloatParameter
 )
 
 
@@ -30,21 +29,19 @@ class RandomAlgorithmParameters(BaseAlgorithmParameters):
         pass
 
 
-def random_algorithm(
-    data: DataSource,
-    parameters: RandomAlgorithmParameters,
-    set_progress: Callable[[float], None],
-) -> ScenarioResult:
-    # run the algorithm
-    sleep(parameters.variance)
+class RandomAlgorithm(BaseAlgorithm):
+    def __init__(
+            self,
+            params: RandomAlgorithmParameters,
+    ):
+        super().__init__(name="Random", params=params)
 
-    # set to complete
-    set_progress(1)
-    return ScenarioResult(data_id=data.id)  # placeholder
+    @staticmethod
+    def initialize_parameters() -> RandomAlgorithmParameters:
+        return RandomAlgorithmParameters()
 
+    def run(self, data: DataSource) -> ScenarioResult:
+        sleep(self.params.variance)
 
-random_algorithm_template = AlgorithmTemplate(
-    name="Random",
-    param_type=RandomAlgorithmParameters,
-    main_method_template=random_algorithm,
-)
+        self.set_progress(100)
+        return ScenarioResult(data_id=data.id)

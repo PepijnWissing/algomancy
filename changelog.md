@@ -1,4 +1,65 @@
 # Change log
+## 0.3.1
+_Released at 05-12-2025_
+
+### Summary
+- **Breaking:** Revised `AlgorithmTemplate` pattern to `BaseAlgorithm` workflow, analog to `BaseDataSource` 
+- **Breaking:** Also revised `KPITemplate` pattern to `BaseKPI` workflow
+
+### Migration to BaseAlgorithm
+To align the development patterns, the template pattern has been substituted for a basemodel pattern, similarly to the
+creation of custom `DataSource`s. Below is an example of the before and after. 
+
+Old version
+```python
+def batching_algorithm(
+    data: DataSource,
+    parameters: BatchingAlgorithmParameters,
+    set_progress: Callable[[float], None],
+) -> ScenarioResult:
+    sleep(parameters.batch_size)
+    set_progress(100)
+    return ScenarioResult(data_id=data.id) 
+
+
+batching_algorithm_template = AlgorithmTemplate(
+    name="Batching",
+    param_type=BatchingAlgorithmParameters,   # Parameter type used to be passed 
+    main_method_template=batching_algorithm,  # as well as the main method handle. 
+)
+```
+
+New version
+```python
+class BatchingAlgorithm(BaseAlgorithm):
+    """ From v0.3.1, create your own algorithm by deriving BaseAlgorithm """
+    def __init__(self, params: BatchingAlgorithmParameters):
+        super().__init__("Batching", params)
+
+    @staticmethod
+    def initialize_parameters() -> BatchingAlgorithmParameters:
+        """ Minimal bit of boilerplate, necessary for internal handling """
+        return BatchingAlgorithmParameters()
+    
+    def run(self, data: DataSource) -> ScenarioResult:
+        """ Derived Algorithms now have to implement their own run() method """
+        sleep(self.params.batch_size)
+        self.set_progress(100)
+        return ScenarioResult(data_id=data.id)
+```
+
+### Migration to BaseKPI
+Similarly, the KPI creation has also been moved to the basemodel pattern. 
+
+Old version
+```python
+old
+```
+
+```python
+new
+```
+
 ## 0.2.15
 _Released at 28-11-2025_
 

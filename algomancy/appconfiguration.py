@@ -1,9 +1,10 @@
 import platform
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, Type
 import os
 
 from algomancy.dataengine import InputFileConfiguration, BASE_DATA_BOUND
-from algomancy.scenarioengine import AlgorithmFactory, Algorithm, KpiTemplate, AlgorithmTemplate
+from algomancy.scenarioengine import AlgorithmFactory, KpiTemplate
+from algomancy.scenarioengine.basealgorithm import ALGORITHM
 from algomancy.stylingconfigurator import StylingConfigurator
 
 
@@ -28,7 +29,7 @@ class AppConfiguration:
             # === scenario manager configuration ===
             etl_factory: Any | None = None,
             kpi_templates: List[KpiTemplate] | None = None,
-            algo_templates: Dict[str, AlgorithmTemplate] | None = None,
+            algo_templates: Dict[str, Type[ALGORITHM]] | None = None,
             input_configs: List[InputFileConfiguration] | None = None,
             autocreate: bool | None = None,
             default_algo: str | None = None,
@@ -254,7 +255,7 @@ class AppConfiguration:
         if self.autocreate:
             tmp_factory = AlgorithmFactory(self.algo_templates)
             test_algorithm = tmp_factory.create(self.default_algo, self.default_algo_params_values)
-            assert isinstance(test_algorithm, Algorithm), "Failed to create default algorithm"
+            assert test_algorithm.healthcheck(), "Failed to create default algorithm"
         else:
             pass
 

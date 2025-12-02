@@ -12,9 +12,9 @@ from threading import Lock
 
 from algomancy.dashboardlogger.logger import Logger
 from algomancy.dataengine import BASE_DATA_BOUND
+from algomancy.scenarioengine.basealgorithm import ALGORITHM
 from algomancy.scenarioengine.enumtypes import ScenarioStatus
 from algomancy.scenarioengine.keyperformanceindicator import KPI
-from algomancy.scenarioengine.algorithmtemplate import Algorithm
 
 SCENARIO_STATUS_STORE = {}
 SCENARIO_STATUS_LOCK = Lock()
@@ -33,7 +33,7 @@ class Scenario:
             tag: str,
             input_data: BASE_DATA_BOUND,
             kpis: Dict[str, KPI],
-            algorithm: Algorithm,
+            algorithm: ALGORITHM,
             provided_id: str = None,
     ):
         """

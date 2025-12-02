@@ -1,4 +1,3 @@
-from .algorithmtemplate import AlgorithmTemplate, Algorithm
 from .basealgorithmparameters import BaseAlgorithmParameters
 from .algorithmfactory import AlgorithmFactory
 from .enumtypes import ScenarioStatus, ImprovementDirection
@@ -9,7 +8,6 @@ from .scenariomanager import ScenarioManager
 
 
 __all__ = [
-    "AlgorithmTemplate", "Algorithm",
     "BaseAlgorithmParameters",
     "AlgorithmFactory",
     "ScenarioStatus", "ImprovementDirection",
