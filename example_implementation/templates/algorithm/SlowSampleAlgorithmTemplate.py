@@ -3,13 +3,13 @@ from typing import Callable
 
 from algomancy.dataengine import DataSource
 from algomancy.scenarioengine import ScenarioResult, AlgorithmTemplate
-from algomancy.scenarioengine.algorithmparameters import (
-    AlgorithmParameters,
+from algomancy.scenarioengine.basealgorithmparameters import (
+    BaseAlgorithmParameters,
     IntegerParameter,
 )
 
 
-class SlowSampleAlgorithmParams(AlgorithmParameters):
+class SlowSampleAlgorithmParams(BaseAlgorithmParameters):
     def __init__(self, name: str = "Slow") -> None:
         super().__init__(name=name)
 

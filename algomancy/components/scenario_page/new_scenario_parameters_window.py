@@ -4,7 +4,7 @@ from typing import Dict
 
 from dash_bootstrap_components import CardBody
 
-from algomancy.scenarioengine.algorithmparameters import TypedParameter, ParameterType
+from algomancy.scenarioengine.basealgorithmparameters import TypedParameter, ParameterType
 from algomancy.components.componentids import (
     ALGO_PARAMS_ENTRY_CARD,
     ALGO_PARAMS_ENTRY_TAB,

@@ -1,5 +1,5 @@
 from .algorithmtemplate import AlgorithmTemplate, Algorithm
-from .algorithmparameters import AlgorithmParameters
+from .basealgorithmparameters import BaseAlgorithmParameters
 from .algorithmfactory import AlgorithmFactory
 from .enumtypes import ScenarioStatus, ImprovementDirection
 from .keyperformanceindicator import KpiTemplate, KPI, build_kpis
@@ -10,7 +10,7 @@ from .scenariomanager import ScenarioManager
 
 __all__ = [
     "AlgorithmTemplate", "Algorithm",
-    "AlgorithmParameters",
+    "BaseAlgorithmParameters",
     "AlgorithmFactory",
     "ScenarioStatus", "ImprovementDirection",
     "KpiTemplate", "KPI", "build_kpis",

@@ -6,14 +6,14 @@ from algomancy.scenarioengine import (
     AlgorithmTemplate,
     ScenarioResult,
 )
-from algomancy.scenarioengine.algorithmparameters import (
-    AlgorithmParameters,
+from algomancy.scenarioengine.basealgorithmparameters import (
+    BaseAlgorithmParameters,
     IntegerParameter,
     EnumParameter,
     BooleanParameter,
 )
 
-class BatchingAlgorithmParameters(AlgorithmParameters):
+class BatchingAlgorithmParameters(BaseAlgorithmParameters):
     def __init__(
         self,
         name: str = "Batching",

@@ -6,13 +6,13 @@ from algomancy.scenarioengine import (
     AlgorithmTemplate,
     ScenarioResult,
 )
-from algomancy.scenarioengine.algorithmparameters import (
-    AlgorithmParameters,
+from algomancy.scenarioengine.basealgorithmparameters import (
+    BaseAlgorithmParameters,
     FloatParameter,
 )
 
 
-class RandomAlgorithmParameters(AlgorithmParameters):
+class RandomAlgorithmParameters(BaseAlgorithmParameters):
     def __init__(
         self,
         name: str = "Random",

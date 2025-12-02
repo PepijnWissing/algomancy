@@ -190,7 +190,7 @@ class BooleanParameter(TypedParameter):
         return self._value
 
 
-class AlgorithmParameters(ABC):
+class BaseAlgorithmParameters(ABC):
     def __init__(self, name: str) -> None:
         self.name: str = name
         self._parameters: Dict[str, TypedParameter] = {}

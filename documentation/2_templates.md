@@ -114,11 +114,11 @@ from typing import Callable
 
 from algomancy.dataengine import BaseDataSource
 from algomancy.scenarioengine import ScenarioResult, AlgorithmTemplate
-from algomancy.scenarioengine.algorithmparameters import *
+from algomancy.scenarioengine.basealgorithmparameters import *
 
 
 # Define the parameters for the algorithm
-class SlowSampleAlgorithmParams(AlgorithmParameters):
+class SlowSampleAlgorithmParams(BaseAlgorithmParameters):
     def __init__(self, name: str = "Slow") -> None:
         super().__init__(name=name)
 
