@@ -1,19 +1,18 @@
 import os
 import shutil
 from abc import ABC, abstractmethod
-from typing import Dict, List, Tuple, Type, TypeVar
+from typing import Dict, List, Tuple, TypeVar
 
 import pandas as pd
 
-from algomancy.dataengine.datasource import DataSource, DataSourceType
+from algomancy.dataengine.datasource import DataClassification, BASE_DATA_BOUND
 from algomancy.dataengine.etl import ETLFactory, ETLConstructionError
 from algomancy.dataengine.inputfileconfiguration import InputFileConfiguration, FileExtension
-from algomancy.dataengine.validator import Validator, ValidationError, ValidationSequence
+from algomancy.dataengine.validator import ValidationSequence
 from algomancy.dataengine.file import File, CSVFile, JSONFile, XLSXFile
 from algomancy.dashboardlogger.logger import Logger
 
 E = TypeVar("E", bound=ETLFactory)
-DOT = TypeVar("DOT", bound=DataSource)
 
 
 class DataManager(ABC):
@@ -26,15 +25,15 @@ class DataManager(ABC):
             etl_factory: type[E],
             input_configs: List[InputFileConfiguration],
             save_type: str,
-            data_object_type: type[DOT],
+            data_object_type: type[BASE_DATA_BOUND],
             logger: Logger | None = None
     ) -> None:
         self.logger = logger
         self._etl_factory = etl_factory(input_configs, self.logger)
         self._input_configs = input_configs
-        self._data: Dict[str, DataSource] = {}
+        self._data: Dict[str, BASE_DATA_BOUND] = {}
         self._save_type = save_type
-        self._data_object_type: type[DOT] = data_object_type
+        self._data_object_type: type[BASE_DATA_BOUND] = data_object_type
 
     @property
     def data_object_type(self):
@@ -53,23 +52,21 @@ class DataManager(ABC):
     def get_data_keys(self) -> List[str]:
         return list(self._data.keys())
 
-    def get_data(self, data_key: str) -> DataSource | None:
+    def get_data(self, data_key: str) -> BASE_DATA_BOUND | None:
         return self._data.get(data_key)
 
     # Derive/Delete
-    def derive_data(self, derive_from_key: str, new_data_key: str) -> None:
-        assert derive_from_key in self.get_data_keys(), f"Data '{derive_from_key}' not found."
-        assert new_data_key not in self.get_data_keys(), f"Data '{new_data_key}' already exists."
+    def derive_data(self, existing_key: str, derived_key: str) -> None:
+        assert existing_key in self.get_data_keys(), f"Data '{existing_key}' not found."
+        assert derived_key not in self.get_data_keys(), f"Data '{derived_key}' already exists."
 
-        new_data = self._data_object_type(ds_type=DataSourceType.DERIVED_DATA, name=new_data_key)
-        new_data.copy_contents_from(ds_to_copy=self.get_data(derive_from_key))
+        self._data[derived_key] = self.get_data(existing_key).derive(derived_key)
 
-        self._data[new_data_key] = new_data
-        self.log(f"Derived data '{new_data_key}' derived from '{derive_from_key}'.")
+        self.log(f"Derived data '{derived_key}' derived from '{existing_key}'.")
 
-    def add_data_source(self, data_source: DataSource) -> None:
+    def add_data_source(self, data_source: BASE_DATA_BOUND) -> None:
         # Add to the data dictionary
-        self._data[data_source.name] = data_source
+        self._data[str(data_source.name)] = data_source
         self.log(f"Loaded DataSource '{data_source.name}' from {self._save_type} file.")
 
     @abstractmethod
@@ -97,7 +94,7 @@ class DataManager(ABC):
             raise ETLConstructionError("No file data provided.")
 
     @staticmethod
-    def _add_to_files(files, name, extension, content = None, path = None) -> None:
+    def _add_to_files(files, name, extension, content=None, path=None) -> None:
         assert path or content, "Either path or content must be provided."
 
         if extension == FileExtension.CSV.lower():
@@ -156,11 +153,11 @@ class StatelessDataManager(DataManager):
             etl_factory: type[ETLFactory],
             input_configs: List[InputFileConfiguration],
             save_type: str,
-            data_object_type: type[DOT],
+            data_object_type: type[BASE_DATA_BOUND],
             logger: Logger | None = None
     ):
         super().__init__(etl_factory, input_configs, save_type, data_object_type, logger)
-        self._data: Dict[str, DataSource] = {}
+        self._data: Dict[str, BASE_DATA_BOUND] = {}
 
     def startup(self):
         # Stateless data manager does not need to perform any additional actions on startup
@@ -181,12 +178,12 @@ class StatefulDataManager(DataManager):
             input_configs: List[InputFileConfiguration],
             data_folder: str,
             save_type: str,
-            data_object_type: type[DOT],
+            data_object_type: type[BASE_DATA_BOUND],
             logger: Logger | None = None
     ):
         super().__init__(etl_factory, input_configs, save_type, data_object_type, logger)
         self._data_folder = data_folder
-        self._data: Dict[str, DOT] = {}  # Loading
+        self._data: Dict[str, BASE_DATA_BOUND] = {}  # Loading
 
     def startup(self):
         try:
@@ -199,15 +196,7 @@ class StatefulDataManager(DataManager):
             print(e)
 
     def load_data_from_file(self, file_path: str) -> None:
-        # Create a DataSource from the parquet bytes
-        if self._save_type == "parquet":
-
-            # Read the file content as bytes
-            with open(file_path, "rb") as f:
-                parquet_bytes = f.read()
-            data_source = self.data_object_type.from_parquet_bytes(parquet_bytes)
-
-        elif self._save_type == "json":
+        if self._save_type == "json":
             # Read the file content as text
             with open(file_path, "r", encoding="utf-8") as f:
                 json_string = f.read()
@@ -306,30 +295,11 @@ class StatefulDataManager(DataManager):
                 df.to_csv(file_path, index=False, sep=";")
 
             # Also keep in memory
-            ds = self.data_object_type(name=dataset_name, ds_type=DataSourceType.DERIVED_DATA)
+            ds = self.data_object_type(name=dataset_name, ds_type=DataClassification.DERIVED_DATA)
             for key, df in data.items():
                 ds.add_table(key, df)
             self._data[dataset_name] = ds
             self.log(f"Stored dataset '{dataset_name}' to disk and memory.")
-
-    def store_data_source_as_parquet(self, dataset_name: str, allow_overwrite: bool = False):
-        import os as _os
-        file_name = _os.path.join(self._data_folder, f'{dataset_name}.parquet', )
-        if _os.path.exists(file_name) and not allow_overwrite:
-            raise Exception(f"Directory '{dataset_name}' already exists in '{self._data_folder}'")
-
-        # Retrieve datasource
-        data_source = self.get_data(dataset_name)
-
-        # check existence
-        assert data_source is not None, f"Data source '{dataset_name}' not found."
-
-        # Serialize it to parquet bytes
-        parquet_bytes = data_source.to_parquet_bytes()
-
-        # store bytes in file
-        with open(file_name, "wb") as f:
-            f.write(parquet_bytes)
 
     def store_data_source_as_json(self, dataset_name: str, allow_overwrite: bool = False):
         import os as _os

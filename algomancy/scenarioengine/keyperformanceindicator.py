@@ -2,10 +2,10 @@ from dataclasses import dataclass
 from typing import Callable, Dict, List
 
 from algomancy.scenarioengine.enumtypes import ImprovementDirection
-from algomancy.scenarioengine.result import ScenarioResult
+from algomancy.scenarioengine.result import BASE_RESULT_BOUND
 from algomancy.scenarioengine.unit import BaseMeasurement, Measurement
 
-KPICalculationFunction = Callable[[ScenarioResult], float]
+KPICalculationFunction = Callable[[BASE_RESULT_BOUND], float]
 
 # todo KpiType: at least value / at most value
 
@@ -63,7 +63,7 @@ class KPI:
     def __str__(self):
         self._measurement.pretty()
 
-    def compute(self, result: ScenarioResult) -> None:
+    def compute(self, result: BASE_RESULT_BOUND) -> None:
         """
         Computes a key performance indicator (KPI) value using the provided result data
         and a callback function.
@@ -72,9 +72,8 @@ class KPI:
         the result data. If an exception occurs during computation, it logs an error
         message indicating the KPI name and raises a ValueError to indicate failure.
 
-        :param result: The result data of the type ScenarioResultData required for KPI
-                       computation.
-        :type result: ScenarioResult
+        :param result: The result data of the type required for KPI computation.
+        :type result: Derived from BaseScenarioResult
         :raises ValueError: If an error occurs during the KPI computation.
         """
         try:
@@ -91,7 +90,6 @@ class KPI:
     def to_dict(self):
         return {
             "name": self.name,
-            # "type": self.type.name,
             "better_when": self.better_when.name,
             "callback": self._callback.__name__,
             "basis": self._measurement.base_measurement,

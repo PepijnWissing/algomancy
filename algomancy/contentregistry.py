@@ -2,14 +2,14 @@ from typing import Callable
 
 from dash import html
 
-from .dataengine import DataSource
+from .dataengine import BASE_DATA_BOUND
 from .scenarioengine import Scenario
 
 
 class ContentRegistry:
     def __init__(self):
         self._home_content: Callable[[],html.Div] | None = None
-        self._data_content: Callable[[DataSource],html.Div] | None = None
+        self._data_content: Callable[[BASE_DATA_BOUND],html.Div] | None = None
         self._scenario_content: Callable[[Scenario],html.Div] | None = None
         self._compare_side_by_side: Callable[[Scenario, str],html.Div] | None = None
         self._compare_compare: Callable[[Scenario, Scenario],html.Div] | None = None
@@ -27,7 +27,7 @@ class ContentRegistry:
 
     def register_data_content(
             self,
-            content_fn: Callable[[DataSource], html.Div],
+            content_fn: Callable[[BASE_DATA_BOUND], html.Div],
             callbacks: Callable[[], None] | None = None
     ):
         self._data_content = content_fn
@@ -77,11 +77,11 @@ class ContentRegistry:
             return default_content
 
     @property
-    def data_content(self) -> Callable[[DataSource], html.Div]:
+    def data_content(self) -> Callable[[BASE_DATA_BOUND], html.Div]:
         if self._data_content:
             return self._data_content
         else:
-            def default_content(data: DataSource):
+            def default_content(data: BASE_DATA_BOUND):
                 return html.Div([
                     html.H1("Data content was not filled."),
                     html.H2(f"Data source: {data.name}"),

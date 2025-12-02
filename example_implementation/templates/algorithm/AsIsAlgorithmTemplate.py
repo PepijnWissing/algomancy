@@ -25,7 +25,7 @@ def as_is_algorithm(
     sleep(0.5)
 
     set_progress(1)
-    return ScenarioResult(master_data_id=data.id)  # placeholder
+    return ScenarioResult(data_id=data.id)  # placeholder
 
 
 as_is_algorithm_template = AlgorithmTemplate(

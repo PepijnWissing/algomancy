@@ -40,7 +40,7 @@ def random_algorithm(
 
     # set to complete
     set_progress(1)
-    return ScenarioResult(master_data_id=data.id)  # placeholder
+    return ScenarioResult(data_id=data.id)  # placeholder
 
 
 random_algorithm_template = AlgorithmTemplate(

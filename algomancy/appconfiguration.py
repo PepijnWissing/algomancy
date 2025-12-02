@@ -1,12 +1,9 @@
 import platform
-from idlelib.pyshell import use_subprocess
-from typing import Any, Callable, Dict, List, TypeVar
+from typing import Any, Callable, Dict, List
 import os
 
-from setuptools.command.build_ext import use_stubs
-
-from algomancy.dataengine import DataSource, InputFileConfiguration
-from algomancy.scenarioengine import AlgorithmParameters, AlgorithmFactory, Algorithm, KpiTemplate, AlgorithmTemplate
+from algomancy.dataengine import InputFileConfiguration, BASE_DATA_BOUND
+from algomancy.scenarioengine import AlgorithmFactory, Algorithm, KpiTemplate, AlgorithmTemplate
 from algomancy.stylingconfigurator import StylingConfigurator
 
 
@@ -27,7 +24,7 @@ class AppConfiguration:
             # === data manager configuration ===
             has_persistent_state: bool = False,
             save_type: str | None = "json",
-            data_object_type: Any | None = DataSource,
+            data_object_type: type[BASE_DATA_BOUND] | None = None,
             # === scenario manager configuration ===
             etl_factory: Any | None = None,
             kpi_templates: List[KpiTemplate] | None = None,

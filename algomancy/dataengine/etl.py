@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, List
 
 from algomancy.dataengine.schema import Schema
-from algomancy.dataengine.datasource import DataSource, DataSourceType
+from algomancy.dataengine.datasource import BASE_DATA_BOUND, DataClassification
 from algomancy.dataengine.extractor import Extractor
 from algomancy.dataengine.file import File
 from algomancy.dataengine.loader import Loader
@@ -31,7 +31,7 @@ class ETLPipeline:
         self.loader = loader
         self.logger = logger
 
-    def run(self) -> DataSource:
+    def run(self) -> BASE_DATA_BOUND:
         """
         Executes an ETL (Extract, Transform, Load) job by coordinating the extraction of data, validation,
         transformation, and loading into a DataSource. It uses extractors to collect data, a validator
@@ -43,7 +43,7 @@ class ETLPipeline:
             step, indicating that the data does not meet required criteria.
 
         Returns:
-            DataSource: The resultant DataSource object containing the processed and loaded data.
+            BASE_DATA_BOUND: The resultant DataSource object containing the processed and loaded data.
         """
         # Extraction
         data = {}
@@ -66,7 +66,7 @@ class ETLPipeline:
             name=self.destination_name,
             data=data,
             validation_messages=validation_messages,
-            ds_type=DataSourceType.MASTER_DATA,
+            ds_type=DataClassification.MASTER_DATA,
         )
 
         if self.logger:

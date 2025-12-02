@@ -1,9 +1,10 @@
 from .datamanager import (DataManager,
                           StatelessDataManager,
                           StatefulDataManager)
-from .dataslicer import slice_data
-from .datasource import (DataSource,
-                         DataSourceType)
+from .datasource import (BaseDataSource,
+                         DataSource,
+                         DataClassification,
+                         BASE_DATA_BOUND)
 from .schema import (Schema,
                      DataType)
 from .etl import (ETLFactory,
@@ -39,8 +40,7 @@ from .file import (File,
 
 __all__ = [
     'DataManager', 'StatefulDataManager', 'StatelessDataManager',
-    'slice_data',
-    'DataSource', 'DataSourceType',
+    'BaseDataSource', 'DataSource', 'DataClassification', 'BASE_DATA_BOUND',
     'Schema', 'DataType',
     'ETLFactory', 'ETLPipeline', 'ETLConstructionError',
     'Extractor', 'SingleExtractor', 'MultiExtractor',
