@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from enum import StrEnum
-from typing import Any, Dict
+from typing import Any, Dict, TypeVar
 
 
 class ParameterError(Exception):
@@ -190,7 +190,7 @@ class BooleanParameter(TypedParameter):
         return self._value
 
 
-class AlgorithmParameters(ABC):
+class BaseAlgorithmParameters(ABC):
     def __init__(self, name: str) -> None:
         self.name: str = name
         self._parameters: Dict[str, TypedParameter] = {}
@@ -209,6 +209,9 @@ class AlgorithmParameters(ABC):
         """Validates parameters, must be implemented in subclass."""
         pass
 
+    def get_parameters(self) -> Dict[str, TypedParameter]:
+        return self._parameters
+
     def serialize(self):
         return {key: p.value for key, p in self._parameters.items()}
 
@@ -223,6 +226,10 @@ class AlgorithmParameters(ABC):
                 self._parameters[name].set_validated_value(value)
             else:
                 raise ParameterError(f"Parameter '{name}' not found.")
+
+    def set_validated_values(self, values: dict[str, Any]) -> None:
+        self.set_values(values)
+        self.validate()
 
     def get_values(self) -> dict[str, Any]:
         return {
@@ -246,3 +253,6 @@ class AlgorithmParameters(ABC):
                     dct[key] = True
                 else:
                     dct[key] = False
+
+
+BASE_PARAMS_BOUND = TypeVar("BASE_PARAMS_BOUND", bound=BaseAlgorithmParameters)

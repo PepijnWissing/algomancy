@@ -6,10 +6,10 @@ from algomancy.scenarioengine import (
     AlgorithmTemplate,
     ScenarioResult,
 )
-from algomancy.scenarioengine.algorithmparameters import AlgorithmParameters
+from algomancy.scenarioengine.basealgorithmparameters import BaseAlgorithmParameters
 
 
-class PlaceholderParams(AlgorithmParameters):
+class PlaceholderParams(BaseAlgorithmParameters):
     def __init__(self, name: str = "As is") -> None:
         super().__init__(name=name)
 

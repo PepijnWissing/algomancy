@@ -4,7 +4,8 @@ from typing import Dict
 
 from dash_bootstrap_components import CardBody
 
-from algomancy.scenarioengine.algorithmparameters import TypedParameter, ParameterType
+from algomancy.scenarioengine import ScenarioManager
+from algomancy.scenarioengine.basealgorithmparameters import TypedParameter, ParameterType
 from algomancy.components.componentids import (
     ALGO_PARAMS_ENTRY_CARD,
     ALGO_PARAMS_ENTRY_TAB,
@@ -69,11 +70,11 @@ def create_input_group(param_dict: Dict[str, TypedParameter]):
 
 
 def create_algo_parameters_entry_card_body(template_name: str) -> CardBody:
-    sm = get_app().server.scenario_manager
-    template = sm.get_algorithm_template(template_name)
-    algo_params = template.param_type()
+    sm: ScenarioManager = get_app().server.scenario_manager
+    algo_params = sm.get_algorithm_parameters(template_name)
     assert algo_params.has_inputs(), "No parameters found for algorithm template."
-    input_group = create_input_group(algo_params._parameters)
+    input_group = create_input_group(algo_params.get_parameters())
+
     return dbc.CardBody(
         input_group
     )

@@ -4,11 +4,12 @@ kpicard.py - KPI Card Component
 This module defines functions for creating and formatting KPI cards that display
 performance metrics and comparisons between scenarios.
 """
+import typing
 
 from dash import html, dcc
 import dash_bootstrap_components as dbc
 
-from algomancy.scenarioengine.keyperformanceindicator import ImprovementDirection
+from algomancy.scenarioengine import ImprovementDirection, BASE_KPI
 from algomancy.scenarioengine.unit import Measurement
 
 
@@ -33,35 +34,46 @@ def is_improvement_good(better_when, left, right):
     return None
 
 
-def format_measurement(measurement: Measurement) -> str:
+def get_delta_binary(left_kpi: BASE_KPI, right_kpi: BASE_KPI):
+    left_value = 1 if left_kpi.success else 0
+    right_value = 1 if right_kpi.success else 0
+
+    delta = right_value - left_value
+    is_good = delta > 0
+
+    if abs(delta) < 1e-10:  # Handle floating point precision
+        return "No change", "-", "text-muted"
+
+    arrow = "🡅" if is_good else "🡇"
+
+    # Create delta measurement with same unit as scaled measurements
+    delta_str = f"{left_kpi.pretty()}     {arrow}     {right_kpi.pretty()}"
+
+    if is_good:
+        details = "Right passes but left does not"
+    else:
+        details = "Left passes but right does not"
+
+    color_class = "text-success" if is_good else "text-danger"
+    return delta_str, details, color_class
+
+
+def get_delta_default(left_kpi: BASE_KPI, right_kpi: BASE_KPI):
     """
-    Format a Measurement using its pretty representation.
+        Determine difference, percentage, and color between two measurements.
+        Scales left measurement and matches right to the same unit.
 
-    Args:
-        measurement: The Measurement to format
+        Args:
+            left_kpi: The left measurement to compare
+            right_kpi: The right measurement to compare
 
-    Returns:
-        str: Formatted measurement as a string
-    """
-    if measurement is None or measurement.value == Measurement.INITIAL_VALUE:
-        return "N/A"
+        Returns:
+            tuple: A tuple containing (delta string, percentage string, color class)
+        """
+    left_measurement: Measurement = left_kpi.measurement
+    right_measurement: Measurement = right_kpi.measurement
+    better_when: ImprovementDirection = left_kpi.better_when
 
-    return measurement.pretty()
-
-
-def get_delta_infos(left_measurement: Measurement, right_measurement: Measurement, better_when: ImprovementDirection):
-    """
-    Determine difference, percentage, and color between two measurements.
-    Scales left measurement and matches right to the same unit.
-
-    Args:
-        left_measurement: The left measurement to compare
-        right_measurement: The right measurement to compare
-        better_when: Direction in which improvement is measured
-
-    Returns:
-        tuple: A tuple containing (delta string, percentage string, color class)
-    """
     # Handle None or uninitialized measurements
     if (left_measurement is None or right_measurement is None or
             left_measurement.value == Measurement.INITIAL_VALUE or
@@ -73,7 +85,7 @@ def get_delta_infos(left_measurement: Measurement, right_measurement: Measuremen
 
     # Match right measurement to left's scaled unit
     try:
-        right_scaled = right_measurement.scale_to_unit(left_scaled)
+        right_scaled = right_measurement.scale_to_unit(left_scaled.unit)
     except ValueError as e:
         # Units are incompatible
         return "Incompatible units", "-", "text-warning"
@@ -92,7 +104,7 @@ def get_delta_infos(left_measurement: Measurement, right_measurement: Measuremen
 
     # Create delta measurement with same unit as scaled measurements
     delta_measurement = Measurement(left_scaled.base_measurement, abs(delta))
-    delta_str = f"{arrow} {format_measurement(delta_measurement)}"
+    delta_str = f"{arrow} {delta_measurement.pretty()}"
 
     try:
         delta_perc = (delta / left_value * 100) if abs(left_value) > 1e-10 else 0
@@ -106,66 +118,77 @@ def get_delta_infos(left_measurement: Measurement, right_measurement: Measuremen
     return delta_str, delta_perc_str, color_class
 
 
+def get_delta_infos(left_kpi: BASE_KPI, right_kpi: BASE_KPI):
+    if left_kpi.is_binary_kpi:
+        return get_delta_binary(left_kpi, right_kpi)
+    else:
+        return get_delta_default(left_kpi, right_kpi)
+
+
 def kpi_card(
-        kpi_name: str,
-        # kpi_type: KpiType,
-        better_when: ImprovementDirection,
-        left_measurement: Measurement,
-        right_measurement: Measurement,
+        left_kpi: BASE_KPI,
+        right_kpi: BASE_KPI,
 ):
     """
     Create a compact KPI comparison card without excessive height.
     Automatically scales the left measurement and matches the right to the same unit.
 
     Args:
-        kpi_name: Name of the KPI
-        # kpi_type: Type of the KPI (NUMERIC, PERCENT, RATIO, TIME)
-        better_when: Direction in which improvement is measured
-        left_measurement: Measurement from the left scenario
-        right_measurement: Measurement from the right scenario
+        left_kpi
+        right_kpi
 
     Returns:
         dbc.Card: A Dash Bootstrap card component displaying the KPI comparison
     """
-    # Scale left and match right to same unit
-    if (left_measurement is not None and right_measurement is not None and
-            left_measurement.value != Measurement.INITIAL_VALUE and
-            right_measurement.value != Measurement.INITIAL_VALUE):
-
-        left_scaled = left_measurement.scale()
-        try:
-            right_scaled = right_measurement.scale_to_unit(left_scaled)
-        except ValueError:
-            # If conversion fails, use unscaled measurements
-            left_scaled = left_measurement
-            right_scaled = right_measurement
-    else:
-        left_scaled = left_measurement
-        right_scaled = right_measurement
 
     # Extract unit symbol for display
-    unit_symbol = left_scaled.unit.symbol if left_scaled and left_scaled.value != Measurement.INITIAL_VALUE else ""
+    unit = left_kpi.get_pretty_unit()
+    unit_symbol = unit.symbol if unit else ""
+
+    kpi_type = str(left_kpi.better_when).capitalize().replace("_", " ") + (
+        f" {left_kpi.get_threshold_str(unit)}" if left_kpi.is_binary_kpi else
+        " is better"
+    )
 
     header = html.Div(
         [
-            html.Span(kpi_name, className="fw-bold"),
-            html.Span(f" ({unit_symbol})", className="text-secondary ms-1") if unit_symbol else None,
+            # Left group: name + optional unit
+            html.Div(
+                [
+                    html.Span(str(left_kpi.name), className="fw-bold"),
+                    # html.Span(f" ({unit_symbol})", className="text-secondary ms-1") if unit_symbol else None,
+                ],
+                style={"display": "flex", "alignItems": "center", "gap": "0.25rem"}
+            ),
+            # Right-aligned kpi_type (same muted style as unit)
+            html.Div(
+                html.Span(kpi_type, className="text-secondary"),
+                style={"display": "flex", "alignItems": "center", "justifyContent": "flex-end", "fontSize": "0.7rem"}
+            ),
         ],
-        style={"fontSize": "1rem", "display": "flex", "alignItems": "center", "marginBottom": "10px"}
+        # Make the header take full width and push the right group to the far right
+        style={
+            "fontSize": "1rem",
+            "display": "flex",
+            "alignItems": "center",
+            "justifyContent": "space-between",
+            "width": "100%",
+            "marginBottom": "10px"
+        }
     )
 
     values = html.Div(
         [
-            html.Small(f"Left: {format_measurement(left_scaled)}",
+            html.Small(f"Left: {left_kpi.details(unit)}",
                        style={"flex": "1", "textAlign": "left"}),
-            html.Small(f"Right: {format_measurement(right_scaled)}",
+            html.Small(f"Right: {right_kpi.details(unit)}",
                        style={"flex": "1", "textAlign": "right"}),
         ],
         className="text-muted",
         style={"fontSize": "0.85rem", "lineHeight": "1", "marginBottom": "2px", "display": "flex", "width": "100%"}
     )
 
-    delta_str, delta_perc_str, color_class = get_delta_infos(left_measurement, right_measurement, better_when)
+    delta_str, delta_perc_str, color_class = get_delta_infos(left_kpi, right_kpi)
     delta = html.Div(
         [
             # Second row: Change, centered

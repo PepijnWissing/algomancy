@@ -1,7 +1,7 @@
 from dash import Output, Input, callback_context, no_update, callback, State, ALL, get_app, ctx, clientside_callback
 from dash.exceptions import PreventUpdate
 
-from algomancy.scenarioengine.enumtypes import ScenarioStatus
+from algomancy.scenarioengine import ScenarioStatus
 from algomancy.components.componentids import *
 from algomancy.components.scenario_page.new_scenario_parameters_window import create_algo_parameters_entry_card_body
 from algomancy.components.scenario_page.scenario_cards import scenario_cards

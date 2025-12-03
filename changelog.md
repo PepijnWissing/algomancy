@@ -1,4 +1,121 @@
 # Change log
+## 0.3.1
+_Released at 03-12-2025_
+
+### Summary
+- **Breaking:** Revised `AlgorithmTemplate` pattern to `BaseAlgorithm` workflow, analog to `BaseDataSource` 
+- **Breaking:** Also revised `KPITemplate` pattern to `BaseKPI` workflow
+- Scenario engine
+  - Export and typing cleanups in `algomancy.scenarioengine` to support `BaseAlgorithm`/`BaseKPI` patterns.
+  - Measurement/unit utilities updated in `algomancy.scenarioengine.unit`.
+  - Added threshold KPIs; `ImprovementDirection.AT_LEAST`, `.AT_MOST`, and argument `threshold`
+- Components and pages
+  - Updated Compare and Scenario page callbacks and KPI Card to align with the new KPI base class and thresholds.
+  - Minor adjustments to Standard Home and Overview pages.
+- Examples
+  - Replaced example KPI template with a `BaseKPI` implementation (`DelayKPI`).
+
+### Migration to BaseAlgorithm
+To align the development patterns, the template pattern has been substituted for a basemodel pattern, similarly to the
+creation of custom `DataSource`s. Below is an example of the before and after. 
+
+**Old version**
+```python
+def batching_algorithm(
+    data: DataSource,
+    parameters: BatchingAlgorithmParameters,
+    set_progress: Callable[[float], None],
+) -> ScenarioResult:
+    sleep(parameters.batch_size)
+    set_progress(100)
+    return ScenarioResult(data_id=data.id) 
+
+
+batching_algorithm_template = AlgorithmTemplate(
+    name="Batching",
+    param_type=BatchingAlgorithmParameters,   # Parameter type used to be passed 
+    main_method_template=batching_algorithm,  # as well as the main method handle. 
+)
+```
+
+**New version**
+```python
+class BatchingAlgorithm(BaseAlgorithm):
+    """ From v0.3.1, create your own algorithm by deriving BaseAlgorithm """
+    def __init__(self, params: BatchingAlgorithmParameters):
+        super().__init__("Batching", params)
+
+    @staticmethod
+    def initialize_parameters() -> BatchingAlgorithmParameters:
+        """ Minimal bit of boilerplate, necessary for internal handling """
+        return BatchingAlgorithmParameters()
+    
+    def run(self, data: DataSource) -> ScenarioResult:
+        """ Derived Algorithms now have to implement their own run() method """
+        sleep(self.params.batch_size)
+        self.set_progress(100)
+        return ScenarioResult(data_id=data.id)
+```
+
+
+
+### Migration to BaseKPI
+Similarly, the KPI creation has also been moved to the basemodel pattern. 
+
+**Old version**
+```python
+default = QUANTITIES["default"]
+default_unit = BaseMeasurement(default["unit"], min_digits=1, max_digits=3, decimals=1)
+
+def create_error_template():
+    def error_rate_calculation(result: ScenarioResult) -> float:
+        return 0.1 * (1 + 0.5 * random.random())  # placeholder
+    
+    return KpiTemplate(
+        name="Error Rate",
+        better_when=ImprovementDirection.LOWER,
+        callback=error_rate_calculation,
+        measurement_base=default_unit,
+    )
+```
+
+**New version**
+```python
+default = QUANTITIES["default"]
+default_unit = BaseMeasurement(default["unit"], min_digits=1, max_digits=3, decimals=1)
+
+class ErrorKPI(BaseKPI):
+    def __init__(self):
+        """ Basic configurations are now made by passing them to the base object """
+        super().__init__(
+            name             = "Error Rate",
+            better_when      = ImprovementDirection.LOWER,
+            base_measurement = default_unit,
+        )
+
+    def compute(self, result: ScenarioResult) -> float:
+        """ The user defines the compute function, as before"""
+        return 0.1 * (1 + 0.5 * random.random())  # placeholder
+```
+
+### Threshold KPIs
+A threshold KPI is initialized with a `threshold` value and appropriate `ImprovementDirection`, in addition to the usual arguments. 
+It is considered to be a 'success' if the value of the kpi exceeds (or does not exceed, in the case of `AT_MOST`) the threshold value. 
+The `.pretty()` function will format a threshold as either a checkmark or a cross, depending on the value relative to the threshold. 
+
+An example is included below
+```python
+# noinspection PyUnresolvedReferences
+class DelayKPI(BaseKPI):
+    def __init__(self):
+        super().__init__(
+            name="Average Delay",
+            better_when=ImprovementDirection.AT_MOST,
+            base_measurement=BaseMeasurement(QUANTITIES["time"]["s"], min_digits=1, max_digits=3, decimals=1),
+            threshold=1200,
+        )
+```
+
 ## 0.2.15
 _Released at 28-11-2025_
 
@@ -304,14 +421,9 @@ The expected keys are `side-by-side`, `kpis`, `compare`, and `details`. An examp
 ```python
 # framework configuration
 configuration = {
-    ...,
-    "compare_ordered_list_components": [
-        'side-by-side',
-        'kpis',
-        'compare',
-        'details',
-    ],
-    ...
+    # ...
+    "compare_ordered_list_components": [ 'side-by-side', 'kpis', 'compare', 'details']
+    # ...
 }
 ```
 
