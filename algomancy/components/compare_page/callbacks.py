@@ -39,10 +39,8 @@ def update_kpi_comparison(left_id, right_id):
         right_kpi = right_kpis.get(tag)
 
         card = kpi_card(
-            kpi_name=left_kpi.name,
-            better_when=left_kpi.better_when,
-            left_measurement=left_kpi.measurement,
-            right_measurement=right_kpi.measurement,
+            left_kpi=left_kpi,
+            right_kpi=right_kpi,
         )
 
         cards.append(html.Div(card, className="kpi-card-wrapper"))

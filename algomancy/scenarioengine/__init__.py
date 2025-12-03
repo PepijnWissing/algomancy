@@ -1,9 +1,8 @@
 from .basealgorithmparameters import BaseAlgorithmParameters
 from .algorithmfactory import AlgorithmFactory
-from .enumtypes import ScenarioStatus, ImprovementDirection
-from .keyperformanceindicator import KpiError, BaseKPI, BASE_KPI
+from .keyperformanceindicator import KpiError, BaseKPI, BASE_KPI, ImprovementDirection
 from .result import BaseScenarioResult, BASE_RESULT_BOUND, ScenarioResult
-from .scenario import Scenario
+from .scenario import Scenario, ScenarioStatus
 from .scenariomanager import ScenarioManager
 
 

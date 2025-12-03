@@ -261,10 +261,17 @@ class Measurement:
         self.unit: Unit = base_measurement.unit
 
     def __str__(self):
-        return f"{self.value} {self.unit.symbol}"
+        return self.to_string()
+
+    def to_string(self) -> str:
+        return f"{self._format_value()} {self.unit.symbol}"
 
     def pretty(self) -> str:
-        return f'{str(self.scale())}'
+        if self.value == Measurement.INITIAL_VALUE:
+            return "N/A"
+        scaled = self.scale()
+        formatted = scaled.to_string()
+        return formatted
 
     def _format_value(self) -> str:
         """Format the value according to the specified decimal places"""
@@ -272,6 +279,10 @@ class Measurement:
 
     def scale(self) -> 'Measurement':
         """Scale the measurement to fit within the desired digit range"""
+        # If no value was set, do nothing
+        if self.value == Measurement.INITIAL_VALUE:
+            return self
+
         # Handle edge case of zero
         if self.value == 0:
             return Measurement(self.base_measurement, 0)
@@ -315,12 +326,12 @@ class Measurement:
         else:
             raise ValueError("Invalid value")
 
-    def scale_to_unit(self, other: 'Measurement') -> 'Measurement':
+    def scale_to_unit(self, other_unit: Unit) -> 'Measurement':
         """
         Scale this measurement to use the same unit as another measurement.
 
         Args:
-            other: The measurement whose unit to match
+            other_unit: The unit to match
 
         Returns:
             A new Measurement with the same unit as other
@@ -329,7 +340,7 @@ class Measurement:
             ValueError: If the measurements are incompatible (different quantity types)
         """
         # If already the same unit, just return a copy with formatted value
-        if self.unit.name == other.unit.name:
+        if self.unit.name == other_unit.name:
             formatted_value = float(self._format_value())
             return Measurement(
                 BaseMeasurement(
@@ -344,11 +355,11 @@ class Measurement:
             )
 
         # Find conversion path from self to other's unit
-        conversion_factor = self._find_conversion_factor(other.unit)
+        conversion_factor = self._find_conversion_factor(other_unit)
 
         if conversion_factor is None:
             raise ValueError(
-                f"Cannot convert from {self.unit.name} to {other.unit.name}: "
+                f"Cannot convert from {self.unit.name} to {other_unit.name}: "
                 f"units are not in the same quantity system"
             )
 
@@ -357,7 +368,7 @@ class Measurement:
 
         # Create new measurement with other's unit
         new_base_measurement = BaseMeasurement(
-            base_unit=other.unit,
+            base_unit=other_unit,
             min_digits=self.base_measurement.min_digits,
             max_digits=self.base_measurement.max_digits,
             decimals=self.base_measurement.decimals,
@@ -866,8 +877,8 @@ def example_usage():
 
     print(f"Measurement 1: {m1}")
     print(f"Measurement 2: {m2}")
-    print(f"M1 scaled to M2's unit: {m1.scale_to_unit(m2)}")
-    print(f"M2 scaled to M1's unit: {m2.scale_to_unit(m1)}")
+    print(f"M1 scaled to M2's unit: {m1.scale_to_unit(m2.unit)}")
+    print(f"M2 scaled to M1's unit: {m2.scale_to_unit(m1.unit)}")
 
     # Example 2: Money at different scales
     print()
@@ -877,8 +888,8 @@ def example_usage():
 
     print(f"Revenue: {revenue}")
     print(f"Budget: {budget}")
-    print(f"Revenue in M$: {revenue.scale_to_unit(budget)}")
-    print(f"Budget in $: {budget.scale_to_unit(revenue)}")
+    print(f"Revenue in M$: {revenue.scale_to_unit(budget.unit)}")
+    print(f"Budget in $: {budget.scale_to_unit(revenue.unit)}")
 
     # Example 3: Compare auto-scaled measurements
     print()
@@ -893,5 +904,5 @@ def example_usage():
 
     print(f"Time 1 (auto-scaled): {t1_scaled}")
     print(f"Time 2 (auto-scaled): {t2_scaled}")
-    print(f"Time 1 matched to Time 2's unit: {t1.scale_to_unit(t2_scaled)}")
-    print(f"Time 2 matched to Time 1's unit: {t2.scale_to_unit(t1_scaled)}")
+    print(f"Time 1 matched to Time 2's unit: {t1.scale_to_unit(t2_scaled.unit)}")
+    print(f"Time 2 matched to Time 1's unit: {t2.scale_to_unit(t1_scaled.unit)}")

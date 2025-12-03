@@ -2,7 +2,7 @@ from dash import html, get_app
 import dash
 import dash_bootstrap_components as dbc
 
-from algomancy.scenarioengine.enumtypes import ScenarioStatus
+from algomancy.scenarioengine import ScenarioStatus
 
 
 class StandardHomePageContentCreator:

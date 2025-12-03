@@ -1,10 +1,19 @@
 # Change log
 ## 0.3.1
-_Released at 05-12-2025_
+_Released at 03-12-2025_
 
 ### Summary
 - **Breaking:** Revised `AlgorithmTemplate` pattern to `BaseAlgorithm` workflow, analog to `BaseDataSource` 
 - **Breaking:** Also revised `KPITemplate` pattern to `BaseKPI` workflow
+- Scenario engine
+  - Export and typing cleanups in `algomancy.scenarioengine` to support `BaseAlgorithm`/`BaseKPI` patterns.
+  - Measurement/unit utilities updated in `algomancy.scenarioengine.unit`.
+  - Added threshold KPIs; `ImprovementDirection.AT_LEAST`, `.AT_MOST`, and argument `threshold`
+- Components and pages
+  - Updated Compare and Scenario page callbacks and KPI Card to align with the new KPI base class and thresholds.
+  - Minor adjustments to Standard Home and Overview pages.
+- Examples
+  - Replaced example KPI template with a `BaseKPI` implementation (`DelayKPI`).
 
 ### Migration to BaseAlgorithm
 To align the development patterns, the template pattern has been substituted for a basemodel pattern, similarly to the
@@ -48,6 +57,8 @@ class BatchingAlgorithm(BaseAlgorithm):
         return ScenarioResult(data_id=data.id)
 ```
 
+
+
 ### Migration to BaseKPI
 Similarly, the KPI creation has also been moved to the basemodel pattern. 
 
@@ -85,6 +96,24 @@ class ErrorKPI(BaseKPI):
     def compute(self, result: ScenarioResult) -> float:
         """ The user defines the compute function, as before"""
         return 0.1 * (1 + 0.5 * random.random())  # placeholder
+```
+
+### Threshold KPIs
+A threshold KPI is initialized with a `threshold` value and appropriate `ImprovementDirection`, in addition to the usual arguments. 
+It is considered to be a 'success' if the value of the kpi exceeds (or does not exceed, in the case of `AT_MOST`) the threshold value. 
+The `.pretty()` function will format a threshold as either a checkmark or a cross, depending on the value relative to the threshold. 
+
+An example is included below
+```python
+# noinspection PyUnresolvedReferences
+class DelayKPI(BaseKPI):
+    def __init__(self):
+        super().__init__(
+            name="Average Delay",
+            better_when=ImprovementDirection.AT_MOST,
+            base_measurement=BaseMeasurement(QUANTITIES["time"]["s"], min_digits=1, max_digits=3, decimals=1),
+            threshold=1200,
+        )
 ```
 
 ## 0.2.15
@@ -392,14 +421,9 @@ The expected keys are `side-by-side`, `kpis`, `compare`, and `details`. An examp
 ```python
 # framework configuration
 configuration = {
-    ...,
-    "compare_ordered_list_components": [
-        'side-by-side',
-        'kpis',
-        'compare',
-        'details',
-    ],
-    ...
+    # ...
+    "compare_ordered_list_components": [ 'side-by-side', 'kpis', 'compare', 'details']
+    # ...
 }
 ```
 

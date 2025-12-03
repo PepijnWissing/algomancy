@@ -6,13 +6,24 @@ It provides functionality for creating, processing, and analyzing scenarios with
 algorithms and parameters.
 """
 import uuid
+from enum import StrEnum, auto
 from typing import Dict, Generic
 
 from algomancy.dashboardlogger.logger import Logger
 from algomancy.dataengine import BASE_DATA_BOUND
 from .basealgorithm import ALGORITHM
-from .enumtypes import ScenarioStatus
 from .keyperformanceindicator import BASE_KPI
+
+
+class ScenarioStatus(StrEnum):
+    """
+    Constants representing the possible states of a scenario.
+    """
+    CREATED = auto()
+    QUEUED = auto()
+    PROCESSING = auto()
+    COMPLETE = auto()
+    FAILED = auto()
 
 
 class Scenario(Generic[BASE_KPI]):
@@ -148,3 +159,4 @@ class Scenario(Generic[BASE_KPI]):
 
     def is_completed(self) -> bool:
         return self.status == ScenarioStatus.COMPLETE
+
