@@ -5,7 +5,7 @@ This module defines functions for creating and formatting KPI cards that display
 performance metrics and comparisons between scenarios.
 """
 
-from dash import html, dcc
+from dash import html
 import dash_bootstrap_components as dbc
 
 from algomancy.scenarioengine.keyperformanceindicator import ImprovementDirection
@@ -49,7 +49,11 @@ def format_measurement(measurement: Measurement) -> str:
     return measurement.pretty()
 
 
-def get_delta_infos(left_measurement: Measurement, right_measurement: Measurement, better_when: ImprovementDirection):
+def get_delta_infos(
+    left_measurement: Measurement,
+    right_measurement: Measurement,
+    better_when: ImprovementDirection,
+):
     """
     Determine difference, percentage, and color between two measurements.
     Scales left measurement and matches right to the same unit.
@@ -63,9 +67,12 @@ def get_delta_infos(left_measurement: Measurement, right_measurement: Measuremen
         tuple: A tuple containing (delta string, percentage string, color class)
     """
     # Handle None or uninitialized measurements
-    if (left_measurement is None or right_measurement is None or
-            left_measurement.value == Measurement.INITIAL_VALUE or
-            right_measurement.value == Measurement.INITIAL_VALUE):
+    if (
+        left_measurement is None
+        or right_measurement is None
+        or left_measurement.value == Measurement.INITIAL_VALUE
+        or right_measurement.value == Measurement.INITIAL_VALUE
+    ):
         return "No data", "-", "text-muted"
 
     # Scale left measurement first
@@ -74,7 +81,7 @@ def get_delta_infos(left_measurement: Measurement, right_measurement: Measuremen
     # Match right measurement to left's scaled unit
     try:
         right_scaled = right_measurement.scale_to_unit(left_scaled)
-    except ValueError as e:
+    except ValueError:
         # Units are incompatible
         return "Incompatible units", "-", "text-warning"
 
@@ -107,11 +114,11 @@ def get_delta_infos(left_measurement: Measurement, right_measurement: Measuremen
 
 
 def kpi_card(
-        kpi_name: str,
-        # kpi_type: KpiType,
-        better_when: ImprovementDirection,
-        left_measurement: Measurement,
-        right_measurement: Measurement,
+    kpi_name: str,
+    # kpi_type: KpiType,
+    better_when: ImprovementDirection,
+    left_measurement: Measurement,
+    right_measurement: Measurement,
 ):
     """
     Create a compact KPI comparison card without excessive height.
@@ -128,10 +135,12 @@ def kpi_card(
         dbc.Card: A Dash Bootstrap card component displaying the KPI comparison
     """
     # Scale left and match right to same unit
-    if (left_measurement is not None and right_measurement is not None and
-            left_measurement.value != Measurement.INITIAL_VALUE and
-            right_measurement.value != Measurement.INITIAL_VALUE):
-
+    if (
+        left_measurement is not None
+        and right_measurement is not None
+        and left_measurement.value != Measurement.INITIAL_VALUE
+        and right_measurement.value != Measurement.INITIAL_VALUE
+    ):
         left_scaled = left_measurement.scale()
         try:
             right_scaled = right_measurement.scale_to_unit(left_scaled)
@@ -144,48 +153,69 @@ def kpi_card(
         right_scaled = right_measurement
 
     # Extract unit symbol for display
-    unit_symbol = left_scaled.unit.symbol if left_scaled and left_scaled.value != Measurement.INITIAL_VALUE else ""
+    unit_symbol = (
+        left_scaled.unit.symbol
+        if left_scaled and left_scaled.value != Measurement.INITIAL_VALUE
+        else ""
+    )
 
     header = html.Div(
         [
             html.Span(kpi_name, className="fw-bold"),
-            html.Span(f" ({unit_symbol})", className="text-secondary ms-1") if unit_symbol else None,
+            html.Span(f" ({unit_symbol})", className="text-secondary ms-1")
+            if unit_symbol
+            else None,
         ],
-        style={"fontSize": "1rem", "display": "flex", "alignItems": "center", "marginBottom": "10px"}
+        style={
+            "fontSize": "1rem",
+            "display": "flex",
+            "alignItems": "center",
+            "marginBottom": "10px",
+        },
     )
 
     values = html.Div(
         [
-            html.Small(f"Left: {format_measurement(left_scaled)}",
-                       style={"flex": "1", "textAlign": "left"}),
-            html.Small(f"Right: {format_measurement(right_scaled)}",
-                       style={"flex": "1", "textAlign": "right"}),
+            html.Small(
+                f"Left: {format_measurement(left_scaled)}",
+                style={"flex": "1", "textAlign": "left"},
+            ),
+            html.Small(
+                f"Right: {format_measurement(right_scaled)}",
+                style={"flex": "1", "textAlign": "right"},
+            ),
         ],
         className="text-muted",
-        style={"fontSize": "0.85rem", "lineHeight": "1", "marginBottom": "2px", "display": "flex", "width": "100%"}
+        style={
+            "fontSize": "0.85rem",
+            "lineHeight": "1",
+            "marginBottom": "2px",
+            "display": "flex",
+            "width": "100%",
+        },
     )
 
-    delta_str, delta_perc_str, color_class = get_delta_infos(left_measurement, right_measurement, better_when)
+    delta_str, delta_perc_str, color_class = get_delta_infos(
+        left_measurement, right_measurement, better_when
+    )
     delta = html.Div(
         [
             # Second row: Change, centered
             html.Div(
                 html.H2(f"{delta_str}", className=color_class),
-                style={"width": "100%", "textAlign": "center", "marginTop": "0.3em"}
+                style={"width": "100%", "textAlign": "center", "marginTop": "0.3em"},
             ),
             # Third row: Change percent, centered
             html.Div(
                 html.H6(f"{delta_perc_str}", className=color_class),
-                style={"width": "100%", "textAlign": "center", "marginTop": "0.0em"}
-            )
+                style={"width": "100%", "textAlign": "center", "marginTop": "0.0em"},
+            ),
         ]
     )
 
     return dbc.Card(
         dbc.CardBody(
-            [header, values, delta],
-            className="p-2",
-            style={"display": "block"}
+            [header, values, delta], className="p-2", style={"display": "block"}
         ),
         className="shadow-sm bg-light",
         style={
@@ -193,6 +223,6 @@ def kpi_card(
             "borderRadius": "0.5rem",
             "boxShadow": "0 1px 2px rgba(0,0,0,0.07)",
             "height": "auto",
-            "display": "block"
-        }
+            "display": "block",
+        },
     )

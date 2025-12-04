@@ -1,7 +1,10 @@
 from typing import Dict
 
-from algomancy.dataengine import Schema, InputFileConfiguration, FileExtension, DataType
-from algomancy.dataengine.inputfileconfiguration import SingleInputFileConfiguration, MultiInputFileConfiguration
+from algomancy.dataengine import Schema, FileExtension, DataType
+from algomancy.dataengine.inputfileconfiguration import (
+    SingleInputFileConfiguration,
+    MultiInputFileConfiguration,
+)
 
 
 class WarehouseLayoutSchema(Schema):
@@ -145,7 +148,7 @@ class StedenSchema(Schema):
 
 
 class KlantenSchema(Schema):
-    ID = 'ID'
+    ID = "ID"
     Name = "Naam"
 
     @property
@@ -183,6 +186,6 @@ example_input_configs = [
         file_schemas={
             "Steden": StedenSchema(),
             "Klanten": KlantenSchema(),
-        }
-    )
+        },
+    ),
 ]

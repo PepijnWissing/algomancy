@@ -1,4 +1,4 @@
-from typing import Callable, Dict, Any, Union
+from typing import Dict, Any, Union
 import importlib.metadata
 
 import os
@@ -10,7 +10,6 @@ from .contentregistry import ContentRegistry
 from .sessionengine.sessionmanager import SessionManager
 from .settingsmanager import SettingsManager
 from algomancy.components.layout import LayoutCreator
-from algomancy.scenarioengine.scenariomanager import ScenarioManager
 from algomancy.contentcreatorlibrary.librarymanager import LibraryManager as lm
 from algomancy.dashboardlogger.logger import MessageStatus
 from algomancy.appconfiguration import AppConfiguration

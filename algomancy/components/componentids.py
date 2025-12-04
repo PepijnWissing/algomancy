@@ -4,11 +4,10 @@ componentids.py - Component ID Constants
 This module defines constants for all component IDs used in the dashboard application.
 These IDs are used for callbacks and to reference components in the Dash application.
 """
-from jinja2.nodes import Compare
 
 # === Styling ===
 GLOBAL_STYLING_STORE = "global-styling"
-PAGE_CONTENT = 'page-content'
+PAGE_CONTENT = "page-content"
 
 # === Home IDs ===
 HOME_PAGE_CONTENT = "home-page-content"
@@ -31,8 +30,8 @@ DM_DERIVE_SET_NAME_INPUT = "dm-derive-set-name-input"
 
 DM_DELETE_OPEN_BUTTON = "dm-delete-open-btn"
 DM_DELETE_SUBMIT_BUTTON = "DATA_MAN_DELETE_BTN"
-DM_DELETE_SET_SELECTOR= "data-man-delete-selector"
-DM_DELETE_CLOSE_BUTTON= "data-man-delete-close-btn"
+DM_DELETE_SET_SELECTOR = "data-man-delete-selector"
+DM_DELETE_CLOSE_BUTTON = "data-man-delete-close-btn"
 DM_DELETE_MODAL = "data-man-delete-modal"
 DM_DELETE_COLLAPSE = "data-man-delete-collapse"
 DM_DELETE_CONFIRM_INPUT = "data-man-delete-confirm-input"
@@ -147,6 +146,8 @@ COMPARE_DETAIL_VIEW = "compare-detail-view"
 OVERVIEW_PAGE_CONTENT = "overview-page-content"
 
 # === Admin Page IDs ===
+ADMIN_NEW_SESSION = "admin-new-session"
+ADMIN_SELECT_SESSION = "admin-select-session"
 ADMIN_LOG_WINDOW = "admin-log-window"
 ADMIN_LOG_INTERVAL = "admin-log-interval"
 ADMIN_LOG_FILTER = "admin-log-filter"

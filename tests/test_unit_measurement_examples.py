@@ -1,5 +1,3 @@
-import pytest
-
 from algomancy.scenarioengine.unit import (
     QUANTITIES,
     BaseMeasurement,
@@ -19,8 +17,12 @@ def test_length_scaling_outputs_reasonable_units():
     small_pretty = small.pretty()
     large_pretty = large.pretty()
 
-    assert isinstance(small_pretty, str) and small_pretty, "pretty() should return non-empty string"
-    assert isinstance(large_pretty, str) and large_pretty, "pretty() should return non-empty string"
+    assert (
+        isinstance(small_pretty, str) and small_pretty
+    ), "pretty() should return non-empty string"
+    assert (
+        isinstance(large_pretty, str) and large_pretty
+    ), "pretty() should return non-empty string"
 
     assert "μm" in small_pretty, "μm is the expected small-unit"
     assert "Mm" in large_pretty, "Mm is the expected large-unit"
@@ -28,8 +30,14 @@ def test_length_scaling_outputs_reasonable_units():
 
 def test_length_scaling_respects_max_min_unit():
     length = QUANTITIES["length"]
-    length_m = BaseMeasurement(length["m"], min_digits=1, max_digits=3, decimals=2,
-                               smallest_unit="mm", largest_unit="km")
+    length_m = BaseMeasurement(
+        length["m"],
+        min_digits=1,
+        max_digits=3,
+        decimals=2,
+        smallest_unit="mm",
+        largest_unit="km",
+    )
 
     # Very small should scale to micrometers or nanometers; very large to km
     small = Measurement(length_m, 0.000005)  # 5e-6 m
@@ -38,8 +46,12 @@ def test_length_scaling_respects_max_min_unit():
     small_pretty = small.pretty()
     large_pretty = large.pretty()
 
-    assert isinstance(small_pretty, str) and small_pretty, "pretty() should return non-empty string"
-    assert isinstance(large_pretty, str) and large_pretty, "pretty() should return non-empty string"
+    assert (
+        isinstance(small_pretty, str) and small_pretty
+    ), "pretty() should return non-empty string"
+    assert (
+        isinstance(large_pretty, str) and large_pretty
+    ), "pretty() should return non-empty string"
 
     assert "mm" in small_pretty, "mm is the expected small-unit"
     assert "km" in large_pretty, "km is the expected large-unit"
@@ -61,7 +73,9 @@ def test_mass_time_data_examples_do_not_raise_and_return_strings():
     # Data (binary)
     data = QUANTITIES["data"]
     data_b = BaseMeasurement(data["B"], min_digits=1, max_digits=3, decimals=2)
-    outputs = [Measurement(data_b, v).pretty() for v in [512, 5_120, 5_242_880, 5_368_709_120]]
+    outputs = [
+        Measurement(data_b, v).pretty() for v in [512, 5_120, 5_242_880, 5_368_709_120]
+    ]
     assert any("KiB" in o for o in outputs)
     assert any("MiB" in o for o in outputs)
 
@@ -80,7 +94,9 @@ def test_money_and_custom_currency_scaling_contains_expected_unit_symbols():
     # Custom currency (EUR)
     eur = create_currency_quantity("€", "Euro")
     eur_base = BaseMeasurement(eur["€"], min_digits=1, max_digits=3, decimals=2)
-    eur_outs = [Measurement(eur_base, v).pretty() for v in [50, 5_000, 500_000, 50_000_000]]
+    eur_outs = [
+        Measurement(eur_base, v).pretty() for v in [50, 5_000, 500_000, 50_000_000]
+    ]
     assert any("€" in o for o in eur_outs)
 
 

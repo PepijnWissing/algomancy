@@ -9,12 +9,18 @@ from .scenariomanager import ScenarioManager
 
 
 __all__ = [
-    "AlgorithmTemplate", "Algorithm",
+    "AlgorithmTemplate",
+    "Algorithm",
     "AlgorithmParameters",
     "AlgorithmFactory",
-    "ScenarioStatus", "ImprovementDirection",
-    "KpiTemplate", "KPI", "build_kpis",
-    "BaseScenarioResult", "BASE_RESULT_BOUND", "ScenarioResult",
+    "ScenarioStatus",
+    "ImprovementDirection",
+    "KpiTemplate",
+    "KPI",
+    "build_kpis",
+    "BaseScenarioResult",
+    "BASE_RESULT_BOUND",
+    "ScenarioResult",
     "Scenario",
     "ScenarioManager",
 ]

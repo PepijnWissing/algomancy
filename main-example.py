@@ -24,18 +24,17 @@ from example_implementation.data_handling.factories import ExampleETLFactory
 from example_implementation.pages.DataPageContent import DataPageContentCreator
 from example_implementation.pages.ScenarioPageContent import ScenarioPageContentCreator
 from example_implementation.templates import (
-    debug_create_example_scenarios,
     algorithm_templates,
     kpi_templates,
 )
 
 
 def main(
-        host: str | None = None,
-        port: int | None = None,
-        threads: int | None = None,
-        connection_limit: int | None = None,
-        debug: bool | None = None,
+    host: str | None = None,
+    port: int | None = None,
+    threads: int | None = None,
+    connection_limit: int | None = None,
+    debug: bool | None = None,
 ) -> None:
     """
     Main entry point for the application.
@@ -45,7 +44,7 @@ def main(
     """
     rich_mahogany = "#400406"  # p
     spicy_paprika = "#CF5C36"  # s
-    dark_garnet = "#73070B"    # t
+    dark_garnet = "#73070B"  # t
 
     dark_green = "#1F271B"
     sage_green = "#6DA34D"
@@ -111,10 +110,10 @@ def main(
             # 'details',
         ],
         compare_ordered_list_components=[
-            'side-by-side',
-            'kpis',
-            'compare',
-            'details',
+            "side-by-side",
+            "kpis",
+            "compare",
+            "details",
         ],
         use_authentication=False,
     )
@@ -124,8 +123,12 @@ def main(
 
     # Run the app
     DashLauncher.run(
-        app=app, host=app_cfg.host, port=app_cfg.port, threads=threads,
-        connection_limit=connection_limit, debug=debug
+        app=app,
+        host=app_cfg.host,
+        port=app_cfg.port,
+        threads=threads,
+        connection_limit=connection_limit,
+        debug=debug,
     )
 
 
@@ -134,11 +137,19 @@ def _parse_cli_args():
     parser.add_argument("--host", help="Host to bind to", type=str, default=None)
     parser.add_argument("--port", help="Port number", type=int, default=None)
     parser.add_argument("--threads", help="Number of threads", type=int, default=8)
-    parser.add_argument("--connections", help="Number of connections", type=int, default=100)
+    parser.add_argument(
+        "--connections", help="Number of connections", type=int, default=100
+    )
     parser.add_argument("--debug", help="Enable debug mode", type=bool, default=None)
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     args = _parse_cli_args()
-    main(host=args.host, port=args.port, threads=args.threads, connection_limit=args.connections, debug=args.debug)
+    main(
+        host=args.host,
+        port=args.port,
+        threads=args.threads,
+        connection_limit=args.connections,
+        debug=args.debug,
+    )

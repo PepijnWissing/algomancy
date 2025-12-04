@@ -3,6 +3,7 @@ from dash import Output, Input, callback, get_app, html
 from algomancy.components.componentids import *
 from algomancy.dashboardlogger.logger import MessageStatus
 
+
 @callback(
     Input(ADMIN_SELECT_SESSION, "value"),
     prevent_initial_call=True,
@@ -11,7 +12,6 @@ def load_session(session_id):
     session_manager = get_app().server.session_manager
     session_manager.set_active_scenario_manager(session_id)
     get_app().server.scenario_manager = session_manager.active_scenario_manager
-
 
 
 @callback(

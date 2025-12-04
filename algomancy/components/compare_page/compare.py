@@ -4,16 +4,18 @@ compare.py - Compare Dashboard Page
 This module defines the layout and components for the compare dashboard page.
 It includes scenario selection, KPI improvement displays, and secondary results sections.
 """
+
 from typing import Any
 
 from dash import html, get_app, callback, Output, Input
 import dash_bootstrap_components as dbc
 
 from algomancy.components.componentids import *
-from algomancy.components.compare_page.scenarioselector import create_side_by_side_viewer, \
-    create_side_by_side_selector
+from algomancy.components.compare_page.scenarioselector import (
+    create_side_by_side_viewer,
+    create_side_by_side_selector,
+)
 
-import algomancy.components.compare_page.callbacks
 from algomancy.contentregistry import ContentRegistry
 from algomancy.scenarioengine import ScenarioManager
 from algomancy.settingsmanager import SettingsManager
@@ -27,10 +29,10 @@ def compare_page():
     selector = create_side_by_side_selector(sm)
 
     orderable_components = {
-        'kpis': create_kpi_viewer(),
-        'side-by-side': create_side_by_side_viewer(),
-        'compare': create_primary_viewer(),
-        'details': create_details_viewer(),
+        "kpis": create_kpi_viewer(),
+        "side-by-side": create_side_by_side_viewer(),
+        "compare": create_primary_viewer(),
+        "details": create_details_viewer(),
     }
 
     order = get_component_order(orderable_components, settings, sm)
@@ -41,8 +43,12 @@ def compare_page():
     return page
 
 
-def order_components(header: dbc.Row, order: list[str], orderable_components: dict[str, dbc.Row | Any],
-                     selector: dbc.Row) -> list[dbc.Row]:
+def order_components(
+    header: dbc.Row,
+    order: list[str],
+    orderable_components: dict[str, dbc.Row | Any],
+    selector: dbc.Row,
+) -> list[dbc.Row]:
     # construct component list
     ordered_components = [
         header,
@@ -56,15 +62,22 @@ def order_components(header: dbc.Row, order: list[str], orderable_components: di
 def validate(configured_order, orderable_components, sm: ScenarioManager) -> bool:
     for comp_id in configured_order:
         if comp_id not in orderable_components:
-            sm.logger.warning(f"Invalid component id '{comp_id}' in compare page order list.")
-            sm.logger.warning(f"Expected (possibly a a subset of) {list(orderable_components.keys())}.")
-            sm.logger.warning(f"Reverting to default component order.")
+            sm.logger.warning(
+                f"Invalid component id '{comp_id}' in compare page order list."
+            )
+            sm.logger.warning(
+                f"Expected (possibly a a subset of) {list(orderable_components.keys())}."
+            )
+            sm.logger.warning("Reverting to default component order.")
             return False
     return True
 
 
-def get_component_order(orderable_components: dict[str, dbc.Row | Any], settings: SettingsManager, sm: ScenarioManager
-                        ) -> list[str]:
+def get_component_order(
+    orderable_components: dict[str, dbc.Row | Any],
+    settings: SettingsManager,
+    sm: ScenarioManager,
+) -> list[str]:
     # set a default
     default_order = list(orderable_components.keys())
 
@@ -85,8 +98,8 @@ def create_details_viewer() -> dbc.Collapse:
         id=PERF_DETAILS_COLLAPSE,
         children=[
             html.H5("Detail view"),
-            html.Div(id=COMPARE_DETAIL_VIEW, className="details-view")
-        ]
+            html.Div(id=COMPARE_DETAIL_VIEW, className="details-view"),
+        ],
     )
 
 
@@ -96,7 +109,7 @@ def create_primary_viewer() -> dbc.Collapse:
         children=[
             html.H4("Compare Results"),
             html.Div(id=PERF_PRIMARY_RESULTS, className="compare-view"),
-        ]
+        ],
     )
 
 
@@ -106,50 +119,54 @@ def create_kpi_viewer() -> dbc.Collapse:
         children=[
             html.H4("KPI Improvements"),
             html.Div(id=KPI_IMPROVEMENT_SECTION, className="kpi-cards"),
-        ]
+        ],
     )
 
 
 def create_header(settings: SettingsManager) -> dbc.Row:
     default_open = settings.compare_default_open
 
-    return dbc.Row([
-        dbc.Col(
-            html.H1("Compare"),
-            width=9
-        ),
-        dbc.Col(
-            dbc.Row([
-                dbc.Col(
-                    dbc.Checklist(
-                        options=[
-                            {'label': 'Show side-by-side', 'value': 'side-by-side'},
-                            {'label': 'Show KPI cards', 'value': 'kpis'},
-                        ],
-                        id=PERF_TOGGLE_CHECKLIST_LEFT,
-                        class_name="styled-toggle",
-                        switch=True,
-                        value=default_open
-                    ),
-                    width=6,
+    return dbc.Row(
+        [
+            dbc.Col(html.H1("Compare"), width=9),
+            dbc.Col(
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            dbc.Checklist(
+                                options=[
+                                    {
+                                        "label": "Show side-by-side",
+                                        "value": "side-by-side",
+                                    },
+                                    {"label": "Show KPI cards", "value": "kpis"},
+                                ],
+                                id=PERF_TOGGLE_CHECKLIST_LEFT,
+                                class_name="styled-toggle",
+                                switch=True,
+                                value=default_open,
+                            ),
+                            width=6,
+                        ),
+                        dbc.Col(
+                            dbc.Checklist(
+                                options=[
+                                    {"label": "Show compare view", "value": "compare"},
+                                    {"label": "Show details", "value": "details"},
+                                ],
+                                id=PERF_TOGGLE_CHECKLIST_RIGHT,
+                                class_name="styled-toggle",
+                                switch=True,
+                                value=default_open,
+                            ),
+                            width=6,
+                        ),
+                    ]
                 ),
-                dbc.Col(
-                    dbc.Checklist(
-                        options=[
-                            {'label': 'Show compare view', 'value': 'compare'},
-                            {'label': 'Show details', 'value': 'details'},
-                        ],
-                        id=PERF_TOGGLE_CHECKLIST_RIGHT,
-                        class_name="styled-toggle",
-                        switch=True,
-                        value=default_open
-                    ),
-                    width=6,
-                ),
-            ]),
-            width=3
-        )
-    ])
+                width=3,
+            ),
+        ]
+    )
 
 
 @callback(
@@ -220,7 +237,9 @@ def update_right_scenario_overview(left_scenario_id, right_scenario_id) -> html.
     Input(RIGHT_SCENARIO_DROPDOWN, "value"),
     prevent_initial_call=True,
 )
-def update_right_scenario_overview(left_scenario_id, right_scenario_id) -> html.Div | str:
+def update_right_scenario_overview(
+    left_scenario_id, right_scenario_id
+) -> html.Div | str:
     sm: ScenarioManager = get_app().server.scenario_manager
     cr: ContentRegistry = get_app().server.content_registry
 

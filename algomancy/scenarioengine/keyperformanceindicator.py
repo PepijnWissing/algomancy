@@ -28,11 +28,11 @@ class KpiTemplate:
 
 class KPI:
     def __init__(
-            self,
-            name: str,
-            better_when: ImprovementDirection,
-            callback: KPICalculationFunction,
-            bm: BaseMeasurement,
+        self,
+        name: str,
+        better_when: ImprovementDirection,
+        callback: KPICalculationFunction,
+        bm: BaseMeasurement,
     ) -> None:
         self._name = name
         # self._type = type
@@ -81,7 +81,7 @@ class KPI:
             if not isinstance(value, (int, float)):
                 raise TypeError("KPI callback must return a numeric value.")
             self.value = value
-        except TypeError as e:
+        except TypeError:
             raise TypeError("KPI callback must return a numeric value.")
         except Exception as e:
             print(f"Error computing KPI {self.name}: {e}")
@@ -93,7 +93,7 @@ class KPI:
             "better_when": self.better_when.name,
             "callback": self._callback.__name__,
             "basis": self._measurement.base_measurement,
-            "value": self.value
+            "value": self.value,
         }
 
 
@@ -129,4 +129,3 @@ def build_kpis(kpi_templates: List[KpiTemplate]) -> Dict[str, KPI]:
         )
 
     return kpi_dict
-

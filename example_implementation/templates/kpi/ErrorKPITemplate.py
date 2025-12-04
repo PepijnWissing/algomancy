@@ -13,7 +13,9 @@ def create_error_template():
         return 0.1 * (1 + 0.5 * random.random())  # placeholder
 
     default = QUANTITIES["default"]
-    default_unit = BaseMeasurement(default["unit"], min_digits=1, max_digits=3, decimals=1)
+    default_unit = BaseMeasurement(
+        default["unit"], min_digits=1, max_digits=3, decimals=1
+    )
 
     return KpiTemplate(
         name="Error Rate",
@@ -24,4 +26,3 @@ def create_error_template():
 
 
 error_template = create_error_template()
-

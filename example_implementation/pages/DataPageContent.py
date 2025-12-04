@@ -3,7 +3,6 @@ import pandas as pd
 from dash import html, dcc, dash_table, callback, Output, Input, State
 import plotly.express as px
 
-import time
 
 from algomancy.dataengine import DataSource
 from ..IDs import (

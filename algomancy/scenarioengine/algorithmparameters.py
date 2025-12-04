@@ -18,7 +18,9 @@ class ParameterType(StrEnum):
 
 
 class TypedParameter(ABC):
-    def __init__(self, name: str, parameter_type: ParameterType, required: bool) -> None:
+    def __init__(
+        self, name: str, parameter_type: ParameterType, required: bool
+    ) -> None:
         self.name = name
         self.parameter_type = parameter_type
         self.required = required
@@ -55,9 +57,13 @@ class TypedParameter(ABC):
 
 
 class StringParameter(TypedParameter):
-    def __init__(self,
-                 name: str, value: str = None, required: bool = True, default: str = "default"
-                 ) -> None:
+    def __init__(
+        self,
+        name: str,
+        value: str = None,
+        required: bool = True,
+        default: str = "default",
+    ) -> None:
         super().__init__(name, ParameterType.STRING, required)
         self.default = default
         if value is not None:
@@ -78,9 +84,9 @@ class StringParameter(TypedParameter):
 
 
 class EnumParameter(TypedParameter):
-    def __init__(self,
-                 name: str, choices: list[str], value: str = None, required: bool = True
-                 ) -> None:
+    def __init__(
+        self, name: str, choices: list[str], value: str = None, required: bool = True
+    ) -> None:
         super().__init__(name, ParameterType.ENUM, required)
         assert len(choices) > 0, "Parameter must have at least one choice."
         self.choices = choices
@@ -91,7 +97,9 @@ class EnumParameter(TypedParameter):
         if not isinstance(value, str):
             raise ParameterError(f"Parameter '{self.name}' must be a string.")
         if value not in self.choices:
-            raise ParameterError(f"Parameter '{self.name}' must be one of {self.choices}.")
+            raise ParameterError(
+                f"Parameter '{self.name}' must be one of {self.choices}."
+            )
 
     def _serialize(self) -> str:
         return f"{self.name}: {self.value}"
@@ -104,41 +112,67 @@ class EnumParameter(TypedParameter):
 
 
 class NumericParameter(TypedParameter, ABC):
-    def __init__(self,
-                 name: str, parameter_type: ParameterType, required: bool, default, minvalue: float = None,
-                 maxvalue: float = None, value: float = None
-                 ) -> None:
+    def __init__(
+        self,
+        name: str,
+        parameter_type: ParameterType,
+        required: bool,
+        default,
+        minvalue: float = None,
+        maxvalue: float = None,
+        value: float = None,
+    ) -> None:
         super().__init__(name, parameter_type, required)
         self.default = default
-        assert parameter_type in [ParameterType.INTEGER, ParameterType.FLOAT], \
-            "Numeric parameter must be of type integer or float."
+        assert parameter_type in [
+            ParameterType.INTEGER,
+            ParameterType.FLOAT,
+        ], "Numeric parameter must be of type integer or float."
         self.min = minvalue
         self.max = maxvalue
 
         if minvalue is not None and maxvalue is not None:
-            assert minvalue <= maxvalue, "Minimum value must be less than or equal to maximum value."
+            assert (
+                minvalue <= maxvalue
+            ), "Minimum value must be less than or equal to maximum value."
 
         if value is not None:
             self.set_validated_value(value)
 
     def _validate(self, value) -> None:
-        if self.parameter_type == ParameterType.FLOAT and not (isinstance(value, float) or isinstance(value, int)):
+        if self.parameter_type == ParameterType.FLOAT and not (
+            isinstance(value, float) or isinstance(value, int)
+        ):
             raise ParameterError(f"Parameter '{self.name}' must be a float.")
-        elif self.parameter_type == ParameterType.INTEGER and not isinstance(value, int):
+        elif self.parameter_type == ParameterType.INTEGER and not isinstance(
+            value, int
+        ):
             raise ParameterError(f"Parameter '{self.name}' must be an integer.")
         if self.min is not None and value < self.min:
-            raise ParameterError(f"Parameter '{self.name}' must be greater than or equal to {self.min}.")
+            raise ParameterError(
+                f"Parameter '{self.name}' must be greater than or equal to {self.min}."
+            )
         if self.max is not None and value > self.max:
-            raise ParameterError(f"Parameter '{self.name}' must be less than or equal to {self.max}.")
+            raise ParameterError(
+                f"Parameter '{self.name}' must be less than or equal to {self.max}."
+            )
 
 
 class FloatParameter(NumericParameter):
     EPSILON = 1e-6
 
-    def __init__(self,
-                 name: str, minvalue: float = None, maxvalue: float = None, value: float = None, required: bool = True,
-                 default: float = 1.0) -> None:
-        super().__init__(name, ParameterType.FLOAT, required, default, minvalue, maxvalue, value)
+    def __init__(
+        self,
+        name: str,
+        minvalue: float = None,
+        maxvalue: float = None,
+        value: float = None,
+        required: bool = True,
+        default: float = 1.0,
+    ) -> None:
+        super().__init__(
+            name, ParameterType.FLOAT, required, default, minvalue, maxvalue, value
+        )
 
     def _serialize(self) -> str:
         return f"{self.name}: {self.value:.2f}"
@@ -152,10 +186,17 @@ class FloatParameter(NumericParameter):
 
 class IntegerParameter(NumericParameter):
     def __init__(
-            self, name: str, minvalue: int = None, maxvalue: int = None, value: int = None, required: bool = True,
-            default: int = 1,
+        self,
+        name: str,
+        minvalue: int = None,
+        maxvalue: int = None,
+        value: int = None,
+        required: bool = True,
+        default: int = 1,
     ) -> None:
-        super().__init__(name, ParameterType.INTEGER, required, default, minvalue, maxvalue, value)
+        super().__init__(
+            name, ParameterType.INTEGER, required, default, minvalue, maxvalue, value
+        )
 
     def _serialize(self) -> str:
         return f"{self.name}: {self.value}"
@@ -169,7 +210,11 @@ class IntegerParameter(NumericParameter):
 
 class BooleanParameter(TypedParameter):
     def __init__(
-            self, name: str, value: bool = None, required: bool = True, default: bool = False,
+        self,
+        name: str,
+        value: bool = None,
+        required: bool = True,
+        default: bool = False,
     ) -> None:
         super().__init__(name, ParameterType.BOOLEAN, required)
         self.default = default
@@ -225,15 +270,15 @@ class AlgorithmParameters(ABC):
                 raise ParameterError(f"Parameter '{name}' not found.")
 
     def get_values(self) -> dict[str, Any]:
-        return {
-            key: p.value for key, p in self._parameters.items()
-        }
+        return {key: p.value for key, p in self._parameters.items()}
 
     def has_inputs(self) -> bool:
         return len(self._parameters) > 0
 
     def get_boolean_parameter_names(self) -> list[str]:
-        return [p.name for p in self._parameters.values() if type(p) is BooleanParameter]
+        return [
+            p.name for p in self._parameters.values() if type(p) is BooleanParameter
+        ]
 
     def repair_param_dict(self, dct):
         # retrieve the boolean variables

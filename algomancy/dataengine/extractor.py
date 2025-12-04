@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from io import StringIO
-from typing import Dict, List
+from typing import Dict
 
 import pandas as pd
 import json
@@ -36,9 +36,13 @@ class DataTypeConverter:
                 continue
 
             if target_type in (DataType.FLOAT, DataType.INTEGER):
-                result_df = DataTypeConverter._convert_numeric_column(result_df, column, target_type)
+                result_df = DataTypeConverter._convert_numeric_column(
+                    result_df, column, target_type
+                )
             elif target_type == DataType.DATETIME:
-                result_df = DataTypeConverter._convert_datetime_column(result_df, column)
+                result_df = DataTypeConverter._convert_datetime_column(
+                    result_df, column
+                )
             elif target_type == DataType.BOOLEAN:
                 result_df = DataTypeConverter._convert_boolean_column(result_df, column)
             elif target_type == DataType.STRING:
@@ -49,7 +53,9 @@ class DataTypeConverter:
         return result_df
 
     @staticmethod
-    def _convert_numeric_column(df: pd.DataFrame, column: str, target_type: DataType) -> pd.DataFrame:
+    def _convert_numeric_column(
+        df: pd.DataFrame, column: str, target_type: DataType
+    ) -> pd.DataFrame:
         """Convert a column to a numeric type, handling different number formats."""
         try:
             # Standard conversion first
@@ -58,23 +64,34 @@ class DataTypeConverter:
             # Try fixing common localization issues
             try:
                 # Try European format (comma as decimal separator)
-                if df[column].dtype == 'object' and len(df[column]) > 0:
+                if df[column].dtype == "object" and len(df[column]) > 0:
                     if target_type == DataType.FLOAT:
-                        temp_values = df[column].str.replace(',', '.').astype(DataType.FLOAT)
+                        temp_values = (
+                            df[column].str.replace(",", ".").astype(DataType.FLOAT)
+                        )
                         df[column] = temp_values
                     else:
                         # For integers, first convert to float (handling comma separators) then to int
-                        temp_values = df[column].str.replace(',', '.').astype(DataType.FLOAT).astype(DataType.INTEGER)
+                        temp_values = (
+                            df[column]
+                            .str.replace(",", ".")
+                            .astype(DataType.FLOAT)
+                            .astype(DataType.INTEGER)
+                        )
                         df[column] = temp_values
             except (ValueError, TypeError, AttributeError, IndexError):
                 try:
                     # Try with thousands separator removal
-                    if df[column].dtype == 'object' and len(df[column]) > 0:
+                    if df[column].dtype == "object" and len(df[column]) > 0:
                         if target_type == DataType.FLOAT:
-                            temp_values = df[column].str.replace(',', '').astype(DataType.FLOAT)
+                            temp_values = (
+                                df[column].str.replace(",", "").astype(DataType.FLOAT)
+                            )
                             df[column] = temp_values
                         else:
-                            temp_values = df[column].str.replace(',', '').astype(DataType.INTEGER)
+                            temp_values = (
+                                df[column].str.replace(",", "").astype(DataType.INTEGER)
+                            )
                             df[column] = temp_values
                 except (ValueError, TypeError, AttributeError, IndexError) as e:
                     print(e)
@@ -92,7 +109,13 @@ class DataTypeConverter:
         except (ValueError, TypeError, AttributeError):
             # Try different date formats
             success = False
-            for date_format in ['%Y-%m-%d', '%m/%d/%Y', '%d/%m/%Y', '%d-%m-%Y', '%d.%m.%Y']:
+            for date_format in [
+                "%Y-%m-%d",
+                "%m/%d/%Y",
+                "%d/%m/%Y",
+                "%d-%m-%Y",
+                "%d.%m.%Y",
+            ]:
                 try:
                     temp = pd.to_datetime(df[column], format=date_format)
                     df[column] = temp
@@ -101,7 +124,9 @@ class DataTypeConverter:
                 except (ValueError, TypeError, AttributeError):
                     continue  # Try next format
             if not success:
-                raise DateFormatError(f"Could not convert column '{column}' to date format.")
+                raise DateFormatError(
+                    f"Could not convert column '{column}' to date format."
+                )
         return df
 
     @staticmethod
@@ -119,9 +144,13 @@ class DataTypeConverter:
             df[column] = temp
         except (ValueError, TypeError):
             # Try different datetime formats
-            for datetime_format in ['%Y-%m-%d %H:%M:%S', '%m/%d/%Y %H:%M:%S',
-                                    '%d/%m/%Y %H:%M:%S', '%Y-%m-%dT%H:%M:%S',
-                                    '%d.%m.%Y %H:%M:%S']:
+            for datetime_format in [
+                "%Y-%m-%d %H:%M:%S",
+                "%m/%d/%Y %H:%M:%S",
+                "%d/%m/%Y %H:%M:%S",
+                "%Y-%m-%dT%H:%M:%S",
+                "%d.%m.%Y %H:%M:%S",
+            ]:
                 try:
                     temp = pd.to_datetime(df[column], format=datetime_format)
                     df[column] = temp
@@ -139,11 +168,19 @@ class DataTypeConverter:
             try:
                 # Try common boolean string representations
                 bool_map = {
-                    'true': True, 'yes': True, 'y': True, '1': True, 't': True,
-                    'false': False, 'no': False, 'n': False, '0': False, 'f': False
+                    "true": True,
+                    "yes": True,
+                    "y": True,
+                    "1": True,
+                    "t": True,
+                    "false": False,
+                    "no": False,
+                    "n": False,
+                    "0": False,
+                    "f": False,
                 }
 
-                if df[column].dtype == 'object':  # Only apply for string types
+                if df[column].dtype == "object":  # Only apply for string types
                     temp = df[column].astype(str).str.lower().map(bool_map)
                     # Only update if mapping was successful (not NaN)
                     mask = ~temp.isna()
@@ -172,21 +209,17 @@ class DataTypeConverter:
 
 
 class Extractor(ABC):
-    def __init__(
-            self,
-            file: File,
-            logger: Logger = None
-    ) -> None:
+    def __init__(self, file: File, logger: Logger = None) -> None:
         self.file = file
         self.logger = logger
 
     def _extraction_message(self):
         if self.logger:
-            self.logger.log(f'Extracting from {self.file.name}')
+            self.logger.log(f"Extracting from {self.file.name}")
 
     def _extraction_success_message(self):
         if self.logger:
-            self.logger.success(f'Extraction of {self.file.name} successful')
+            self.logger.success(f"Extraction of {self.file.name} successful")
 
     @abstractmethod
     def extract(self) -> Dict[str, pd.DataFrame]:
@@ -194,12 +227,7 @@ class Extractor(ABC):
 
 
 class SingleExtractor(Extractor):
-    def __init__(
-            self,
-            file: File,
-            schema: Schema,
-            logger: Logger = None
-    ) -> None:
+    def __init__(self, file: File, schema: Schema, logger: Logger = None) -> None:
         super().__init__(file, logger)
         self.schema = schema
 
@@ -225,16 +253,15 @@ class SingleExtractor(Extractor):
 
 class MultiExtractor(Extractor):
     def __init__(
-            self,
-            files: File,
-            schemas: Dict[str, Schema],
-            logger: Logger = None
+        self, files: File, schemas: Dict[str, Schema], logger: Logger = None
     ) -> None:
         super().__init__(files, logger)
         self.schemas = schemas
 
     def _check_schemas(self, dfs: Dict[str, pd.DataFrame]):
-        missing_keys = set(dfs.keys()) - set([self.get_extraction_key(name) for name in self.schemas.keys()])
+        missing_keys = set(dfs.keys()) - set(
+            [self.get_extraction_key(name) for name in self.schemas.keys()]
+        )
         assert len(missing_keys) == 0, f"Missing schemas for keys: {missing_keys}"
 
     def extract(self) -> Dict[str, pd.DataFrame]:
@@ -247,19 +274,24 @@ class MultiExtractor(Extractor):
         # Attemting to convert all dataframes with the corresponing schema
         # Before this we check if the keys of the schemas and the names of the extracted dataframes match
         self._check_schemas(dfs)
-        dfs = {key: DataTypeConverter.convert_dtypes(df, self.schemas[self.get_schema_name(key)]) for key, df in dfs.items()}
+        dfs = {
+            key: DataTypeConverter.convert_dtypes(
+                df, self.schemas[self.get_schema_name(key)]
+            )
+            for key, df in dfs.items()
+        }
 
         self._extraction_success_message()
         return dfs
 
     def get_extraction_key(self, name: str) -> str:
-        return f'{self.file.name}.{name}'
+        return f"{self.file.name}.{name}"
 
     def get_schema_name(self, extraction_key: str) -> str:
         prefix = f"{self.file.name}."
         if extraction_key.startswith(prefix):
-            rval = extraction_key[len(prefix):]
-            return extraction_key[len(prefix):]
+            rval = extraction_key[len(prefix) :]
+            return extraction_key[len(prefix) :]
         return extraction_key
 
     @abstractmethod
@@ -295,11 +327,7 @@ class CSVSingleExtractor(SingleExtractor):
     """
 
     def __init__(
-            self,
-            file: CSVFile,
-            schema: Schema,
-            logger: Logger = None,
-            separator: str = ";"
+        self, file: CSVFile, schema: Schema, logger: Logger = None, separator: str = ";"
     ) -> None:
         super().__init__(file, schema, logger)
         self._separator = separator
@@ -335,12 +363,7 @@ class JSONSingleExtractor(SingleExtractor):
             Logger instance for logging messages. Defaults to None.
     """
 
-    def __init__(
-            self,
-            file: JSONFile,
-            schema: Schema,
-            logger: Logger = None
-    ) -> None:
+    def __init__(self, file: JSONFile, schema: Schema, logger: Logger = None) -> None:
         super().__init__(file, schema, logger)
 
     def _extract_file(self) -> pd.DataFrame:
@@ -371,11 +394,11 @@ class XLSXSingleExtractor(SingleExtractor):
     """
 
     def __init__(
-            self,
-            file: XLSXFile,
-            schema: Schema,
-            sheet_name: str | int,
-            logger: Logger = None,
+        self,
+        file: XLSXFile,
+        schema: Schema,
+        sheet_name: str | int,
+        logger: Logger = None,
     ) -> None:
         super().__init__(file, schema, logger)
         self._sheet_name: str | int = sheet_name
@@ -391,7 +414,9 @@ class XLSXSingleExtractor(SingleExtractor):
         if isinstance(sheet_name, int):
             # Get the sheet name from the index mapping
             if str(sheet_name) in content_obj["metadata"]["index_to_sheet_name"]:
-                sheet_name = content_obj["metadata"]["index_to_sheet_name"][str(sheet_name)]
+                sheet_name = content_obj["metadata"]["index_to_sheet_name"][
+                    str(sheet_name)
+                ]
             else:
                 # Use the index directly to get from the list of sheet names
                 try:
@@ -399,13 +424,15 @@ class XLSXSingleExtractor(SingleExtractor):
                 except IndexError:
                     raise ValueError(
                         f"Sheet index {sheet_name} is out of range. "
-                        f"Available sheets: {content_obj['metadata']['sheet_names']}")
+                        f"Available sheets: {content_obj['metadata']['sheet_names']}"
+                    )
 
         # Check if the requested sheet exists
         if sheet_name not in content_obj["sheets"]:
             raise ValueError(
                 f"Sheet '{sheet_name}' not found in Excel file. "
-                f"Available sheets: {content_obj['metadata']['sheet_names']}")
+                f"Available sheets: {content_obj['metadata']['sheet_names']}"
+            )
 
         # Get the data for the requested sheet
         sheet_data = content_obj["sheets"][sheet_name]
@@ -439,15 +466,17 @@ class XLSXMultiExtractor(MultiExtractor):
     """
 
     def __init__(
-            self,
-            file: XLSXFile,
-            schemas: Dict[str, Schema],
-            logger: Logger = None,
+        self,
+        file: XLSXFile,
+        schemas: Dict[str, Schema],
+        logger: Logger = None,
     ) -> None:
         super().__init__(file, schemas, logger)
         self._sheet_names = list(self.schemas.keys())
-        self._single_sheet_extractors = {sheet_name: XLSXSingleExtractor(file, schemas[sheet_name], sheet_name) for sheet_name in
-                                         self._sheet_names}
+        self._single_sheet_extractors = {
+            sheet_name: XLSXSingleExtractor(file, schemas[sheet_name], sheet_name)
+            for sheet_name in self._sheet_names
+        }
 
     def _extract_files(self) -> Dict[str, pd.DataFrame]:
         dfs = {}

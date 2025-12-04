@@ -33,26 +33,61 @@ class LayoutCreator:
             logos = []
             if styling.logo_url is not None:
                 logos.append(
-                    html.Img(src=styling.logo_url, width="210px", className="mb-2 expanded-logo sidebar-content-fade",
-                             id="sidebar-logo")
+                    html.Img(
+                        src=styling.logo_url,
+                        width="210px",
+                        className="mb-2 expanded-logo sidebar-content-fade",
+                        id="sidebar-logo",
+                    )
                 )
 
             if styling.button_url is not None:
                 logos.append(
-                    html.Img(src=styling.button_url, width="40px", className="mb-2 collapsed-logo", id="sidebar-icon")
+                    html.Img(
+                        src=styling.button_url,
+                        width="40px",
+                        className="mb-2 collapsed-logo",
+                        id="sidebar-icon",
+                    )
                 )
-            sidebar_children.extend([
-                html.Div(logos, className="sidebar-logo-wrapper", id="sidebar-logo-wrapper"),
-                html.Hr(className="bg-light"),
-            ])
+            sidebar_children.extend(
+                [
+                    html.Div(
+                        logos,
+                        className="sidebar-logo-wrapper",
+                        id="sidebar-logo-wrapper",
+                    ),
+                    html.Hr(className="bg-light"),
+                ]
+            )
 
         nav_items = [
             {"icon": "fas fa-home", "label": "Home", "href": "/", "index": 1},
             {"icon": "fas fa-database", "label": "Data", "href": "/data", "index": 2},
-            {"icon": "fas fa-project-diagram", "label": "Scenarios", "href": "/scenarios", "index": 3},
-            {"icon": "fas fa-chart-line", "label": "Compare", "href": "/compare", "index": 4},
-            {"icon": "fas fa-table", "label": "Overview", "href": "/overview", "index": 5},
-            {"icon": "fas fa-user-shield", "label": "Admin", "href": "/admin", "index": 6},
+            {
+                "icon": "fas fa-project-diagram",
+                "label": "Scenarios",
+                "href": "/scenarios",
+                "index": 3,
+            },
+            {
+                "icon": "fas fa-chart-line",
+                "label": "Compare",
+                "href": "/compare",
+                "index": 4,
+            },
+            {
+                "icon": "fas fa-table",
+                "label": "Overview",
+                "href": "/overview",
+                "index": 5,
+            },
+            {
+                "icon": "fas fa-user-shield",
+                "label": "Admin",
+                "href": "/admin",
+                "index": 6,
+            },
         ]
 
         sidebar_nav = dbc.Nav(
@@ -69,13 +104,13 @@ class LayoutCreator:
                     href=item["href"],
                     className="sidebar-link",
                     id={"type": "sidebar-link", "index": item["index"]},
-                    active="exact"
+                    active="exact",
                 )
                 for item in nav_items
             ],
             vertical=True,
             pills=True,
-            className="sidebar-nav"
+            className="sidebar-nav",
         )
 
         sidebar_children.append(sidebar_nav)
@@ -88,10 +123,7 @@ class LayoutCreator:
         )
 
         # Routing callback
-        @callback(
-            Output('page-content', 'children'),
-            Input('url', 'pathname')
-        )
+        @callback(Output("page-content", "children"), Input("url", "pathname"))
         def display_page(pathname):
             if pathname == "/":
                 return home_page()
@@ -113,9 +145,11 @@ class LayoutCreator:
             Output(PAGE_CONTENT, "className"),
             Input(SIDEBAR_TOGGLE, "n_clicks"),
             State(SIDEBAR, "className"),
-            State(PAGE_CONTENT, "className")
+            State(PAGE_CONTENT, "className"),
         )
-        def update_sidebar_class(n_clicks, current_sidebar_className, current_page_content_className):
+        def update_sidebar_class(
+            n_clicks, current_sidebar_className, current_page_content_className
+        ):
             if n_clicks is None:
                 return current_sidebar_className, current_page_content_className
             is_expanded = "collapsed" not in current_sidebar_className
@@ -130,17 +164,19 @@ class LayoutCreator:
     def _create_sidebar_layout(styling: StylingConfigurator) -> html.Div:
         themed_styling = styling.initiate_theme_colors()
 
-        layout = html.Div([
-            dcc.Location(id='url', refresh=False),
-            dcc.Store(id=SIDEBAR_COLLAPSED, data=False),
-            html.Div([
-                LayoutCreator._create_menu_sidebar(styling),
-                html.Div(id=PAGE_CONTENT, className="expanded page-content")
+        layout = html.Div(
+            [
+                dcc.Location(id="url", refresh=False),
+                dcc.Store(id=SIDEBAR_COLLAPSED, data=False),
+                html.Div(
+                    [
+                        LayoutCreator._create_menu_sidebar(styling),
+                        html.Div(id=PAGE_CONTENT, className="expanded page-content"),
+                    ],
+                    className="layout-container",
+                ),
             ],
-                className="layout-container",
-            )
-        ],
-            style=themed_styling
+            style=themed_styling,
         )
 
         return layout

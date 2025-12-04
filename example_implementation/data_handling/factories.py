@@ -79,7 +79,6 @@ class ExampleETLFactory(de.ETLFactory):
                 schemas=self.get_schemas(multisheet),
                 logger=self.logger,
             ),
-
         }
 
         return extractors
@@ -89,7 +88,7 @@ class ExampleETLFactory(de.ETLFactory):
 
         vs.add_validator(de.ExtractionSuccessVerification())
 
-        vs.add_validator( # todo this is currently broken because of multiextractor
+        vs.add_validator(  # todo this is currently broken because of multiextractor
             de.InputConfigurationValidator(
                 configs=self.input_configurations,
                 severity=de.ValidationSeverity.CRITICAL,

@@ -1,4 +1,3 @@
-
 DATA_TABLE_ITEMS_STORE = "data-table-items-store"
 DATA_TABLE_ITEMS = "data-table-items"
 DATA_TABLE_LAYOUT_STORE = "data-table-layout-store"

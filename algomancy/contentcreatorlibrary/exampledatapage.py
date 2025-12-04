@@ -131,7 +131,9 @@ class ExampleDataPageContentCreator:
 
     @staticmethod
     def create_data_page_content(data: DataSource, table_page_size: int = 10):
-        data_view = ExampleDataPageContentCreator._create_raw_data_view(data, table_page_size)
+        data_view = ExampleDataPageContentCreator._create_raw_data_view(
+            data, table_page_size
+        )
         layout = ExampleDataPageContentCreator._create_layout_plot(data)
 
         # DataPageContentCreator.register_callbacks_on_data_page()

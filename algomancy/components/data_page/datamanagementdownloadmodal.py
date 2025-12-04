@@ -2,8 +2,13 @@ from dash.dcc import send_file
 from dash import html, dcc, callback, Output, Input, State, no_update, get_app
 from dash.exceptions import PreventUpdate
 
-from algomancy.components.componentids import DM_DOWNLOAD_MODAL, DM_DOWNLOAD_CHECKLIST, DM_DOWNLOAD_SUBMIT_BUTTON, \
-    DM_DOWNLOAD_MODAL_CLOSE_BTN, DM_DOWNLOAD_OPEN_BUTTON
+from algomancy.components.componentids import (
+    DM_DOWNLOAD_MODAL,
+    DM_DOWNLOAD_CHECKLIST,
+    DM_DOWNLOAD_SUBMIT_BUTTON,
+    DM_DOWNLOAD_MODAL_CLOSE_BTN,
+    DM_DOWNLOAD_OPEN_BUTTON,
+)
 
 import dash_bootstrap_components as dbc
 import io
@@ -40,28 +45,49 @@ def data_management_download_modal(sm: ScenarioManager, themed_styling):
     Returns:
         dbc.Modal: A Dash Bootstrap Components modal dialog
     """
-    return dbc.Modal([
-        dbc.ModalHeader(dbc.ModalTitle("Download Data"), close_button=False),
-        dbc.ModalBody([
-            html.Div([
-                dbc.Label("Select datasets to download"),
-                dbc.Checklist(
-                    options=[
-                        {"label": ds, "value": ds} for ds in sm.get_data_keys()
-                    ],
-                    value=[],
-                    id=DM_DOWNLOAD_CHECKLIST
-                )
-            ])
-        ]),
-        dbc.ModalFooter([
-            dbc.Button("Download", id=DM_DOWNLOAD_SUBMIT_BUTTON,class_name="dm-download-modal-confirm-btn"),
-            dbc.Button("Close", id=DM_DOWNLOAD_MODAL_CLOSE_BTN, class_name="dm-download-modal-cancel-btn ms-auto")
-        ]),
-        dcc.Download(id="dm-download"),  # persistent Download component
-    ],
-        id=DM_DOWNLOAD_MODAL, is_open=False, centered=True, class_name="themed-modal", style=themed_styling,
-        keyboard=False,  backdrop="static",
+    return dbc.Modal(
+        [
+            dbc.ModalHeader(dbc.ModalTitle("Download Data"), close_button=False),
+            dbc.ModalBody(
+                [
+                    html.Div(
+                        [
+                            dbc.Label("Select datasets to download"),
+                            dbc.Checklist(
+                                options=[
+                                    {"label": ds, "value": ds}
+                                    for ds in sm.get_data_keys()
+                                ],
+                                value=[],
+                                id=DM_DOWNLOAD_CHECKLIST,
+                            ),
+                        ]
+                    )
+                ]
+            ),
+            dbc.ModalFooter(
+                [
+                    dbc.Button(
+                        "Download",
+                        id=DM_DOWNLOAD_SUBMIT_BUTTON,
+                        class_name="dm-download-modal-confirm-btn",
+                    ),
+                    dbc.Button(
+                        "Close",
+                        id=DM_DOWNLOAD_MODAL_CLOSE_BTN,
+                        class_name="dm-download-modal-cancel-btn ms-auto",
+                    ),
+                ]
+            ),
+            dcc.Download(id="dm-download"),  # persistent Download component
+        ],
+        id=DM_DOWNLOAD_MODAL,
+        is_open=False,
+        centered=True,
+        class_name="themed-modal",
+        style=themed_styling,
+        keyboard=False,
+        backdrop="static",
     )
 
 
@@ -89,10 +115,7 @@ def close_download_modal(n, is_open):
     return is_open
 
 
-@callback(
-    Output(DM_DOWNLOAD_CHECKLIST, "value"),
-    Input(DM_DOWNLOAD_MODAL, "is_open")
-)
+@callback(Output(DM_DOWNLOAD_CHECKLIST, "value"), Input(DM_DOWNLOAD_MODAL, "is_open"))
 def reset_on_close(is_open):
     return [] if not is_open else no_update
 

@@ -5,6 +5,7 @@ class ScenarioStatus(StrEnum):
     """
     Constants representing the possible states of a scenario.
     """
+
     CREATED = auto()
     QUEUED = auto()
     PROCESSING = auto()

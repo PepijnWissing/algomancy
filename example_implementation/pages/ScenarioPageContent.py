@@ -1,5 +1,3 @@
-import time
-
 from dash import html
 
 from algomancy.scenarioengine import Scenario

@@ -6,21 +6,24 @@ from algomancy.dataengine import BASE_DATA_BOUND
 from algomancy.scenarioengine.progresstracker import ProgressTracker
 from algomancy.scenarioengine.result import BASE_RESULT_BOUND
 
-ALGORITHM_PARAMETER = TypeVar('ALGORITHM_PARAMETER', bound=AlgorithmParameters)
+ALGORITHM_PARAMETER = TypeVar("ALGORITHM_PARAMETER", bound=AlgorithmParameters)
 
 
 @dataclass
 class AlgorithmTemplate(Generic[ALGORITHM_PARAMETER]):
     name: str
     param_type: type(ALGORITHM_PARAMETER)
-    main_method_template: Callable[[BASE_DATA_BOUND, ALGORITHM_PARAMETER, Callable[[float], None]], BASE_RESULT_BOUND]
+    main_method_template: Callable[
+        [BASE_DATA_BOUND, ALGORITHM_PARAMETER, Callable[[float], None]],
+        BASE_RESULT_BOUND,
+    ]
 
 
 class Algorithm:
     def __init__(
-            self,
-            template: AlgorithmTemplate,
-            params: AlgorithmParameters,
+        self,
+        template: AlgorithmTemplate,
+        params: AlgorithmParameters,
     ) -> None:
         self._description = str(params.serialize())
         self._template = template

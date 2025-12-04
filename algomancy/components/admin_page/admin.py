@@ -9,7 +9,6 @@ from algomancy.components.componentids import (
     ADMIN_NEW_SESSION,
     ADMIN_SELECT_SESSION,
 )
-import algomancy.components.admin_page.callbacks  # necessary to register callbacks
 
 
 def admin_header():
@@ -27,37 +26,40 @@ def admin_sessions():
 
     return [
         html.H3("Sessions"),
-        dbc.Row([
-            dbc.Col([
-                dbc.Row(html.Label("Select session:")),
-                dbc.Row(
-                    dcc.Dropdown(
-                        id=ADMIN_SELECT_SESSION,
-                        options=[
-                            {"label": session, "value": session}
-                            for session in sessions
-                        ],
-                        value=session_manager.active_session_name,
-                        clearable=False,
-                    )
+        dbc.Row(
+            [
+                dbc.Col(
+                    [
+                        dbc.Row(html.Label("Select session:")),
+                        dbc.Row(
+                            dcc.Dropdown(
+                                id=ADMIN_SELECT_SESSION,
+                                options=[
+                                    {"label": session, "value": session}
+                                    for session in sessions
+                                ],
+                                value=session_manager.active_session_name,
+                                clearable=False,
+                            )
+                        ),
+                    ],
+                    width=4,
                 ),
-            ],
-            width=4
-            ),
-            dbc.Col(
-                dbc.Button(
-                    "New Session",
-                    id=ADMIN_NEW_SESSION,
-                    className="ms-2",
-                    style={
-                        "backgroundColor": "var(--theme-secondary)",
-                        "color": "var(--text-selected)",
-                        "border": "none",
-                    },
+                dbc.Col(
+                    dbc.Button(
+                        "New Session",
+                        id=ADMIN_NEW_SESSION,
+                        className="ms-2",
+                        style={
+                            "backgroundColor": "var(--theme-secondary)",
+                            "color": "var(--text-selected)",
+                            "border": "none",
+                        },
+                    ),
+                    width=2,
                 ),
-                width=2
-            )
-        ])
+            ]
+        ),
     ]
 
 

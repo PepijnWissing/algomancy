@@ -6,12 +6,16 @@ from algomancy.appconfiguration import AppConfiguration
 class SettingsManager:
     def __init__(self, configurations: AppConfiguration | Dict):
         # Accept either AppConfiguration or dict; store as dict internally
-        if hasattr(configurations, "as_dict") and callable(getattr(configurations, "as_dict")):
+        if hasattr(configurations, "as_dict") and callable(
+            getattr(configurations, "as_dict")
+        ):
             self._configurations: Dict[str, Any] = configurations.as_dict()
         elif isinstance(configurations, dict):
             self._configurations = configurations
         else:
-            raise TypeError("SettingsManager expects an AppConfiguration or a dict of settings")
+            raise TypeError(
+                "SettingsManager expects an AppConfiguration or a dict of settings"
+            )
 
     def __getitem__(self, item):
         return self._configurations.get(item, [])
@@ -42,4 +46,3 @@ class SettingsManager:
     @property
     def show_loading_on_comparepage(self):
         return self["show_loading_on_comparepage"]
-

@@ -5,6 +5,7 @@ This module defines the Scenario class and related enums for managing simulation
 It provides functionality for creating, processing, and analyzing scenarios with different
 algorithms and parameters.
 """
+
 import uuid
 from typing import Dict
 
@@ -29,12 +30,12 @@ class Scenario:
     """
 
     def __init__(
-            self,
-            tag: str,
-            input_data: BASE_DATA_BOUND,
-            kpis: Dict[str, KPI],
-            algorithm: Algorithm,
-            provided_id: str = None,
+        self,
+        tag: str,
+        input_data: BASE_DATA_BOUND,
+        kpis: Dict[str, KPI],
+        algorithm: Algorithm,
+        provided_id: str = None,
     ):
         """
         Initializes a new Scenario with the specified parameters.
@@ -90,7 +91,10 @@ class Scenario:
 
         Exceptions during processing are caught, and the scenario status is set to FAILED.
         """
-        if not (self.status == ScenarioStatus.CREATED or self.status == ScenarioStatus.QUEUED):
+        if not (
+            self.status == ScenarioStatus.CREATED
+            or self.status == ScenarioStatus.QUEUED
+        ):
             return
 
         self.status = ScenarioStatus.PROCESSING
@@ -106,7 +110,7 @@ class Scenario:
 
     def cancel(self, logger: Logger = None):
         if logger:
-            logger.warning(f'Not Yet Implemented: Scenario {self.tag} cancel')
+            logger.warning(f"Not Yet Implemented: Scenario {self.tag} cancel")
         pass
 
     def refresh(self, logger: Logger = None):
@@ -135,11 +139,20 @@ class Scenario:
         return {
             "id": self.id,
             "tag": self.tag,
-            "input_data_id": self._input_data.id if hasattr(self._input_data, 'id') else None,
-            "kpis": {k: v.to_dict() if hasattr(v, "to_dict") else v for k, v in self._kpis.items()},
-            "algorithm": self._algorithm.to_dict() if hasattr(self._algorithm, 'to_dict') else self._algorithm,
+            "input_data_id": self._input_data.id
+            if hasattr(self._input_data, "id")
+            else None,
+            "kpis": {
+                k: v.to_dict() if hasattr(v, "to_dict") else v
+                for k, v in self._kpis.items()
+            },
+            "algorithm": self._algorithm.to_dict()
+            if hasattr(self._algorithm, "to_dict")
+            else self._algorithm,
             "status": self.status,
-            "result": self.result.to_dict() if hasattr(self.result, "to_dict") else self.result
+            "result": self.result.to_dict()
+            if hasattr(self.result, "to_dict")
+            else self.result,
         }
 
     def is_completed(self) -> bool:

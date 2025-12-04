@@ -13,6 +13,7 @@ from algomancy.scenarioengine.algorithmparameters import (
     BooleanParameter,
 )
 
+
 class BatchingAlgorithmParameters(AlgorithmParameters):
     def __init__(
         self,

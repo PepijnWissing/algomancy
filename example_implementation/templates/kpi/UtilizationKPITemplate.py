@@ -13,7 +13,9 @@ def create_utilization_template():
         return 50 * (1 + 0.5 * random.random())  # placeholder
 
     percent = QUANTITIES["percentage"]
-    percent_percent = BaseMeasurement(percent["%"], min_digits=1, max_digits=3, decimals=1)
+    percent_percent = BaseMeasurement(
+        percent["%"], min_digits=1, max_digits=3, decimals=1
+    )
 
     return KpiTemplate(
         name="Utilization",

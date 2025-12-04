@@ -5,8 +5,11 @@ from typing import List, Dict
 import pandas as pd
 
 from algomancy.dashboardlogger.logger import Logger
-from algomancy.dataengine.inputfileconfiguration import InputFileConfiguration, SingleInputFileConfiguration, \
-    MultiInputFileConfiguration
+from algomancy.dataengine.inputfileconfiguration import (
+    InputFileConfiguration,
+    SingleInputFileConfiguration,
+    MultiInputFileConfiguration,
+)
 
 
 class ValidationSeverity(StrEnum):
@@ -96,9 +99,9 @@ class ExtractionSuccessVerification(Validator):
         for name, df in data.items():
             if df.empty:
                 self.add_message(
-                        ValidationSeverity.CRITICAL,
-                        f"Extraction of {name} returned empty DataFrame."
-                    )
+                    ValidationSeverity.CRITICAL,
+                    f"Extraction of {name} returned empty DataFrame.",
+                )
         return self.messages
 
 
@@ -117,23 +120,23 @@ class InputConfigurationValidator(Validator):
                     yielded by this validator. Defaults to ValidationSeverity.ERROR.
 
     """
+
     def __init__(
-            self,
-            configs: List[InputFileConfiguration] = None,
-            severity: ValidationSeverity = ValidationSeverity.ERROR
+        self,
+        configs: List[InputFileConfiguration] = None,
+        severity: ValidationSeverity = ValidationSeverity.ERROR,
     ) -> None:
         super().__init__()
 
-        self._configs: Dict[str, InputFileConfiguration] | None = \
+        self._configs: Dict[str, InputFileConfiguration] | None = (
             {cfg.file_name: cfg for cfg in configs} if configs else None
+        )
 
         self._severity = severity
 
     def validate(self, data: Dict[str, pd.DataFrame]) -> List[ValidationMessage]:
         if not self._configs:
-            self.add_message(
-                self._severity, "No configurations provided."
-            )
+            self.add_message(self._severity, "No configurations provided.")
             return self.messages
 
         schemas = {}
@@ -142,27 +145,28 @@ class InputConfigurationValidator(Validator):
                 schemas[cfg.file_name] = cfg.file_schema
             elif isinstance(cfg, MultiInputFileConfiguration):
                 for sub_cfg, schema in cfg.file_schemas.items():
-                    schemas[f'{cfg.file_name}.{sub_cfg}'] = schema
+                    schemas[f"{cfg.file_name}.{sub_cfg}"] = schema
 
         for name, df in data.items():
             if name not in schemas:
-                self.buffer_message(
-                    self._severity, f"No schema found for {name}."
-                )
+                self.buffer_message(self._severity, f"No schema found for {name}.")
                 continue
 
             schema = schemas[name]
             for col in df.columns:
                 if col not in schema.datatypes:
                     self.buffer_message(
-                            self._severity, f"Column '{col}' not in schema for {name}."
-                        )
+                        self._severity, f"Column '{col}' not in schema for {name}."
+                    )
                 elif df[col].dtype != schema.datatypes[col]:
                     self.buffer_message(
-                            ValidationSeverity.WARNING, f"Column '{col}' has incorrect datatype for {name}."
-                        )
+                        ValidationSeverity.WARNING,
+                        f"Column '{col}' has incorrect datatype for {name}.",
+                    )
 
-            self.flush_buffer(success_message=f"Schema validation successful for {name}.")
+            self.flush_buffer(
+                success_message=f"Schema validation successful for {name}."
+            )
 
         return self.messages
 
@@ -184,7 +188,16 @@ class ValidationSequence:
         if not self._completed:
             return False
 
-        return len([msg for msg in self._messages if (msg.severity == ValidationSeverity.CRITICAL)]) == 0
+        return (
+            len(
+                [
+                    msg
+                    for msg in self._messages
+                    if (msg.severity == ValidationSeverity.CRITICAL)
+                ]
+            )
+            == 0
+        )
 
     @property
     def messages(self) -> List[ValidationMessage]:
@@ -194,7 +207,9 @@ class ValidationSequence:
     def completed(self) -> bool:
         return self._completed
 
-    def run_validation(self, data: Dict[str, pd.DataFrame]) -> (bool, List[ValidationMessage]):
+    def run_validation(
+        self, data: Dict[str, pd.DataFrame]
+    ) -> (bool, List[ValidationMessage]):
         for validator in self._validators:
             messages = validator.validate(data=data)
             self._add_messages(messages)

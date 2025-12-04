@@ -34,4 +34,3 @@ class MultiInputFileConfiguration(InputFileConfiguration):
     @property
     def sub_names(self) -> List[str]:
         return list(self.file_schemas.keys())
-

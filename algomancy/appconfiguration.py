@@ -3,7 +3,12 @@ from typing import Any, Callable, Dict, List
 import os
 
 from algomancy.dataengine import InputFileConfiguration, BASE_DATA_BOUND
-from algomancy.scenarioengine import AlgorithmFactory, Algorithm, KpiTemplate, AlgorithmTemplate
+from algomancy.scenarioengine import (
+    AlgorithmFactory,
+    Algorithm,
+    KpiTemplate,
+    AlgorithmTemplate,
+)
 from algomancy.stylingconfigurator import StylingConfigurator
 
 
@@ -17,52 +22,52 @@ class AppConfiguration:
     """
 
     def __init__(
-            self,
-            # === path specifications ===
-            assets_path: str = "assets",
-            data_path: str = "data",
-            # === data manager configuration ===
-            has_persistent_state: bool = False,
-            save_type: str | None = "json",
-            data_object_type: type[BASE_DATA_BOUND] | None = None,
-            # === scenario manager configuration ===
-            etl_factory: Any | None = None,
-            kpi_templates: List[KpiTemplate] | None = None,
-            algo_templates: Dict[str, AlgorithmTemplate] | None = None,
-            input_configs: List[InputFileConfiguration] | None = None,
-            autocreate: bool | None = None,
-            default_algo: str | None = None,
-            default_algo_params_values: Dict[str, Any] | None = None,
-            autorun: bool | None = None,
-            # === content functions ===
-            home_content: Callable[..., Any] | str = "placeholder",
-            data_content: Callable[..., Any] | str = "placeholder",
-            scenario_content: Callable[..., Any] | str = "placeholder",
-            compare_content: Callable[..., Any] | str = "placeholder",
-            compare_compare: Callable[..., Any] | str = "placeholder",
-            compare_details: Callable[..., Any] | str = "placeholder",
-            overview_content: Callable[..., Any] | str = "placeholder",
-            # === callbacks ===
-            home_callbacks: Callable[..., Any] | str | None = "placeholder",
-            data_callbacks: Callable[..., Any] | str | None = "placeholder",
-            scenario_callbacks: Callable[..., Any] | str | None = "placeholder",
-            compare_callbacks: Callable[..., Any] | str | None = "placeholder",
-            overview_callbacks: Callable[..., Any] | str | None = "placeholder",
-            # === styling configuration ===
-            styling_config: Any | None = StylingConfigurator.get_cqm_config(),
-            use_cqm_loader: bool = False,
-            # === misc dashboard configurations ===
-            title: str = "Algomancy Dashboard",
-            host: str | None = None,
-            port: int | None = None,
-            # === page configurations ===
-            compare_default_open: List[str] | None = None,
-            compare_ordered_list_components: List[str] | None = None,
-            use_data_page_spinner: bool = True,
-            use_scenario_page_spinner: bool = True,
-            use_compare_page_spinner: bool = True,
-            # === authentication ===
-            use_authentication: bool = False,
+        self,
+        # === path specifications ===
+        assets_path: str = "assets",
+        data_path: str = "data",
+        # === data manager configuration ===
+        has_persistent_state: bool = False,
+        save_type: str | None = "json",
+        data_object_type: type[BASE_DATA_BOUND] | None = None,
+        # === scenario manager configuration ===
+        etl_factory: Any | None = None,
+        kpi_templates: List[KpiTemplate] | None = None,
+        algo_templates: Dict[str, AlgorithmTemplate] | None = None,
+        input_configs: List[InputFileConfiguration] | None = None,
+        autocreate: bool | None = None,
+        default_algo: str | None = None,
+        default_algo_params_values: Dict[str, Any] | None = None,
+        autorun: bool | None = None,
+        # === content functions ===
+        home_content: Callable[..., Any] | str = "placeholder",
+        data_content: Callable[..., Any] | str = "placeholder",
+        scenario_content: Callable[..., Any] | str = "placeholder",
+        compare_content: Callable[..., Any] | str = "placeholder",
+        compare_compare: Callable[..., Any] | str = "placeholder",
+        compare_details: Callable[..., Any] | str = "placeholder",
+        overview_content: Callable[..., Any] | str = "placeholder",
+        # === callbacks ===
+        home_callbacks: Callable[..., Any] | str | None = "placeholder",
+        data_callbacks: Callable[..., Any] | str | None = "placeholder",
+        scenario_callbacks: Callable[..., Any] | str | None = "placeholder",
+        compare_callbacks: Callable[..., Any] | str | None = "placeholder",
+        overview_callbacks: Callable[..., Any] | str | None = "placeholder",
+        # === styling configuration ===
+        styling_config: Any | None = StylingConfigurator.get_cqm_config(),
+        use_cqm_loader: bool = False,
+        # === misc dashboard configurations ===
+        title: str = "Algomancy Dashboard",
+        host: str | None = None,
+        port: int | None = None,
+        # === page configurations ===
+        compare_default_open: List[str] | None = None,
+        compare_ordered_list_components: List[str] | None = None,
+        use_data_page_spinner: bool = True,
+        use_scenario_page_spinner: bool = True,
+        use_compare_page_spinner: bool = True,
+        # === authentication ===
+        use_authentication: bool = False,
     ):
         # paths
         self.assets_path = assets_path
@@ -177,11 +182,15 @@ class AppConfiguration:
         if self.assets_path is None or self.assets_path == "":
             raise ValueError("assets_path must be provided")
         if not os.path.isdir(self.assets_path):
-            raise ValueError(f"assets_path does not exist or is not a directory: {self.assets_path}")
+            raise ValueError(
+                f"assets_path does not exist or is not a directory: {self.assets_path}"
+            )
 
         if self.has_persistent_state:
             if not os.path.isdir(self.data_path):
-                raise ValueError(f"data_path does not exist or is not a directory: {self.data_path}")
+                raise ValueError(
+                    f"data_path does not exist or is not a directory: {self.data_path}"
+                )
             if self.data_path is None or self.data_path == "":
                 raise ValueError("data_path must be provided")
 
@@ -196,7 +205,9 @@ class AppConfiguration:
         }
         missing = [k for k, v in required_fields.items() if v is None]
         if missing:
-            raise ValueError(f"Missing required configuration fields: {', '.join(missing)}")
+            raise ValueError(
+                f"Missing required configuration fields: {', '.join(missing)}"
+            )
 
         # booleans allowed to be False, but must not be None if specified
         for name, val in {
@@ -206,7 +217,9 @@ class AppConfiguration:
             "use_authentication": self.use_authentication,
         }.items():
             if val is None:
-                raise ValueError(f"Boolean configuration '{name}' must be set to True or False, not None")
+                raise ValueError(
+                    f"Boolean configuration '{name}' must be set to True or False, not None"
+                )
 
         # save type
         if self.save_type is None:
@@ -228,33 +241,51 @@ class AppConfiguration:
         if not isinstance(self.compare_default_open, list):
             raise ValueError("compare_default_open must be a list of strings")
         if not isinstance(self.compare_ordered_list_components, list):
-            raise ValueError("compare_ordered_list_components must be a list of strings")
+            raise ValueError(
+                "compare_ordered_list_components must be a list of strings"
+            )
 
         # ensure all strings are valid
-        admissible_values = ['side-by-side', 'kpis', 'compare', 'details']
+        admissible_values = ["side-by-side", "kpis", "compare", "details"]
         for component in self.compare_default_open:
             if not isinstance(component, str):
-                raise ValueError(f"compare_default_open must be a list of strings, but contains {component}")
+                raise ValueError(
+                    f"compare_default_open must be a list of strings, but contains {component}"
+                )
             if component not in admissible_values:
-                raise ValueError(f"compare_default_open contains invalid component: {component}")
+                raise ValueError(
+                    f"compare_default_open contains invalid component: {component}"
+                )
 
         for component in self.compare_ordered_list_components:
             if not isinstance(component, str):
-                raise ValueError(f"compare_ordered_list_components must be a list of strings, but contains {component}")
+                raise ValueError(
+                    f"compare_ordered_list_components must be a list of strings, but contains {component}"
+                )
             if component not in admissible_values:
-                raise ValueError(f"compare_ordered_list_components contains invalid component: {component}")
+                raise ValueError(
+                    f"compare_ordered_list_components contains invalid component: {component}"
+                )
 
         # ensure all strings are unique
         if len(self.compare_default_open) != len(set(self.compare_default_open)):
             raise ValueError("compare_default_open contains duplicate values")
-        if len(self.compare_ordered_list_components) != len(set(self.compare_ordered_list_components)):
-            raise ValueError("compare_ordered_list_components contains duplicate values")
+        if len(self.compare_ordered_list_components) != len(
+            set(self.compare_ordered_list_components)
+        ):
+            raise ValueError(
+                "compare_ordered_list_components contains duplicate values"
+            )
 
     def _validate_algorithm_parameters(self) -> None:
         if self.autocreate:
             tmp_factory = AlgorithmFactory(self.algo_templates)
-            test_algorithm = tmp_factory.create(self.default_algo, self.default_algo_params_values)
-            assert isinstance(test_algorithm, Algorithm), "Failed to create default algorithm"
+            test_algorithm = tmp_factory.create(
+                self.default_algo, self.default_algo_params_values
+            )
+            assert isinstance(
+                test_algorithm, Algorithm
+            ), "Failed to create default algorithm"
         else:
             pass
 

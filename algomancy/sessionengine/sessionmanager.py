@@ -1,5 +1,5 @@
 import os
-from typing import Dict, List, Optional, TypeVar
+from typing import Dict, List, TypeVar
 
 from algomancy.appconfiguration import AppConfiguration
 from algomancy.dashboardlogger import Logger, MessageStatus
@@ -8,9 +8,8 @@ from algomancy.scenarioengine import KpiTemplate, AlgorithmTemplate, ScenarioMan
 
 
 class SessionManager:
-    """
+    """ """
 
-    """
     E = TypeVar("E", bound=ETLFactory)
 
     @classmethod
@@ -65,13 +64,11 @@ class SessionManager:
         # Components
         self._sessions = {}
         if self._has_persistent_state:
-            assert data_folder, (
-                "Data folder must be specified if a persistent state is used."
-            )
-
-            sessions = self.determine_sessions_from_folder(
+            assert (
                 data_folder
-            )
+            ), "Data folder must be specified if a persistent state is used."
+
+            sessions = self.determine_sessions_from_folder(data_folder)
             for session_name, session_path in sessions.items():
                 self._sessions[session_name] = ScenarioManager(
                     etl_factory=etl_factory,
@@ -97,7 +94,7 @@ class SessionManager:
                 data_object_type,
                 default_algo_name,
                 default_param_values,
-                autorun
+                autorun,
             )
 
         self._session_name = list(self._sessions.keys())[0]
@@ -111,7 +108,9 @@ class SessionManager:
 
     @staticmethod
     def determine_sessions_from_folder(data_folder) -> Dict[str, str]:
-        session_folders = {f.name: f.path for f in os.scandir(data_folder) if f.is_dir()}
+        session_folders = {
+            f.name: f.path for f in os.scandir(data_folder) if f.is_dir()
+        }
         return session_folders
 
     def set_active_scenario_manager(self, session_name: str):
@@ -152,7 +151,6 @@ class SessionManager:
             default_param_values=default_param_values,
             autorun=autorun,
         )
-
 
     @property
     def sessions_names(self) -> List[str]:
