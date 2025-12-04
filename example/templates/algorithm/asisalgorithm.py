@@ -17,7 +17,6 @@ class AsIsAlgorithmParams(BaseAlgorithmParameters):
 
 
 class AsIsAlgorithm(BaseAlgorithm):
-
     def __init__(self, params: AsIsAlgorithmParams):
         super().__init__("As is", params)
 

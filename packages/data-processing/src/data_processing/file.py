@@ -5,7 +5,7 @@ import pandas as pd
 import json
 import base64
 
-from algomancy.dataengine.inputfileconfiguration import FileExtension
+from .inputfileconfiguration import FileExtension
 
 
 class File(ABC):

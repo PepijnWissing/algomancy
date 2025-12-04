@@ -1,13 +1,13 @@
 from typing import Dict, List, Optional, TypeVar, Type
 
-from algomancy.dataengine import (
+from data_processing import (
     ETLFactory,
     InputFileConfiguration,
     StatefulDataManager,
     StatelessDataManager,
     BASE_DATA_BOUND,
 )
-from algomancy.dashboardlogger.logger import Logger, MessageStatus
+from utils import Logger, MessageStatus
 from .basealgorithm import ALGORITHM
 from .basealgorithmparameters import BASE_PARAMS_BOUND
 
@@ -16,7 +16,6 @@ from .scenario import Scenario
 from .scenarioregistry import ScenarioRegistry
 from .scenariofactory import ScenarioFactory
 from .scenarioprocessor import ScenarioProcessor
-from src.algomancy.appconfiguration import AppConfiguration
 
 
 class ScenarioManager:
@@ -27,11 +26,7 @@ class ScenarioManager:
     E = TypeVar("E", bound=ETLFactory)
 
     @classmethod
-    def from_config(cls, cfg: "AppConfiguration") -> "ScenarioManager":
-        # Local import to avoid heavy top-level coupling
-        from src.algomancy.appconfiguration import AppConfiguration  # type: ignore
-        if not isinstance(cfg, AppConfiguration):
-            raise TypeError("from_config expects an AppConfiguration instance")
+    def from_config(cls, cfg) -> "ScenarioManager":
         return cls(
             etl_factory=cfg.etl_factory,
             kpi_templates=cfg.kpi_templates,

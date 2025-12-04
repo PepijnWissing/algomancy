@@ -3,12 +3,8 @@ from typing import List, Dict
 
 import pandas as pd
 
-from algomancy.dataengine.validator import ValidationMessage
-from algomancy.dataengine.datasource import (
-    DataClassification,
-    DataSource,
-    BASE_DATA_BOUND,
-)
+from .validator import ValidationMessage
+from .datasource import DataClassification, DataSource, BASE_DATA_BOUND
 
 
 class Loader(ABC):

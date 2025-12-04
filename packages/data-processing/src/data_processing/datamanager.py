@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, List, Tuple, TypeVar
 
 import pandas as pd
-from utils.logger import Logger
+from utils import Logger
 
 from .datasource import DataClassification, BASE_DATA_BOUND
 from .etl import ETLFactory, ETLConstructionError

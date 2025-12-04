@@ -5,6 +5,7 @@ This module defines constants for all component IDs used in the dashboard applic
 These IDs are used for callbacks and to reference components in the Dash application.
 """
 
+
 # === Session IDs ===
 ACTIVE_SESSION = "active-session-id"
 

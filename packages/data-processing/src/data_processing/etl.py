@@ -2,22 +2,20 @@
 from abc import ABC, abstractmethod
 from typing import Dict, List
 
-from algomancy.dataengine.schema import Schema
-from algomancy.dataengine.datasource import BASE_DATA_BOUND, DataClassification
-from algomancy.dataengine.extractor import Extractor
-from algomancy.dataengine.file import File
-from algomancy.dataengine.loader import Loader
-from algomancy.dataengine.transformer import Transformer
-from algomancy.dataengine.validator import (
-    ValidationError,
-    ValidationSequence,
-)
-from algomancy.dataengine.inputfileconfiguration import (
+from algomancy_utils import Logger
+
+from .schema import Schema
+from .datasource import BASE_DATA_BOUND, DataClassification
+from .extractor import Extractor
+from .file import File
+from .loader import Loader
+from .transformer import Transformer
+from .validator import ValidationError, ValidationSequence
+from .inputfileconfiguration import (
     InputFileConfiguration,
     SingleInputFileConfiguration,
     MultiInputFileConfiguration,
 )
-from algomancy.dashboardlogger.logger import Logger
 
 
 class ETLPipeline:

@@ -11,8 +11,8 @@ from dash import (
 )
 import dash_bootstrap_components as dbc
 
-from algomancy.components.admin_page.sessions import create_new_session_window
-from algomancy.components.componentids import (
+from .sessions import create_new_session_window
+from ..componentids import (
     ADMIN_NEW_SESSION,
     ACTIVE_SESSION,
     ADMIN_SELECT_SESSION,
@@ -185,6 +185,7 @@ def create_admin_page(session_id):
 def load_session(session_id):
     """Updates the active session when a new session is selected using the dropdown."""
     return session_id
+
 
 
 @callback(

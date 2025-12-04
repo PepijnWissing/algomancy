@@ -296,9 +296,12 @@ class AppConfiguration:
     def from_dict(cls, config: Dict[str, Any]) -> "AppConfiguration":
         return cls(**config)
 
+
 stub_configuration = AppConfiguration(
     etl_factory=PlaceholderETLFactory,
     kpi_templates=[placeholder_kpi_template],
-    algo_templates={placeholder_algorithm_template.name: placeholder_algorithm_template},
+    algo_templates={
+        placeholder_algorithm_template.name: placeholder_algorithm_template
+    },
     input_configs=[placeholder_input_config],
 )

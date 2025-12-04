@@ -1,8 +1,18 @@
-from dash import Output, Input, callback_context, no_update, callback, State, ALL, get_app, ctx
+from dash import (
+    Output,
+    Input,
+    callback_context,
+    no_update,
+    callback,
+    State,
+    ALL,
+    get_app,
+    ctx,
+)
 from dash.exceptions import PreventUpdate
 
 from algomancy.scenarioengine import ScenarioStatus
-from algomancy.components.componentids import (
+from ..componentids import (
     SCENARIO_PROCESS_BUTTON,
     SCENARIO_CREATOR_MODAL,
     SCENARIO_TAG_INPUT,

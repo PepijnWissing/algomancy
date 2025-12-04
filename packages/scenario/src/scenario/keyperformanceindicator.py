@@ -2,8 +2,8 @@ from abc import ABC, abstractmethod
 from enum import StrEnum, auto
 from typing import TypeVar
 
-from algomancy.scenarioengine.result import BASE_RESULT_BOUND
-from algomancy.scenarioengine.unit import BaseMeasurement, Measurement, Unit
+from .result import BASE_RESULT_BOUND
+from utils.unit import BaseMeasurement, Measurement, Unit
 
 
 class ImprovementDirection(StrEnum):

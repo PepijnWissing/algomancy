@@ -6,8 +6,8 @@ import base64
 import pandas as pd
 from dash import Input, Output, State, callback, no_update, get_app, html
 
-from algomancy.dataengine import ValidationError, DataManager
-from algomancy.components.componentids import (
+from algomancy_data import ValidationError, DataManager
+from ..componentids import (
     DATA_SELECTOR_DROPDOWN,
     DM_DERIVE_SET_SELECTOR,
     DM_DELETE_SET_SELECTOR,

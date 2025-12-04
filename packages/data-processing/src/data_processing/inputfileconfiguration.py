@@ -3,7 +3,7 @@ from enum import StrEnum
 from typing import List, Dict
 from abc import ABC
 
-from algomancy.dataengine.schema import Schema
+from .schema import Schema
 
 
 class FileExtension(StrEnum):

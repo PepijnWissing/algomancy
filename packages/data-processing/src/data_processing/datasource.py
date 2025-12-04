@@ -13,7 +13,7 @@ from typing import List, TypeVar
 
 import pandas as pd
 
-from algomancy.dataengine.validator import ValidationMessage
+from .validator import ValidationMessage
 
 
 class DataClassification(StrEnum):

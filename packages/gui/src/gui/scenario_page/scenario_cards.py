@@ -10,9 +10,12 @@ import dash_bootstrap_components as dbc
 
 from algomancy.scenarioengine.scenariomanager import ScenarioManager, Scenario
 from algomancy.scenarioengine import ScenarioStatus
-from algomancy.stylingconfigurator import StylingConfigurator
 
-from algomancy.components import SCENARIO_PROCESS_BUTTON, SCENARIO_DELETE_BUTTON, SCENARIO_CARD, SCENARIO_STATUS_BADGE
+from algomancy.components import (
+    SCENARIO_PROCESS_BUTTON,
+    SCENARIO_DELETE_BUTTON,
+    SCENARIO_CARD,
+)
 from .scenario_badge import status_badge
 
 

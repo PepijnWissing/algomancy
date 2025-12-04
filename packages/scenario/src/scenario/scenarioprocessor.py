@@ -2,7 +2,8 @@ import queue
 import threading
 from typing import Optional
 
-from algomancy.dashboardlogger import Logger
+from utils.logger import Logger
+
 from .scenario import Scenario
 
 

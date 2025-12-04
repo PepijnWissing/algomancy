@@ -1,6 +1,6 @@
 from typing import Dict, Any, List, Type, Generic
 
-from algomancy.dashboardlogger import Logger
+from utils.logger import Logger
 from .basealgorithm import ALGORITHM
 
 

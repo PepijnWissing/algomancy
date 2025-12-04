@@ -5,9 +5,9 @@ from typing import Dict
 import pandas as pd
 import json
 
-from algomancy.dataengine.schema import Schema, DataType
-from algomancy.dataengine.file import File, XLSXFile, JSONFile, CSVFile
-from algomancy.dashboardlogger import Logger
+from .schema import Schema, DataType
+from .file import File, XLSXFile, JSONFile, CSVFile
+from utils import Logger
 
 
 class DateFormatError(Exception):

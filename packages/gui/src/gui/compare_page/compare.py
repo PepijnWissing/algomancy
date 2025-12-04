@@ -10,7 +10,7 @@ from typing import Any
 from dash import html, get_app, callback, Output, Input, State
 import dash_bootstrap_components as dbc
 
-from algomancy.components.componentids import (
+from ..componentids import (
     PERF_DETAILS_COLLAPSE,
     COMPARE_DETAIL_VIEW,
     PERF_COMPARE_COLLAPSE,
@@ -66,8 +66,9 @@ def render_ordered_components(active_session_name):
     order = get_component_order(orderable_components, settings, sm)
 
     ordered_components = order_components(header, order, orderable_components, selector)
-    return ordered_components
 
+    page = html.Div(ordered_components, className="compare-page")
+    return page
 
 def order_components(
     header: dbc.Row,

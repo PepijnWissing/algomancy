@@ -1,4 +1,4 @@
-from src.algomancy.components.componentids import (
+from ..componentids import (
     DM_IMPORT_MODAL_CLOSE_BTN,
     DM_IMPORT_MODAL,
     DM_IMPORT_SUBMIT_BUTTON,
@@ -12,9 +12,9 @@ from src.algomancy.components.componentids import (
 import dash_bootstrap_components as dbc
 from dash import html, dcc, get_app
 
-from algomancy.components.cqmloader import cqm_loader
-from algomancy.components.defaultloader import default_loader
-from algomancy.scenarioengine import ScenarioManager
+from ..cqmloader import cqm_loader
+from ..defaultloader import default_loader
+from algomancy_scenario import ScenarioManager
 from src.algomancy.settingsmanager import SettingsManager
 
 """

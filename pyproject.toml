@@ -1,54 +1,49 @@
+[build-system]
+build-backend = "uv_build"
+requires = ["uv_build>=0.9.6,<0.10.0"]
+
 [project]
-name = "Algomancy"
-version = "0.3.1"
-description = "A dashboarding framework for visualizing performances of algorithms or simulations in various scenarios."
-requires-python = ">=3.14"
-dependencies = [
-    "dash>=3.2.0",
-    "dash-auth>=2.3.0",
-    "dash-bootstrap-components>=2.0.3",
-    "dash-daq>=0.6.0",
-    "dash-iconify>=0.1.2",
-    "openpyxl>=3.1.5",
-    "pandas>=2.3.1",
-    "prek>=0.2.1",
-    "pytest>=8.4.2",
-    "ruff>=0.13.1",
-    "strenum>=0.4.15",
-    "tabulate>=0.9.0",
-    "waitress>=3.0.2",
-    "wheel>=0.45.1",
-    "uv_build>=0.9.6,<0.10.0",
-    "content-lib",
-    "data-processing",
-    "gui",
-    "scenario",
-    "utils",
-]
 authors = [
-    {name = "Pepijn Wissing", email = "pepijn.wissing@cqm.nl"},
-    {name = "Bart Post", email = "bart.post@cqm.nl"}
+  {email = "pepijn.wissing@cqm.nl", name = "Pepijn Wissing"},
+  {email = "bart.post@cqm.nl", name = "Bart Post"}
 ]
-maintainers = [
-    {name = "Pepijn Wissing", email = "pepijn.wissing@cqm.nl"},
-    {name = "Bart Post", email = "bart.post@cqm.nl"}
-]
-readme = "README.md"
-license = {text = "Restricted"}
-keywords = ["visualization", "algorithm", "simulation", "scenario"]
 classifiers = [
   "Development Status :: 4 - Beta",
   "Programming Language :: Python"
 ]
-
-[tool.uv.workspace]
-members = [
-    "packages/content-lib",
-    "packages/gui",
-    "packages/utils",
-    "packages/data-processing",
-    "packages/scenario",
+dependencies = [
+  "dash>=3.2.0",
+  "dash-auth>=2.3.0",
+  "dash-bootstrap-components>=2.0.3",
+  "dash-daq>=0.6.0",
+  "dash-iconify>=0.1.2",
+  "openpyxl>=3.1.5",
+  "pandas>=2.3.1",
+  "prek>=0.2.1",
+  "pytest>=8.4.2",
+  "ruff>=0.13.1",
+  "strenum>=0.4.15",
+  "tabulate>=0.9.0",
+  "waitress>=3.0.2",
+  "wheel>=0.45.1",
+  "uv_build>=0.9.6,<0.10.0",
+  "content-lib",
+  "data-processing",
+  "gui",
+  "scenario",
+  "utils"
 ]
+description = "A dashboarding framework for visualizing performances of algorithms or simulations in various scenarios."
+keywords = ["visualization", "algorithm", "simulation", "scenario"]
+license = {text = "Restricted"}
+maintainers = [
+  {email = "pepijn.wissing@cqm.nl", name = "Pepijn Wissing"},
+  {email = "bart.post@cqm.nl", name = "Bart Post"}
+]
+name = "Algomancy"
+readme = "README.md"
+requires-python = ">=3.14"
+version = "0.3.1"
 
 [tool.uv.sources]
 content-lib = {workspace = true}
@@ -57,6 +52,11 @@ gui = {workspace = true}
 scenario = {workspace = true}
 utils = {workspace = true}
 
-[build-system]
-requires = ["uv_build>=0.9.6,<0.10.0"]
-build-backend = "uv_build"
+[tool.uv.workspace]
+members = [
+  "packages/content-lib",
+  "packages/gui",
+  "packages/utils",
+  "packages/data-processing",
+  "packages/scenario"
+]

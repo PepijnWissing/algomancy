@@ -10,8 +10,8 @@ import uuid
 from enum import StrEnum, auto
 from typing import Dict, Generic
 
-from algomancy.dashboardlogger import Logger
-from algomancy.dataengine import BASE_DATA_BOUND
+from utils import Logger
+from data_processing import BASE_DATA_BOUND
 from .basealgorithm import ALGORITHM
 from .keyperformanceindicator import BASE_KPI
 

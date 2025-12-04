@@ -3,10 +3,13 @@ from enum import StrEnum
 from typing import List, Dict
 
 import pandas as pd
+from utils import Logger
 
-from algomancy.dashboardlogger import Logger
-from algomancy.dataengine.inputfileconfiguration import InputFileConfiguration, SingleInputFileConfiguration, \
-    MultiInputFileConfiguration
+from .inputfileconfiguration import (
+    InputFileConfiguration,
+    SingleInputFileConfiguration,
+    MultiInputFileConfiguration,
+)
 
 
 class ValidationSeverity(StrEnum):

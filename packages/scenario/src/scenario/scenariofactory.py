@@ -1,12 +1,13 @@
 from typing import Dict, List, Optional, Type
 
-from algomancy.scenarioengine.algorithmfactory import AlgorithmFactory
-from algomancy.dashboardlogger import Logger
-from algomancy.scenarioengine.basealgorithm import ALGORITHM
-from algomancy.scenarioengine.keyperformanceindicator import BASE_KPI
-from algomancy.scenarioengine.kpifactory import KpiFactory
-from algomancy.scenarioengine.scenario import Scenario
-from algomancy.dataengine import DataManager
+from utils import Logger
+from data_processing import DataManager
+
+from .algorithmfactory import AlgorithmFactory
+from .basealgorithm import ALGORITHM
+from .keyperformanceindicator import BASE_KPI
+from .kpifactory import KpiFactory
+from .scenario import Scenario
 
 
 class ScenarioFactory:

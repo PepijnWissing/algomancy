@@ -2,7 +2,7 @@ from dash.dcc import send_file
 from dash import html, dcc, callback, Output, Input, State, no_update, get_app
 from dash.exceptions import PreventUpdate
 
-from algomancy.components.componentids import (
+from ..componentids import (
     DM_DOWNLOAD_MODAL,
     DM_DOWNLOAD_CHECKLIST,
     DM_DOWNLOAD_SUBMIT_BUTTON,
