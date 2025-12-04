@@ -1,26 +1,26 @@
 from dash import html, dcc, get_app
 import dash_bootstrap_components as dbc
 
-from algomancy.components.data_page.datamanagementdeletemodal import (
+from gui.data_page.datamanagementdeletemodal import (
     data_management_delete_modal,
 )
-from algomancy.components.data_page.datamanagementderivemodal import (
+from gui.data_page.datamanagementderivemodal import (
     data_management_derive_modal,
 )
-from algomancy.components.data_page.datamanagementdownloadmodal import (
+from gui.data_page.datamanagementdownloadmodal import (
     data_management_download_modal,
 )
-from algomancy.components.data_page.datamanagementimportmodal import (
+from gui.data_page.datamanagementimportmodal import (
     data_management_import_modal,
 )
-from algomancy.components.data_page.datamanagementsavemodal import (
+from gui.data_page.datamanagementsavemodal import (
     data_management_save_modal,
 )
-from algomancy.components.data_page.datamanagementuploadmodal import (
+from gui.data_page.datamanagementuploadmodal import (
     data_management_upload_modal,
 )
-from algomancy.scenarioengine.scenariomanager import ScenarioManager
-from algomancy.components.componentids import (
+from scenario.scenariomanager import ScenarioManager
+from gui.componentids import (
     DATA_SELECTOR_DROPDOWN,
     DATA_MAN_SUCCESS_ALERT,
     DATA_MAN_ERROR_ALERT,

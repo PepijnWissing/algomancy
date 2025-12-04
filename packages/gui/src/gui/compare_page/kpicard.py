@@ -8,8 +8,8 @@ performance metrics and comparisons between scenarios.
 from dash import html
 import dash_bootstrap_components as dbc
 
-from algomancy.scenarioengine import ImprovementDirection, BASE_KPI
-from algomancy.scenarioengine.unit import Measurement
+from scenario import ImprovementDirection, BASE_KPI
+from scenario.unit import Measurement
 
 
 def is_improvement_good(better_when, left, right):

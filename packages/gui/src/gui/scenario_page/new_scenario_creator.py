@@ -1,7 +1,7 @@
 from dash import html, dcc, get_app
 import dash_bootstrap_components as dbc
 
-from algomancy.components.componentids import (
+from gui.componentids import (
     SCENARIO_TAG_INPUT,
     SCENARIO_DATA_INPUT,
     SCENARIO_ALGO_INPUT,
@@ -9,7 +9,7 @@ from algomancy.components.componentids import (
     SCENARIO_CREATE_STATUS,
     SCENARIO_CREATOR_MODAL,
 )
-from algomancy.components.scenario_page.new_scenario_parameters_window import (
+from gui.scenario_page.new_scenario_parameters_window import (
     create_algo_parameters_window,
 )
 from algomancy.scenarioengine import ScenarioManager

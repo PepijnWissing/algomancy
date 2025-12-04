@@ -1,8 +1,8 @@
 import dash_bootstrap_components as dbc
 from dash import dcc
 
-from algomancy.scenarioengine.scenariomanager import ScenarioManager
-from algomancy.components.componentids import (
+from scenario.scenariomanager import ScenarioManager
+from gui.componentids import (
     DM_SAVE_MODAL,
     DM_SAVE_MODAL_CLOSE_BTN,
     DM_SAVE_SET_SELECTOR,

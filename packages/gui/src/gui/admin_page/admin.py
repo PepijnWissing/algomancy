@@ -1,9 +1,11 @@
 # Page layouts
 from dash import html
 
-from algomancy.components.componentids import ADMIN_PAGE
-
-import algomancy.components.admin_page.callbacks  # noqa
+from gui.componentids import (
+    ADMIN_LOG_WINDOW,
+    ADMIN_LOG_INTERVAL,
+    ADMIN_LOG_FILTER,
+)
 
 
 def admin_page():

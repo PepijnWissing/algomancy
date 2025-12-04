@@ -1,8 +1,14 @@
 import dash_bootstrap_components as dbc
 from dash import html, dcc
 
-from algomancy.scenarioengine.scenariomanager import ScenarioManager
-from algomancy.components.componentids import *
+from scenario.scenariomanager import ScenarioManager
+from gui.componentids import (
+    DM_DERIVE_SET_SELECTOR,
+    DM_DERIVE_MODAL_SUBMIT_BTN,
+    DM_DERIVE_SET_NAME_INPUT,
+    DM_DERIVE_MODAL_CLOSE_BTN,
+    DM_DERIVE_MODAL,
+)
 
 """
 Modal component for deriving new datasets from existing ones.

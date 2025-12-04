@@ -1,6 +1,6 @@
 from dash import html, get_app
 
-from algomancy.components.componentids import HOME_PAGE_CONTENT
+from gui.componentids import HOME_PAGE_CONTENT
 from src.algomancy.contentregistry import ContentRegistry
 
 

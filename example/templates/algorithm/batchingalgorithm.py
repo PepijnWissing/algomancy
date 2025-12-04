@@ -1,11 +1,11 @@
 from time import sleep
 
-from algomancy.dataengine import DataSource
-from algomancy.scenarioengine import (
+from data_processing import DataSource
+from scenario import (
     ScenarioResult,
 )
-from algomancy.scenarioengine import BaseAlgorithm
-from algomancy.scenarioengine import (
+from scenario import BaseAlgorithm
+from scenario import (
     BaseAlgorithmParameters,
     IntegerParameter,
     EnumParameter,

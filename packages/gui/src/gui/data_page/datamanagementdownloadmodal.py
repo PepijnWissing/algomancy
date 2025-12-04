@@ -21,7 +21,7 @@ import uuid
 import tempfile
 import threading
 
-from algomancy.scenarioengine.scenariomanager import ScenarioManager
+from scenario.scenariomanager import ScenarioManager
 
 """
 Modal component for downloading data files into the application.

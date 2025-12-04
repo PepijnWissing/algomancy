@@ -32,7 +32,7 @@ from algomancy.components.compare_page.scenarioselector import (
 )
 
 from src.algomancy.contentregistry import ContentRegistry
-from algomancy.scenarioengine import ScenarioManager
+from scenario import ScenarioManager
 from src.algomancy.settingsmanager import SettingsManager
 
 import algomancy.components.compare_page.callbacks  # noqa

@@ -2,31 +2,31 @@ from typing import Tuple, Callable
 
 from dash import html
 
-from algomancy.contentcreatorlibrary.standarddatapage import (
+from content_lib.standarddatapage import (
     StandardDataPageContentCreator,
 )
-from algomancy.dataengine import BASE_DATA_BOUND
-from algomancy.scenarioengine import Scenario
+from data_processing import BASE_DATA_BOUND
+from scenario import Scenario
 
-from algomancy.contentcreatorlibrary.placeholderhomepagecontentcreator import (
+from content_lib.placeholderhomepagecontentcreator import (
     PlaceholderHomePageContentCreator,
 )
-from algomancy.contentcreatorlibrary.standardhomepage import (
+from content_lib.standardhomepage import (
     StandardHomePageContentCreator,
 )
-from algomancy.contentcreatorlibrary.exampledatapage import (
+from content_lib.exampledatapage import (
     ExampleDataPageContentCreator,
 )
-from algomancy.contentcreatorlibrary.placeholderdatapage import (
+from content_lib.placeholderdatapage import (
     PlaceholderDataPageContentCreator,
 )
-from algomancy.contentcreatorlibrary.placeholdercomparepage import (
+from content_lib.placeholdercomparepage import (
     PlaceholderComparePageContentCreator,
 )
-from algomancy.contentcreatorlibrary.placeholderscenariopage import (
+from content_lib.placeholderscenariopage import (
     PlaceholderScenarioPageContentCreator,
 )
-from algomancy.contentcreatorlibrary.standardoverviewpage import (
+from content_lib.standardoverviewpage import (
     StandardOverviewPageContentCreator,
 )
 

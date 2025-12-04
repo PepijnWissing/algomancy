@@ -1,6 +1,6 @@
 from typing import Dict
 
-from algomancy.dataengine import Schema, DataType, InputFileConfiguration, FileExtension
+from data_processing import Schema, DataType, InputFileConfiguration, FileExtension
 
 
 class PlaceholderSchema(Schema):

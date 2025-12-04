@@ -7,7 +7,7 @@ It handles updating scenario overviews, KPI comparisons, and other interactive e
 
 from dash import callback, Input, Output, html, get_app, State
 
-from algomancy.components.componentids import (
+from ..componentids import (
     KPI_IMPROVEMENT_SECTION,
     LEFT_SCENARIO_DROPDOWN,
     RIGHT_SCENARIO_DROPDOWN,

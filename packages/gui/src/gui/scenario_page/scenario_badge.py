@@ -7,7 +7,7 @@ providing visual indicators of a scenario's current status.
 
 import dash_bootstrap_components as dbc
 
-from algomancy.scenarioengine import ScenarioStatus
+from scenario import ScenarioStatus
 
 
 def status_badge(status):

@@ -1,6 +1,6 @@
 from dash import html, get_app, callback, Output, Input, State
 
-from algomancy.components.componentids import (
+from ..componentids import (
     DATA_PAGE_CONTENT,
     DATA_SELECTOR_DROPDOWN,
     ACTIVE_SESSION,
@@ -9,7 +9,7 @@ from algomancy.components.componentids import (
 from algomancy.components.data_page.datamanagementtopbar import top_bar
 from algomancy.components.layouthelpers import create_wrapped_content_div
 from src.algomancy.contentregistry import ContentRegistry
-from algomancy.scenarioengine import ScenarioManager
+from scenario import ScenarioManager
 from src.algomancy.settingsmanager import SettingsManager
 
 import algomancy.components.data_page.dialogcallbacks  # noqa

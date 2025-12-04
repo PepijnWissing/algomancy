@@ -1,9 +1,9 @@
 from time import sleep
 
-from algomancy.dataengine import DataSource
-from algomancy.scenarioengine import BaseAlgorithmParameters, ScenarioResult
-from algomancy.scenarioengine import BaseAlgorithm
-from algomancy.scenarioengine import IntegerParameter
+from data_processing import DataSource
+from scenario import BaseAlgorithmParameters, ScenarioResult
+from scenario import BaseAlgorithm
+from scenario import IntegerParameter
 
 
 class SlowAlgorithmParams(BaseAlgorithmParameters):

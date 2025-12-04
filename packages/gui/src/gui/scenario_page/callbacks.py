@@ -44,7 +44,7 @@ from ..componentids import (
 from algomancy.components.scenario_page.new_scenario_parameters_window import (
     create_algo_parameters_entry_card_body,
 )
-from algomancy.components.scenario_page.scenario_cards import scenario_cards
+from gui.scenario_page.scenario_cards import scenario_cards
 
 from algomancy.components.layouthelpers import create_wrapped_content_div
 from algomancy.components.scenario_page.delete_confirmation import (

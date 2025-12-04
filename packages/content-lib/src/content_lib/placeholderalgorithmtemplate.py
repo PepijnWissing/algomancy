@@ -1,12 +1,11 @@
 from time import sleep
-from typing import Callable
 
-from algomancy.dataengine import DataSource
-from algomancy.scenarioengine import (
-    AlgorithmTemplate,
+from data_processing import DataSource
+from scenario import (
+    BaseAlgorithmParameters,
     ScenarioResult,
 )
-from algomancy.scenarioengine import BaseAlgorithmParameters
+from scenario.basealgorithm import BaseAlgorithm
 
 
 class PlaceholderParams(BaseAlgorithmParameters):
@@ -17,19 +16,15 @@ class PlaceholderParams(BaseAlgorithmParameters):
         pass
 
 
-def placeholder_main_method(
-    data: DataSource,
-    parameters: PlaceholderParams,
-    set_progress: Callable[[float], None],
-) -> ScenarioResult:
-    sleep(0.5)
+class AsIsAlgorithm(BaseAlgorithm):
+    def __init__(self, params: PlaceholderParams):
+        super().__init__("As is", params)
 
-    set_progress(1)
-    return ScenarioResult(master_data_id=data.id)  # placeholder
+    @staticmethod
+    def initialize_parameters() -> PlaceholderParams:
+        return PlaceholderParams()
 
-
-placeholder_algorithm_template = AlgorithmTemplate(
-    name="As is",
-    param_type=PlaceholderParams,
-    main_method_template=placeholder_main_method,
-)
+    def run(self, data: DataSource) -> ScenarioResult:
+        sleep(0.5)
+        self.set_progress(100)
+        return ScenarioResult(data_id=data.id)

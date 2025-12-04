@@ -33,7 +33,7 @@ Quick start
 
 Example: length
 ```python
-from algomancy.scenarioengine.unit import QUANTITIES, BaseMeasurement, Measurement
+from scenario.unit import QUANTITIES, BaseMeasurement, Measurement
 
 length = QUANTITIES["length"]
 length_m = BaseMeasurement(length["m"], min_digits=1, max_digits=3, decimals=2)
