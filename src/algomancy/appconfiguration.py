@@ -3,9 +3,11 @@ from typing import Any, Callable, Dict, List, Type
 import os
 
 from content_lib import PlaceholderETLFactory
-from content_lib.placeholderalgorithmtemplate import placeholder_algorithm_template
+from content_lib.placeholderalgorithmtemplate import (
+    PlaceholderAlgorithm,
+)
 from content_lib.placeholderinputconfig import placeholder_input_config
-from content_lib.placeholderkpitemplate import placeholder_kpi_template
+from content_lib.placeholderkpitemplate import PlaceholderKPI
 from data_processing import InputFileConfiguration, BASE_DATA_BOUND
 from scenario import AlgorithmFactory, ALGORITHM, BASE_KPI
 
@@ -305,9 +307,11 @@ class AppConfiguration:
 
 stub_configuration = AppConfiguration(
     etl_factory=PlaceholderETLFactory,
-    kpi_templates=[placeholder_kpi_template],
+    kpi_templates={
+        str(PlaceholderKPI.name): PlaceholderKPI,
+    },
     algo_templates={
-        placeholder_algorithm_template.name: placeholder_algorithm_template
+        str(PlaceholderAlgorithm.name): PlaceholderAlgorithm,
     },
     input_configs=[placeholder_input_config],
 )

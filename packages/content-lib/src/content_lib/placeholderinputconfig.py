@@ -1,6 +1,11 @@
 from typing import Dict
 
-from data_processing import Schema, DataType, InputFileConfiguration, FileExtension
+from data_processing import (
+    Schema,
+    DataType,
+    SingleInputFileConfiguration,
+    FileExtension,
+)
 
 
 class PlaceholderSchema(Schema):
@@ -20,7 +25,7 @@ class PlaceholderSchema(Schema):
         }
 
 
-placeholder_input_config = InputFileConfiguration(
+placeholder_input_config = SingleInputFileConfiguration(
     extension=FileExtension.CSV,
     file_name="placeholder_data",
     file_schema=PlaceholderSchema(),
