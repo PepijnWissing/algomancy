@@ -2,11 +2,14 @@ import platform
 from typing import Any, Callable, Dict, List, Type
 import os
 
-from algomancy.dataengine import InputFileConfiguration, BASE_DATA_BOUND
-from algomancy.scenarioengine import AlgorithmFactory
-from algomancy.scenarioengine.basealgorithm import ALGORITHM
-from algomancy.scenarioengine.keyperformanceindicator import BASE_KPI
-from algomancy.stylingconfigurator import StylingConfigurator
+from content_lib import PlaceholderETLFactory
+from content_lib.placeholderalgorithmtemplate import placeholder_algorithm_template
+from content_lib.placeholderinputconfig import placeholder_input_config
+from content_lib.placeholderkpitemplate import placeholder_kpi_template
+from data_processing import InputFileConfiguration, BASE_DATA_BOUND
+from scenario import AlgorithmFactory, ALGORITHM, BASE_KPI
+
+from .stylingconfigurator import StylingConfigurator
 
 
 class AppConfiguration:
