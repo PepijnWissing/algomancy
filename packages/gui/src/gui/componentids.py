@@ -4,7 +4,7 @@ componentids.py - Component ID Constants
 This module defines constants for all component IDs used in the dashboard application.
 These IDs are used for callbacks and to reference components in the Dash application.
 """
-
+TEST = 1#bad comment
 
 # === Styling ===
 GLOBAL_STYLING_STORE = "global-styling"
