@@ -9,15 +9,16 @@ class PlaceholderSchema(Schema):
     @property
     def datatypes(self) -> Dict[str, DataType]:
         return {
-            "id":DataType.INTEGER,
-            "name":DataType.STRING,
-            "age":DataType.INTEGER,
-            "city":DataType.STRING,
-            "department":DataType.STRING,
-            "salary":DataType.INTEGER,
-            "hire_date":DataType.DATETIME,
-            "performance_score":DataType.FLOAT,
+            "id": DataType.INTEGER,
+            "name": DataType.STRING,
+            "age": DataType.INTEGER,
+            "city": DataType.STRING,
+            "department": DataType.STRING,
+            "salary": DataType.INTEGER,
+            "hire_date": DataType.DATETIME,
+            "performance_score": DataType.FLOAT,
         }
+
 
 placeholder_input_config = InputFileConfiguration(
     extension=FileExtension.CSV,

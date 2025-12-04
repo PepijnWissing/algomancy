@@ -2,27 +2,31 @@
 from abc import ABC, abstractmethod
 from typing import Dict, List
 
-from algomancy.dataengine.schema import Schema
-from algomancy.dataengine.datasource import BASE_DATA_BOUND, DataClassification
-from algomancy.dataengine.extractor import Extractor
-from algomancy.dataengine.file import File
-from algomancy.dataengine.loader import Loader
-from algomancy.dataengine.transformer import Transformer
-from algomancy.dataengine.validator import ValidationError, ValidationSequence
-from algomancy.dataengine.inputfileconfiguration import InputFileConfiguration, SingleInputFileConfiguration, \
-    MultiInputFileConfiguration
-from algomancy.dashboardlogger import Logger
+from utils import Logger
+
+from .schema import Schema
+from .datasource import BASE_DATA_BOUND, DataClassification
+from .extractor import Extractor
+from .file import File
+from .loader import Loader
+from .transformer import Transformer
+from .validator import ValidationError, ValidationSequence
+from .inputfileconfiguration import (
+    InputFileConfiguration,
+    SingleInputFileConfiguration,
+    MultiInputFileConfiguration,
+)
 
 
 class ETLPipeline:
     def __init__(
-            self,
-            destination_name: str,
-            extractors: Dict[str, Extractor],
-            validation_sequence: ValidationSequence,
-            transformers: List[Transformer],  #todo refactor to transformationsequence
-            loader: Loader,
-            logger: Logger
+        self,
+        destination_name: str,
+        extractors: Dict[str, Extractor],
+        validation_sequence: ValidationSequence,
+        transformers: List[Transformer],  # todo refactor to transformationsequence
+        loader: Loader,
+        logger: Logger,
     ) -> None:
         self.destination_name = destination_name
         self.extractors = extractors
@@ -55,7 +59,9 @@ class ETLPipeline:
         is_valid, validation_messages = self.validation_sequence.run_validation(data)
 
         if not is_valid:
-            raise ValidationError("A critical validation error occurred. See log for details.")
+            raise ValidationError(
+                "A critical validation error occurred. See log for details."
+            )
 
         # Transformation
         for transformer in self.transformers:
@@ -93,14 +99,18 @@ class ETLFactory(ABC):
         try:
             cfg = self.configs_dct[file_name]
         except KeyError:
-            raise ETLConstructionError(f"No input configuration available for {file_name}.")
+            raise ETLConstructionError(
+                f"No input configuration available for {file_name}."
+            )
 
         if isinstance(cfg, SingleInputFileConfiguration):
             return cfg.file_schema
         elif isinstance(cfg, MultiInputFileConfiguration):
             return cfg.file_schemas
         else:
-            raise ETLConstructionError(f"{file_name} does not have a valid input file configuration")
+            raise ETLConstructionError(
+                f"{file_name} does not have a valid input file configuration"
+            )
 
     @abstractmethod
     def create_extractors(self, files: Dict[str, File]) -> Dict[str, Extractor]:
@@ -118,9 +128,13 @@ class ETLFactory(ABC):
     def create_loader(self) -> Loader:
         pass
 
-    def build_pipeline(self, dataset_name: str, files: Dict[str, File], logger: Logger) -> ETLPipeline:
+    def build_pipeline(
+        self, dataset_name: str, files: Dict[str, File], logger: Logger
+    ) -> ETLPipeline:
         extractors = self.create_extractors(files)
         validations = self.create_validation_sequence()
         transformers = self.create_transformers()
         loader = self.create_loader()
-        return ETLPipeline(dataset_name, extractors, validations, transformers, loader, logger)
+        return ETLPipeline(
+            dataset_name, extractors, validations, transformers, loader, logger
+        )

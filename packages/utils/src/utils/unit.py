@@ -89,22 +89,23 @@ class Unit:
       point back to the smaller.
     - `__str__` prints a human-readable description for debugging.
     """
+
     def __init__(self, name: str, symbol: str):
         self.name: str = name
         self.symbol: str = symbol
-        self.smaller_unit: 'Unit | None' = None
+        self.smaller_unit: "Unit | None" = None
         self.conversion_factor_to_smaller: float | None = None
-        self.larger_unit: 'Unit | None' = None
+        self.larger_unit: "Unit | None" = None
         self.conversion_factor_to_larger: float | None = None
 
     def __str__(self):
-        return f'Unit: {self.name}, ({self.symbol})'
+        return f"Unit: {self.name}, ({self.symbol})"
 
-    def _set_smaller_unit(self, smaller_unit: 'Unit', conversion_factor: float):
+    def _set_smaller_unit(self, smaller_unit: "Unit", conversion_factor: float):
         self.smaller_unit = smaller_unit
         self.conversion_factor_to_smaller = conversion_factor
 
-    def set_larger_unit(self, larger_unit: 'Unit', conversion_factor: float):
+    def set_larger_unit(self, larger_unit: "Unit", conversion_factor: float):
         self.larger_unit = larger_unit
         self.conversion_factor_to_larger = conversion_factor
 
@@ -133,6 +134,7 @@ class Quantity:
     - When you add a new unit, bidirectional links between adjacent units are
       re-built automatically.
     """
+
     def __init__(self, name: str, standard_unit: Unit):
         self.name: str = name
         self.standard_unit: Unit = standard_unit
@@ -143,12 +145,16 @@ class Quantity:
         try:
             return self.associated_units[key]
         except KeyError:
-            raise KeyError(f"Unit '{key}' not found in quantity '{self.name}'\n"
-                           f"  Available units are: {', '.join(self.associated_units.keys())}")
+            raise KeyError(
+                f"Unit '{key}' not found in quantity '{self.name}'\n"
+                f"  Available units are: {', '.join(self.associated_units.keys())}"
+            )
 
     def add_unit(self, base_unit: Unit, factor_to_base: float):
         if base_unit.name in self.associated_units:
-            raise ValueError(f"Unit '{base_unit.name}' already exists in quantity '{self.name}'")
+            raise ValueError(
+                f"Unit '{base_unit.name}' already exists in quantity '{self.name}'"
+            )
         self.associated_units[base_unit.name] = base_unit
         self.sorted_units.append((base_unit, factor_to_base))
         self._sort_associated_units()
@@ -163,10 +169,7 @@ class Quantity:
             if i == len(self.sorted_units) - 1:
                 break
             next_unit, next_factor = self.sorted_units[i + 1]
-            unit.set_larger_unit(
-                next_unit,
-                factor / next_factor
-            )
+            unit.set_larger_unit(next_unit, factor / next_factor)
 
 
 class BaseMeasurement:
@@ -200,14 +203,15 @@ class BaseMeasurement:
     - If `smallest_unit`/`largest_unit` are provided, they must match unit names
       registered in the corresponding `Quantity`.
     """
+
     def __init__(
-            self,
-            base_unit: Unit,
-            min_digits: int = 0,
-            max_digits: int = 3,
-            decimals: int = 2,
-            smallest_unit: str | None = None,
-            largest_unit: str | None = None,
+        self,
+        base_unit: Unit,
+        min_digits: int = 0,
+        max_digits: int = 3,
+        decimals: int = 2,
+        smallest_unit: str | None = None,
+        largest_unit: str | None = None,
     ):
         self.unit: Unit = base_unit
         self.min_digits: int = min_digits
@@ -217,8 +221,10 @@ class BaseMeasurement:
         self.largest_unit: str | None = largest_unit
 
     def __str__(self):
-        return (f"{self.unit.name}, {self.unit.symbol} | {self.min_digits} to {self.max_digits} digits |"
-                f" {self.decimals} decimals")
+        return (
+            f"{self.unit.name}, {self.unit.symbol} | {self.min_digits} to {self.max_digits} digits |"
+            f" {self.decimals} decimals"
+        )
 
 
 class Measurement:
@@ -253,6 +259,7 @@ class Measurement:
     print(m.pretty())           # 2500.00 m
     ```
     """
+
     INITIAL_VALUE = -9999999999
 
     def __init__(self, base_measurement: BaseMeasurement, value: float = INITIAL_VALUE):
@@ -277,7 +284,7 @@ class Measurement:
         """Format the value according to the specified decimal places"""
         return f"{self.value:.{self.base_measurement.decimals}f}"
 
-    def scale(self) -> 'Measurement':
+    def scale(self) -> "Measurement":
         """Scale the measurement to fit within the desired digit range"""
         # If no value was set, do nothing
         if self.value == Measurement.INITIAL_VALUE:
@@ -291,7 +298,11 @@ class Measurement:
         n_digits = self._get_digits()
 
         # if the number of digits is within the range, return formatted measurement
-        if self.base_measurement.min_digits <= n_digits <= self.base_measurement.max_digits:
+        if (
+            self.base_measurement.min_digits
+            <= n_digits
+            <= self.base_measurement.max_digits
+        ):
             formatted_value = float(self._format_value())
             return Measurement(self.base_measurement, formatted_value)
 
@@ -320,13 +331,13 @@ class Measurement:
         if 1 <= value < 10:
             return progress
         elif 10 <= value:
-            return self._get_digits(value/10, progress+1)
+            return self._get_digits(value / 10, progress + 1)
         elif value < 1:
-            return self._get_digits(value*10, progress-1)
+            return self._get_digits(value * 10, progress - 1)
         else:
             raise ValueError("Invalid value")
 
-    def scale_to_unit(self, other_unit: Unit) -> 'Measurement':
+    def scale_to_unit(self, other_unit: Unit) -> "Measurement":
         """
         Scale this measurement to use the same unit as another measurement.
 
@@ -351,7 +362,7 @@ class Measurement:
                     smallest_unit=self.base_measurement.smallest_unit,
                     largest_unit=self.base_measurement.largest_unit,
                 ),
-                formatted_value
+                formatted_value,
             )
 
         # Find conversion path from self to other's unit
@@ -416,7 +427,7 @@ class Measurement:
 
         return None
 
-    def _scale_up(self) -> 'Measurement':
+    def _scale_up(self) -> "Measurement":
         """Scale up to a larger unit"""
         # Check if we can scale up
         if self.unit.larger_unit is None:
@@ -425,8 +436,10 @@ class Measurement:
             return Measurement(self.base_measurement, formatted_value)
 
         # Check if largest_unit constraint prevents scaling
-        if (self.base_measurement.largest_unit is not None and
-                self.unit.name == self.base_measurement.largest_unit):
+        if (
+            self.base_measurement.largest_unit is not None
+            and self.unit.name == self.base_measurement.largest_unit
+        ):
             formatted_value = float(self._format_value())
             return Measurement(self.base_measurement, formatted_value)
 
@@ -445,7 +458,7 @@ class Measurement:
         # Recursively scale if still too many digits
         return new_measurement.scale()
 
-    def _scale_down(self) -> 'Measurement':
+    def _scale_down(self) -> "Measurement":
         """Scale down to a smaller unit"""
         # Check if we can scale down
         if self.unit.smaller_unit is None:
@@ -454,8 +467,10 @@ class Measurement:
             return Measurement(self.base_measurement, formatted_value)
 
         # Check if smallest_unit constraint prevents scaling
-        if (self.base_measurement.smallest_unit is not None and
-                self.unit.name == self.base_measurement.smallest_unit):
+        if (
+            self.base_measurement.smallest_unit is not None
+            and self.unit.name == self.base_measurement.smallest_unit
+        ):
             formatted_value = float(self._format_value())
             return Measurement(self.base_measurement, formatted_value)
 
@@ -478,6 +493,7 @@ class Measurement:
 # ============================================================================
 # Pre-defined Quantities with Extensive Unit Options
 # ============================================================================
+
 
 def create_length_quantity() -> Quantity:
     """Create a length quantity with metric units"""
@@ -722,6 +738,7 @@ def create_default_quantity() -> Quantity:
 # Standard Quantities Registry
 # ============================================================================
 
+
 class QuantityRegistry:
     """Registry for commonly used quantities
 
@@ -789,8 +806,10 @@ class QuantityRegistry:
         """Get a quantity by name using [] operator"""
         quantity = self.get(name)
         if quantity is None:
-            raise KeyError(f"Quantity '{name}' not found in registry.\n "
-                           f"  Available quantities: {self.list_quantities()}")
+            raise KeyError(
+                f"Quantity '{name}' not found in registry.\n "
+                f"  Available quantities: {self.list_quantities()}"
+            )
         return quantity
 
 

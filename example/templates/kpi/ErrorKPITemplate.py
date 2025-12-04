@@ -31,7 +31,9 @@ class ErrorKPI(BaseKPI):
         super().__init__(
             "Error Rate",
             ImprovementDirection.LOWER,
-            BaseMeasurement(QUANTITIES["default"]["unit"], min_digits=1, max_digits=3, decimals=1)
+            BaseMeasurement(
+                QUANTITIES["default"]["unit"], min_digits=1, max_digits=3, decimals=1
+            ),
         )
 
     def compute(self, result: ScenarioResult) -> float:

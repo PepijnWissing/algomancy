@@ -15,15 +15,17 @@ from algomancy.scenarioengine import (
 
 class BatchingAlgorithmParameters(BaseAlgorithmParameters):
     def __init__(
-            self,
-            name: str = "Batching",
+        self,
+        name: str = "Batching",
     ):
         super().__init__(name=name)
 
         self.add_parameters(
             [
                 IntegerParameter(name="batch_size", minvalue=1),
-                EnumParameter(name="search_direction", choices=["depth first", "breadth first"]),
+                EnumParameter(
+                    name="search_direction", choices=["depth first", "breadth first"]
+                ),
                 BooleanParameter(name="use_cache"),
             ]
         )
@@ -56,6 +58,7 @@ class BatchingAlgorithm(BaseAlgorithm):
         sleep(self.params.batch_size)
         self.set_progress(100)
         return ScenarioResult(data_id=data.id)
+
 
 # def batching_algorithm(
 #     data: DataSource,

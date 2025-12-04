@@ -4,7 +4,6 @@ from algomancy.dataengine import DataSource
 
 
 class PlaceholderDataPageContentCreator:
-
     @staticmethod
     def register_callbacks():
         pass

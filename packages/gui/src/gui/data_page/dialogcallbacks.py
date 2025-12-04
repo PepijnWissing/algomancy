@@ -38,13 +38,17 @@ def get_options_for_lists(data):
     sm = get_app().server.scenario_manager
 
     options = [{"label": ds, "value": ds} for ds in sm.get_data_keys()]
-    derived_options = [{"label": ds, "value": ds} for ds in sm.get_data_keys() if
-                       not sm.get_data(ds).is_master_data()]
+    derived_options = [
+        {"label": ds, "value": ds}
+        for ds in sm.get_data_keys()
+        if not sm.get_data(ds).is_master_data()
+    ]
 
     return options, options, options, derived_options, options
 
 
 # === callbacks related to the derive modal ===
+
 
 def _sanitize(name: str) -> str:
     # keep ascii-safe filename characters only
@@ -60,14 +64,9 @@ def _sanitize(name: str) -> str:
         Output(DATA_MAN_ERROR_ALERT, "is_open", allow_duplicate=True),
         Output(DM_DERIVE_MODAL, "is_open", allow_duplicate=True),
     ],
-    [
-        Input(DM_DERIVE_MODAL_SUBMIT_BTN, "n_clicks")
-    ],
-    [
-        State(DM_DERIVE_SET_SELECTOR, "value"),
-        State(DM_DERIVE_SET_NAME_INPUT, "value")
-    ],
-    prevent_initial_call=True
+    [Input(DM_DERIVE_MODAL_SUBMIT_BTN, "n_clicks")],
+    [State(DM_DERIVE_SET_SELECTOR, "value"), State(DM_DERIVE_SET_NAME_INPUT, "value")],
+    prevent_initial_call=True,
 )
 def derive_data_callback(n_clicks, selected_data_key, derived_name):
     """
@@ -90,21 +89,31 @@ def derive_data_callback(n_clicks, selected_data_key, derived_name):
     try:
         sanitized_name = _sanitize(derived_name)
         sm.derive_data(selected_data_key, sanitized_name)
-        return datetime.now(), "Successfully created derived dataset!", True, "", False, False
+        return (
+            datetime.now(),
+            "Successfully created derived dataset!",
+            True,
+            "",
+            False,
+            False,
+        )
     except Exception as e:
         return no_update, "", False, f"Problem with deriving: {str(e)}", True, False
 
 
 @callback(
     Output(DM_DERIVE_MODAL, "is_open"),
-    [Input(DM_DERIVE_OPEN_BTN, "n_clicks"), Input(DM_DERIVE_MODAL_CLOSE_BTN, "n_clicks")],
+    [
+        Input(DM_DERIVE_OPEN_BTN, "n_clicks"),
+        Input(DM_DERIVE_MODAL_CLOSE_BTN, "n_clicks"),
+    ],
     [dash.dependencies.State(DM_DERIVE_MODAL, "is_open")],
 )
 def toggle_modal_derive(open_clicks, close_clicks, is_open):
     """
     Toggles the visibility of the derive modal dialog.
 
-    Opens the modal when the open button is clicked and closes it when 
+    Opens the modal when the open button is clicked and closes it when
     the close button is clicked.
 
     Args:
@@ -121,6 +130,7 @@ def toggle_modal_derive(open_clicks, close_clicks, is_open):
 
 
 # === callbacks related to the delete modal
+
 
 @callback(
     Output(DM_DELETE_SET_SELECTOR, "value"),
@@ -142,12 +152,13 @@ def reset_on_close(modal_is_open: bool):
     return no_update
 
 
-@callback([
-    Output(DM_DELETE_COLLAPSE, "is_open"),
-    Output(DM_DELETE_CONFIRM_INPUT, "value"),
-],
+@callback(
+    [
+        Output(DM_DELETE_COLLAPSE, "is_open"),
+        Output(DM_DELETE_CONFIRM_INPUT, "value"),
+    ],
     Input(DM_DELETE_SET_SELECTOR, "value"),
-    prevent_initial_call=True
+    prevent_initial_call=True,
 )
 def open_confirm_section(selected_data_key):
     """
@@ -170,13 +181,9 @@ def open_confirm_section(selected_data_key):
 
     is_master_data = sm.get_data(selected_data_key).is_master_data()
     if is_master_data:
-        return (
-            True, ""
-        )
+        return (True, "")
     else:
-        return (
-            False, "DELETE"
-        )
+        return (False, "DELETE")
 
 
 @callback(
@@ -188,14 +195,10 @@ def open_confirm_section(selected_data_key):
         Output(DATA_MAN_ERROR_ALERT, "is_open", allow_duplicate=True),
         Output(DM_DELETE_MODAL, "is_open", allow_duplicate=True),
     ],
-    [
-        Input(DM_DELETE_SUBMIT_BUTTON, "n_clicks")
-    ],
-    [
-        State(DM_DELETE_SET_SELECTOR, "value"),
-        State(DM_DELETE_CONFIRM_INPUT, "value")
-    ],
-    prevent_initial_call=True)
+    [Input(DM_DELETE_SUBMIT_BUTTON, "n_clicks")],
+    [State(DM_DELETE_SET_SELECTOR, "value"), State(DM_DELETE_CONFIRM_INPUT, "value")],
+    prevent_initial_call=True,
+)
 def delete_data_callback(n_clicks, selected_data_key, confirm_str):
     """
     Deletes the selected dataset when the delete button is clicked.
@@ -213,7 +216,17 @@ def delete_data_callback(n_clicks, selected_data_key, confirm_str):
         Tuple containing updated dropdown options, alert messages, and modal state
     """
     if not selected_data_key:
-        return no_update, no_update, no_update, no_update, "", False, "Select a dataset to delete!", True, False
+        return (
+            no_update,
+            no_update,
+            no_update,
+            no_update,
+            "",
+            False,
+            "Select a dataset to delete!",
+            True,
+            False,
+        )
     if confirm_str != "DELETE":
         return no_update, no_update, no_update, no_update, no_update, no_update
     sm = get_app().server.scenario_manager
@@ -226,14 +239,17 @@ def delete_data_callback(n_clicks, selected_data_key, confirm_str):
 
 @callback(
     Output(DM_DELETE_MODAL, "is_open"),
-    [Input(DM_DELETE_OPEN_BUTTON, "n_clicks"), Input(DM_DELETE_CLOSE_BUTTON, "n_clicks")],
+    [
+        Input(DM_DELETE_OPEN_BUTTON, "n_clicks"),
+        Input(DM_DELETE_CLOSE_BUTTON, "n_clicks"),
+    ],
     [dash.dependencies.State(DM_DELETE_MODAL, "is_open")],
 )
 def toggle_modal_delete(open_clicks, close_clicks, is_open):
     """
     Toggles the visibility of the delete modal dialog.
 
-    Opens the modal when the open button is clicked and closes it when 
+    Opens the modal when the open button is clicked and closes it when
     the close button is clicked.
 
     Args:
@@ -251,16 +267,20 @@ def toggle_modal_delete(open_clicks, close_clicks, is_open):
 
 # === callbacks related to the upload modal
 
+
 @callback(
     Output(DM_IMPORT_MODAL, "is_open"),
-    [Input(DM_IMPORT_OPEN_BUTTON, "n_clicks"), Input(DM_IMPORT_MODAL_CLOSE_BTN, "n_clicks")],
+    [
+        Input(DM_IMPORT_OPEN_BUTTON, "n_clicks"),
+        Input(DM_IMPORT_MODAL_CLOSE_BTN, "n_clicks"),
+    ],
     [dash.dependencies.State(DM_IMPORT_MODAL, "is_open")],
 )
 def toggle_modal_load(open_clicks, close_clicks, is_open):
     """
     Toggles the visibility of the load modal dialog.
 
-    Opens the modal when the open button is clicked and closes it when 
+    Opens the modal when the open button is clicked and closes it when
     the close button is clicked.
 
     Args:
@@ -289,35 +309,35 @@ def render_file_mapping_table(mapping):
     """
 
     # Compose table header
-    header = [
-        html.Tr([html.Th("Expected"), html.Th("Found")])
-    ]
+    header = [html.Tr([html.Th("Expected"), html.Th("Found")])]
 
     # Compose table rows
     rows = []
     for expected, found in mapping.items():
         rows.append(html.Tr([html.Td(expected), html.Td(found)]))
 
-    table = html.Table(header + rows,
-                       style={
-                           "width": "100%",
-                           "borderCollapse": "separate",  # More space than "collapse"
-                           "border": "none",  # No border on the table
-                           "borderSpacing": "10px 6px",  # Horizontal and vertical spacing between cells
-                           "margin": "8px 0"  # Additional space around the table
-                       }
-                       )
+    table = html.Table(
+        header + rows,
+        style={
+            "width": "100%",
+            "borderCollapse": "separate",  # More space than "collapse"
+            "border": "none",  # No border on the table
+            "borderSpacing": "10px 6px",  # Horizontal and vertical spacing between cells
+            "margin": "8px 0",  # Additional space around the table
+        },
+    )
     return html.Div([html.Strong("File Mapping:"), table])
 
 
-@callback([
-    Output(DM_IMPORT_MODAL_FILEVIEWER_CARD, "children"),
-    Output(DM_IMPORT_MODAL_FILEVIEWER_COLLAPSE, "is_open"),
-    Output(DM_IMPORT_MODAL_FILEVIEWER_ALERT, "is_open"),
-    Output(DM_IMPORT_MODAL_FILEVIEWER_ALERT, "children"),
-],
+@callback(
+    [
+        Output(DM_IMPORT_MODAL_FILEVIEWER_CARD, "children"),
+        Output(DM_IMPORT_MODAL_FILEVIEWER_COLLAPSE, "is_open"),
+        Output(DM_IMPORT_MODAL_FILEVIEWER_ALERT, "is_open"),
+        Output(DM_IMPORT_MODAL_FILEVIEWER_ALERT, "children"),
+    ],
     Input(DM_IMPORT_UPLOADER, "filename"),
-    prevent_initial_call=True
+    prevent_initial_call=True,
 )
 def show_uploaded_filename(filename):
     """
@@ -348,16 +368,20 @@ def show_uploaded_filename(filename):
         filenames = [filename]
 
     from .filenamematcher import match_file_names
+
     try:
         mapping = match_file_names(sm.input_configurations, filenames)
     except Exception as e:
         sm.logger.error(f"Problem with loading: {str(e)}")
         sm.logger.log_traceback(e)
-        return no_update, False, True, f"Could not match files uniquely. Close and try again"
+        return (
+            no_update,
+            False,
+            True,
+            "Could not match files uniquely. Close and try again",
+        )
 
-    return html.Div([
-        render_file_mapping_table(mapping)
-    ]), True, False, ""
+    return html.Div([render_file_mapping_table(mapping)]), True, False, ""
 
 
 def decode_contents(contents):
@@ -373,8 +397,8 @@ def decode_contents(contents):
     if not contents:
         return None, None
 
-    content_type, content_string = contents.split(',', 1)
-    mime_type = content_type.split(';')[0][5:]
+    content_type, content_string = contents.split(",", 1)
+    mime_type = content_type.split(";")[0][5:]
     decoded = base64.b64decode(content_string)
     return mime_type, decoded
 
@@ -383,27 +407,32 @@ def handle_csv_upload(contents):
     mime_type, decoded = decode_contents(contents)
     if mime_type == "text/csv":
         from io import StringIO
-        data_str = decoded.decode('utf-8')
+
+        data_str = decoded.decode("utf-8")
         df = pd.read_csv(StringIO(data_str))
         return df
     else:
         raise ValueError("Unsupported file type")
 
 
-@callback([
-    Output(DM_LIST_UPDATER_STORE, "data", allow_duplicate=True),
-    Output(DM_IMPORT_MODAL, "is_open", allow_duplicate=True),
-    Output(DATA_MAN_SUCCESS_ALERT, "children", allow_duplicate=True),
-    Output(DATA_MAN_SUCCESS_ALERT, "is_open", allow_duplicate=True),
-    Output(DATA_MAN_ERROR_ALERT, "children", allow_duplicate=True),
-    Output(DATA_MAN_ERROR_ALERT, "is_open", allow_duplicate=True),
-    Output('dm-import-modal-dummy-store', 'data', allow_duplicate=True),
-], [
-    Input(DM_IMPORT_SUBMIT_BUTTON, "n_clicks"),
-], [
-    State(DM_IMPORT_UPLOADER, "contents"),
-    State(DM_IMPORT_UPLOADER, "filename"),
-    State(DM_IMPORT_MODAL_NAME_INPUT, "value"), ],
+@callback(
+    [
+        Output(DM_LIST_UPDATER_STORE, "data", allow_duplicate=True),
+        Output(DM_IMPORT_MODAL, "is_open", allow_duplicate=True),
+        Output(DATA_MAN_SUCCESS_ALERT, "children", allow_duplicate=True),
+        Output(DATA_MAN_SUCCESS_ALERT, "is_open", allow_duplicate=True),
+        Output(DATA_MAN_ERROR_ALERT, "children", allow_duplicate=True),
+        Output(DATA_MAN_ERROR_ALERT, "is_open", allow_duplicate=True),
+        Output("dm-import-modal-dummy-store", "data", allow_duplicate=True),
+    ],
+    [
+        Input(DM_IMPORT_SUBMIT_BUTTON, "n_clicks"),
+    ],
+    [
+        State(DM_IMPORT_UPLOADER, "contents"),
+        State(DM_IMPORT_UPLOADER, "filename"),
+        State(DM_IMPORT_MODAL_NAME_INPUT, "value"),
+    ],
     prevent_initial_call=True,
 )
 def process_imports(n_clicks, contents, filenames, dataset_name):
@@ -465,7 +494,9 @@ def prepare_files_from_upload(sm, filenames, contents):
     reverse_mapping = {value: key for key, value in mapping.items()}
 
     # Extract file extensions and create content dictionary
-    extensions = {file_name: file_name.split(".")[-1].lower() for file_name in filenames}
+    extensions = {
+        file_name: file_name.split(".")[-1].lower() for file_name in filenames
+    }
     content_dict = dict(zip(filenames, contents))
 
     # Prepare file items with content
@@ -532,16 +563,20 @@ def clean_contents_on_close(modal_is_open: bool):
 
 # === Callbacks related to the save modal ===
 
+
 @callback(
     Output(DM_SAVE_MODAL, "is_open"),
-    [Input(DM_SAVE_OPEN_BUTTON, "n_clicks"), Input(DM_SAVE_MODAL_CLOSE_BTN, "n_clicks")],
+    [
+        Input(DM_SAVE_OPEN_BUTTON, "n_clicks"),
+        Input(DM_SAVE_MODAL_CLOSE_BTN, "n_clicks"),
+    ],
     [dash.dependencies.State(DM_SAVE_MODAL, "is_open")],
 )
 def toggle_modal_save(open_clicks, close_clicks, is_open):
     """
     Toggles the visibility of the save modal dialog.
 
-    Opens the modal when the open button is clicked and closes it when 
+    Opens the modal when the open button is clicked and closes it when
     the close button is clicked.
 
     Args:
@@ -587,7 +622,10 @@ def reset_save_selection_on_close(modal_is_open: bool):
     State(DM_SAVE_SET_SELECTOR, "value"),
     prevent_initial_call=True,
 )
-def save_derived_data(n_clicks, set_name: str, ):
+def save_derived_data(
+    n_clicks,
+    set_name: str,
+):
     """
     Saves a derived dataset as master data when the save button is clicked.
 

@@ -12,8 +12,9 @@ class MessageStatus(StrEnum):
 
 
 class Message:
-
-    def __init__(self, message: str, status: MessageStatus = MessageStatus.INFO) -> None:
+    def __init__(
+        self, message: str, status: MessageStatus = MessageStatus.INFO
+    ) -> None:
         self.message = message
         self.status = status
         self.timestamp = datetime.datetime.now()
@@ -63,9 +64,7 @@ class Logger:
         :param message: Het bericht dat gelogd wordt
         :param status: Status/type van het bericht (bijv. 'info', 'success', 'warning', 'error')
         """
-        self._logs.append(
-            Message(message=message, status=status)
-        )
+        self._logs.append(Message(message=message, status=status))
         self.latest_log = self._logs[-1]
 
         if self._print_to_console:
@@ -74,7 +73,7 @@ class Logger:
     def success(self, message: str):
         self.log(message, status=MessageStatus.SUCCESS)
 
-    def warning(self, message:str):
+    def warning(self, message: str):
         self.log(message, status=MessageStatus.WARNING)
 
     def error(self, message: str):
@@ -98,8 +97,6 @@ class Logger:
         self._logs.clear()
 
     def log_traceback(self, e: Exception):
-        self.error(
-            f"An error occurred: {e.__class__.__name__}: {e}"
-        )
+        self.error(f"An error occurred: {e.__class__.__name__}: {e}")
         for msg in traceback.format_tb(e.__traceback__):
             self.error(msg)

@@ -28,5 +28,3 @@ def test_derive_data(
     # mutate derived data
     # #-- expected to fail as debug_mutate() has been removed.
     sm.get_data(derived_data_key).debug_mutate()  # may throw NotImplementedError
-
-

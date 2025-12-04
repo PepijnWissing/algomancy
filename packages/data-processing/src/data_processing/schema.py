@@ -15,7 +15,6 @@ class DataType(StrEnum):
 
 
 class Schema(ABC):
-
     @property
     @abstractmethod
     def datatypes(self) -> Dict[str, DataType]:
@@ -42,11 +41,11 @@ class Schema(ABC):
         return [
             name
             for name, attr in vars(cls).items()
-            if not (name.startswith('__') and name.endswith('__'))
-               and not name == 'datatypes'
-               and not inspect.isroutine(attr)
-               and not inspect.isclass(attr)
-               and not inspect.isbuiltin(attr)
-               # Optioneel: filter properties/descriptors indien gewenst
-               and not inspect.isdatadescriptor(attr)
+            if not (name.startswith("__") and name.endswith("__"))
+            and not name == "datatypes"
+            and not inspect.isroutine(attr)
+            and not inspect.isclass(attr)
+            and not inspect.isbuiltin(attr)
+            # Optioneel: filter properties/descriptors indien gewenst
+            and not inspect.isdatadescriptor(attr)
         ]

@@ -5,10 +5,7 @@ from algomancy.scenarioengine import (
     ScenarioResult,
 )
 from algomancy.scenarioengine import BaseAlgorithm
-from algomancy.scenarioengine import (
-    BaseAlgorithmParameters,
-    FloatParameter
-)
+from algomancy.scenarioengine import BaseAlgorithmParameters, FloatParameter
 
 
 class RandomAlgorithmParameters(BaseAlgorithmParameters):
@@ -31,8 +28,8 @@ class RandomAlgorithmParameters(BaseAlgorithmParameters):
 
 class RandomAlgorithm(BaseAlgorithm):
     def __init__(
-            self,
-            params: RandomAlgorithmParameters,
+        self,
+        params: RandomAlgorithmParameters,
     ):
         super().__init__(name="Random", params=params)
 

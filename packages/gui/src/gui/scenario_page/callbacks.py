@@ -1,9 +1,21 @@
-from dash import Output, Input, callback_context, no_update, callback, State, ALL, get_app, ctx
+from dash import (
+    Output,
+    Input,
+    callback_context,
+    no_update,
+    callback,
+    State,
+    ALL,
+    get_app,
+    ctx,
+)
 from dash.exceptions import PreventUpdate
 
 from algomancy.scenarioengine import ScenarioStatus
 from algomancy.components.componentids import *
-from algomancy.components.scenario_page.new_scenario_parameters_window import create_algo_parameters_entry_card_body
+from algomancy.components.scenario_page.new_scenario_parameters_window import (
+    create_algo_parameters_entry_card_body,
+)
 from algomancy.components.scenario_page.scenario_cards import scenario_cards
 
 
@@ -64,7 +76,11 @@ def process_scenario(process_clicks):
     sm = get_app().server.scenario_manager
 
     triggered = ctx.triggered_id
-    if isinstance(triggered, dict) and triggered["type"] == SCENARIO_PROCESS_BUTTON and sum(process_clicks) > 0:
+    if (
+        isinstance(triggered, dict)
+        and triggered["type"] == SCENARIO_PROCESS_BUTTON
+        and sum(process_clicks) > 0
+    ):
         scenario = sm.get_by_id(triggered["index"])
         if not scenario:
             return no_update
@@ -84,18 +100,20 @@ def process_scenario(process_clicks):
 
 def get_currently_processing_info(sm):
     value = sm.currently_processing.progress
-    label = f'{value:.0f}%' if value > 10 else ""
-    message = f'Processing: {sm.currently_processing.tag}'  # todo use textwrap to abbreviate tag
+    label = f"{value:.0f}%" if value > 10 else ""
+    message = f"Processing: {sm.currently_processing.tag}"  # todo use textwrap to abbreviate tag
     return value, label, message
 
 
 @callback(
-    [Output(SCENARIO_PROG_BAR, "value"),
-     Output(SCENARIO_PROG_BAR, "label"),
-     Output(SCENARIO_PROG_TEXT, "children"),
-     Output(SCENARIO_PROG_COLLAPSE, "is_open"),
-     Output(SCENARIO_PROG_INTERVAL, "disabled", allow_duplicate=True),
-     Output(SCENARIO_CURRENTLY_RUNNING_STORE, "data")],
+    [
+        Output(SCENARIO_PROG_BAR, "value"),
+        Output(SCENARIO_PROG_BAR, "label"),
+        Output(SCENARIO_PROG_TEXT, "children"),
+        Output(SCENARIO_PROG_COLLAPSE, "is_open"),
+        Output(SCENARIO_PROG_INTERVAL, "disabled", allow_duplicate=True),
+        Output(SCENARIO_CURRENTLY_RUNNING_STORE, "data"),
+    ],
     Input(SCENARIO_PROG_INTERVAL, "n_intervals"),
     State(SCENARIO_CURRENTLY_RUNNING_STORE, "data"),
     prevent_initial_call=True,
@@ -154,7 +172,7 @@ def open_algo_params_window(algo_name):
     if algo_name:
         try:
             return True, create_algo_parameters_entry_card_body(algo_name)
-        except AssertionError as ae:
+        except AssertionError:
             # get_app().server.scenario_manager.logger.log_traceback(ae)
             return False, ""
     return False, ""
@@ -174,7 +192,9 @@ def open_algo_params_window(algo_name):
     State(SCENARIO_SELECTED_ID_STORE, "data"),
     prevent_initial_call=True,
 )
-def create_scenario(create_clicks, tag, dataset, algorithm, algo_param_values, selected_id):
+def create_scenario(
+    create_clicks, tag, dataset, algorithm, algo_param_values, selected_id
+):
     # Now algo_param_values is a list containing the values of each param input, in DOM order!
     # You can also get their IDs from dash.callback_context.inputs_list for mapping
 
@@ -188,14 +208,16 @@ def create_scenario(create_clicks, tag, dataset, algorithm, algo_param_values, s
     scenario_manager = get_app().server.scenario_manager
 
     param_ids = [s["id"] for s in callback_context.states_list[3]]
-    param_dict = {pid["param"]: value for pid, value in zip(param_ids, algo_param_values)}
+    param_dict = {
+        pid["param"]: value for pid, value in zip(param_ids, algo_param_values)
+    }
 
     try:
         scenario_manager.create_scenario(tag, dataset, algorithm, param_dict)
         return "new scenario created", "", False, False
     except Exception as e:
         get_app().server.scenario_manager.logger.log_traceback(e)
-        return no_update, f'Error: {e}', True, False
+        return no_update, f"Error: {e}", True, False
 
 
 # --- Delete Modal Open Callback ---
@@ -306,12 +328,17 @@ def refresh_cards(message, selected_id):
     else:
         return scenario_cards(scenario_manager, None)
 
+
 @callback(
-    [Output({"type": SCENARIO_CARD, "index": ALL}, "className"),
-     Output(SCENARIO_SELECTED_ID_STORE, "data")],
+    [
+        Output({"type": SCENARIO_CARD, "index": ALL}, "className"),
+        Output(SCENARIO_SELECTED_ID_STORE, "data"),
+    ],
     [Input({"type": SCENARIO_CARD, "index": ALL}, "n_clicks")],
-    [State({"type": SCENARIO_CARD, "index": ALL}, "id"),
-     State(SCENARIO_SELECTED_ID_STORE, "data")],
+    [
+        State({"type": SCENARIO_CARD, "index": ALL}, "id"),
+        State(SCENARIO_SELECTED_ID_STORE, "data"),
+    ],
     # prevent_initial_call=True
 )
 def handle_scenario_card_click(n_clicks_list, card_ids, selected_scenario_id):
@@ -332,7 +359,9 @@ def handle_scenario_card_click(n_clicks_list, card_ids, selected_scenario_id):
         # On initial load, set default classes based on stored selection
         if selected_scenario_id:
             return [
-                "scenario-card selected" if card_id["index"] == selected_scenario_id else "scenario-card"
+                "scenario-card selected"
+                if card_id["index"] == selected_scenario_id
+                else "scenario-card"
                 for card_id in card_ids
             ], selected_scenario_id
         else:
@@ -346,6 +375,7 @@ def handle_scenario_card_click(n_clicks_list, card_ids, selected_scenario_id):
 
     # Extract the card index from the JSON string
     import json
+
     triggered_component = json.loads(triggered_id)
     clicked_card_id = triggered_component["index"]
 

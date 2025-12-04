@@ -3,8 +3,8 @@ from typing import List, Dict
 
 import pandas as pd
 
-from algomancy.dataengine.validator import ValidationMessage
-from algomancy.dataengine.datasource import DataClassification, DataSource, BASE_DATA_BOUND
+from .validator import ValidationMessage
+from .datasource import DataClassification, DataSource, BASE_DATA_BOUND
 
 
 class Loader(ABC):
@@ -12,22 +12,23 @@ class Loader(ABC):
         self.logger = logger
 
     @abstractmethod
-    def load(self,
-             name: str,
-             data: Dict[str, pd.DataFrame],
-             validation_messages: List[ValidationMessage],
-             ds_type: DataClassification,  # -- todo remove input argument: ETL'd data should always be master?
-             ) -> BASE_DATA_BOUND:
+    def load(
+        self,
+        name: str,
+        data: Dict[str, pd.DataFrame],
+        validation_messages: List[ValidationMessage],
+        ds_type: DataClassification,  # -- todo remove input argument: ETL'd data should always be master?
+    ) -> BASE_DATA_BOUND:
         pass
 
 
 class DataSourceLoader(Loader):
     def load(
-            self,
-            name: str,
-            data: dict[str, pd.DataFrame],
-            validation_messages: List[ValidationMessage],
-            ds_type: DataClassification = DataClassification.MASTER_DATA,
+        self,
+        name: str,
+        data: dict[str, pd.DataFrame],
+        validation_messages: List[ValidationMessage],
+        ds_type: DataClassification = DataClassification.MASTER_DATA,
     ) -> DataSource:
         datasource = DataSource(
             ds_type=ds_type,

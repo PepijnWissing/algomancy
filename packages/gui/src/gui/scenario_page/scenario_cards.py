@@ -10,9 +10,12 @@ import dash_bootstrap_components as dbc
 
 from algomancy.scenarioengine.scenariomanager import ScenarioManager, Scenario
 from algomancy.scenarioengine import ScenarioStatus
-from algomancy.stylingconfigurator import StylingConfigurator
 
-from algomancy.components import SCENARIO_PROCESS_BUTTON, SCENARIO_DELETE_BUTTON, SCENARIO_CARD, SCENARIO_STATUS_BADGE
+from algomancy.components import (
+    SCENARIO_PROCESS_BUTTON,
+    SCENARIO_DELETE_BUTTON,
+    SCENARIO_CARD,
+)
 from .scenario_badge import status_badge
 
 
@@ -22,7 +25,7 @@ def hidden_card():
     return scenario_card(dummy_scenario)
 
 
-def scenario_card(s: Scenario, is_hidden: bool=False):
+def scenario_card(s: Scenario, is_hidden: bool = False):
     # Determine process button appearance based on scenario status
     if s.status == ScenarioStatus.CREATED:
         status = "created"
@@ -33,60 +36,68 @@ def scenario_card(s: Scenario, is_hidden: bool=False):
     elif s.status in (ScenarioStatus.COMPLETE, ScenarioStatus.FAILED):
         status = "completed"
         btn_text = "Refresh"
-    else:                           # never
+    else:  # never
         status = "standard"
         btn_text = "Process"
 
     return html.Div(
         [
             # Top row: Scenario tag
-            dbc.Row([
-                dbc.Col(
-                    html.P(html.Strong(s.tag), className="mb-1"),
-                    width=12
-                )
-            ]),
+            dbc.Row([dbc.Col(html.P(html.Strong(s.tag), className="mb-1"), width=12)]),
             # Bottom row: Badge and buttons
-            dbc.Row([
-                dbc.Col(
-                    # Left: Badge
-                    html.Div(
-                        [
-                            html.Div(
-                                status_badge(s.status),
-                                id={"type": "SCENARIO_STATUS_BADGE_INNER", "index": s.id},
-                            ),
-                            dcc.Store(id={"type": "scenario-status-badge-store", "index": s.id}),
-                        ],
-                        className="d-flex align-items-center"
+            dbc.Row(
+                [
+                    dbc.Col(
+                        # Left: Badge
+                        html.Div(
+                            [
+                                html.Div(
+                                    status_badge(s.status),
+                                    id={
+                                        "type": "SCENARIO_STATUS_BADGE_INNER",
+                                        "index": s.id,
+                                    },
+                                ),
+                                dcc.Store(
+                                    id={
+                                        "type": "scenario-status-badge-store",
+                                        "index": s.id,
+                                    }
+                                ),
+                            ],
+                            className="d-flex align-items-center",
+                        ),
+                        width=6,
                     ),
-                    width=6),
-                # Right: Buttons
-                dbc.Col(
-                    dbc.ButtonGroup([
-                        dbc.Button(
-                            btn_text,
-                            id={"type": SCENARIO_PROCESS_BUTTON, "index": s.id},
-                            size="sm",
-                            n_clicks=0,
-                            class_name="scenario-multi-btn-" + status,
+                    # Right: Buttons
+                    dbc.Col(
+                        dbc.ButtonGroup(
+                            [
+                                dbc.Button(
+                                    btn_text,
+                                    id={"type": SCENARIO_PROCESS_BUTTON, "index": s.id},
+                                    size="sm",
+                                    n_clicks=0,
+                                    class_name="scenario-multi-btn-" + status,
+                                ),
+                                dbc.Button(
+                                    "Delete",
+                                    id={"type": SCENARIO_DELETE_BUTTON, "index": s.id},
+                                    size="sm",
+                                    n_clicks=0,
+                                    class_name="scenario-delete-btn-" + status,
+                                ),
+                            ]
                         ),
-                        dbc.Button(
-                            "Delete",
-                            id={"type": SCENARIO_DELETE_BUTTON, "index": s.id},
-                            size="sm",
-                            n_clicks=0,
-                            class_name="scenario-delete-btn-" + status,
-                        ),
-                    ]),
-                    width=6,
-                    className="d-flex align-items-center justify-content-end"
-                ),
-            ])
+                        width=6,
+                        className="d-flex align-items-center justify-content-end",
+                    ),
+                ]
+            ),
         ],
         id={"type": SCENARIO_CARD, "index": s.id},
         n_clicks=0,
-        className="scenario-card" if not is_hidden else "scenario-card hidden"
+        className="scenario-card" if not is_hidden else "scenario-card hidden",
     )
 
 
@@ -103,7 +114,7 @@ def scenario_cards(scenario_manager: ScenarioManager, selected_id=None):
     """
     cards = []
     for scenario in scenario_manager.list_scenarios():
-        is_selected = (scenario.id == selected_id)
+        is_selected = scenario.id == selected_id
         card = scenario_card(scenario)
         cards.append(card)
     return cards

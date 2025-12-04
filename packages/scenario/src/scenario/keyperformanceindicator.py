@@ -2,8 +2,8 @@ from abc import ABC, abstractmethod
 from enum import StrEnum, auto
 from typing import TypeVar
 
-from algomancy.scenarioengine.result import BASE_RESULT_BOUND
-from algomancy.scenarioengine.unit import BaseMeasurement, Measurement, Unit
+from .result import BASE_RESULT_BOUND
+from utils.unit import BaseMeasurement, Measurement, Unit
 
 
 class ImprovementDirection(StrEnum):
@@ -21,16 +21,18 @@ class KpiError(Exception):
 
 class BaseKPI(ABC):
     def __init__(
-            self,
-            name: str,
-            better_when: ImprovementDirection,
-            base_measurement: BaseMeasurement,
-            threshold: float | None = None,
+        self,
+        name: str,
+        better_when: ImprovementDirection,
+        base_measurement: BaseMeasurement,
+        threshold: float | None = None,
     ) -> None:
         self._name = name
         self._better_when = better_when
         self._measurement = Measurement(base_measurement)
-        self._threshold = Measurement(base_measurement, threshold) if threshold else None
+        self._threshold = (
+            Measurement(base_measurement, threshold) if threshold else None
+        )
 
     def __str__(self):
         self.pretty()
@@ -53,7 +55,10 @@ class BaseKPI(ABC):
 
     @property
     def is_binary_kpi(self) -> bool:
-        return self._better_when in [ImprovementDirection.AT_MOST, ImprovementDirection.AT_LEAST]
+        return self._better_when in [
+            ImprovementDirection.AT_MOST,
+            ImprovementDirection.AT_LEAST,
+        ]
 
     @property
     def success(self) -> bool:
@@ -129,4 +134,3 @@ class BaseKPI(ABC):
 
 
 BASE_KPI = TypeVar("BASE_KPI", bound=BaseKPI)
-

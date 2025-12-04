@@ -23,17 +23,19 @@ def data_page() -> html.Div:
         settings.use_cqm_loader,
     )
 
-    return html.Div([
-        html.H1("Data"),
-        top_bar(sm),
-        main_div,
-    ],)
+    return html.Div(
+        [
+            html.H1("Data"),
+            top_bar(sm),
+            main_div,
+        ],
+    )
 
 
 def content_div() -> html.Div:
     return html.Div(
-        html.Div(className='data-page-content'),  # placeholder
-        id=DATA_PAGE_CONTENT
+        html.Div(className="data-page-content"),  # placeholder
+        id=DATA_PAGE_CONTENT,
     )
 
 
@@ -47,7 +49,7 @@ def fill_data_page_content(data_key: str):
     cr: ContentRegistry = get_app().server.content_registry
 
     if data_key not in sm.get_data_keys():
-        return [html.P(f"Select a dataset.")]
+        return [html.P("Select a dataset.")]
 
     data = sm.get_data(data_key)
     page = cr.data_content(data)

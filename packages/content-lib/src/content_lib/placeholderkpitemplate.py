@@ -18,5 +18,5 @@ placeholder_kpi_template = KpiTemplate(
     name="Placeholder KPI",
     better_when=ImprovementDirection.LOWER,
     callback=placeholder_calculation_function,
-    measurement_base=mass_kg
+    measurement_base=mass_kg,
 )

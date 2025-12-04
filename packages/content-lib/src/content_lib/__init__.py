@@ -19,5 +19,5 @@ __all__ = [
     "StandardDataPageContentCreator",
     "StandardHomePageContentCreator",
     "StandardOverviewPageContentCreator",
-    "PlaceholderETLFactory"
+    "PlaceholderETLFactory",
 ]

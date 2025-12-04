@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import TypeVar
 
-from algomancy.dataengine import BASE_DATA_BOUND
+from data_processing import BASE_DATA_BOUND
 from .result import BASE_RESULT_BOUND
 from .basealgorithmparameters import BASE_PARAMS_BOUND
 
@@ -14,7 +14,7 @@ class BaseAlgorithm(ABC):
         self._progress: float = 0
 
     def __str__(self):
-        return f'{self.name} [{self._progress:.0f}%]: {self.description}'
+        return f"{self.name} [{self._progress:.0f}%]: {self.description}"
 
     @property
     def params(self):

@@ -15,9 +15,6 @@ def overview_page():
     """
     cr: ContentRegistry = get_app().server.content_registry
 
-    page = html.Div(
-        cr.overview_content(),
-        id=OVERVIEW_PAGE_CONTENT
-    )
+    page = html.Div(cr.overview_content(), id=OVERVIEW_PAGE_CONTENT)
 
     return page

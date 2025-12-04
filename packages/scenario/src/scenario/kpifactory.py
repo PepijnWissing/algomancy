@@ -1,6 +1,6 @@
 from typing import Generic, Dict, Type, List
 
-from algomancy.scenarioengine.keyperformanceindicator import BASE_KPI
+from .keyperformanceindicator import BASE_KPI
 
 
 class KpiFactory(Generic[BASE_KPI]):
@@ -15,6 +15,7 @@ class KpiFactory(Generic[BASE_KPI]):
         _templates (Dict[str, Type[BASE_KPI]]): Dictionary mapping template names
             to their corresponding KPI classes.
     """
+
     def __init__(self, templates: Dict[str, Type[BASE_KPI]]):
         self._templates = templates
 
@@ -41,4 +42,8 @@ class KpiFactory(Generic[BASE_KPI]):
             dict: A dictionary where the keys are the names of the templates from the
                 subset and the values are their corresponding instantiated templates.
         """
-        return {name: template() for name, template in self._templates.items() if name in subset}
+        return {
+            name: template()
+            for name, template in self._templates.items()
+            if name in subset
+        }

@@ -1,12 +1,13 @@
 from typing import Dict, List, Optional, Type
 
-from algomancy.scenarioengine.algorithmfactory import AlgorithmFactory
-from algomancy.dashboardlogger import Logger
-from algomancy.scenarioengine.basealgorithm import ALGORITHM
-from algomancy.scenarioengine.keyperformanceindicator import BASE_KPI
-from algomancy.scenarioengine.kpifactory import KpiFactory
-from algomancy.scenarioengine.scenario import Scenario
-from algomancy.dataengine import DataManager
+from utils import Logger
+from data_processing import DataManager
+
+from .algorithmfactory import AlgorithmFactory
+from .basealgorithm import ALGORITHM
+from .keyperformanceindicator import BASE_KPI
+from .kpifactory import KpiFactory
+from .scenario import Scenario
 
 
 class ScenarioFactory:
@@ -14,8 +15,13 @@ class ScenarioFactory:
     Creates scenarios, builds algorithms and KPIs, and performs parameter validation.
     """
 
-    def __init__(self, kpi_templates: Dict[str, Type[BASE_KPI]], algo_templates: Dict[str, Type[ALGORITHM]],
-                 data_manager: DataManager, logger: Logger | None = None):
+    def __init__(
+        self,
+        kpi_templates: Dict[str, Type[BASE_KPI]],
+        algo_templates: Dict[str, Type[ALGORITHM]],
+        data_manager: DataManager,
+        logger: Logger | None = None,
+    ):
         self.logger = logger
         self._kpi_factory = KpiFactory(kpi_templates)
         self._algorithm_factory = AlgorithmFactory(algo_templates, logger)
@@ -33,12 +39,22 @@ class ScenarioFactory:
         if self.logger:
             self.logger.log(msg)
 
-    def create(self, tag: str, dataset_key: str, algo_name: str, algo_params: Optional[dict] = None) -> Scenario:
+    def create(
+        self,
+        tag: str,
+        dataset_key: str,
+        algo_name: str,
+        algo_params: Optional[dict] = None,
+    ) -> Scenario:
         if algo_params is None:
             algo_params = {}
 
-        assert algo_name in self.available_algorithms, f"Algorithm '{algo_name}' not found."
-        assert dataset_key in self._data_manager.get_data_keys(), f"Data '{dataset_key}' not found."
+        assert (
+            algo_name in self.available_algorithms
+        ), f"Algorithm '{algo_name}' not found."
+        assert (
+            dataset_key in self._data_manager.get_data_keys()
+        ), f"Data '{dataset_key}' not found."
 
         algorithm = self._algorithm_factory.create(
             input_name=algo_name,

@@ -2,17 +2,33 @@ from typing import Tuple, Callable
 
 from dash import html
 
-from algomancy.contentcreatorlibrary.standarddatapage import StandardDataPageContentCreator
+from algomancy.contentcreatorlibrary.standarddatapage import (
+    StandardDataPageContentCreator,
+)
 from algomancy.dataengine import BASE_DATA_BOUND
 from algomancy.scenarioengine import Scenario
 
-from algomancy.contentcreatorlibrary.placeholderhomepagecontentcreator import PlaceholderHomePageContentCreator
-from algomancy.contentcreatorlibrary.standardhomepage import StandardHomePageContentCreator
-from algomancy.contentcreatorlibrary.exampledatapage import ExampleDataPageContentCreator
-from algomancy.contentcreatorlibrary.placeholderdatapage import PlaceholderDataPageContentCreator
-from algomancy.contentcreatorlibrary.placeholdercomparepage import PlaceholderComparePageContentCreator
-from algomancy.contentcreatorlibrary.placeholderscenariopage import PlaceholderScenarioPageContentCreator
-from algomancy.contentcreatorlibrary.standardoverviewpage import StandardOverviewPageContentCreator
+from algomancy.contentcreatorlibrary.placeholderhomepagecontentcreator import (
+    PlaceholderHomePageContentCreator,
+)
+from algomancy.contentcreatorlibrary.standardhomepage import (
+    StandardHomePageContentCreator,
+)
+from algomancy.contentcreatorlibrary.exampledatapage import (
+    ExampleDataPageContentCreator,
+)
+from algomancy.contentcreatorlibrary.placeholderdatapage import (
+    PlaceholderDataPageContentCreator,
+)
+from algomancy.contentcreatorlibrary.placeholdercomparepage import (
+    PlaceholderComparePageContentCreator,
+)
+from algomancy.contentcreatorlibrary.placeholderscenariopage import (
+    PlaceholderScenarioPageContentCreator,
+)
+from algomancy.contentcreatorlibrary.standardoverviewpage import (
+    StandardOverviewPageContentCreator,
+)
 
 
 class LibraryManager:
@@ -21,8 +37,8 @@ class LibraryManager:
 
     @staticmethod
     def get_home_content(
-            home_content: Callable[[], html.Div] | str,
-            home_callbacks: Callable[[], None] | str | None,
+        home_content: Callable[[], html.Div] | str,
+        home_callbacks: Callable[[], None] | str | None,
     ) -> Tuple[
         Callable[[], html.Div],
         Callable[[], None] | None,
@@ -39,7 +55,9 @@ class LibraryManager:
                 # pass
                 content = PlaceholderHomePageContentCreator.create_content
             else:
-                raise ValueError("Prepared component choices are: 'standard' or 'placeholder'")
+                raise ValueError(
+                    "Prepared component choices are: 'standard' or 'placeholder'"
+                )
 
         # Input types were not respected, throw an error
         else:
@@ -61,7 +79,9 @@ class LibraryManager:
                 # pass
                 callbacks = PlaceholderHomePageContentCreator.register_callbacks
             else:
-                raise ValueError("Prepared component choices are: 'standard' or 'placeholder'")
+                raise ValueError(
+                    "Prepared component choices are: 'standard' or 'placeholder'"
+                )
 
         # Input types were not respected, throw an error
         else:
@@ -71,11 +91,11 @@ class LibraryManager:
 
     @staticmethod
     def get_data_content(
-            data_content: Callable[[BASE_DATA_BOUND], html.Div] | str ,
-            data_callbacks: Callable[[], None] | str | None = None,
+        data_content: Callable[[BASE_DATA_BOUND], html.Div] | str,
+        data_callbacks: Callable[[], None] | str | None = None,
     ) -> Tuple[
         Callable[[BASE_DATA_BOUND], html.Div],
-        Callable[[BASE_DATA_BOUND], html.Div] | None
+        Callable[[BASE_DATA_BOUND], html.Div] | None,
     ]:
         # If the input is a custom function, return the function
         if isinstance(data_content, Callable):
@@ -90,7 +110,9 @@ class LibraryManager:
             elif data_content == "example":
                 content = ExampleDataPageContentCreator.create_data_page_content
             else:
-                raise ValueError("Prepared component choices are: 'placeholder', 'standard' or 'example'")
+                raise ValueError(
+                    "Prepared component choices are: 'placeholder', 'standard' or 'example'"
+                )
 
         # Input types were not respected, throw an error
         else:
@@ -113,7 +135,9 @@ class LibraryManager:
             elif data_callbacks == "example":
                 callbacks = ExampleDataPageContentCreator.register_callbacks
             else:
-                raise ValueError("Prepared component choices are: 'placeholder', 'standard' or 'example'")
+                raise ValueError(
+                    "Prepared component choices are: 'placeholder', 'standard' or 'example'"
+                )
 
         # Input types were not respected, throw an error
         else:
@@ -124,17 +148,16 @@ class LibraryManager:
 
     @staticmethod
     def get_scenario_content(
-            scenario_content: Callable[[Scenario], html.Div] | str,
-            scenario_callbacks: Callable[[], None] | str | None = None,
-    ) -> Tuple[
-        Callable[[Scenario], html.Div],
-        Callable[[Scenario], html.Div] | None
-    ]:
+        scenario_content: Callable[[Scenario], html.Div] | str,
+        scenario_callbacks: Callable[[], None] | str | None = None,
+    ) -> Tuple[Callable[[Scenario], html.Div], Callable[[Scenario], html.Div] | None]:
         if isinstance(scenario_content, Callable):
             content = scenario_content
         elif isinstance(scenario_content, str):
             if scenario_content == "placeholder":
-                content = PlaceholderScenarioPageContentCreator.create_scenario_page_content
+                content = (
+                    PlaceholderScenarioPageContentCreator.create_scenario_page_content
+                )
             else:
                 raise ValueError("Prepared component choices are: 'placeholder'")
         else:
@@ -150,21 +173,23 @@ class LibraryManager:
             else:
                 raise ValueError("Prepared component choices are: 'placeholder'")
         else:
-            raise ValueError("scenario_callbacks must be a string or a callable or None")
+            raise ValueError(
+                "scenario_callbacks must be a string or a callable or None"
+            )
 
         return content, callbacks
 
     @staticmethod
     def get_compare_content(
-            compare_content: Callable[[Scenario, str], html.Div] | str,
-            compare_compare: Callable[[Scenario, Scenario], html.Div] | str,
-            compare_details: Callable[[Scenario, Scenario], html.Div] | str,
-            compare_callbacks: Callable[[], None] | str | None = None,
+        compare_content: Callable[[Scenario, str], html.Div] | str,
+        compare_compare: Callable[[Scenario, Scenario], html.Div] | str,
+        compare_details: Callable[[Scenario, Scenario], html.Div] | str,
+        compare_callbacks: Callable[[], None] | str | None = None,
     ) -> Tuple[
         Callable[[Scenario, str], html.Div],
         Callable[[Scenario, Scenario], html.Div],
         Callable[[Scenario, Scenario], html.Div],
-        Callable[[], None] | None
+        Callable[[], None] | None,
     ]:
         if isinstance(compare_content, Callable):
             content = compare_content
@@ -214,17 +239,16 @@ class LibraryManager:
 
     @staticmethod
     def get_overview_content(
-            overview_content: Callable[[], html.Div] | str,
-            overview_callbacks: Callable[[], None] | str | None = None,
-    ) -> Tuple[
-        Callable[[], html.Div],
-        Callable[[], None] | None
-    ]:
+        overview_content: Callable[[], html.Div] | str,
+        overview_callbacks: Callable[[], None] | str | None = None,
+    ) -> Tuple[Callable[[], html.Div], Callable[[], None] | None]:
         if isinstance(overview_content, Callable):
             content = overview_content
         elif isinstance(overview_content, str):
             if overview_content == "standard":
-                content = StandardOverviewPageContentCreator.create_overview_page_content
+                content = (
+                    StandardOverviewPageContentCreator.create_overview_page_content
+                )
             else:
                 raise ValueError("Prepared component choices are: 'standard'")
         else:
@@ -240,6 +264,8 @@ class LibraryManager:
             else:
                 raise ValueError("Prepared component choices are: 'standard'")
         else:
-            raise ValueError("overview_callbacks must be a string or a callable or None")
+            raise ValueError(
+                "overview_callbacks must be a string or a callable or None"
+            )
 
         return content, callbacks

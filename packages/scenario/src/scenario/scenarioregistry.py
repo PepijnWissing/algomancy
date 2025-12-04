@@ -1,6 +1,6 @@
 from typing import Dict, List, Optional
 
-from algomancy.dashboardlogger import Logger
+from utils.logger import Logger
 from .scenario import Scenario
 
 

@@ -59,24 +59,27 @@ def get_delta_binary(left_kpi: BASE_KPI, right_kpi: BASE_KPI):
 
 def get_delta_default(left_kpi: BASE_KPI, right_kpi: BASE_KPI):
     """
-        Determine difference, percentage, and color between two measurements.
-        Scales left measurement and matches right to the same unit.
+    Determine difference, percentage, and color between two measurements.
+    Scales left measurement and matches right to the same unit.
 
-        Args:
-            left_kpi: The left measurement to compare
-            right_kpi: The right measurement to compare
+    Args:
+        left_kpi: The left measurement to compare
+        right_kpi: The right measurement to compare
 
-        Returns:
-            tuple: A tuple containing (delta string, percentage string, color class)
-        """
+    Returns:
+        tuple: A tuple containing (delta string, percentage string, color class)
+    """
     left_measurement: Measurement = left_kpi.measurement
     right_measurement: Measurement = right_kpi.measurement
     better_when: ImprovementDirection = left_kpi.better_when
 
     # Handle None or uninitialized measurements
-    if (left_measurement is None or right_measurement is None or
-            left_measurement.value == Measurement.INITIAL_VALUE or
-            right_measurement.value == Measurement.INITIAL_VALUE):
+    if (
+        left_measurement is None
+        or right_measurement is None
+        or left_measurement.value == Measurement.INITIAL_VALUE
+        or right_measurement.value == Measurement.INITIAL_VALUE
+    ):
         return "No data", "-", "text-muted"
 
     # Scale left measurement first
@@ -85,7 +88,7 @@ def get_delta_default(left_kpi: BASE_KPI, right_kpi: BASE_KPI):
     # Match right measurement to left's scaled unit
     try:
         right_scaled = right_measurement.scale_to_unit(left_scaled.unit)
-    except ValueError as e:
+    except ValueError:
         # Units are incompatible
         return "Incompatible units", "-", "text-warning"
 
@@ -125,8 +128,8 @@ def get_delta_infos(left_kpi: BASE_KPI, right_kpi: BASE_KPI):
 
 
 def kpi_card(
-        left_kpi: BASE_KPI,
-        right_kpi: BASE_KPI,
+    left_kpi: BASE_KPI,
+    right_kpi: BASE_KPI,
 ):
     """
     Create a compact KPI comparison card without excessive height.
@@ -145,8 +148,9 @@ def kpi_card(
     unit_symbol = unit.symbol if unit else ""
 
     kpi_type = str(left_kpi.better_when).capitalize().replace("_", " ") + (
-        f" {left_kpi.get_threshold_str(unit)}" if left_kpi.is_binary_kpi else
-        " is better"
+        f" {left_kpi.get_threshold_str(unit)}"
+        if left_kpi.is_binary_kpi
+        else " is better"
     )
 
     header = html.Div(
@@ -157,12 +161,17 @@ def kpi_card(
                     html.Span(str(left_kpi.name), className="fw-bold"),
                     # html.Span(f" ({unit_symbol})", className="text-secondary ms-1") if unit_symbol else None,
                 ],
-                style={"display": "flex", "alignItems": "center", "gap": "0.25rem"}
+                style={"display": "flex", "alignItems": "center", "gap": "0.25rem"},
             ),
             # Right-aligned kpi_type (same muted style as unit)
             html.Div(
                 html.Span(kpi_type, className="text-secondary"),
-                style={"display": "flex", "alignItems": "center", "justifyContent": "flex-end", "fontSize": "0.7rem"}
+                style={
+                    "display": "flex",
+                    "alignItems": "center",
+                    "justifyContent": "flex-end",
+                    "fontSize": "0.7rem",
+                },
             ),
         ],
         # Make the header take full width and push the right group to the far right
@@ -172,19 +181,29 @@ def kpi_card(
             "alignItems": "center",
             "justifyContent": "space-between",
             "width": "100%",
-            "marginBottom": "10px"
-        }
+            "marginBottom": "10px",
+        },
     )
 
     values = html.Div(
         [
-            html.Small(f"Left: {left_kpi.details(unit)}",
-                       style={"flex": "1", "textAlign": "left"}),
-            html.Small(f"Right: {right_kpi.details(unit)}",
-                       style={"flex": "1", "textAlign": "right"}),
+            html.Small(
+                f"Left: {left_kpi.details(unit)}",
+                style={"flex": "1", "textAlign": "left"},
+            ),
+            html.Small(
+                f"Right: {right_kpi.details(unit)}",
+                style={"flex": "1", "textAlign": "right"},
+            ),
         ],
         className="text-muted",
-        style={"fontSize": "0.85rem", "lineHeight": "1", "marginBottom": "2px", "display": "flex", "width": "100%"}
+        style={
+            "fontSize": "0.85rem",
+            "lineHeight": "1",
+            "marginBottom": "2px",
+            "display": "flex",
+            "width": "100%",
+        },
     )
 
     delta_str, delta_perc_str, color_class = get_delta_infos(left_kpi, right_kpi)
@@ -193,21 +212,19 @@ def kpi_card(
             # Second row: Change, centered
             html.Div(
                 html.H2(f"{delta_str}", className=color_class),
-                style={"width": "100%", "textAlign": "center", "marginTop": "0.3em"}
+                style={"width": "100%", "textAlign": "center", "marginTop": "0.3em"},
             ),
             # Third row: Change percent, centered
             html.Div(
                 html.H6(f"{delta_perc_str}", className=color_class),
-                style={"width": "100%", "textAlign": "center", "marginTop": "0.0em"}
-            )
+                style={"width": "100%", "textAlign": "center", "marginTop": "0.0em"},
+            ),
         ]
     )
 
     return dbc.Card(
         dbc.CardBody(
-            [header, values, delta],
-            className="p-2",
-            style={"display": "block"}
+            [header, values, delta], className="p-2", style={"display": "block"}
         ),
         className="shadow-sm bg-light",
         style={
@@ -215,6 +232,6 @@ def kpi_card(
             "borderRadius": "0.5rem",
             "boxShadow": "0 1px 2px rgba(0,0,0,0.07)",
             "height": "auto",
-            "display": "block"
-        }
+            "display": "block",
+        },
     )

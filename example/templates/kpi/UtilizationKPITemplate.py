@@ -13,9 +13,7 @@ percent_percent = BaseMeasurement(percent["%"], min_digits=1, max_digits=3, deci
 
 class UtilizationKPI(BaseKPI):
     def __init__(self):
-        super().__init__(
-            "Utilization", ImprovementDirection.HIGHER, percent_percent
-        )
+        super().__init__("Utilization", ImprovementDirection.HIGHER, percent_percent)
 
     def compute(self, result: ScenarioResult) -> float:
         return 50 * (1 + 0.5 * random.random())

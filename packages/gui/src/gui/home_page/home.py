@@ -12,7 +12,4 @@ def home_page():
         html.Div: A Dash HTML component representing the home page
     """
     cr: ContentRegistry = get_app().server.content_registry
-    return html.Div(
-        cr.home_content(),
-        id=HOME_PAGE_CONTENT
-    )
+    return html.Div(cr.home_content(), id=HOME_PAGE_CONTENT)

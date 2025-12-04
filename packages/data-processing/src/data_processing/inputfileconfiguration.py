@@ -3,7 +3,7 @@ from enum import StrEnum
 from typing import List, Dict
 from abc import ABC
 
-from algomancy.dataengine.schema import Schema
+from .schema import Schema
 
 
 class FileExtension(StrEnum):
@@ -34,4 +34,3 @@ class MultiInputFileConfiguration(InputFileConfiguration):
     @property
     def sub_names(self) -> List[str]:
         return list(self.file_schemas.keys())
-
