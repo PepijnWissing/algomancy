@@ -5,6 +5,7 @@ This module defines constants for all component IDs used in the dashboard applic
 These IDs are used for callbacks and to reference components in the Dash application.
 """
 TEST = 1#bad comment
+TEST2=1#bad bad
 
 # === Styling ===
 GLOBAL_STYLING_STORE = "global-styling"
