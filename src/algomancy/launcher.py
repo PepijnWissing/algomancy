@@ -1,20 +1,20 @@
 from typing import Dict, Any, Union
 import importlib.metadata
-
 import os
+
 from waitress import serve
 import dash_auth
 from dash import get_app, Dash
+from dash_bootstrap_components.themes import BOOTSTRAP
+
+from gui.layout import LayoutCreator
+from scenario.scenariomanager import ScenarioManager
+from content_lib.librarymanager import LibraryManager as lm
+from utils.logger import MessageStatus
 
 from .contentregistry import ContentRegistry
 from .settingsmanager import SettingsManager
-from algomancy.components.layout import LayoutCreator
-from algomancy.scenarioengine.scenariomanager import ScenarioManager
-from algomancy.contentcreatorlibrary.librarymanager import LibraryManager as lm
-from algomancy.dashboardlogger.logger import MessageStatus
-from src.algomancy.appconfiguration import AppConfiguration
-
-from dash_bootstrap_components.themes import BOOTSTRAP
+from .appconfiguration import AppConfiguration
 
 
 class DashLauncher:
