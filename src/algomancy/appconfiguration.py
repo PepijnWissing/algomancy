@@ -10,7 +10,10 @@ from data_processing import InputFileConfiguration, BASE_DATA_BOUND
 from scenario import AlgorithmFactory, ALGORITHM, BASE_KPI
 
 from .stylingconfigurator import StylingConfigurator
-TEST=1
+
+TEST = 1
+TEST2 = 1
+
 
 class AppConfiguration:
     """
