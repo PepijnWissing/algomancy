@@ -6,10 +6,43 @@ import base64
 import pandas as pd
 from dash import Input, Output, State, callback, no_update, get_app, html
 
-from algomancy.dataengine import ValidationError, DataManager
-from algomancy.components.componentids import *
-from algomancy.components.data_page.filenamematcher import match_file_names
-from algomancy.scenarioengine import ScenarioManager
+from data_processing import ValidationError, DataManager
+from gui.componentids import (
+    DATA_SELECTOR_DROPDOWN,
+    DM_DERIVE_SET_SELECTOR,
+    DM_DELETE_SET_SELECTOR,
+    DM_SAVE_SET_SELECTOR,
+    DM_DOWNLOAD_CHECKLIST,
+    DM_LIST_UPDATER_STORE,
+    DATA_MAN_SUCCESS_ALERT,
+    DATA_MAN_ERROR_ALERT,
+    DM_DERIVE_MODAL,
+    DM_DERIVE_MODAL_SUBMIT_BTN,
+    DM_DERIVE_SET_NAME_INPUT,
+    DM_DERIVE_OPEN_BTN,
+    DM_DERIVE_MODAL_CLOSE_BTN,
+    DM_DELETE_MODAL,
+    DM_DELETE_COLLAPSE,
+    DM_DELETE_CONFIRM_INPUT,
+    DM_DELETE_SUBMIT_BUTTON,
+    DM_DELETE_OPEN_BUTTON,
+    DM_DELETE_CLOSE_BUTTON,
+    DM_IMPORT_MODAL,
+    DM_IMPORT_OPEN_BUTTON,
+    DM_IMPORT_MODAL_CLOSE_BTN,
+    DM_IMPORT_MODAL_FILEVIEWER_CARD,
+    DM_IMPORT_MODAL_FILEVIEWER_COLLAPSE,
+    DM_IMPORT_MODAL_FILEVIEWER_ALERT,
+    DM_IMPORT_UPLOADER,
+    DM_IMPORT_SUBMIT_BUTTON,
+    DM_IMPORT_MODAL_NAME_INPUT,
+    DM_SAVE_MODAL,
+    DM_SAVE_OPEN_BUTTON,
+    DM_SAVE_MODAL_CLOSE_BTN,
+    DM_SAVE_SUBMIT_BUTTON,
+)
+from gui.data_page.filenamematcher import match_file_names
+from scenario import ScenarioManager
 
 """
 Callback functions for data management dialogs in the dashboard application.

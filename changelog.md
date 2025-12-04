@@ -6,8 +6,8 @@ _Released at 03-12-2025_
 - **Breaking:** Revised `AlgorithmTemplate` pattern to `BaseAlgorithm` workflow, analog to `BaseDataSource` 
 - **Breaking:** Also revised `KPITemplate` pattern to `BaseKPI` workflow
 - Scenario engine
-  - Export and typing cleanups in `algomancy.scenarioengine` to support `BaseAlgorithm`/`BaseKPI` patterns.
-  - Measurement/unit utilities updated in `algomancy.scenarioengine.unit`.
+  - Export and typing cleanups in `scenario` to support `BaseAlgorithm`/`BaseKPI` patterns.
+  - Measurement/unit utilities updated in `scenario.unit`.
   - Added threshold KPIs; `ImprovementDirection.AT_LEAST`, `.AT_MOST`, and argument `threshold`
 - Components and pages
   - Updated Compare and Scenario page callbacks and KPI Card to align with the new KPI base class and thresholds.
@@ -321,7 +321,7 @@ At a later time, this button will also support a cancel operation.
 import random
 
 from src.algomancy import ImprovementDirection, KpiTemplate, ScenarioResult
-from algomancy.scenarioengine import QUANTITIES, BaseMeasurement
+from scenario import QUANTITIES, BaseMeasurement
 
 
 def throughput_calculation(result: ScenarioResult) -> float:

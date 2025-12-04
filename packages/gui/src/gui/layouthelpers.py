@@ -1,7 +1,7 @@
 from dash import html, dcc
 
-from algomancy.components.cqmloader import cqm_loader
-from algomancy.components.defaultloader import default_loader
+from gui.cqmloader import cqm_loader
+from gui.defaultloader import default_loader
 
 
 def create_wrapped_content_div(

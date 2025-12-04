@@ -4,12 +4,12 @@ from typing import Dict
 
 from dash_bootstrap_components import CardBody
 
-from algomancy.scenarioengine import ScenarioManager
-from algomancy.scenarioengine.basealgorithmparameters import (
+from scenario import ScenarioManager
+from scenario.basealgorithmparameters import (
     TypedParameter,
     ParameterType,
 )
-from algomancy.components.componentids import (
+from gui.componentids import (
     ALGO_PARAMS_ENTRY_CARD,
     ALGO_PARAMS_ENTRY_TAB,
     ALGO_PARAMS_UPLOAD_TAB,

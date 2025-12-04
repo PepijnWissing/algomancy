@@ -11,12 +11,38 @@ from dash import (
 )
 from dash.exceptions import PreventUpdate
 
-from algomancy.scenarioengine import ScenarioStatus
-from algomancy.components.componentids import *
-from algomancy.components.scenario_page.new_scenario_parameters_window import (
+from gui.componentids import (
+    SCENARIO_LIST_UPDATE_STORE,
+    SCENARIO_SELECTED_ID_STORE,
+    SCENARIO_PROG_INTERVAL,
+    SCENARIO_PROCESS_BUTTON,
+    SCENARIO_PROG_BAR,
+    SCENARIO_PROG_TEXT,
+    SCENARIO_PROG_COLLAPSE,
+    SCENARIO_CURRENTLY_RUNNING_STORE,
+    SCENARIO_CREATOR_MODAL,
+    SCENARIO_CREATOR_OPEN_BUTTON,
+    SCENARIO_TAG_INPUT,
+    SCENARIO_DATA_INPUT,
+    SCENARIO_ALGO_INPUT,
+    ALGO_PARAMS_WINDOW_ID,
+    ALGO_PARAMS_ENTRY_CARD,
+    SCENARIO_ALERT,
+    SCENARIO_NEW_BUTTON,
+    SCENARIO_DELETE_MODAL,
+    SCENARIO_TO_DELETE,
+    SCENARIO_DELETE_BUTTON,
+    SCENARIO_SELECTED,
+    SCENARIO_CONFIRM_DELETE_BUTTON,
+    SCENARIO_CANCEL_DELETE_BUTTON,
+    SCENARIO_LIST,
+    SCENARIO_CARD,
+)
+from scenario import ScenarioStatus
+from gui.scenario_page.new_scenario_parameters_window import (
     create_algo_parameters_entry_card_body,
 )
-from algomancy.components.scenario_page.scenario_cards import scenario_cards
+from gui.scenario_page.scenario_cards import scenario_cards
 
 
 # --- Page Initialization Callback ---

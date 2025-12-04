@@ -6,14 +6,14 @@ from dash import html, Output, callback, Input, State, dcc
 from dash.html import Div
 
 from algomancy.stylingconfigurator import StylingConfigurator, LayoutSelection
-from algomancy.components.componentids import *
+from gui.componentids import SIDEBAR_TOGGLE, SIDEBAR, PAGE_CONTENT, SIDEBAR_COLLAPSED
 
-from algomancy.components.home_page.home import home_page
-from algomancy.components.data_page.data import data_page
-from algomancy.components.scenario_page.scenarios import scenario_page
-from algomancy.components.compare_page.compare import compare_page
-from algomancy.components.admin_page.admin import admin_page
-from algomancy.components.overview_page.overview import overview_page
+from gui.home_page.home import home_page
+from gui.data_page.data import data_page
+from gui.scenario_page.scenarios import scenario_page
+from gui.compare_page.compare import compare_page
+from gui.admin_page.admin import admin_page
+from gui.overview_page.overview import overview_page
 
 
 class LayoutCreator:

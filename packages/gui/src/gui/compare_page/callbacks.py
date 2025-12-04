@@ -7,9 +7,20 @@ It handles updating scenario overviews, KPI comparisons, and other interactive e
 
 from dash import callback, Input, Output, html, get_app
 
-from algomancy.components.componentids import *
-from algomancy.components.compare_page.kpicard import kpi_card
-from algomancy.scenarioengine import ScenarioManager
+from gui.componentids import (
+    KPI_IMPROVEMENT_SECTION,
+    LEFT_SCENARIO_DROPDOWN,
+    RIGHT_SCENARIO_DROPDOWN,
+    PERF_SBS_LEFT_COLLAPSE,
+    PERF_SBS_RIGHT_COLLAPSE,
+    PERF_KPI_COLLAPSE,
+    PERF_TOGGLE_CHECKLIST_LEFT,
+    PERF_COMPARE_COLLAPSE,
+    PERF_DETAILS_COLLAPSE,
+    PERF_TOGGLE_CHECKLIST_RIGHT,
+)
+from gui.compare_page.kpicard import kpi_card
+from scenario import ScenarioManager
 
 
 @callback(

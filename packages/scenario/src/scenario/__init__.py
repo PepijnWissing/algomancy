@@ -4,11 +4,12 @@ from .keyperformanceindicator import KpiError, BaseKPI, BASE_KPI, ImprovementDir
 from .result import BaseScenarioResult, BASE_RESULT_BOUND, ScenarioResult
 from .scenario import Scenario, ScenarioStatus
 from .scenariomanager import ScenarioManager
-from .basealgorithm import ALGORITHM
+from .basealgorithm import ALGORITHM, BaseAlgorithm
 
 
 __all__ = [
     "BaseAlgorithmParameters",
+    "BaseAlgorithm",
     "ALGORITHM",
     "AlgorithmFactory",
     "ScenarioStatus",

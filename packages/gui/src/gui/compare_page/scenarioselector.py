@@ -9,9 +9,16 @@ import dash_bootstrap_components as dbc
 
 from dash import html, dcc, get_app
 
-from algomancy.components.layouthelpers import create_wrapped_content_div
-from algomancy.scenarioengine.scenariomanager import ScenarioManager
-from algomancy.components.componentids import *
+from gui.layouthelpers import create_wrapped_content_div
+from scenario.scenariomanager import ScenarioManager
+from gui.componentids import (
+    LEFT_SCENARIO_DROPDOWN,
+    RIGHT_SCENARIO_DROPDOWN,
+    LEFT_SCENARIO_OVERVIEW,
+    RIGHT_SCENARIO_OVERVIEW,
+    PERF_SBS_LEFT_COLLAPSE,
+    PERF_SBS_RIGHT_COLLAPSE,
+)
 from src.algomancy.settingsmanager import SettingsManager
 
 

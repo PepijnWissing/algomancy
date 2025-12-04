@@ -7,7 +7,8 @@ creates the Dash application, and starts the web server.
 
 import argparse
 
-from algomancy.contentcreatorlibrary import PlaceholderHomePageContentCreator
+from content_lib import PlaceholderHomePageContentCreator
+from data_processing import DataSource
 from src.algomancy.launcher import DashLauncher
 from algomancy.stylingconfigurator import (
     StylingConfigurator,
@@ -102,11 +103,11 @@ def configure_styling() -> StylingConfigurator:
     cornsilk = "#FEFAE0"
 
     white = "#FFFFFF"
-    purple = "#3EBDF3"
-    lightblue = "#4C0265"
-    bright_blue = ColorConfiguration.linear_combination_hex(lightblue, purple, 0.5)
+    # purple = "#3EBDF3"
+    # lightblue = "#4C0265"
+    # bright_blue = ColorConfiguration.linear_combination_hex(lightblue, purple, 0.5)
     darkgrey = "#424242"
-    lightgrey = "#E3E3E3"
+    # lightgrey = "#E3E3E3"
 
     styling = StylingConfigurator(
         layout_selection=LayoutSelection.SIDEBAR,

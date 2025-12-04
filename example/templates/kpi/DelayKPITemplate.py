@@ -4,8 +4,8 @@ from src.algomancy import (
     ImprovementDirection,
     ScenarioResult,
 )
-from algomancy.scenarioengine import BaseKPI
-from algomancy.scenarioengine import QUANTITIES, BaseMeasurement
+from scenario import BaseKPI
+from scenario import QUANTITIES, BaseMeasurement
 
 
 class DelayKPI(BaseKPI):

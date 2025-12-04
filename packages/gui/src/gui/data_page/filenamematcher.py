@@ -1,7 +1,7 @@
 from typing import List, Dict
 from itertools import zip_longest
 
-from algomancy.dataengine.datamanager import InputFileConfiguration
+from data_processing.datamanager import InputFileConfiguration
 
 
 def hamming_distance(s1, s2):

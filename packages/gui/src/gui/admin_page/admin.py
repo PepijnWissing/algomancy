@@ -2,7 +2,7 @@
 from dash import html, dcc
 import dash_bootstrap_components as dbc
 
-from algomancy.components.componentids import (
+from gui.componentids import (
     ADMIN_LOG_WINDOW,
     ADMIN_LOG_INTERVAL,
     ADMIN_LOG_FILTER,

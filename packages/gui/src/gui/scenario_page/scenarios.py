@@ -1,17 +1,31 @@
 from dash import html, dcc, callback, Output, Input, ALL, get_app, ctx, no_update
 
-from algomancy.components.componentids import *
-from algomancy.components.layouthelpers import create_wrapped_content_div
-from algomancy.components.scenario_page.delete_confirmation import (
+from gui.componentids import (
+    SCENARIO_LIST_UPDATE_STORE,
+    SCENARIO_TO_DELETE,
+    SCENARIO_SELECTED_ID_STORE,
+    SCENARIO_ALERT,
+    SCENARIO_CREATOR_OPEN_BUTTON,
+    SCENARIO_PROG_INTERVAL,
+    SCENARIO_CURRENTLY_RUNNING_STORE,
+    SCENARIO_PROG_TEXT,
+    SCENARIO_PROG_BAR,
+    SCENARIO_PROG_COLLAPSE,
+    SCENARIO_LIST,
+    SCENARIO_SELECTED,
+    SCENARIO_CARD,
+)
+from gui.layouthelpers import create_wrapped_content_div
+from gui.scenario_page.delete_confirmation import (
     delete_confirmation_modal,
 )
-from algomancy.components.scenario_page.new_scenario_creator import new_scenario_creator
-from algomancy.components.scenario_page.scenario_cards import hidden_card
+from gui.scenario_page.new_scenario_creator import new_scenario_creator
+from gui.scenario_page.scenario_cards import hidden_card
 
 import dash_bootstrap_components as dbc
 
 from src.algomancy.contentregistry import ContentRegistry
-from algomancy.scenarioengine import ScenarioManager
+from scenario import ScenarioManager
 from src.algomancy.settingsmanager import SettingsManager
 
 

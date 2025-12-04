@@ -1,11 +1,11 @@
 import random
 
-from src.algomancy import (
+from scenario import (
     ImprovementDirection,
     ScenarioResult,
+    BaseKPI,
 )
-from algomancy.scenarioengine import BaseKPI
-from algomancy.scenarioengine import QUANTITIES, BaseMeasurement
+from utils import QUANTITIES, BaseMeasurement
 
 percent = QUANTITIES["percentage"]
 percent_percent = BaseMeasurement(percent["%"], min_digits=1, max_digits=3, decimals=1)

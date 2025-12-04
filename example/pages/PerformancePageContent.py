@@ -7,7 +7,7 @@ It creates a collapsible section that displays additional results for the select
 
 from dash import html
 
-from algomancy.scenarioengine import Scenario
+from scenario import Scenario
 
 
 class PerformancePageContentCreator:

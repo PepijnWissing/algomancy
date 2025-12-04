@@ -5,7 +5,7 @@ import dash_bootstrap_components as dbc
 from dash import html, dcc, get_app, callback, Output, Input, State, no_update
 from dash.exceptions import PreventUpdate
 
-from algomancy.components.componentids import (
+from gui.componentids import (
     DM_UPLOAD_MODAL_CLOSE_BTN,
     DM_UPLOAD_MODAL_FILEVIEWER_CARD,
     DM_UPLOAD_MODAL_FILEVIEWER_COLLAPSE,
@@ -14,13 +14,13 @@ from algomancy.components.componentids import (
     DM_UPLOAD_UPLOADER,
     DM_UPLOAD_MODAL,
 )
-from algomancy.components.componentids import (
+from gui.componentids import (
     DM_UPLOAD_SUCCESS_ALERT,
     DM_LIST_UPDATER_STORE,
 )
-from algomancy.components.cqmloader import cqm_loader
-from algomancy.components.defaultloader import default_loader
-from algomancy.scenarioengine import ScenarioManager
+from gui.cqmloader import cqm_loader
+from gui.defaultloader import default_loader
+from scenario import ScenarioManager
 from src.algomancy.settingsmanager import SettingsManager
 
 """

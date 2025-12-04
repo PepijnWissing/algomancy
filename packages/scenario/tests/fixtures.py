@@ -1,8 +1,8 @@
 import pytest
 
 from src.algomancy import Logger
-from algomancy.dataengine import DataSource
-from algomancy.scenarioengine import ScenarioManager
+from data_processing import DataSource
+from scenario import ScenarioManager
 from example_implementation.data_handling.factories import ExampleETLFactory
 from example_implementation.data_handling.input_configs import example_input_configs
 from example_implementation.templates import kpi_templates, algorithm_templates

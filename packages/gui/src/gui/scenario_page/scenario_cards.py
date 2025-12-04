@@ -8,19 +8,19 @@ These cards display scenario information and provide buttons for processing and 
 from dash import html, dcc
 import dash_bootstrap_components as dbc
 
-from algomancy.scenarioengine.scenariomanager import ScenarioManager, Scenario
-from algomancy.scenarioengine import ScenarioStatus
+from scenario.scenariomanager import ScenarioManager, Scenario
+from scenario import ScenarioStatus
 
-from algomancy.components import (
+
+from .scenario_badge import status_badge
+from ..componentids import (
     SCENARIO_PROCESS_BUTTON,
     SCENARIO_DELETE_BUTTON,
     SCENARIO_CARD,
 )
-from .scenario_badge import status_badge
 
 
 def hidden_card():
-    card_style = {"display": "none"}
     dummy_scenario = Scenario("dummy", None, None, None)
     return scenario_card(dummy_scenario)
 
@@ -114,7 +114,7 @@ def scenario_cards(scenario_manager: ScenarioManager, selected_id=None):
     """
     cards = []
     for scenario in scenario_manager.list_scenarios():
-        is_selected = scenario.id == selected_id
+        # is_selected = scenario.id == selected_id # legacy
         card = scenario_card(scenario)
         cards.append(card)
     return cards

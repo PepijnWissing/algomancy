@@ -10,14 +10,27 @@ from typing import Any
 from dash import html, get_app, callback, Output, Input
 import dash_bootstrap_components as dbc
 
-from algomancy.components.componentids import *
-from algomancy.components.compare_page.scenarioselector import (
+from gui.componentids import (
+    PERF_DETAILS_COLLAPSE,
+    COMPARE_DETAIL_VIEW,
+    PERF_COMPARE_COLLAPSE,
+    PERF_PRIMARY_RESULTS,
+    PERF_KPI_COLLAPSE,
+    KPI_IMPROVEMENT_SECTION,
+    PERF_TOGGLE_CHECKLIST_LEFT,
+    PERF_TOGGLE_CHECKLIST_RIGHT,
+    LEFT_SCENARIO_OVERVIEW,
+    LEFT_SCENARIO_DROPDOWN,
+    RIGHT_SCENARIO_OVERVIEW,
+    RIGHT_SCENARIO_DROPDOWN,
+)
+from gui.compare_page.scenarioselector import (
     create_side_by_side_viewer,
     create_side_by_side_selector,
 )
 
 from src.algomancy.contentregistry import ContentRegistry
-from algomancy.scenarioengine import ScenarioManager
+from scenario import ScenarioManager
 from src.algomancy.settingsmanager import SettingsManager
 
 
@@ -211,7 +224,7 @@ def update_right_scenario_overview(scenario_id) -> html.Div | str:
     Input(RIGHT_SCENARIO_DROPDOWN, "value"),
     prevent_initial_call=True,
 )
-def update_right_scenario_overview(left_scenario_id, right_scenario_id) -> html.Div:
+def update_primary(left_scenario_id, right_scenario_id) -> html.Div:
     sm: ScenarioManager = get_app().server.scenario_manager
     cr: ContentRegistry = get_app().server.content_registry
 
@@ -237,9 +250,7 @@ def update_right_scenario_overview(left_scenario_id, right_scenario_id) -> html.
     Input(RIGHT_SCENARIO_DROPDOWN, "value"),
     prevent_initial_call=True,
 )
-def update_right_scenario_overview(
-    left_scenario_id, right_scenario_id
-) -> html.Div | str:
+def update_details(left_scenario_id, right_scenario_id) -> html.Div | str:
     sm: ScenarioManager = get_app().server.scenario_manager
     cr: ContentRegistry = get_app().server.content_registry
 

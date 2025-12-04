@@ -1,6 +1,6 @@
 import dash_bootstrap_components as dbc
 
-from algomancy.components.componentids import (
+from gui.componentids import (
     SCENARIO_DELETE_MODAL,
     SCENARIO_CANCEL_DELETE_BUTTON,
     SCENARIO_CONFIRM_DELETE_BUTTON,

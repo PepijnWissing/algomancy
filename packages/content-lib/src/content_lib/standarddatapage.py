@@ -3,7 +3,7 @@ import pandas as pd
 from dash import html, dcc, dash_table, callback, Output, Input, State
 import plotly.express as px
 
-from algomancy.dataengine import DataSource
+from data_processing import DataSource
 
 DATA_TABLE_ITEMS_STORE = "standard-data-table-items-store"
 DATA_TABLE_ITEMS = "standard-data-table-items"

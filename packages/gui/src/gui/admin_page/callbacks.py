@@ -1,7 +1,7 @@
 from dash import Output, Input, callback, get_app, html
 
-from algomancy.components.componentids import *
-from algomancy.dashboardlogger.logger import MessageStatus
+from gui.componentids import ADMIN_LOG_WINDOW, ADMIN_LOG_FILTER, ADMIN_LOG_INTERVAL
+from utils.logger import MessageStatus
 
 
 @callback(

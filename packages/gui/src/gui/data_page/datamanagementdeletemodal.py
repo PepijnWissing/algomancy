@@ -1,8 +1,15 @@
 import dash_bootstrap_components as dbc
 from dash import html, dcc
 
-from algomancy.scenarioengine.scenariomanager import ScenarioManager
-from algomancy.components.componentids import *
+from scenario.scenariomanager import ScenarioManager
+from gui.componentids import (
+    DM_DELETE_SET_SELECTOR,
+    DM_DELETE_COLLAPSE,
+    DM_DELETE_CONFIRM_INPUT,
+    DM_DELETE_SUBMIT_BUTTON,
+    DM_DELETE_CLOSE_BUTTON,
+    DM_DELETE_MODAL,
+)
 
 """
 Modal component for deleting datasets from the application.

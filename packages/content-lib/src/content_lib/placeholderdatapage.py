@@ -1,6 +1,6 @@
 from dash import html
 
-from algomancy.dataengine import DataSource
+from data_processing import DataSource
 
 
 class PlaceholderDataPageContentCreator:

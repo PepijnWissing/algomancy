@@ -1,6 +1,6 @@
 from typing import Dict, cast
 
-import algomancy.dataengine as de
+import data_processing as de
 
 
 class PlaceholderETLFactory(de.ETLFactory):

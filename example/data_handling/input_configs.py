@@ -1,7 +1,7 @@
 from typing import Dict
 
-from algomancy.dataengine import Schema, FileExtension, DataType
-from algomancy.dataengine import (
+from data_processing import Schema, FileExtension, DataType
+from data_processing import (
     SingleInputFileConfiguration,
     MultiInputFileConfiguration,
 )

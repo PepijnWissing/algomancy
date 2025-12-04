@@ -1,22 +1,20 @@
 import random
 
-from src.algomancy import (
+from scenario import (
     ImprovementDirection,
-    KpiTemplate,
+    BaseKPI,
     ScenarioResult,
 )
-from algomancy.scenarioengine import QUANTITIES
+from utils import QUANTITIES, BaseMeasurement
 
 
-def placeholder_calculation_function(result: ScenarioResult) -> float:
-    return 1000 * (1 + 0.5 * random.random())  # placeholder
+percent = QUANTITIES["percentage"]
+percent_percent = BaseMeasurement(percent["%"], min_digits=1, max_digits=3, decimals=1)
 
 
-mass_kg = QUANTITIES["mass"]["kg"]
+class PlaceholderKPI(BaseKPI):
+    def __init__(self):
+        super().__init__("Placeholder", ImprovementDirection.HIGHER, percent_percent)
 
-placeholder_kpi_template = KpiTemplate(
-    name="Placeholder KPI",
-    better_when=ImprovementDirection.LOWER,
-    callback=placeholder_calculation_function,
-    measurement_base=mass_kg,
-)
+    def compute(self, result: ScenarioResult) -> float:
+        return 50 * (1 + 0.5 * random.random())

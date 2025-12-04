@@ -1,10 +1,10 @@
 from dash import html, get_app, callback, Output, Input
 
-from algomancy.components.componentids import DATA_PAGE_CONTENT, DATA_SELECTOR_DROPDOWN
-from algomancy.components.data_page.datamanagementtopbar import top_bar
-from algomancy.components.layouthelpers import create_wrapped_content_div
+from gui.componentids import DATA_PAGE_CONTENT, DATA_SELECTOR_DROPDOWN
+from gui.data_page.datamanagementtopbar import top_bar
+from gui.layouthelpers import create_wrapped_content_div
 from src.algomancy.contentregistry import ContentRegistry
-from algomancy.scenarioengine import ScenarioManager
+from scenario import ScenarioManager
 from src.algomancy.settingsmanager import SettingsManager
 
 
