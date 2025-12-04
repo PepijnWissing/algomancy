@@ -23,7 +23,12 @@ from .validator import (
     ValidationSequence,
 )
 from .loader import Loader, DataSourceLoader
-from .inputfileconfiguration import InputFileConfiguration, FileExtension
+from .inputfileconfiguration import (
+    SingleInputFileConfiguration,
+    MultiInputFileConfiguration,
+    FileExtension,
+    InputFileConfiguration,
+)
 from .file import File, CSVFile, JSONFile, XLSXFile
 
 __all__ = [
@@ -61,6 +66,8 @@ __all__ = [
     "Loader",
     "DataSourceLoader",
     "InputFileConfiguration",
+    "SingleInputFileConfiguration",
+    "MultiInputFileConfiguration",
     "FileExtension",
     "File",
     "JSONFile",

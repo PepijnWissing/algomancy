@@ -1,4 +1,4 @@
-from src.algomancy import (
+from gui.componentids import (
     DM_IMPORT_MODAL_CLOSE_BTN,
     DM_IMPORT_MODAL,
     DM_IMPORT_SUBMIT_BUTTON,

@@ -842,7 +842,7 @@ def example_usage():
 
     print("\n=== Time Examples ===")
     time = QUANTITIES["time"]
-    time_s = BaseMeasurement(time["s"], min_digits=1, max_digits=2, decimals=1)
+    time_s = BaseMeasurement(time["s"], min_digits=1, max_digits=3, decimals=1)
 
     for val in [0.000_001, 0.5, 45, 3_665, 86_400, 31_536_000]:
         m = Measurement(time_s, val)
@@ -925,3 +925,7 @@ def example_usage():
     print(f"Time 2 (auto-scaled): {t2_scaled}")
     print(f"Time 1 matched to Time 2's unit: {t1.scale_to_unit(t2_scaled.unit)}")
     print(f"Time 2 matched to Time 1's unit: {t2.scale_to_unit(t1_scaled.unit)}")
+
+
+if __name__ == "__main__":
+    example_usage()

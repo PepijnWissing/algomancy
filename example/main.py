@@ -45,7 +45,8 @@ def main(
 
     # framework configuration via AppConfiguration
     app_cfg = AppConfiguration(
-        data_path="../packages/algomancy-scenario/tests/data",
+        data_path="../example/data",
+        assets_path="../example/assets",
         has_persistent_state=True,
         etl_factory=ExampleETLFactory,
         kpi_templates=kpi_templates,
@@ -125,8 +126,8 @@ def configure_styling() -> StylingConfigurator:
                 "unified_hover": "#8FBE74",
             },
         ),
-        logo_url="/assets/cqm-logo-white.png",
-        button_url="/assets/cqm-button-white.png",
+        logo_url="/example/assets/cqm-logo-white.png",
+        button_url="/example/assets/cqm-button-white.png",
         card_highlight_mode=CardHighlightMode.SUBTLE_DARK,
     )
     return styling

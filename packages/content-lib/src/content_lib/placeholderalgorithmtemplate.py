@@ -16,7 +16,7 @@ class PlaceholderParams(BaseAlgorithmParameters):
         pass
 
 
-class AsIsAlgorithm(BaseAlgorithm):
+class PlaceholderAlgorithm(BaseAlgorithm):
     def __init__(self, params: PlaceholderParams):
         super().__init__("As is", params)
 

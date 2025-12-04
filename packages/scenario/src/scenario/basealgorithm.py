@@ -8,7 +8,7 @@ from .basealgorithmparameters import BASE_PARAMS_BOUND
 
 class BaseAlgorithm(ABC):
     def __init__(self, name: str, params: BASE_PARAMS_BOUND):
-        self.name: str = name
+        self._name: str = name
         self.description = str(params.serialize())
         self._params: BASE_PARAMS_BOUND = params
         self._progress: float = 0
@@ -23,6 +23,10 @@ class BaseAlgorithm(ABC):
     @property
     def get_progress(self) -> float:
         return self._progress
+
+    @property
+    def name(self) -> str:
+        return self._name
 
     def set_progress(self, progress: float):
         assert 0 <= progress <= 100, "progress must be between 0 and 100"
