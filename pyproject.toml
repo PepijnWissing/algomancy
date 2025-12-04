@@ -19,7 +19,6 @@ dependencies = [
   "dash-iconify>=0.1.2",
   "openpyxl>=3.1.5",
   "pandas>=2.3.1",
-  "prek>=0.2.1",
   "pytest>=8.4.2",
   "ruff>=0.13.1",
   "strenum>=0.4.15",
@@ -31,7 +30,8 @@ dependencies = [
   "data-processing",
   "gui",
   "scenario",
-  "utils"
+  "utils",
+  "prek>=0.2.19"
 ]
 description = "A dashboarding framework for visualizing performances of algorithms or simulations in various scenarios."
 keywords = ["visualization", "algorithm", "simulation", "scenario"]
