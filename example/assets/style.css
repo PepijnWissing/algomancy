@@ -1,0 +1,409 @@
+@import url('/example/assetse/assets/css/theme_colors.css');
+@import url('/example/assetse/assets/css/sidebar_layout.css');
+@import url('/example/assetse/assets/css/button_colors.css');
+@import url('/example/assetse/assets/css/cqm_loader.css');
+
+/* =========================
+   Base elements & utilities
+   ========================= */
+hr {
+    border-top: 2px solid gray;
+}
+
+/*todo buttons on scenario page should be styled separately*/
+
+.btn {
+    border-color: var(--theme-secondary);   /* todo this should respond to unified button colors */
+    background-color: var(--theme-secondary);
+    color: var(--text-selected)
+}
+
+.btn:hover {
+    border-color: var(--theme-tertiary);
+    background-color: var(--theme-tertiary);
+    color: var(--text-highlight);
+}
+
+.rc-slider-track {
+    background-color: var(--theme-secondary);
+}
+
+.rc-slider-dot-active, .rc-slider-handle, .rc-slider-handle:focus {
+    border-color: var(--theme-secondary);
+}
+
+.rc-slider-handle:active {
+    border-color: var(--theme-secondary);
+    box-shadow: 0 0 0 2px rgb(from var(--theme-secondary) r g b /0.3) ;
+}
+
+.CalendarDay__selected, .CalendarDay__selected:active, .CalendarDay__selected:hover {
+    background: var(--theme-primary);
+    border: 1px double var(--theme-primary);
+    color: var(--text-selected);
+}
+
+.CalendarDay__selected_span {
+    background: var(--theme-secondary);
+    border: 1px double var(--theme-secondary);
+    color: var(--text-selected);
+}
+
+.DayPickerKeyboardShortcuts_show {
+  display: none;
+}
+
+.DateInput_input__focused {
+    border-bottom: 2px solid var(--theme-primary);
+}
+
+/* =========================
+   Layout containers
+   ========================= */
+.page-content {
+    padding: 2rem;
+    transition: margin-left 0.3s ease-in-out;
+    background-color: var(--background-color);
+    color: var(--text-color);
+}
+
+.page-content.collapsed {
+    margin-left: 80px; /* Width of the collapsed sidebar */
+}
+
+.page-content.expanded {
+    margin-left: 270px; /* Width of the expanded sidebar */
+}
+
+.layout-container {
+    background-color: var(--background-color);
+    min-height: 100vh;
+}
+
+/* =========================
+   Controls & components
+   ========================= */
+/* Accordion styling */
+.accordion-button {
+    background-color: var(--card-surface);
+    color: var(--text-color);
+}
+
+.accordion-item {
+    background-color: var(--card-surface);
+    border-radius: 6px;
+    transition: background-color 0.2s ease-in-out;
+    border: 1px solid rgba(0,0,0,0.1);
+    border-left: 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    color: var(--text-color);
+}
+
+/* Styling for dropdown menus */
+.Select-control, .Select-menu-outer, .Select-input {
+    background-color: var(--card-surface);
+    color: var(--text-color);
+    transition: box-shadow 0.2s ease-in-out;
+}
+
+.Select-value-label, .Select-option {
+    color: var(--text-color);
+}
+
+.Select--single > .Select-control .Select-value, .Select-placeholder {
+    background-color: var(--card-surface);
+    color: var(--text-color);
+}
+
+.VirtualizedSelectOption {
+    background-color: var(--card-surface);
+    color: var(--text-color);
+}
+
+.VirtualizedSelectFocusedOption {
+    background-color: var(--theme-secondary);
+    color: var(--text-selected);
+}
+
+.Select--multi .Select-value-icon {
+    color: var(--text-color);
+    /*background-color: rgb(from var(--theme-secondary) r g b /0.2);*/
+    border-right-color: var(--theme-secondary);
+}
+
+.Select--multi .Select-value-icon:hover {
+    color: var(--text-selected);
+    background-color: rgb(from var(--theme-secondary) r g b /0.5);
+    border-right-color: var(--theme-secondary);
+    transition: background-color 0.2s ease-in-out;
+}
+
+.Select--multi .Select-value {
+    color: var(--text-color);
+    background-color: rgb(from var(--theme-secondary) r g b /0.2);
+    border-color: var(--theme-secondary);
+}
+
+.is-focused:not(.is-open)>.Select-control {
+    border-color: var(--theme-secondary);
+    box-shadow: 0 0 0 2px rgb(from var(--theme-secondary) r g b /0.3) ;
+}
+
+.is-open>.Select-control {
+    background-color: var(--card-surface);
+}
+
+/* styling for input groups */
+.form-control, input.form-control {
+    background-color: var(--card-surface);
+    color: var(--text-color);
+}
+
+.form-control:focus, input.form-control:focus {
+    background-color: var(--card-surface);
+    color: var(--text-color);
+    border-color: var(--theme-secondary);
+    box-shadow: 0 0 0 0.2rem rgb(from var(--theme-secondary) r g b /0.3);
+}
+
+.form-control::placeholder, input.form-control::placeholder {
+    color: var(--text-color);
+    opacity: 0.6;
+}
+
+/* styling for checkboxes */
+.form-check-input {
+    background-color: var(--card-surface);
+    border-color: var(--text-color);
+    color: var(--text-color);
+    transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+    cursor: pointer;
+}
+
+.form-check-input:checked {
+    background-color: var(--toggle-active-color);
+    border-color: var(--toggle-active-color);
+}
+
+.form-check-input:focus {
+    box-shadow: 0 0 0 0.2rem var(--toggle-shadow-color);
+    border-color: var(--toggle-active-color);
+}
+
+.form-switch .form-check-input {
+    background-color: var(--toggle-background-color);
+    background-image: var(--toggle-handle-inactive);
+}
+
+.form-switch .form-check-input:checked {
+    background-color: var(--toggle-active-color);
+    background-image: var(--toggle-handle-selected);
+}
+
+.form-switch .form-check-input:focus, .form-check-input:active{
+    background-image: var(--toggle-handle-focussed)
+}
+
+.form-switch .form-check-input:checked:focus {
+    box-shadow: 0 0 0 0.2rem var(--toggle-shadow-color);
+    background-image: var(--toggle-handle-selected)
+}
+
+/* daq.BooleanSwitch background color */
+.gJuplL {
+    background-color: var(--toggle-active-color) !important;
+}
+
+/* =========================
+   Scenario cards & new scenario controls
+   ========================= */
+.scenario-card {
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+    background-color: var(--card-surface);
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    padding : 8px 12px;
+    margin-bottom: 10px;
+}
+
+.scenario-card.selected {
+    background-color: var(--theme-secondary);
+    color: var(--text-selected);
+    border-color: var(--theme-secondary);
+    transition: all 0.25s ease-in-out;
+}
+
+.scenario-card.hidden {
+    display: none;
+}
+
+.scenario-progress-bar .progress-bar{
+    background-color: var(--theme-secondary) !important;
+    animation: progress-bar-stripes 1s linear infinite;
+}
+
+/* =========================
+   Admin page log window
+   ========================= */
+.admin-log-card {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 380px); /* Adjust based on other content */
+    min-height: 300px; /* Set a reasonable minimum */
+    overflow-y: auto; /* Allow scrolling if content exceeds height */
+}
+
+
+.admin-log-window {
+    flex: 1;
+    overflow-y: auto;
+    font-family: monospace;
+    white-space: pre-wrap;
+    background-color: #f8f9fa;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+/* =========================
+   Themed modals & their contents
+   ========================= */
+.themed-modal {
+    color: var(--text-color);
+}
+
+.themed-modal .modal-header {
+    background-color: var(--theme-primary); /* issue: the modal does not respond to the variable update */
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+.themed-modal .modal-title {
+    color: var(--text-selected);
+    font-weight: 600;
+}
+
+.themed-modal .modal-body, .modal-footer{
+    background-color: var(--background-color);
+    color: var(--text-color);
+}
+
+.themed-modal .uploaded-files-card,
+.themed-modal .uploaded-files-table {
+    background-color: var(--background-color);
+}
+
+.themed-modal .uploaded-files-table {
+    color: var(--text-color);
+}
+
+.themed-modal .uploaded-files-table .uploaded-files-header {
+    color: var(--text-color);
+}
+
+.themed-modal .uploaded-files-table .uploaded-file-good{
+    color: var(--text-color);
+}
+
+.themed-modal .uploaded-files-table .uploaded-file-bad{
+    color: #b92629;
+    text-decoration: line-through;
+}
+
+/* =========================
+   Scenario page specifics
+   ========================= */
+
+.scenario-multi-btn-created { /* process */
+    background-color: #1b9e08;
+    border: 0;
+    color: #FFFFFF;
+    min-width: 80px;
+    pointer-events: all;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.scenario-multi-btn-created:hover { /* process */
+    background-color: #105906;
+    color: #FFFFFF;
+}
+
+
+.scenario-multi-btn-completed { /* refresh */
+    background-color: #4487d5;
+    border: 0;
+    color: #FFFFFF;
+    min-width: 80px;
+    pointer-events: all;
+}
+
+.scenario-multi-btn-completed:hover, .scenario-multi-btn-completed:focus {
+    background-color: #2b5688;
+    color: #FFFFFF;
+}
+
+.scenario-multi-btn-queued, .scenario-delete-btn-created, .scenario-delete-btn-completed { /* cancel */
+    background-color: #bd1414;
+    border: 0;
+    color: #FFFFFF;
+    min-width: 80px;
+    pointer-events: all;
+}
+
+.scenario-multi-btn-queued:hover, .scenario-multi-btn-queued:focus,
+.scenario-delete-btn-created:hover, .scenario-delete-btn-created:focus,
+.scenario-delete-btn-completed:hover, .scenario-delete-btn-completed:focus {
+    background-color: #770d0d;
+    color: #FFFFFF;
+}
+
+.scenario-delete-btn-queued { /* delete */
+    background-color: #a14a4a;
+    border: 0;
+    color: #FFFFFF;
+    min-width: 80px;
+    pointer-events: none;
+}
+
+
+/* =========================
+   Compare page (mirrors performance page styles)
+   ========================= */
+.compare-page {
+
+}
+
+.compare-page .side-by-side-viewer,
+.compare-page .compare-view,
+.compare-page .details-view{
+    margin-bottom: 10px;
+}
+
+.compare-page .kpi-cards{
+    margin-bottom: 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+}
+
+.compare-page .kpi-cards .kpi-card-wrapper{
+    flex: 1 1 300px;
+    width: 400px;
+    height: 200px;
+    margin: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* details/compare view margin moved into grouped rule above */
+
+/* =========================
+   Page content min-heights
+   ========================= */
+.data-page-content {
+    min-height: 500px;
+}
+
+.scenario-page-content {
+    min-height: 500px;
+}

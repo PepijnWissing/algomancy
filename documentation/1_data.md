@@ -75,7 +75,7 @@ A standard `DataSource` stores data exclusively in its `tables` attribute, which
 The following example demonstrates basic usage:
 
 ```python
-from algomancy.dataengine import BaseDataSource, DataClassification
+from src.algomancy import BaseDataSource, DataClassification
 import pandas as pd
 
 # Create a DataSource instance
@@ -109,7 +109,7 @@ Consider the example of a custom data source that includes a set of locations, e
 and geographic coordinates (longitude and latitude). The custom data source class would look like this:
 
 ```python 
-from algomancy.dataengine import BaseDataSource
+from src.algomancy import BaseDataSource
 from typing import Dict
 from dataclasses import dataclass
 import json
@@ -200,18 +200,19 @@ example will follow below; for now, it suffices to know that the `ETLFactory` is
 components of the ETL process.
 
 The following code fragment is an example of a `MyETLFactory` implementation. 
-The continued example, below, will show the implementation of the `create_...()` methods; for now, they are left as stubs. 
-
+The continued example, below, will show the implementation of the `create_...()` methods; for now, they are left as stubs.
 
 ```python 
-import algomancy.dataengine as de
+
+from src import algomancy as de
 from typing import Dict, List
+
 
 # Create an ETLFactory
 class MyETLFactory(de.ETLFactory):
     def __init__(self, configs: List[de.InputFileConfiguration], logger=None):
         super().__init__(configs, logger)
-    
+
     def create_extractors(self, files: Dict[str, de.File]) -> Dict[str, de.Extractor]:
         ...
 
@@ -249,14 +250,17 @@ The `InputFileConfiguration` class is used to configure the extractors. It is a 
 - `file_schema`: The expected data type configuration of the file.
 
 Consider the following code fragment:
+
 ```python
-import algomancy.dataengine as de
+
+from src import algomancy as de
 from typing import Dict, List
+
 
 class WarehouseLayoutSchema(de.Schema):
     """Schema class that holds column names for warehouse layout data"""
 
-    ID = "slotid"   # -- optionally declare column names here
+    ID = "slotid"  # -- optionally declare column names here
     X = "x"
     Y = "y"
     ZONE = "zone"
@@ -269,6 +273,7 @@ class WarehouseLayoutSchema(de.Schema):
             WarehouseLayoutSchema.X: de.DataType.FLOAT,
             WarehouseLayoutSchema.Y: de.DataType.FLOAT,
         }
+
 
 warehouse_config = de.InputFileConfiguration(  # -- create an InputFileConfiguration instance
     extension=de.FileExtension.CSV,
@@ -335,29 +340,30 @@ Before we discuss the implementation of extractors, we will first discuss how to
 
 In practice, the user will primarily 'tell the ETLFactory' which extractor to use for which file, and which datatypes to 
 expect in the output DataFrame. This is done by implementing the `create_extractors()` method of the `ETLFactory` class.
-Consider the following example implementation. 
+Consider the following example implementation.
 
 ```python
-import algomancy.dataengine as de
+
+from src import algomancy as de
 from typing import Dict, List
+
 
 # Create an ETLFactory
 class MyETLFactory(de.ETLFactory):
-    
     ...
-    
+
     def create_extractors(self, files: Dict[str, de.File]) -> Dict[str, de.Extractor]:
         """ """
-        
+
         # declare expected names
         sku_data = "sku_data"
         employee = "employees"
 
         # construct a dictionary of expected schemas
         schemas = {cfg.file_name: cfg.file_schema for cfg in self.input_configurations}
-        
+
         # Optionally check that the expected files were passed and the schemas match the file names
-        
+
         extractors = {
             sku_data: de.CSVExtractor(
                 file=files[sku_data],  # -- constains a CSVFile
@@ -471,14 +477,16 @@ The user will typically need to implement their own validators, as most data val
 When the `Validators` have been created, the implementation of `create_validation_sequence()` is, once again, fairly straightforward. 
 The user simply needs to create an instance of the desired `ValidationSequence`, and add the desired `Validator`s to by 
 calling the `add_validator()` method. Consider the following example implementation.
+
 ```python
-import algomancy.dataengine as de
+
+from src import algomancy as de
 from typing import Dict, List
+
 
 # Create an ETLFactory
 class MyETLFactory(de.ETLFactory):
-    
-    ...    
+    ...
 
     def create_validation_sequence(self) -> de.ValidationSequence:
         vs = de.ValidationSequence(logger=self.logger)
@@ -549,20 +557,21 @@ Several ready-to-use, prebuilt transformers are provided:
 Example usage of creating a transformer in the factory:
 
 ```python
-import algomancy.dataengine as de
+
+from src import algomancy as de
 from typing import Dict, List
+
 
 # Create an ETLFactory
 class MyETLFactory(de.ETLFactory):
-    
-    ...    
+    ...
 
     def create_transformers(self) -> list[de.Transformer]:
         """ Create and return a list of transformers to be applied in sequence. """
         transformers = []
-        
-        transformers.append(de.CleanTransformer(logger=self.logger))  
-        
+
+        transformers.append(de.CleanTransformer(logger=self.logger))
+
         return transformers
 ```
 
@@ -572,7 +581,8 @@ implement the `transform()` method, which is used to transform the data. Conside
 
 ```python
 import pandas as pd
-import algomancy.dataengine as de
+from src import algomancy as de
+
 
 class CleanTransformer(de.Transformer):
     def __init__(self, logger=None) -> None:
@@ -610,11 +620,12 @@ Again, the implementation of `create_loader()` is straightforward; the main task
 Consider the following example implementation.
 
 ```python
-import algomancy.dataengine as de
+
+from src import algomancy as de
 from typing import Dict, List
 
+
 class MyETLFactory(de.ETLFactory):
-    
     ...
 
     def create_loader(self) -> de.Loader:
@@ -628,7 +639,8 @@ implemented as follows.
 ### Creating a Loader
 
 ```python
-import algomancy.dataengine as de
+
+from src import algomancy as de
 import pandas as pd
 from algomancy.dashboardlogger import Logger
 from typing import Dict, List

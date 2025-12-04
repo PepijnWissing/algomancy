@@ -114,7 +114,7 @@ from typing import Callable
 
 from algomancy.dataengine import BaseDataSource
 from algomancy.scenarioengine import ScenarioResult, AlgorithmTemplate
-from algomancy.scenarioengine.basealgorithmparameters import *
+from algomancy.scenarioengine import *
 
 
 # Define the parameters for the algorithm

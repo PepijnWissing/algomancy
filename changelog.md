@@ -268,35 +268,39 @@ _Released at 05-11-2025_
 Added `AppConfiguration` class to manage and validate the launch configuration. Conceptually, this class is a wrapper that provides a consistent interface for the configuration fields and their validation.
 This class is now used to manage the launch sequence. In particular, DashLauncher.build(...) now takes an `AppConfiguration` object as an argument, instead of a dictionary.
 Your main method must be migrated to use the new class. An example is shown below:
+
 ```python
 # main method: preferred version
 
-from algomancy.launcher import DashLauncher
-from algomancy.appconfiguration import AppConfiguration
+from src.algomancy.launcher import DashLauncher
+from src.algomancy.appconfiguration import AppConfiguration
+
 
 def main():
     app_cfg = AppConfiguration(
         data_path="data",
         has_persistent_state=True,
-#       ...
+        #       ...
     )
     app = DashLauncher.build(app_cfg)
     DashLauncher.run(app=app, host=app_cfg.host, port=app_cfg.port)
 ```
-For migration, the `AppConfiguration.from_dict(...)` method can be used to create an `AppConfiguration` object from a dictionary. Note that this is not advised, as this will not allow for IDE support. 
+For migration, the `AppConfiguration.from_dict(...)` method can be used to create an `AppConfiguration` object from a dictionary. Note that this is not advised, as this will not allow for IDE support.
+
 ```python
 # main method: migration alternative
 
-from algomancy.launcher import DashLauncher
-from algomancy.appconfiguration import AppConfiguration
+from src.algomancy.launcher import DashLauncher
+from src.algomancy.appconfiguration import AppConfiguration
+
 
 def main():
     configuration = {
         "data_path": "data",
         "has_persistent_state": True,
-#       ...   
+        #       ...   
     }
-    app_cfg = AppConfiguration.from_dict(configuration)   
+    app_cfg = AppConfiguration.from_dict(configuration)
     app = DashLauncher.build(app_cfg)
     DashLauncher.run(app=app, host=app_cfg.host, port=app_cfg.port)
 ```
@@ -325,31 +329,34 @@ At a later time, this button will also support a cancel operation.
 - KPI templates should be migrated to `BaseMeasurement`/`Measurement`. See `algomancy\\scenarioengine\\keyperformanceindicator.py` for how KPIs surface measurements.
 - Extensive examples are available in `algomancy\\scenarioengine\\unit.py\\example_usage()`.
 - KPI Template creation should now follow the following pattern:
+
 ```python
 import random
 
-from algomancy.scenarioengine import ImprovementDirection, KpiTemplate, ScenarioResult
-from algomancy.scenarioengine.unit import QUANTITIES, BaseMeasurement
+from src.algomancy import ImprovementDirection, KpiTemplate, ScenarioResult
+from algomancy.scenarioengine import QUANTITIES, BaseMeasurement
+
 
 def throughput_calculation(result: ScenarioResult) -> float:
     return 100 * (1 + 0.5 * random.random())  # placeholder
 
+
 mass = QUANTITIES["mass"]
 mass_kg = BaseMeasurement(
-    mass["kg"],                                 # the default unit is kg; the associated quantity is mass
-    min_digits=1,                               # the minimum number of nonzero digits before the decimal point
-    max_digits=3,                               # the maximum number of nonzero digits before the decimal point
-    decimals=2,                                 # the number of decimal places to display
-    smallest_unit = "g",                        # the smallest unit to display - overrides min_digits
-    largest_unit = "ton",                       # the largest unit to display - overrides max_digits
+    mass["kg"],  # the default unit is kg; the associated quantity is mass
+    min_digits=1,  # the minimum number of nonzero digits before the decimal point
+    max_digits=3,  # the maximum number of nonzero digits before the decimal point
+    decimals=2,  # the number of decimal places to display
+    smallest_unit="g",  # the smallest unit to display - overrides min_digits
+    largest_unit="ton",  # the largest unit to display - overrides max_digits
 )
 
 template = KpiTemplate(
     name="Throughput",
     # type=KpiType.NUMERIC,                     # KpiType has become redundant, formatting is now handled by Measurement
-    better_when=ImprovementDirection.HIGHER,    
+    better_when=ImprovementDirection.HIGHER,
     callback=throughput_calculation,
-    measurement_base=mass_kg,                   # Pass the measurement to use as a basis for the kpi value
+    measurement_base=mass_kg,  # Pass the measurement to use as a basis for the kpi value
 )
 ```
 
