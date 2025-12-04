@@ -1,6 +1,6 @@
 from typing import Dict, Any, List
 
-from src.algomancy.appconfiguration import AppConfiguration
+from .appconfiguration import AppConfiguration
 
 
 class SettingsManager:

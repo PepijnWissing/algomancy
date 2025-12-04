@@ -2,8 +2,8 @@ from typing import Callable
 
 from dash import html
 
-from algomancy.dataengine import BASE_DATA_BOUND
-from algomancy.scenarioengine import Scenario
+from data_processing import BASE_DATA_BOUND
+from scenario import Scenario
 
 
 class ContentRegistry:
