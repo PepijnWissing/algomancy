@@ -7,9 +7,11 @@ creates the Dash application, and starts the web server.
 
 import argparse
 
+import os
+import sys
+
 from algomancy_content import PlaceholderHomePageContentCreator
 from algomancy_data import DataSource
-from src.algomancy.launcher import DashLauncher
 from algomancy_gui.stylingconfigurator import (
     StylingConfigurator,
     LayoutSelection,
@@ -17,7 +19,6 @@ from algomancy_gui.stylingconfigurator import (
     CardHighlightMode,
     ButtonColorMode,
 )
-from src.algomancy.appconfiguration import AppConfiguration
 
 from example.data_handling.input_configs import example_input_configs
 from example.data_handling.factories import ExampleETLFactory
@@ -27,6 +28,15 @@ from example.templates import (
     kpi_templates,
     algorithm_templates,
 )
+
+
+# Ensure project root is on sys.path so sibling packages (like `src`) can be imported
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
+from src.algomancy.launcher import DashLauncher  # noqa: E402
+from src.algomancy.appconfiguration import AppConfiguration  # noqa: E402
 
 
 def main(
