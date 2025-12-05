@@ -2,9 +2,7 @@ from dash import html, get_app
 import dash
 import dash_bootstrap_components as dbc
 
-from algomancy.scenarioengine import ScenarioStatus
-from algomancy.scenarioengine import ScenarioManager
-from algomancy.sessionengine import SessionManager
+from algomancy_scenario import ScenarioStatus
 
 
 class StandardHomePageContentCreator:

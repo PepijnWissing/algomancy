@@ -7,7 +7,7 @@ It creates a collapsible section that displays additional results for the select
 
 from dash import html
 
-from scenario import Scenario
+from algomancy_scenario import Scenario
 
 
 class PlaceholderComparePageContentCreator:
