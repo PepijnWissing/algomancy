@@ -1,7 +1,7 @@
 import time
 from typing import List, Dict, TypeVar, cast
 
-import data_processing as de
+import algomancy_data as de
 
 F = TypeVar("F", bound=de.File)
 

@@ -1,3 +1,5 @@
+import os
+
 from dash import html, get_app
 import dash
 import dash_bootstrap_components as dbc
@@ -60,7 +62,7 @@ class HomePageContentCreator:
             ),
         ]
         logo_url = dash.get_asset_url("Scholt_Energy.png")
-
+        print(os.getcwd())
         return html.Div(
             [
                 # Header with logo

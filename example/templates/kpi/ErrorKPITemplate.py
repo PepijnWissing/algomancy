@@ -1,11 +1,11 @@
 import random
 
-from src.algomancy import (
+from scenario import (
     ImprovementDirection,
     ScenarioResult,
 )
 from scenario import BaseKPI
-from scenario import QUANTITIES, BaseMeasurement
+from utils.unit import QUANTITIES, BaseMeasurement
 
 
 # def create_error_template():

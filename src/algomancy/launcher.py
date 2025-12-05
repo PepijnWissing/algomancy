@@ -7,13 +7,13 @@ import dash_auth
 from dash import get_app, Dash
 from dash_bootstrap_components.themes import BOOTSTRAP
 
-from gui.layout import LayoutCreator
-from scenario.scenariomanager import ScenarioManager
-from content_lib.librarymanager import LibraryManager as lm
-from utils.logger import MessageStatus
+from algomancy_gui.layout import LayoutCreator
+from algomancy_gui.contentregistry import ContentRegistry
+from algomancy_gui.settingsmanager import SettingsManager
+from algomancy_scenario.scenariomanager import ScenarioManager
+from algomancy_content.librarymanager import LibraryManager as lm
+from algomancy_utils.logger import MessageStatus
 
-from .contentregistry import ContentRegistry
-from .settingsmanager import SettingsManager
 from .appconfiguration import AppConfiguration
 
 
@@ -63,10 +63,15 @@ class DashLauncher:
             BOOTSTRAP,
             "https://use.fontawesome.com/releases/v5.15.4/css/all.css",
         ]
+
+        from pathlib import Path
+
+        assets_path = Path(os.getcwd()) / Path(cfg.assets_path)
+
         app = Dash(
             external_stylesheets=external_stylesheets,
             suppress_callback_exceptions=True,
-            assets_folder=cfg.assets_path,
+            assets_folder=str(assets_path),
         )
         app.title = cfg.title
 

@@ -406,7 +406,7 @@ import pandas as pd
 import json
 from io import StringIO
 
-import data_processing as de
+import algomancy_data as de
 from algomancy.dashboardlogger import Logger
 from typing import Dict, List
 
@@ -505,7 +505,7 @@ implement the `validate()` method, which is used to validate the data. Consider 
 ```python
 import pandas as pd
 
-import data_processing as de
+import algomancy_data as de
 from typing import Dict, List
 
 class ExtractionSuccessVerification(de.Validator):

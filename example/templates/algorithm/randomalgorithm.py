@@ -1,6 +1,6 @@
 from time import sleep
 
-from data_processing import DataSource
+from algomancy_data import DataSource
 from scenario import (
     ScenarioResult,
 )

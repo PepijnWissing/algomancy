@@ -7,10 +7,10 @@ creates the Dash application, and starts the web server.
 
 import argparse
 
-from content_lib import PlaceholderHomePageContentCreator
-from data_processing import DataSource
+from algomancy_content import PlaceholderHomePageContentCreator
+from algomancy_data import DataSource
 from src.algomancy.launcher import DashLauncher
-from algomancy.stylingconfigurator import (
+from algomancy_gui.stylingconfigurator import (
     StylingConfigurator,
     LayoutSelection,
     ColorConfiguration,
@@ -19,11 +19,11 @@ from algomancy.stylingconfigurator import (
 )
 from src.algomancy.appconfiguration import AppConfiguration
 
-from .data_handling.input_configs import example_input_configs
-from .data_handling.factories import ExampleETLFactory
-from .pages.DataPageContent import DataPageContentCreator
-from .pages.ScenarioPageContent import ScenarioPageContentCreator
-from .templates import (
+from example.data_handling.input_configs import example_input_configs
+from example.data_handling.factories import ExampleETLFactory
+from example.pages.DataPageContent import DataPageContentCreator
+from example.pages.ScenarioPageContent import ScenarioPageContentCreator
+from example.templates import (
     kpi_templates,
     algorithm_templates,
 )
@@ -42,11 +42,10 @@ def main(
     Loads data from CSV files, initializes the data source, creates the Dash application,
     and starts the web server.
     """
-
     # framework configuration via AppConfiguration
     app_cfg = AppConfiguration(
-        data_path="../example/data",
-        assets_path="../example/assets",
+        data_path="example/data",
+        assets_path="example/assets",
         has_persistent_state=True,
         etl_factory=ExampleETLFactory,
         kpi_templates=kpi_templates,
@@ -102,13 +101,8 @@ def configure_styling() -> StylingConfigurator:
     dark_green = "#1F271B"
     sage_green = "#6DA34D"
     cornsilk = "#FEFAE0"
-
     white = "#FFFFFF"
-    # purple = "#3EBDF3"
-    # lightblue = "#4C0265"
-    # bright_blue = ColorConfiguration.linear_combination_hex(lightblue, purple, 0.5)
     darkgrey = "#424242"
-    # lightgrey = "#E3E3E3"
 
     styling = StylingConfigurator(
         layout_selection=LayoutSelection.SIDEBAR,
@@ -126,8 +120,8 @@ def configure_styling() -> StylingConfigurator:
                 "unified_hover": "#8FBE74",
             },
         ),
-        logo_url="/example/assets/cqm-logo-white.png",
-        button_url="/example/assets/cqm-button-white.png",
+        logo_path="CQM-logo-white.png",  # path as if cwd is the assets folder
+        button_path="cqm-button-white.png",
         card_highlight_mode=CardHighlightMode.SUBTLE_DARK,
     )
     return styling

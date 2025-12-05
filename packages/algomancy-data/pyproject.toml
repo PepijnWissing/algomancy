@@ -1,0 +1,20 @@
+[project]
+name = "data-processing"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Pepijn Wissing", email = "Wsg@cqm.nl" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "utils",
+    "pandas",
+]
+
+[build-system]
+requires = ["uv_build>=0.9.6,<0.10.0"]
+build-backend = "uv_build"
+
+[tool.uv.sources]
+utils = {workspace = true}

@@ -112,7 +112,7 @@ def slow_sample_algorithm(
 from time import sleep
 from typing import Callable
 
-from data_processing import BaseDataSource
+from algomancy_data import BaseDataSource
 from scenario import ScenarioResult, AlgorithmTemplate
 from scenario import *
 
