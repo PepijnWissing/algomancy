@@ -2,7 +2,7 @@ from dash import html, get_app
 import dash
 import dash_bootstrap_components as dbc
 
-from scenario import ScenarioStatus
+from algomancy_scenario import ScenarioStatus
 
 
 class StandardHomePageContentCreator:

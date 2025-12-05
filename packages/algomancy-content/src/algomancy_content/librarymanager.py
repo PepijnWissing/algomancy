@@ -2,33 +2,17 @@ from typing import Tuple, Callable
 
 from dash import html
 
-from content_lib.standarddatapage import (
-    StandardDataPageContentCreator,
-)
 from algomancy_data import BASE_DATA_BOUND
-from scenario import Scenario
+from algomancy_scenario import Scenario
 
-from content_lib.placeholderhomepagecontentcreator import (
-    PlaceholderHomePageContentCreator,
-)
-from content_lib.standardhomepage import (
-    StandardHomePageContentCreator,
-)
-from content_lib.exampledatapage import (
-    ExampleDataPageContentCreator,
-)
-from content_lib.placeholderdatapage import (
-    PlaceholderDataPageContentCreator,
-)
-from content_lib.placeholdercomparepage import (
-    PlaceholderComparePageContentCreator,
-)
-from content_lib.placeholderscenariopage import (
-    PlaceholderScenarioPageContentCreator,
-)
-from content_lib.standardoverviewpage import (
-    StandardOverviewPageContentCreator,
-)
+from .standarddatapage import StandardDataPageContentCreator
+from .placeholderhomepagecontentcreator import PlaceholderHomePageContentCreator
+from .standardhomepage import StandardHomePageContentCreator
+from .exampledatapage import ExampleDataPageContentCreator
+from .placeholderdatapage import PlaceholderDataPageContentCreator
+from .placeholdercomparepage import PlaceholderComparePageContentCreator
+from .placeholderscenariopage import PlaceholderScenarioPageContentCreator
+from .standardoverviewpage import StandardOverviewPageContentCreator
 
 
 class LibraryManager:

@@ -1,11 +1,7 @@
 from time import sleep
 
 from algomancy_data import DataSource
-from scenario import (
-    BaseAlgorithmParameters,
-    ScenarioResult,
-)
-from scenario.basealgorithm import BaseAlgorithm
+from algomancy_scenario import BaseAlgorithmParameters, ScenarioResult, BaseAlgorithm
 
 
 class PlaceholderParams(BaseAlgorithmParameters):
