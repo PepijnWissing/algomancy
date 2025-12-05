@@ -29,12 +29,12 @@ from example.templates import (
     algorithm_templates,
 )
 
-
 # Ensure project root is on sys.path so sibling packages (like `src`) can be imported
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
+# Suppress ruff linter for these two imports
 from src.algomancy.launcher import DashLauncher  # noqa: E402
 from src.algomancy.appconfiguration import AppConfiguration  # noqa: E402
 
