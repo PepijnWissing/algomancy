@@ -1,6 +1,6 @@
 import pytest
 
-from src.algomancy import ScenarioManager
+from ..src.algomancy_scenario.scenariomanager import ScenarioManager
 
 
 @pytest.fixture
@@ -17,7 +17,7 @@ def test_derive_data(
     test_key = data_keys[0]  # may throw IndexError in case fixture is bad
 
     # store hash of original
-    original_hash = sm.get_data(test_key).hash()
+    # original_hash = sm.get_data(test_key).hash()
 
     # derive data
     sm.derive_data(test_key, derived_data_key)
