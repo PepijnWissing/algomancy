@@ -1,6 +1,6 @@
 from dash import html
 
-from scenario import Scenario
+from algomancy_scenario import Scenario
 
 
 class ScenarioPageContentCreator:

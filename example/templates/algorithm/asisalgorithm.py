@@ -1,11 +1,11 @@
 from time import sleep
 
 from algomancy_data import DataSource
-from scenario import (
+from algomancy_scenario import (
     ScenarioResult,
+    BaseAlgorithm,
+    BaseAlgorithmParameters,
 )
-from scenario import BaseAlgorithm
-from scenario import BaseAlgorithmParameters
 
 
 class AsIsAlgorithmParams(BaseAlgorithmParameters):

@@ -1,11 +1,12 @@
 from time import sleep
 
 from algomancy_data import DataSource
-from scenario import (
+from algomancy_scenario import (
     ScenarioResult,
+    BaseAlgorithm,
+    BaseAlgorithmParameters,
+    FloatParameter,
 )
-from scenario import BaseAlgorithm
-from scenario import BaseAlgorithmParameters, FloatParameter
 
 
 class RandomAlgorithmParameters(BaseAlgorithmParameters):
