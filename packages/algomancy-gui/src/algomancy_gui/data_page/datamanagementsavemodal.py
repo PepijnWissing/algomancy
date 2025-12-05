@@ -1,5 +1,6 @@
+import dash
 import dash_bootstrap_components as dbc
-from dash import dcc
+from dash import dcc, callback, Output, Input, no_update, State, get_app
 
 from algomancy_scenario import ScenarioManager
 
@@ -8,6 +9,9 @@ from ..componentids import (
     DM_SAVE_MODAL_CLOSE_BTN,
     DM_SAVE_SET_SELECTOR,
     DM_SAVE_SUBMIT_BUTTON,
+    DM_SAVE_OPEN_BUTTON,
+    DATA_MAN_SUCCESS_ALERT,
+    DATA_MAN_ERROR_ALERT,
 )
 
 """
@@ -86,3 +90,96 @@ def data_management_save_modal(sm: ScenarioManager, themed_styling):
         keyboard=False,
         backdrop="static",
     )
+
+
+@callback(
+    Output(DM_SAVE_MODAL, "is_open"),
+    [
+        Input(DM_SAVE_OPEN_BUTTON, "n_clicks"),
+        Input(DM_SAVE_MODAL_CLOSE_BTN, "n_clicks"),
+    ],
+    [dash.dependencies.State(DM_SAVE_MODAL, "is_open")],
+)
+def toggle_modal_save(open_clicks, close_clicks, is_open):
+    """
+    Toggles the visibility of the save modal dialog.
+
+    Opens the modal when the open button is clicked and closes it when
+    the close button is clicked.
+
+    Args:
+        open_clicks: Number of times the open button has been clicked
+        close_clicks: Number of times the close button has been clicked
+        is_open: Current state of the modal (open or closed)
+
+    Returns:
+        bool: New state for the modal
+    """
+    if open_clicks or close_clicks:
+        return not is_open
+    return is_open
+
+
+@callback(
+    Output(DM_SAVE_SET_SELECTOR, "value"),
+    Input(DM_SAVE_MODAL, "is_open"),
+    prevent_initial_call=True,
+)
+def reset_save_selection_on_close(modal_is_open: bool):
+    """
+    Resets the save dataset selector when the save modal is closed.
+
+    Args:
+        modal_is_open: Boolean indicating if the modal is open
+
+    Returns:
+        None if the modal is closed, no_update otherwise
+    """
+    if not modal_is_open:
+        return None
+    return no_update
+
+
+@callback(
+    Output(DM_SAVE_MODAL, "is_open", allow_duplicate=True),
+    Output(DATA_MAN_SUCCESS_ALERT, "children", allow_duplicate=True),
+    Output(DATA_MAN_SUCCESS_ALERT, "is_open", allow_duplicate=True),
+    Output(DATA_MAN_ERROR_ALERT, "children", allow_duplicate=True),
+    Output(DATA_MAN_ERROR_ALERT, "is_open", allow_duplicate=True),
+    Input(DM_SAVE_SUBMIT_BUTTON, "n_clicks"),
+    State(DM_SAVE_SET_SELECTOR, "value"),
+    prevent_initial_call=True,
+)
+def save_derived_data(
+    n_clicks,
+    set_name: str,
+):
+    """
+    Saves a derived dataset as master data when the save button is clicked.
+
+    Stores the dataset files to disk and updates the dataset's status to master data.
+    Displays success or error messages and closes the modal upon completion.
+
+    Args:
+        n_clicks: Number of times the submit button has been clicked
+        set_name: Name of the dataset to save
+
+    Returns:
+        Tuple containing modal state and alert messages
+    """
+
+    sm: ScenarioManager = get_app().server.scenario_manager
+    try:
+        data = sm.get_data(set_name)
+        data.set_to_master_data()
+
+        if sm.save_type == "json":
+            sm.store_data_as_json(set_name)
+        else:
+            raise ValueError(f"Unknown save type: {sm.save_type}")
+
+        return False, "Files saved successfully", True, "", False
+    except Exception as e:
+        sm.logger.error(f"Problem with saving: {str(e)}")
+        sm.logger.log_traceback(e)
+        return False, "", False, f"Problem with saving: {str(e)}", True
