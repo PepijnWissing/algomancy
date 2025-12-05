@@ -1,4 +1,4 @@
-from src.algomancy import ScenarioManager
+from scenario import ScenarioManager
 
 
 def debug_create_example_scenarios(sm: ScenarioManager):

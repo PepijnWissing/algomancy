@@ -26,11 +26,11 @@ dependencies = [
   "waitress>=3.0.2",
   "wheel>=0.45.1",
   "uv_build>=0.9.6,<0.10.0",
-  "content-lib",
-  "data-processing",
-  "gui",
-  "scenario",
-  "utils",
+  "algomancy-content",
+  "algomancy-data",
+  "algomancy-scenario",
+  "algomancy-utils",
+  "algomancy-gui",
   "prek>=0.2.19"
 ]
 description = "A dashboarding framework for visualizing performances of algorithms or simulations in various scenarios."
@@ -46,17 +46,17 @@ requires-python = ">=3.14"
 version = "0.3.1"
 
 [tool.uv.sources]
-content-lib = {workspace = true}
-data-processing = {workspace = true}
-gui = {workspace = true}
-scenario = {workspace = true}
-utils = {workspace = true}
+algomancy-content = {workspace = true}
+algomancy-data = {workspace = true}
+algomancy-gui = {workspace = true}
+algomancy-scenario = {workspace = true}
+algomancy-utils = {workspace = true}
 
 [tool.uv.workspace]
 members = [
-  "packages/content-lib",
-  "packages/gui",
-  "packages/utils",
-  "packages/data-processing",
-  "packages/scenario"
+  "packages/algomancy-content",
+  "packages/algomancy-gui",
+  "packages/algomancy-utils",
+  "packages/algomancy-data",
+  "packages/algomancy-scenario"
 ]

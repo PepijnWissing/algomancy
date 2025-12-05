@@ -3,7 +3,7 @@ import pandas as pd
 from dash import html, dcc, dash_table, callback, Output, Input, State
 import plotly.express as px
 
-from data_processing import DataSource
+from algomancy_data import DataSource
 from ..IDs import (
     DATA_TABLE_ITEMS_STORE,
     DATA_TABLE_ITEMS,
