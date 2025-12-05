@@ -1,15 +1,13 @@
 from time import sleep
 
 from algomancy_data import DataSource
-from scenario import (
-    ScenarioResult,
-)
-from scenario import BaseAlgorithm
-from scenario import (
+from algomancy_scenario import (
     BaseAlgorithmParameters,
     IntegerParameter,
     EnumParameter,
     BooleanParameter,
+    BaseAlgorithm,
+    ScenarioResult,
 )
 
 

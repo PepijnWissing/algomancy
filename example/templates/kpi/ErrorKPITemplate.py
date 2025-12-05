@@ -1,11 +1,11 @@
 import random
 
-from scenario import (
+from algomancy_scenario import (
     ImprovementDirection,
     ScenarioResult,
+    BaseKPI,
 )
-from scenario import BaseKPI
-from utils.unit import QUANTITIES, BaseMeasurement
+from algomancy_utils import QUANTITIES, BaseMeasurement
 
 
 class ErrorKPI(BaseKPI):

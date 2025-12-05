@@ -3,7 +3,7 @@ from typing import Callable
 from dash import html
 
 from algomancy_data import BASE_DATA_BOUND
-from scenario import Scenario
+from algomancy_scenario import Scenario
 
 
 class ContentRegistry:
