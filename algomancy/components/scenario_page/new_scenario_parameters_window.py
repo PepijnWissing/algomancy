@@ -67,7 +67,7 @@ def create_input_group(param_dict: Dict[str, TypedParameter]):
 
 
 def create_algo_parameters_entry_card_body(template_name: str) -> CardBody:
-    sm = get_app().server.scenario_manager
+    sm = get_app().server.session_manager
     template = sm.get_algorithm_template(template_name)
     algo_params = template.param_type()
     assert algo_params.has_inputs(), "No parameters found for algorithm template."

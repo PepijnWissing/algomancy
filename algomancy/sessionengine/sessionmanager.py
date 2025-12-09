@@ -98,6 +98,7 @@ class SessionManager:
             )
 
         self._start_session_name = list(self._sessions.keys())[0]
+        self._algo_templates = algo_templates
 
         self.log("SessionManager initialized.")
 
@@ -151,3 +152,6 @@ class SessionManager:
     @property
     def start_session_name(self) -> str:
         return self._start_session_name
+
+    def get_algorithm_template(self, key) -> AlgorithmTemplate:
+        return self._algo_templates.get(key)

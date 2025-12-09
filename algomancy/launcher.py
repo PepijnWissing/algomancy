@@ -31,9 +31,6 @@ class DashLauncher:
 
         session_manager = SessionManager.from_config(cfg_obj)
 
-        # # initialize Scenario Manager using the configuration
-        # sm = ScenarioManager.from_config(cfg_obj)
-
         # Create the app
         app = DashLauncher._construct(
             cfg=cfg_obj,
