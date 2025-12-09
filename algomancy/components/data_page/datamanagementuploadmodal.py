@@ -245,8 +245,8 @@ def _render_uploaded_files(filenames, wrong_filenames) -> html.Div:
     return table_div
 
 
-def check_files(filenames):
-    sm = get_app().server.scenario_manager
+def check_files(filenames, session_id: str):
+    sm = get_app().server.session_manager.get_scenario_manager(session_id)
     allowed_type = sm.save_type
 
     filenames_with_wrong_type = [
@@ -283,9 +283,10 @@ def check_files(filenames):
         Output(DM_UPLOAD_UPLOADER, "disabled", allow_duplicate=True),
     ],
     Input(DM_UPLOAD_UPLOADER, "filename"),
+    State(ACTIVE_SESSION, "data"),
     prevent_initial_call=True,
 )
-def update_file_viewer(filename):
+def update_file_viewer(filename, session_id: str):
     """
     Callback to respond to file upload events
     """
@@ -298,7 +299,7 @@ def update_file_viewer(filename):
     else:
         filenames = [filename]
 
-    good_files, bad_files = check_files(filenames)
+    good_files, bad_files = check_files(filenames, session_id)
 
     return html.Div([_render_uploaded_files(good_files, bad_files)]), True, True
 
@@ -335,7 +336,7 @@ def process_uploaded_files(n_clicks, contents, filenames, session_id: str):
         contents = [contents]
 
     # Filter good files
-    good_files, _ = check_files(filenames)
+    good_files, _ = check_files(filenames, session_id)
     files_with_content = zip(filenames, contents)
     good_files_with_content = [
         (filename, content)
