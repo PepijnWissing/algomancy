@@ -31,11 +31,11 @@ from algomancy.components.compare_page.scenarioselector import (
     create_side_by_side_selector,
 )
 
-
 from algomancy.contentregistry import ContentRegistry
 from algomancy.scenarioengine import ScenarioManager
 from algomancy.settingsmanager import SettingsManager
 
+import algomancy.components.compare_page.callbacks
 
 @callback(
     Output(COMPARE_PAGE, "children"),
