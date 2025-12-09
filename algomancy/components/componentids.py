@@ -144,6 +144,7 @@ PERF_COMPARE_COLLAPSE = "perf-compare-collapse"
 
 
 # === Compare Page IDs ===
+COMPARE_PAGE = "compare-page"
 COMPARE_DETAIL_VIEW = "compare-detail-view"
 
 # === Overview Page IDs ===

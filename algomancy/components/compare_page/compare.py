@@ -24,19 +24,27 @@ from algomancy.components.componentids import (
     ACTIVE_SESSION,
     RIGHT_SCENARIO_OVERVIEW,
     RIGHT_SCENARIO_DROPDOWN,
+    COMPARE_PAGE,
 )
 from algomancy.components.compare_page.scenarioselector import (
     create_side_by_side_viewer,
     create_side_by_side_selector,
 )
 
+
 from algomancy.contentregistry import ContentRegistry
 from algomancy.scenarioengine import ScenarioManager
 from algomancy.settingsmanager import SettingsManager
 
 
-def compare_page():
-    sm: ScenarioManager = get_app().server.scenario_manager
+@callback(
+    Output(COMPARE_PAGE, "children"),
+    Input(ACTIVE_SESSION, "data"),
+)
+def render_ordered_components(active_session_name):
+    sm: ScenarioManager = get_app().server.session_manager.get_scenario_manager(
+        active_session_name
+    )
     settings: SettingsManager = get_app().server.settings
 
     header = create_header(settings)
@@ -52,9 +60,11 @@ def compare_page():
     order = get_component_order(orderable_components, settings, sm)
 
     ordered_components = order_components(header, order, orderable_components, selector)
+    return ordered_components
 
-    page = html.Div(ordered_components, className="compare-page")
-    return page
+
+def compare_page():
+    return html.Div(id=COMPARE_PAGE, className="compare-page")
 
 
 def order_components(
