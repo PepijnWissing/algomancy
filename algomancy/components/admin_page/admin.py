@@ -10,6 +10,7 @@ from algomancy.components.componentids import (
     ADMIN_SELECT_SESSION,
 )
 
+import algomancy.components.admin_page.callbacks # ignore
 
 def admin_header():
     return [
