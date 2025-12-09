@@ -153,6 +153,7 @@ COMPARE_DETAIL_VIEW = "compare-detail-view"
 OVERVIEW_PAGE_CONTENT = "overview-page-content"
 
 # === Admin Page IDs ===
+ADMIN_PAGE = "admin-page"
 ADMIN_NEW_SESSION = "admin-new-session"
 ADMIN_SELECT_SESSION = "admin-select-session"
 ADMIN_LOG_WINDOW = "admin-log-window"
