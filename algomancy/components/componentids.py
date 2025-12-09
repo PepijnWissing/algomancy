@@ -5,6 +5,9 @@ This module defines constants for all component IDs used in the dashboard applic
 These IDs are used for callbacks and to reference components in the Dash application.
 """
 
+# === Session IDs ===
+ACTIVE_SESSION = "active-session-id"
+
 # === Styling ===
 GLOBAL_STYLING_STORE = "global-styling"
 PAGE_CONTENT = "page-content"
@@ -13,6 +16,7 @@ PAGE_CONTENT = "page-content"
 HOME_PAGE_CONTENT = "home-page-content"
 
 # === Data IDs ===
+DATA_PAGE = "data-page"
 DM_LIST_UPDATER_STORE = "dm-list-updater"
 
 DATA_PAGE_CONTENT = "data-page-content"
@@ -70,6 +74,8 @@ DM_DOWNLOAD_SUBMIT_BUTTON = "dm-download-submit-btn"
 DM_DOWNLOAD_MODAL_CLOSE_BTN = "dm-download-modal-close-btn"
 
 # === Scenario IDs ===
+SCENARIO_PAGE = "scenario-page"
+
 SCENARIO_LIST = "scenario-list"
 SCENARIO_DELETE_MODAL = "delete-modal"
 SCENARIO_CREATE_STATUS = "create-status"

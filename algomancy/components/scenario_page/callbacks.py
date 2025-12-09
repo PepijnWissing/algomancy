@@ -12,7 +12,34 @@ from dash import (
 from dash.exceptions import PreventUpdate
 
 from algomancy.scenarioengine.enumtypes import ScenarioStatus
-from algomancy.components.componentids import *
+from algomancy.components.componentids import (
+    SCENARIO_LIST_UPDATE_STORE,
+    SCENARIO_SELECTED_ID_STORE,
+    ACTIVE_SESSION,
+    SCENARIO_PROG_INTERVAL,
+    SCENARIO_PROCESS_BUTTON,
+    SCENARIO_PROG_BAR,
+    SCENARIO_PROG_TEXT,
+    SCENARIO_PROG_COLLAPSE,
+    SCENARIO_CURRENTLY_RUNNING_STORE,
+    SCENARIO_CREATOR_MODAL,
+    SCENARIO_CREATOR_OPEN_BUTTON,
+    SCENARIO_TAG_INPUT,
+    SCENARIO_DATA_INPUT,
+    SCENARIO_ALGO_INPUT,
+    ALGO_PARAMS_WINDOW_ID,
+    ALGO_PARAMS_ENTRY_CARD,
+    SCENARIO_ALERT,
+    SCENARIO_NEW_BUTTON,
+    SCENARIO_DELETE_MODAL,
+    SCENARIO_TO_DELETE,
+    SCENARIO_DELETE_BUTTON,
+    SCENARIO_SELECTED,
+    SCENARIO_CONFIRM_DELETE_BUTTON,
+    SCENARIO_CANCEL_DELETE_BUTTON,
+    SCENARIO_LIST,
+    SCENARIO_CARD,
+)
 from algomancy.components.scenario_page.new_scenario_parameters_window import (
     create_algo_parameters_entry_card_body,
 )
@@ -24,15 +51,17 @@ from algomancy.components.scenario_page.scenario_cards import scenario_cards
     Output(SCENARIO_LIST_UPDATE_STORE, "data"),
     Input("url", "pathname"),
     State(SCENARIO_SELECTED_ID_STORE, "data"),
+    State(ACTIVE_SESSION, "data"),
     prevent_initial_call=False,
 )
-def initialize_page(pathname, selected_id):
+def initialize_page(pathname, selected_id, session_id):
     """
     Initializes the scenario page when it is loaded.
 
     Args:
         pathname (str): Current URL pathname
         selected_id (str): ID of currently selected scenario
+        session_id (str): ID of active session
 
     Returns:
         tuple: (
@@ -43,7 +72,7 @@ def initialize_page(pathname, selected_id):
             selected scenario ID
         )
     """
-    scenario_manager = get_app().server.scenario_manager
+    scenario_manager = get_app().server.session_manager.get_scenario_manager(session_id)
 
     # Only initialize on page load
     if pathname and "scenario" in pathname:
@@ -56,9 +85,10 @@ def initialize_page(pathname, selected_id):
 @callback(
     Output(SCENARIO_PROG_INTERVAL, "disabled"),
     Input({"type": SCENARIO_PROCESS_BUTTON, "index": ALL}, "n_clicks"),
+    State(ACTIVE_SESSION, "data"),
     prevent_initial_call=True,
 )
-def process_scenario(process_clicks):
+def process_scenario(process_clicks, session_id):
     """
     Processes a scenario when the process button is clicked.
 
@@ -73,7 +103,7 @@ def process_scenario(process_clicks):
     Returns:
         bool | dash.no_update: Whether the progress interval should be disabled.
     """
-    sm = get_app().server.scenario_manager
+    sm = get_app().server.session_manager.get_scenario_manager(session_id)
 
     triggered = ctx.triggered_id
     if (
@@ -116,10 +146,11 @@ def get_currently_processing_info(sm):
     ],
     Input(SCENARIO_PROG_INTERVAL, "n_intervals"),
     State(SCENARIO_CURRENTLY_RUNNING_STORE, "data"),
+    State(ACTIVE_SESSION, "data"),
     prevent_initial_call=True,
 )
-def update_progress(n_intervals, msg):
-    sm = get_app().server.scenario_manager
+def update_progress(n_intervals, msg, session_id):
+    sm = get_app().server.session_manager.get_scenario_manager(session_id=session_id)
     if sm.currently_processing:
         value, label, message = get_currently_processing_info(sm)
         if message != msg:
@@ -166,14 +197,15 @@ def refresh_on_close(is_open):
     Output(ALGO_PARAMS_WINDOW_ID, "is_open"),
     Output(ALGO_PARAMS_ENTRY_CARD, "children"),
     Input(SCENARIO_ALGO_INPUT, "value"),
+    State(ACTIVE_SESSION, "data"),
     prevent_initial_call=True,
 )
-def open_algo_params_window(algo_name):
+def open_algo_params_window(algo_name, session_id):
     if algo_name:
         try:
             return True, create_algo_parameters_entry_card_body(algo_name)
         except AssertionError:
-            # get_app().server.scenario_manager.logger.log_traceback(ae)
+            # get_app().server.session_manager.get_scenario_manager(session_id).logger.log_traceback(ae)
             return False, ""
     return False, ""
 
@@ -190,10 +222,11 @@ def open_algo_params_window(algo_name):
     State(SCENARIO_ALGO_INPUT, "value"),
     State({"type": "algo-param-input", "param": ALL}, "value"),
     State(SCENARIO_SELECTED_ID_STORE, "data"),
+    State(ACTIVE_SESSION, "data"),
     prevent_initial_call=True,
 )
 def create_scenario(
-    create_clicks, tag, dataset, algorithm, algo_param_values, selected_id
+    create_clicks, tag, dataset, algorithm, algo_param_values, selected_id, session_id
 ):
     # Now algo_param_values is a list containing the values of each param input, in DOM order!
     # You can also get their IDs from dash.callback_context.inputs_list for mapping
@@ -205,7 +238,7 @@ def create_scenario(
     if not algorithm:
         return no_update, "Algorithm is required", True, False
 
-    scenario_manager = get_app().server.scenario_manager
+    scenario_manager = get_app().server.session_manager.get_scenario_manager(session_id)
 
     param_ids = [s["id"] for s in callback_context.states_list[3]]
     param_dict = {
@@ -216,7 +249,7 @@ def create_scenario(
         scenario_manager.create_scenario(tag, dataset, algorithm, param_dict)
         return "new scenario created", "", False, False
     except Exception as e:
-        get_app().server.scenario_manager.logger.log_traceback(e)
+        get_app().server.session_manager.logger.log_traceback(e)
         return no_update, f"Error: {e}", True, False
 
 
@@ -225,9 +258,10 @@ def create_scenario(
     Output(SCENARIO_DELETE_MODAL, "is_open", allow_duplicate=True),
     Output(SCENARIO_TO_DELETE, "data", allow_duplicate=True),
     Input({"type": SCENARIO_DELETE_BUTTON, "index": ALL}, "n_clicks"),
+    State(ACTIVE_SESSION, "data"),
     prevent_initial_call=True,
 )
-def open_delete_modal(delete_clicks):
+def open_delete_modal(delete_clicks, session_id):
     """
     Opens the delete confirmation modal when a delete button is clicked.
     Prevents opening on refresh or unrelated status updates.
@@ -242,7 +276,9 @@ def open_delete_modal(delete_clicks):
                 return no_update, no_update
             # Check that idx is a valid index in the list
             if 0 <= idx < len(delete_clicks) and delete_clicks[idx]:
-                return True, get_app().server.scenario_manager.list_scenarios()[idx].id
+                return True, get_app().server.session_manager.get_scenario_manager(
+                    session_id
+                ).list_scenarios()[idx].id
     return no_update, no_update
 
 
@@ -255,9 +291,12 @@ def open_delete_modal(delete_clicks):
     Input(SCENARIO_CONFIRM_DELETE_BUTTON, "n_clicks"),
     State(SCENARIO_TO_DELETE, "data"),
     State(SCENARIO_SELECTED_ID_STORE, "data"),
+    State(ACTIVE_SESSION, "data"),
     prevent_initial_call=True,
 )
-def confirm_delete_scenario(confirm_clicks, scenario_to_delete, selected_id):
+def confirm_delete_scenario(
+    confirm_clicks, scenario_to_delete, selected_id, session_id
+):
     """
     Deletes a scenario when the confirm delete button is clicked.
 
@@ -265,6 +304,7 @@ def confirm_delete_scenario(confirm_clicks, scenario_to_delete, selected_id):
         confirm_clicks (int): Number of clicks on the confirm delete button
         scenario_to_delete (str): ID of scenario marked for deletion
         selected_id (str): ID of currently selected scenario
+        session_id (str): ID of active session
 
     Returns:
         tuple: (
@@ -274,7 +314,7 @@ def confirm_delete_scenario(confirm_clicks, scenario_to_delete, selected_id):
             selected scenario ID
         )
     """
-    scenario_manager = get_app().server.scenario_manager
+    scenario_manager = get_app().server.session_manager.get_scenario_manager(session_id)
 
     if scenario_to_delete is not None:
         scenario_manager.delete_scenario(scenario_to_delete)
@@ -317,11 +357,12 @@ def trigger_refresh(msg):
     Output(SCENARIO_LIST, "children"),
     Input(SCENARIO_LIST_UPDATE_STORE, "data"),
     State(SCENARIO_SELECTED_ID_STORE, "data"),
+    State(ACTIVE_SESSION, "data"),
     prevent_initial_call=True,
 )
-def refresh_cards(message, selected_id):
+def refresh_cards(message, selected_id, session_id):
     app = get_app()
-    scenario_manager = app.server.scenario_manager
+    scenario_manager = app.server.session_manager.get_scenario_manager(session_id)
 
     if selected_id in scenario_manager.list_ids():
         return scenario_cards(scenario_manager, selected_id)

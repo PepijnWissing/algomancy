@@ -97,8 +97,7 @@ class SessionManager:
                 autorun,
             )
 
-        self._session_name = list(self._sessions.keys())[0]
-        self._scenario_manager = self._sessions[self._session_name]
+        self._start_session_name = list(self._sessions.keys())[0]
 
         self.log("SessionManager initialized.")
 
@@ -113,16 +112,9 @@ class SessionManager:
         }
         return session_folders
 
-    def set_active_scenario_manager(self, session_name: str):
-        self._session_name = session_name
-        assert session_name in self._sessions, f"Session '{session_name}' not found."
-        self.log(f"Active session set to '{session_name}'.")
-        self._scenario_manager = self._sessions[session_name]
-
     def get_scenario_manager(self, session_id: str) -> ScenarioManager:
-        self.log("Scenario id cannot be None when using persistent state.")
-        if session_id in self._sessions:
-            self.log(f"Scenario '{session_id}' not found.")
+        if session_id not in self._sessions:
+            self.log(f"Session '{session_id}' not found.")
         assert session_id in self._sessions, f"Scenario '{session_id}' not found."
         return self._sessions[session_id]
 
@@ -157,9 +149,5 @@ class SessionManager:
         return list(self._sessions.keys())
 
     @property
-    def active_session_name(self) -> str:
-        return self._session_name
-
-    @property
-    def active_scenario_manager(self) -> ScenarioManager:
-        return self._scenario_manager
+    def start_session_name(self) -> str:
+        return self._start_session_name

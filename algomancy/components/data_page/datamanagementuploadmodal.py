@@ -13,6 +13,7 @@ from algomancy.components.componentids import (
     DM_UPLOAD_SUBMIT_BUTTON,
     DM_UPLOAD_UPLOADER,
     DM_UPLOAD_MODAL,
+    ACTIVE_SESSION,
 )
 from algomancy.components.componentids import (
     DM_UPLOAD_SUCCESS_ALERT,
@@ -312,9 +313,10 @@ def update_file_viewer(filename):
     Input(DM_UPLOAD_SUBMIT_BUTTON, "n_clicks"),
     State(DM_UPLOAD_UPLOADER, "contents"),
     State(DM_UPLOAD_UPLOADER, "filename"),
+    State(ACTIVE_SESSION, "data"),
     prevent_initial_call=True,
 )
-def process_uploaded_files(n_clicks, contents, filenames):
+def process_uploaded_files(n_clicks, contents, filenames, session_id: str):
     """
     Process uploaded files when the submit button is clicked.
 
@@ -325,7 +327,7 @@ def process_uploaded_files(n_clicks, contents, filenames):
         raise PreventUpdate
 
     app = get_app()
-    sm = app.server.scenario_manager
+    sm = app.server.session_manager.get_scenario_manager(session_id)
 
     # Make sure we're working with lists
     if not isinstance(filenames, list):

@@ -1,24 +1,29 @@
-from dash import Output, Input, callback, get_app, html
+from dash import Output, Input, callback, get_app, html, State
 
-from algomancy.components.componentids import *
+from algomancy.components.componentids import (
+    ACTIVE_SESSION,
+    ADMIN_SELECT_SESSION,
+    ADMIN_LOG_WINDOW,
+    ADMIN_LOG_INTERVAL,
+    ADMIN_LOG_FILTER,
+)
 from algomancy.dashboardlogger.logger import MessageStatus
 
 
 @callback(
+    Output(ACTIVE_SESSION, "data"),
     Input(ADMIN_SELECT_SESSION, "value"),
-    prevent_initial_call=True,
 )
 def load_session(session_id):
-    session_manager = get_app().server.session_manager
-    session_manager.set_active_scenario_manager(session_id)
-    get_app().server.scenario_manager = session_manager.active_scenario_manager
+    return session_id
 
 
 @callback(
     Output(ADMIN_LOG_WINDOW, "children"),
     [Input(ADMIN_LOG_INTERVAL, "n_intervals"), Input(ADMIN_LOG_FILTER, "value")],
+    State(ACTIVE_SESSION, "data"),
 )
-def update_log_window(n_intervals, filter_value):
+def update_log_window(n_intervals, filter_value, session_id):
     """
     Updates the log window with messages from the scenario_manager's logger.
 
@@ -30,7 +35,8 @@ def update_log_window(n_intervals, filter_value):
         list: List of HTML components representing log messages
     """
     # Get the scenario manager
-    scenario_manager = get_app().server.scenario_manager
+
+    scenario_manager = get_app().server.session_manager.get_scenario_manager(session_id)
 
     # Get the logger from the scenario manager
     logger = scenario_manager.logger

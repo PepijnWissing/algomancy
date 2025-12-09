@@ -7,7 +7,41 @@ import pandas as pd
 from dash import Input, Output, State, callback, no_update, get_app, html
 
 from algomancy.dataengine import ValidationError, DataManager
-from algomancy.components.componentids import *
+from algomancy.components.componentids import (
+    DATA_SELECTOR_DROPDOWN,
+    DM_DERIVE_SET_SELECTOR,
+    DM_DELETE_SET_SELECTOR,
+    DM_SAVE_SET_SELECTOR,
+    DM_DOWNLOAD_CHECKLIST,
+    DM_LIST_UPDATER_STORE,
+    ACTIVE_SESSION,
+    DATA_MAN_SUCCESS_ALERT,
+    DATA_MAN_ERROR_ALERT,
+    DM_DERIVE_MODAL,
+    DM_DERIVE_MODAL_SUBMIT_BTN,
+    DM_DERIVE_SET_NAME_INPUT,
+    DM_DERIVE_OPEN_BTN,
+    DM_DERIVE_MODAL_CLOSE_BTN,
+    DM_DELETE_MODAL,
+    DM_DELETE_COLLAPSE,
+    DM_DELETE_CONFIRM_INPUT,
+    DM_DELETE_SUBMIT_BUTTON,
+    DM_DELETE_OPEN_BUTTON,
+    DM_DELETE_CLOSE_BUTTON,
+    DM_IMPORT_MODAL,
+    DM_IMPORT_OPEN_BUTTON,
+    DM_IMPORT_MODAL_CLOSE_BTN,
+    DM_IMPORT_MODAL_FILEVIEWER_CARD,
+    DM_IMPORT_MODAL_FILEVIEWER_COLLAPSE,
+    DM_IMPORT_MODAL_FILEVIEWER_ALERT,
+    DM_IMPORT_UPLOADER,
+    DM_IMPORT_SUBMIT_BUTTON,
+    DM_IMPORT_MODAL_NAME_INPUT,
+    DM_SAVE_MODAL,
+    DM_SAVE_OPEN_BUTTON,
+    DM_SAVE_MODAL_CLOSE_BTN,
+    DM_SAVE_SUBMIT_BUTTON,
+)
 from algomancy.components.data_page.filenamematcher import match_file_names
 from algomancy.scenarioengine import ScenarioManager
 
@@ -32,10 +66,13 @@ and data flow between the UI and the backend ScenarioManager.
     [
         Input(DM_LIST_UPDATER_STORE, "data"),
     ],
+    [
+        State(ACTIVE_SESSION, "data"),
+    ],
     prevent_initial_call=True,
 )
-def get_options_for_lists(data):
-    sm = get_app().server.scenario_manager
+def get_options_for_lists(data, session_id: str):
+    sm = get_app().server.session_manager.get_scenario_manager(session_id)
 
     options = [{"label": ds, "value": ds} for ds in sm.get_data_keys()]
     derived_options = [
@@ -65,10 +102,14 @@ def _sanitize(name: str) -> str:
         Output(DM_DERIVE_MODAL, "is_open", allow_duplicate=True),
     ],
     [Input(DM_DERIVE_MODAL_SUBMIT_BTN, "n_clicks")],
-    [State(DM_DERIVE_SET_SELECTOR, "value"), State(DM_DERIVE_SET_NAME_INPUT, "value")],
+    [
+        State(DM_DERIVE_SET_SELECTOR, "value"),
+        State(DM_DERIVE_SET_NAME_INPUT, "value"),
+        State(ACTIVE_SESSION, "data"),
+    ],
     prevent_initial_call=True,
 )
-def derive_data_callback(n_clicks, selected_data_key, derived_name):
+def derive_data_callback(n_clicks, selected_data_key, derived_name, session_id: str):
     """
     Creates a derived dataset from an existing one when the derive button is clicked.
 
@@ -79,13 +120,16 @@ def derive_data_callback(n_clicks, selected_data_key, derived_name):
         n_clicks: Number of times the submit button has been clicked
         selected_data_key: Key of the dataset to derive from
         derived_name: Name for the new derived dataset
+        session_id: ID of the active session
 
     Returns:
         Tuple containing updated dropdown options, alert messages, and modal state
     """
     if not selected_data_key or not derived_name:
         return no_update, "", False, "Choose a dataset and enter a name!", True, False
-    sm: ScenarioManager = get_app().server.scenario_manager
+    sm: ScenarioManager = get_app().server.session_manager.get_scenario_manager(
+        session_id
+    )
     try:
         sanitized_name = _sanitize(derived_name)
         sm.derive_data(selected_data_key, sanitized_name)
@@ -158,9 +202,10 @@ def reset_on_close(modal_is_open: bool):
         Output(DM_DELETE_CONFIRM_INPUT, "value"),
     ],
     Input(DM_DELETE_SET_SELECTOR, "value"),
+    State(ACTIVE_SESSION, "data"),
     prevent_initial_call=True,
 )
-def open_confirm_section(selected_data_key):
+def open_confirm_section(selected_data_key, session_id: str):
     """
     Controls the visibility of the confirmation section in the delete modal.
 
@@ -169,6 +214,7 @@ def open_confirm_section(selected_data_key):
 
     Args:
         selected_data_key: Key of the selected dataset
+        session_id: ID of the active session
 
     Returns:
         tuple: (is_open, confirm_input_value) where:
@@ -177,7 +223,7 @@ def open_confirm_section(selected_data_key):
     """
     if not selected_data_key:
         return False, ""
-    sm = get_app().server.scenario_manager
+    sm = get_app().server.session_manager.get_scenario_manager(session_id)
 
     is_master_data = sm.get_data(selected_data_key).is_master_data()
     if is_master_data:
@@ -196,10 +242,14 @@ def open_confirm_section(selected_data_key):
         Output(DM_DELETE_MODAL, "is_open", allow_duplicate=True),
     ],
     [Input(DM_DELETE_SUBMIT_BUTTON, "n_clicks")],
-    [State(DM_DELETE_SET_SELECTOR, "value"), State(DM_DELETE_CONFIRM_INPUT, "value")],
+    [
+        State(DM_DELETE_SET_SELECTOR, "value"),
+        State(DM_DELETE_CONFIRM_INPUT, "value"),
+        State(ACTIVE_SESSION, "data"),
+    ],
     prevent_initial_call=True,
 )
-def delete_data_callback(n_clicks, selected_data_key, confirm_str):
+def delete_data_callback(n_clicks, selected_data_key, confirm_str, session_id: str):
     """
     Deletes the selected dataset when the delete button is clicked.
 
@@ -211,6 +261,7 @@ def delete_data_callback(n_clicks, selected_data_key, confirm_str):
         n_clicks: Number of times the submit button has been clicked
         selected_data_key: Key of the dataset to delete
         confirm_str: Confirmation string that must equal "DELETE" to proceed
+        session_id: ID of the active session
 
     Returns:
         Tuple containing updated dropdown options, alert messages, and modal state
@@ -229,7 +280,7 @@ def delete_data_callback(n_clicks, selected_data_key, confirm_str):
         )
     if confirm_str != "DELETE":
         return no_update, no_update, no_update, no_update, no_update, no_update
-    sm = get_app().server.scenario_manager
+    sm = get_app().server.session_manager.get_scenario_manager(session_id)
     try:
         sm.delete_data(selected_data_key)
         return datetime.now(), "Dataset deleted successfully!", True, "", False, False
@@ -337,9 +388,10 @@ def render_file_mapping_table(mapping):
         Output(DM_IMPORT_MODAL_FILEVIEWER_ALERT, "children"),
     ],
     Input(DM_IMPORT_UPLOADER, "filename"),
+    State(ACTIVE_SESSION, "data"),
     prevent_initial_call=True,
 )
-def show_uploaded_filename(filename):
+def show_uploaded_filename(filename, session_id: str):
     """
     Displays information about uploaded files in the load modal.
 
@@ -348,6 +400,7 @@ def show_uploaded_filename(filename):
 
     Args:
         filename: String or list of strings containing uploaded filenames
+        session_id: ID of the active session
 
     Returns:
         tuple: (card_children, collapse_is_open, alert_is_open, alert_message) where:
@@ -359,7 +412,7 @@ def show_uploaded_filename(filename):
     if not filename:
         return no_update, False, False, ""
 
-    sm = get_app().server.scenario_manager
+    sm = get_app().server.session_manager.get_scenario_manager(session_id)
 
     # Allow for possible list/file array
     if isinstance(filename, list):
@@ -432,10 +485,11 @@ def handle_csv_upload(contents):
         State(DM_IMPORT_UPLOADER, "contents"),
         State(DM_IMPORT_UPLOADER, "filename"),
         State(DM_IMPORT_MODAL_NAME_INPUT, "value"),
+        State(ACTIVE_SESSION, "data"),
     ],
     prevent_initial_call=True,
 )
-def process_imports(n_clicks, contents, filenames, dataset_name):
+def process_imports(n_clicks, contents, filenames, dataset_name, session_id: str):
     """
     Processes uploaded files when the import submit button is clicked.
 
@@ -444,6 +498,7 @@ def process_imports(n_clicks, contents, filenames, dataset_name):
         contents: Base64-encoded contents of the uploaded files
         filenames: Names of the uploaded files
         dataset_name: Name for the new dataset
+        session_id: ID of the active session
 
     Returns:
         Tuple containing updated dropdown options, modal state, and alert messages
@@ -453,7 +508,7 @@ def process_imports(n_clicks, contents, filenames, dataset_name):
         return no_update, no_update, "", False, "", False, ""
 
     # Get scenario manager from app context
-    sm = get_app().server.scenario_manager
+    sm = get_app().server.session_manager.get_scenario_manager(session_id)
 
     try:
         sm.log(f"Loading {filenames} into {dataset_name}")
@@ -620,11 +675,13 @@ def reset_save_selection_on_close(modal_is_open: bool):
     Output(DATA_MAN_ERROR_ALERT, "is_open", allow_duplicate=True),
     Input(DM_SAVE_SUBMIT_BUTTON, "n_clicks"),
     State(DM_SAVE_SET_SELECTOR, "value"),
+    State(ACTIVE_SESSION, "data"),
     prevent_initial_call=True,
 )
 def save_derived_data(
     n_clicks,
     set_name: str,
+    session_id: str,
 ):
     """
     Saves a derived dataset as master data when the save button is clicked.
@@ -635,12 +692,15 @@ def save_derived_data(
     Args:
         n_clicks: Number of times the submit button has been clicked
         set_name: Name of the dataset to save
+        session_id: ID of the active session
 
     Returns:
         Tuple containing modal state and alert messages
     """
 
-    sm: ScenarioManager = get_app().server.scenario_manager
+    sm: ScenarioManager = get_app().server.session_manager.get_scenario_manager(
+        session_id
+    )
     try:
         data = sm.get_data(set_name)
         data.set_to_master_data()

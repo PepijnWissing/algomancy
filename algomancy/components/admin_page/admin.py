@@ -38,7 +38,7 @@ def admin_sessions():
                                     {"label": session, "value": session}
                                     for session in sessions
                                 ],
-                                value=session_manager.active_session_name,
+                                value=session_manager.start_session_name,
                                 clearable=False,
                             )
                         ),

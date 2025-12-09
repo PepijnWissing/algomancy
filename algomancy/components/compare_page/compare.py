@@ -7,10 +7,24 @@ It includes scenario selection, KPI improvement displays, and secondary results 
 
 from typing import Any
 
-from dash import html, get_app, callback, Output, Input
+from dash import html, get_app, callback, Output, Input, State
 import dash_bootstrap_components as dbc
 
-from algomancy.components.componentids import *
+from algomancy.components.componentids import (
+    PERF_DETAILS_COLLAPSE,
+    COMPARE_DETAIL_VIEW,
+    PERF_COMPARE_COLLAPSE,
+    PERF_PRIMARY_RESULTS,
+    PERF_KPI_COLLAPSE,
+    KPI_IMPROVEMENT_SECTION,
+    PERF_TOGGLE_CHECKLIST_LEFT,
+    PERF_TOGGLE_CHECKLIST_RIGHT,
+    LEFT_SCENARIO_OVERVIEW,
+    LEFT_SCENARIO_DROPDOWN,
+    ACTIVE_SESSION,
+    RIGHT_SCENARIO_OVERVIEW,
+    RIGHT_SCENARIO_DROPDOWN,
+)
 from algomancy.components.compare_page.scenarioselector import (
     create_side_by_side_viewer,
     create_side_by_side_selector,
@@ -172,13 +186,18 @@ def create_header(settings: SettingsManager) -> dbc.Row:
 @callback(
     Output(LEFT_SCENARIO_OVERVIEW, "children"),
     Input(LEFT_SCENARIO_DROPDOWN, "value"),
+    State(ACTIVE_SESSION, "data"),
     prevent_initial_call=True,
 )
-def update_left_scenario_overview(scenario_id) -> html.Div | str:
+def update_left_scenario_overview(scenario_id, session_id) -> html.Div | str:
     if not scenario_id:
         return "No scenario selected."
 
-    s = get_app().server.scenario_manager.get_by_id(scenario_id)
+    s = (
+        get_app()
+        .server.session_manager.get_scenario_manager(session_id)
+        .get_by_id(scenario_id)
+    )
     cr: ContentRegistry = get_app().server.content_registry
 
     if not s:
@@ -190,13 +209,18 @@ def update_left_scenario_overview(scenario_id) -> html.Div | str:
 @callback(
     Output(RIGHT_SCENARIO_OVERVIEW, "children"),
     Input(RIGHT_SCENARIO_DROPDOWN, "value"),
+    State(ACTIVE_SESSION, "data"),
     prevent_initial_call=True,
 )
-def update_right_scenario_overview(scenario_id) -> html.Div | str:
+def update_right_scenario_overview(scenario_id, session_id) -> html.Div | str:
     if not scenario_id:
         return "No scenario selected."
 
-    s = get_app().server.scenario_manager.get_by_id(scenario_id)
+    s = (
+        get_app()
+        .server.session_manager.get_scenario_manager(session_id)
+        .get_by_id(scenario_id)
+    )
     cr: ContentRegistry = get_app().server.content_registry
 
     if not s:
@@ -209,10 +233,15 @@ def update_right_scenario_overview(scenario_id) -> html.Div | str:
     Output(PERF_PRIMARY_RESULTS, "children"),
     Input(LEFT_SCENARIO_DROPDOWN, "value"),
     Input(RIGHT_SCENARIO_DROPDOWN, "value"),
+    State(ACTIVE_SESSION, "data"),
     prevent_initial_call=True,
 )
-def update_right_scenario_overview(left_scenario_id, right_scenario_id) -> html.Div:
-    sm: ScenarioManager = get_app().server.scenario_manager
+def update_right_scenario_overview_primary(
+    left_scenario_id, right_scenario_id, session_id
+) -> html.Div:
+    sm: ScenarioManager = get_app().server.session_manager.get_scenario_manager(
+        session_id
+    )
     cr: ContentRegistry = get_app().server.content_registry
 
     # check the inputs
@@ -235,12 +264,17 @@ def update_right_scenario_overview(left_scenario_id, right_scenario_id) -> html.
     Output(COMPARE_DETAIL_VIEW, "children"),
     Input(LEFT_SCENARIO_DROPDOWN, "value"),
     Input(RIGHT_SCENARIO_DROPDOWN, "value"),
+    State(ACTIVE_SESSION, "data"),
     prevent_initial_call=True,
 )
-def update_right_scenario_overview(
-    left_scenario_id, right_scenario_id
+def update_right_scenario_overview_detail(
+    left_scenario_id,
+    right_scenario_id,
+    session_id: str,
 ) -> html.Div | str:
-    sm: ScenarioManager = get_app().server.scenario_manager
+    sm: ScenarioManager = get_app().server.session_manager.get_scenario_manager(
+        session_id
+    )
     cr: ContentRegistry = get_app().server.content_registry
 
     if not left_scenario_id or not right_scenario_id:

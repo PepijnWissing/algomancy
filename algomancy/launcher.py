@@ -4,8 +4,9 @@ import importlib.metadata
 import os
 from waitress import serve
 import dash_auth
-from dash import get_app, Dash
+from dash import get_app, Dash, dcc, html
 
+from .components.componentids import ACTIVE_SESSION
 from .contentregistry import ContentRegistry
 from .sessionengine.sessionmanager import SessionManager
 from .settingsmanager import SettingsManager
@@ -75,9 +76,6 @@ class DashLauncher:
         # register the scenario manager on the app object
         app.server.session_manager = session_manager
 
-        # for testing
-        app.server.scenario_manager = app.server.session_manager.active_scenario_manager
-
         # register the styling configuration on the app object
         app.server.styling_config = cfg.styling_config
 
@@ -120,7 +118,16 @@ class DashLauncher:
         content_registry.register_overview_content(overview_content, overview_callbacks)
 
         # fill and run the app
-        app.layout = LayoutCreator.create_layout(cfg.styling_config)
+        app.layout = html.Div(
+            [
+                LayoutCreator.create_layout(cfg.styling_config),
+                dcc.Store(
+                    id=ACTIVE_SESSION,
+                    storage_type="session",
+                    data=session_manager.start_session_name,
+                ),
+            ]
+        )
 
         return app
 
@@ -133,7 +140,7 @@ class DashLauncher:
         connection_limit: int = 100,
         debug: bool = False,
     ) -> None:
-        sm = get_app().server.scenario_manager
+        sm = get_app().server.session_manager
 
         algomancy_version = importlib.metadata.version("algomancy")
         sm.log(f"Algomancy version: {algomancy_version}", MessageStatus.INFO)

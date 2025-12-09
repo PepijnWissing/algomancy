@@ -8,6 +8,7 @@ from algomancy.components.componentids import (
     DM_DOWNLOAD_SUBMIT_BUTTON,
     DM_DOWNLOAD_MODAL_CLOSE_BTN,
     DM_DOWNLOAD_OPEN_BUTTON,
+    ACTIVE_SESSION,
 )
 
 import dash_bootstrap_components as dbc
@@ -130,14 +131,17 @@ def _sanitize_filename(name: str) -> str:
     Output("dm-download", "data"),  # send file to the persistent Download component
     Input(DM_DOWNLOAD_SUBMIT_BUTTON, "n_clicks"),
     State(DM_DOWNLOAD_CHECKLIST, "value"),
+    State(ACTIVE_SESSION, "data"),
     prevent_initial_call=True,
 )
-def download_modal_children(n, selected_keys):
+def download_modal_children(n, selected_keys, session_id: str):
     if not selected_keys:
         # nothing selected -> ignore
         raise PreventUpdate
 
-    sm: ScenarioManager = get_app().server.scenario_manager
+    sm: ScenarioManager = get_app().server.session_manager.get_scenario_manager(
+        session_id
+    )
 
     # Build file contents mapping
     files = {}
