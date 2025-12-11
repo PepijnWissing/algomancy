@@ -1,49 +1,20 @@
 import pytest
 
-from src.algomancy import ScenarioManager
-
-
-def bparams(batch_size, direction, use_cache):
-    """Helper function to create batching algorithm parameters"""
-    return {
-        "batch_size": batch_size,
-        "search_direction": direction,
-        "use_cache": use_cache,
-    }
+from algomancy_scenario import ScenarioManager
 
 
 @pytest.mark.parametrize(
     "tag, dataset_key, algo_name, params",
     [
-        pytest.param("as is", "example_data", "As is", {}, id="as is"),
+        pytest.param("slow1", "example_data", "Slow", {"duration": 1}, id="slow1"),
+        pytest.param("slow2", "example_data", "Slow", {"duration": 2}, id="slow2"),
         pytest.param(
-            "batch1",
+            "slow3",
             "example_data",
-            "Batching",
-            bparams(1, "depth first", True),
-            id="batch1",
-        ),
-        pytest.param(
-            "batch2",
-            "example_data",
-            "Batching",
-            bparams(2, "dept first", True),
-            marks=pytest.mark.xfail(reason="typo"),
-            id="batch2",
-        ),
-        pytest.param(
-            "batch3",
-            "example_data",
-            "Batching",
-            bparams(1, "breadth first", True),
-            id="batch3",
-        ),
-        pytest.param(
-            "batch4",
-            "example_data",
-            "Batching",
-            bparams(2, "breadth first", True),
-            id="batch4",
+            "Slow",
+            {"duration": 100},
+            marks=pytest.mark.xfail(reason="Too long"),
+            id="slow3",
         ),
     ],
 )

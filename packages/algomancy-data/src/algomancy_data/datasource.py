@@ -108,9 +108,6 @@ class BaseDataSource(ABC):
     def from_json(cls, json_string: str) -> "BaseDataSource":
         raise NotImplementedError("Abstract method")
 
-    def debug_mutate(self):
-        raise NotImplementedError("Abstract method")
-
 
 BASE_DATA_BOUND = TypeVar("BASE_DATA_BOUND", bound=BaseDataSource)
 

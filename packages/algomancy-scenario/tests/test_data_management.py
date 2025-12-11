@@ -1,6 +1,6 @@
 import pytest
 
-from ..src.algomancy_scenario.scenariomanager import ScenarioManager
+from algomancy_scenario import ScenarioManager
 
 
 @pytest.fixture
@@ -24,7 +24,3 @@ def test_derive_data(
 
     # check if derived data is available
     assert derived_data_key in sm.get_data_keys(), "Derived data not available."
-
-    # mutate derived data
-    # #-- expected to fail as debug_mutate() has been removed.
-    sm.get_data(derived_data_key).debug_mutate()  # may throw NotImplementedError

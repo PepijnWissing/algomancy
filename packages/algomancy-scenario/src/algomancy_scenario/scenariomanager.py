@@ -294,7 +294,7 @@ class ScenarioManager:
 
     def debug_load_data(self, dataset_name: str) -> None:
         if isinstance(self._dm, StatefulDataManager):
-            self._dm.load_data_from_dir("data")
+            self._dm.load_data_from_dir(dataset_name)
         elif isinstance(self._dm, StatelessDataManager):
             raise NotImplementedError(
                 "Todo: implement loading for stateless data manager."

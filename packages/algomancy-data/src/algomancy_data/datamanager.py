@@ -206,7 +206,13 @@ class StatefulDataManager(DataManager):
                 self.logger.log_traceback(e)
             print(e)
 
-    def load_data_from_file(self, file_path: str) -> None:
+    def load_data_from_file(self, file_name: str, root: str | None = None) -> None:
+        if root is None:
+            root = self._data_folder
+
+        # Retrieve files from directory
+        file_path = os.path.join(root, file_name)
+
         if self._save_type == "json":
             # Read the file content as text
             with open(file_path, "r", encoding="utf-8") as f:
@@ -245,7 +251,7 @@ class StatefulDataManager(DataManager):
                     continue
 
                 try:
-                    self.load_data_from_file(item_path)
+                    self.load_data_from_file(item)
 
                 except Exception as e:
                     self.logger.error(

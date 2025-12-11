@@ -16,16 +16,6 @@ stages:
             inputs:
               versionSpec: $(python.version)
 
-#          - task: Cache@2
-#            displayName: Cache pip and virtualenv
-#            inputs:
-#              key: 'pip | "$(Agent.OS)" | uv.lock'
-#              restoreKeys: |
-#                pip | "$(Agent.OS)"
-#              path: |
-#                $(Agent.HomeDirectory)/.cache/pip
-#                $(Pipeline.Workspace)/.venv
-
           - task: CmdLine@2
             displayName: Upgrade pip and install uv
             inputs:
