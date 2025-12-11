@@ -19,10 +19,7 @@ class SlowAlgorithmParams(BaseAlgorithmParameters):
 
     @property
     def duration(self) -> int:
-        param_dct = self._parameters
-        duration_parameter = param_dct["duration"]
-
-        return int(duration_parameter.value)
+        return int(self["duration"])
 
     def validate(self):
         pass
