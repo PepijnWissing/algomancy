@@ -1,29 +1,49 @@
 variables:
-  python.version: 3.11
+  python.version: 3.14
 trigger:
   - development
 name: $(date:yyyyMMdd)$(rev:.r)
 stages:
-- stage: __default
-  jobs:
-  - job: Phase_1
-    displayName: Build
-    pool:
-      vmImage: ubuntu-latest
-    steps:
-    - task: UsePythonVersion@0
-      displayName: Use Python $(python.version)
-      inputs:
-        versionSpec: $(python.version)
-    - task: CmdLine@2
-      displayName: Install and update pip
-      inputs:
-        script: python -m pip install --upgrade pip
-    - task: CmdLine@2
-      displayName: Install wheel and build packages
-      inputs:
-        script: pip install wheel build
-    - task: CmdLine@2
-      displayName: Build
-      inputs:
-        script: python -m build
+  - stage: __default
+    jobs:
+      - job: Phase_1
+        displayName: Build
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - task: UsePythonVersion@0
+            displayName: Use Python $(python.version)
+            inputs:
+              versionSpec: $(python.version)
+
+          - task: Cache@2
+            displayName: Cache pip and virtualenv
+            inputs:
+              key: 'pip | "$(Agent.OS)" | uv.lock'
+              restoreKeys: |
+                pip | "$(Agent.OS)"
+              path: |
+                ~/.cache/pip
+                .venv
+
+          - task: CmdLine@2
+            displayName: Upgrade pip and install uv
+            inputs:
+              script: |
+                python -m pip install --upgrade pip
+                python -m pip install uv
+
+          - task: CmdLine@2
+            displayName: Install dependencies with uv (workspace-aware)
+            inputs:
+              script: uv install
+
+          - task: CmdLine@2
+            displayName: Validate lockfile
+            inputs:
+              script: uv lock --check || (echo "Lockfile out of date" && exit 1)
+
+          - task: CmdLine@2
+            displayName: Build source and wheels with uv
+            inputs:
+              script: uv build
