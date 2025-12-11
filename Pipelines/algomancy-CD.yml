@@ -45,7 +45,7 @@ stages:
 
           - task: PublishPipelineArtifact@1
             displayName: Publish dist artifacts
-            condition: eq(variables['publish'], 'true')
+#            condition: eq(variables['publish'], 'true')
             inputs:
               targetPath: 'dist'
               artifact: 'dist'
