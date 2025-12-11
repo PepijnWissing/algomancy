@@ -1,9 +1,8 @@
 # language: yaml
 variables:
   python.version: 3.14
-  test: 'true'
 trigger:
-  - main
+  - development
 name: $(date:yyyyMMdd)$(rev:.r)
 stages:
   - stage: __default
@@ -25,10 +24,10 @@ stages:
             inputs:
               script: |
                 python -m pip install --upgrade pip
-                python -m pip install uv build pytest-cov
+                python -m pip install uv build
 
           - task: CmdLine@2
-            displayName: Install project dependencies with uv
+            displayName: Install project dependencies with uv (workspace-aware)
             inputs:
               script: |
                 uv sync --frozen
@@ -51,6 +50,37 @@ stages:
               targetPath: 'dist'
               artifact: 'dist'
               publishLocation: 'pipeline'
+
+      - job: Test
+        displayName: Run tests
+        dependsOn: Build
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - task: UsePythonVersion@0
+            displayName: Use Python $(python.version)
+            inputs:
+              versionSpec: $(python.version)
+
+          - task: CmdLine@2
+            displayName: Upgrade pip and install uv and test deps
+            inputs:
+              script: |
+                python -m pip install --upgrade pip
+                python -m pip install uv pytest pytest-cov
+
+          - task: DownloadPipelineArtifact@2
+            displayName: Download dist artifact (optional)
+            inputs:
+              artifact: 'dist'
+              path: 'dist_downloaded'
+
+          - task: CmdLine@2
+            displayName: Install project dependencies for tests
+            inputs:
+              script: |
+                # Use the lockfile to reproduce environment
+                uv sync --frozen
 
           - task: CmdLine@2
             displayName: Run tests
