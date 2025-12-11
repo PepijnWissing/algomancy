@@ -55,7 +55,6 @@ stages:
         displayName: Publish to feed
         dependsOn:
           - Build
-          - Test
         condition: succeeded()
         pool:
           vmImage: ubuntu-latest
