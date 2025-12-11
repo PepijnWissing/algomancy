@@ -1,9 +1,13 @@
-from src.algomancy import (
-    QUANTITIES,
-    BaseMeasurement,
-    Measurement,
-    create_currency_quantity,
-)
+from algomancy_utils import QUANTITIES, BaseMeasurement, Measurement, Quantity, Unit
+
+
+def create_currency_quantity(symbol: str, name: str) -> Quantity:
+    """Create a generic currency quantity"""
+    currency = Quantity(name, Unit(symbol, symbol))
+    currency.add_unit(Unit(f"k{symbol}", f"k{symbol}"), 1_000)
+    currency.add_unit(Unit(f"M{symbol}", f"M{symbol}"), 1_000_000)
+    currency.add_unit(Unit(f"B{symbol}", f"B{symbol}"), 1_000_000_000)
+    return currency
 
 
 def test_length_scaling_outputs_reasonable_units():
@@ -66,7 +70,7 @@ def test_mass_time_data_examples_do_not_raise_and_return_strings():
 
     # Time
     time = QUANTITIES["time"]
-    time_s = BaseMeasurement(time["s"], min_digits=1, max_digits=2, decimals=1)
+    time_s = BaseMeasurement(time["s"], min_digits=1, max_digits=3, decimals=1)
     for val in [0.000_001, 0.5, 45, 3_665, 86_400]:
         assert Measurement(time_s, val).pretty()
 
@@ -106,8 +110,8 @@ def test_scale_to_same_unit_behaviour():
     m1 = Measurement(BaseMeasurement(length["mm"], decimals=2), 1_500_000)
     m2 = Measurement(BaseMeasurement(length["km"], decimals=2), 2.5)
 
-    m1_to_m2 = m1.scale_to_unit(m2)
-    m2_to_m1 = m2.scale_to_unit(m1)
+    m1_to_m2 = m1.scale_to_unit(m2.unit)
+    m2_to_m1 = m2.scale_to_unit(m1.unit)
 
     assert isinstance(str(m1_to_m2), str) and str(m1_to_m2)
     assert isinstance(str(m2_to_m1), str) and str(m2_to_m1)
@@ -121,8 +125,8 @@ def test_scale_to_same_unit_behaviour():
     revenue = Measurement(BaseMeasurement(money["$"], decimals=2), 1_234_567)
     budget = Measurement(BaseMeasurement(money["M$"], decimals=2), 5.5)
 
-    rev_in_budget_units = revenue.scale_to_unit(budget)
-    bud_in_revenue_units = budget.scale_to_unit(revenue)
+    rev_in_budget_units = revenue.scale_to_unit(budget.unit)
+    bud_in_revenue_units = budget.scale_to_unit(revenue.unit)
 
     assert rev_in_budget_units.unit.name == budget.unit.name
     assert bud_in_revenue_units.unit.name == revenue.unit.name
@@ -142,8 +146,8 @@ def test_auto_scaled_and_matched_time_examples():
     assert str(t1_scaled)
     assert str(t2_scaled)
 
-    matched_1 = t1.scale_to_unit(t2_scaled)
-    matched_2 = t2.scale_to_unit(t1_scaled)
+    matched_1 = t1.scale_to_unit(t2_scaled.unit)
+    matched_2 = t2.scale_to_unit(t1_scaled.unit)
 
     assert matched_1.unit.name == t2_scaled.unit.name
     assert matched_2.unit.name == t1_scaled.unit.name

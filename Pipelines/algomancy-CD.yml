@@ -1,15 +1,17 @@
 # language: yaml
 variables:
   python.version: 3.14
-  publish: 'false'   # set to 'true' when you want to actually upload to feed
+  test: 'true'
 trigger:
   - main
 name: $(date:yyyyMMdd)$(rev:.r)
 stages:
   - stage: __default
+    displayName: Build-Test-Publish
     jobs:
-      - job: Phase_1
-        displayName: Publish
+
+      - job: Build
+        displayName: Build
         pool:
           vmImage: ubuntu-latest
         steps:
@@ -19,11 +21,11 @@ stages:
               versionSpec: $(python.version)
 
           - task: CmdLine@2
-            displayName: Upgrade pip and install uv, build and publishing tools
+            displayName: Upgrade pip and install uv and build tools
             inputs:
               script: |
                 python -m pip install --upgrade pip
-                python -m pip install uv build twine keyring artifacts-keyring
+                python -m pip install uv build
 
           - task: CmdLine@2
             displayName: Install project dependencies with uv (workspace-aware)
@@ -45,20 +47,92 @@ stages:
 
           - task: PublishPipelineArtifact@1
             displayName: Publish dist artifacts
-#            condition: eq(variables['publish'], 'true')
             inputs:
               targetPath: 'dist'
               artifact: 'dist'
               publishLocation: 'pipeline'
 
+      - job: Test
+        displayName: Run tests
+        dependsOn: Build
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - task: UsePythonVersion@0
+            displayName: Use Python $(python.version)
+            inputs:
+              versionSpec: $(python.version)
+
+          - task: CmdLine@2
+            displayName: Upgrade pip and install uv and test deps
+            inputs:
+              script: |
+                python -m pip install --upgrade pip
+                python -m pip install uv pytest pytest-cov
+
+          - task: DownloadPipelineArtifact@2
+            displayName: Download dist artifact (optional)
+            inputs:
+              artifact: 'dist'
+              path: 'dist_downloaded'
+
+          - task: CmdLine@2
+            displayName: Install project dependencies for tests
+            inputs:
+              script: |
+                # Use the lockfile to reproduce environment
+                uv sync --frozen
+
+          - task: CmdLine@2
+            displayName: Run pytest
+            inputs:
+              script: |
+                # Adjust pytest args as needed
+                uv run pytest -v --junitxml=pytest-results.xml
+
+          - task: PublishTestResults@2
+            displayName: Publish pytest results
+            inputs:
+              testResultsFiles: '**/pytest-results.xml'
+              testRunTitle: 'Pytest results'
+              mergeTestResults: true
+
+      - job: Publish
+        displayName: Publish to feed
+        dependsOn:
+          - Build
+          - Test
+        condition: succeeded()
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - task: UsePythonVersion@0
+            displayName: Use Python $(python.version)
+            inputs:
+              versionSpec: $(python.version)
+
+          - task: CmdLine@2
+            displayName: Upgrade pip and install publishing tools
+            inputs:
+              script: |
+                python -m pip install --upgrade pip
+                python -m pip install twine keyring artifacts-keyring
+
+          - task: DownloadPipelineArtifact@2
+            displayName: Download dist artifact
+            inputs:
+              artifact: 'dist'
+              path: 'dist_downloaded'
+
           - task: TwineAuthenticate@1
             displayName: 'Twine authenticate'
-            condition: eq(variables['publish'], 'true')
+            condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
             inputs:
               artifactFeed: WARP/WarpPython
 
           - task: CmdLine@2
             displayName: Upload to feed
-            condition: eq(variables['publish'], 'true')
+            condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
             inputs:
-              script: twine upload --config-file $(PYPIRC_PATH) --verbose -r WarpPython dist/*
+              script: |
+                twine upload --config-file $(PYPIRC_PATH) --verbose -r WarpPython dist_downloaded/*

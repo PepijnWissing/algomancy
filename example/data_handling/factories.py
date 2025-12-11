@@ -1,4 +1,3 @@
-import time
 from typing import List, Dict, TypeVar, cast
 
 import algomancy_data as de
@@ -31,24 +30,7 @@ class ExampleETLFactory(de.ETLFactory):
         inventory = "inventory"
         multisheet = "multisheet"
 
-        # expected_files = {
-        #     warehouse_layout,
-        #     sku_data,
-        #     employee,
-        #     inventory,
-        #     multisheet,
-        # }
-
-        # missing_files = set(files.keys()) - expected_files
-        # if len(missing_files) > 0:
-        #     raise de.ETLConstructionError(f"Missing files: {missing_files}")
-        #
-        # schemas = {cfg.file_name: cfg.file_schema for cfg in self.input_configurations}
-        # missing_schemas = set(schemas.keys()) - expected_files
-        # if len(missing_schemas) > 0:
-        #     raise de.ETLConstructionError(f"Missing configurations: {missing_schemas}")
-
-        time.sleep(5)
+        # time.sleep(5)
 
         extractors = {
             sku_data: de.CSVSingleExtractor(
