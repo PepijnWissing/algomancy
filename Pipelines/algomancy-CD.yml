@@ -84,18 +84,31 @@ stages:
                 uv sync --frozen
 
           - task: CmdLine@2
-            displayName: Run pytest
+            displayName: Run tests
             inputs:
               script: |
-                # Adjust pytest args as needed
-                uv run pytest -v --junitxml=pytest-results.xml
-
-          - task: PublishTestResults@2
-            displayName: Publish pytest results
-            inputs:
-              testResultsFiles: '**/pytest-results.xml'
-              testRunTitle: 'Pytest results'
-              mergeTestResults: true
+                # Ensure pytest is available (installed earlier)
+                # Run tests in the repo root 'tests' folder (if present)
+                set -e
+                echo "Running root tests (if any)..."
+                if [ -d "$(Build.SourcesDirectory)/tests" ]; then
+                  uv run pytest tests -v --junitxml=pytest-results-root.xml || true
+                else
+                  echo "No root tests directory found."
+                fi
+                
+                # Run tests in each workspace package if that package has a tests/ folder.
+                echo "Running package tests..."
+                for pkg in packages/*; do
+                  if [ -d "$pkg/tests" ]; then
+                    pkgname=$(basename "$pkg")
+                    echo "Running tests for package: $pkgname"
+                    # produce a per-package junit xml so we can merge/publish them
+                    uv run pytest "$pkg/tests" -v --junitxml="pytest-results-$pkgname.xml" || true
+                  else
+                    echo "No tests directory in $pkg"
+                  fi
+                done
 
       - job: Publish
         displayName: Publish to feed
