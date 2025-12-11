@@ -1,7 +1,6 @@
 # language: yaml
 variables:
   python.version: 3.14
-  test: 'true'
 trigger:
   - main
 name: $(date:yyyyMMdd)$(rev:.r)
