@@ -23,8 +23,8 @@ stages:
               restoreKeys: |
                 pip | "$(Agent.OS)"
               path: |
-                ~/.cache/pip
-                .venv
+                $(Agent.HomeDirectory)/.cache/pip
+                $(Pipeline.Workspace)/.venv
 
           - task: CmdLine@2
             displayName: Upgrade pip and install uv
