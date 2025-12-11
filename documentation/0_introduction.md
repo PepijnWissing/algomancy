@@ -1,7 +1,7 @@
 # Introduction
 
 #@ Overview
-The WARP framework is a web-based application for the analysis and visualization of complex analytical scenarios. It is designed to be flexible and extensible, enabling users to implement their own algorithms and data sources.
+The Algomancy framework is a web-based application for the analysis and visualization of complex analytical scenarios. It is designed to be flexible and extensible, enabling users to implement their own algorithms and data sources.
 
 ### Organization
 
