@@ -36,7 +36,7 @@ stages:
           - task: CmdLine@2
             displayName: Install dependencies with uv (workspace-aware)
             inputs:
-              script: uv install
+              script: uv sync --frozen
 
           - task: CmdLine@2
             displayName: Validate lockfile
