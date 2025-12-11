@@ -1,6 +1,17 @@
-from dash import Output, Input, callback, get_app, html, dcc
+from dash import (
+    Output,
+    Input,
+    State,
+    callback,
+    get_app,
+    html,
+    dcc,
+    callback_context,
+    no_update,
+)
 import dash_bootstrap_components as dbc
 
+from algomancy.components.admin_page.sessions import create_new_session_window
 from algomancy.components.componentids import (
     ADMIN_NEW_SESSION,
     ACTIVE_SESSION,
@@ -9,6 +20,9 @@ from algomancy.components.componentids import (
     ADMIN_LOG_INTERVAL,
     ADMIN_LOG_FILTER,
     ADMIN_PAGE,
+    ADMIN_COPY_SESSION,
+    SESSION_CREATOR_MODAL,
+    NEW_SESSION_BUTTON,
 )
 from algomancy.dashboardlogger.logger import MessageStatus
 
@@ -51,6 +65,19 @@ def admin_sessions(session_id):
                     dbc.Button(
                         "New Session",
                         id=ADMIN_NEW_SESSION,
+                        className="ms-2",
+                        style={
+                            "backgroundColor": "var(--theme-secondary)",
+                            "color": "var(--text-selected)",
+                            "border": "none",
+                        },
+                    ),
+                    width=2,
+                ),
+                dbc.Col(
+                    dbc.Button(
+                        "Copy Session",
+                        id=ADMIN_COPY_SESSION,
                         className="ms-2",
                         style={
                             "backgroundColor": "var(--theme-secondary)",
@@ -131,6 +158,7 @@ def create_admin_page(session_id):
         + admin_sessions(session_id)
         + [html.Hr()]
         + admin_system_logs()
+        + [create_new_session_window()]
     )
     return admin_content
 
@@ -207,3 +235,28 @@ def update_log_window(n_intervals, filter_value):
     log_components.reverse()
 
     return log_components
+
+
+@callback(
+    Output(SESSION_CREATOR_MODAL, "is_open"),
+    Input(ADMIN_NEW_SESSION, "n_clicks"),
+    Input(ADMIN_COPY_SESSION, "n_clicks"),
+    Input(f"{NEW_SESSION_BUTTON}-cancel", "n_clicks"),
+    State(SESSION_CREATOR_MODAL, "is_open"),
+    State(ACTIVE_SESSION, "data"),
+    prevent_initial_call=True,
+)
+def toggle_scenario_creator_modal(
+    open_new_click, open_copy_click, cancel_click, is_open, session_id: str
+):
+    ctx = callback_context
+    if not ctx.triggered:
+        return no_update
+    triggered_id = ctx.triggered[0]["prop_id"].split(".")[0]
+    if triggered_id == ADMIN_NEW_SESSION and not is_open:
+        return True
+    if triggered_id == ADMIN_COPY_SESSION and not is_open:
+        return True
+    elif triggered_id in [f"{NEW_SESSION_BUTTON}-cancel"]:
+        return False
+    return is_open

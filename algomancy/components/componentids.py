@@ -155,10 +155,13 @@ OVERVIEW_PAGE_CONTENT = "overview-page-content"
 # === Admin Page IDs ===
 ADMIN_PAGE = "admin-page"
 ADMIN_NEW_SESSION = "admin-new-session"
+ADMIN_COPY_SESSION = "admin-copy-session"
 ADMIN_SELECT_SESSION = "admin-select-session"
 ADMIN_LOG_WINDOW = "admin-log-window"
 ADMIN_LOG_INTERVAL = "admin-log-interval"
 ADMIN_LOG_FILTER = "admin-log-filter"
+NEW_SESSION_BUTTON = "new-session-button"
+SESSION_CREATOR_MODAL = "session-creator-modal"
 
 # === Layout IDs ===
 SIDEBAR = "sidebar"
