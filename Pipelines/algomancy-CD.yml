@@ -110,6 +110,13 @@ stages:
                   fi
                 done
 
+          - task: PublishTestResults@2
+            displayName: Publish pytest results
+            inputs:
+              testResultsFiles: '**/pytest-results-*.xml'
+              testRunTitle: 'Pytest results'
+              mergeTestResults: true
+
       - job: Publish
         displayName: Publish to feed
         dependsOn:
@@ -129,7 +136,7 @@ stages:
             inputs:
               script: |
                 python -m pip install --upgrade pip
-                python -m pip install twine keyring artifacts-keyring
+                python -m pip install uv build twine keyring artifacts-keyring
 
           - task: DownloadPipelineArtifact@2
             displayName: Download dist artifact
