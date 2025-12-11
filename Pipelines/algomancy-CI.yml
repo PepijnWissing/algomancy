@@ -1,12 +1,16 @@
+# language: yaml
 variables:
   python.version: 3.14
+  test: 'true'
 trigger:
-  - development
+  - main
 name: $(date:yyyyMMdd)$(rev:.r)
 stages:
   - stage: __default
+    displayName: Build-Test-Publish
     jobs:
-      - job: Phase_1
+
+      - job: Build
         displayName: Build
         pool:
           vmImage: ubuntu-latest
@@ -17,23 +21,67 @@ stages:
               versionSpec: $(python.version)
 
           - task: CmdLine@2
-            displayName: Upgrade pip and install uv
+            displayName: Upgrade pip and install uv and build tools
             inputs:
               script: |
                 python -m pip install --upgrade pip
-                python -m pip install uv
+                python -m pip install uv build pytest-cov
 
           - task: CmdLine@2
-            displayName: Install dependencies with uv (workspace-aware)
+            displayName: Install project dependencies with uv
             inputs:
-              script: uv sync --frozen
+              script: |
+                uv sync --frozen
 
           - task: CmdLine@2
             displayName: Validate lockfile
             inputs:
-              script: uv lock --check || (echo "Lockfile out of date" && exit 1)
+              script: |
+                uv lock --check || (echo "Lockfile out of date" && exit 1)
 
           - task: CmdLine@2
             displayName: Build source and wheels with uv
             inputs:
-              script: uv build
+              script: |
+                uv build --wheel
+
+          - task: PublishPipelineArtifact@1
+            displayName: Publish dist artifacts
+            inputs:
+              targetPath: 'dist'
+              artifact: 'dist'
+              publishLocation: 'pipeline'
+
+          - task: CmdLine@2
+            displayName: Run tests
+            inputs:
+              script: |
+                # Ensure pytest is available (installed earlier)
+                # Run tests in the repo root 'tests' folder (if present)
+                set -e
+                echo "Running root tests (if any)..."
+                if [ -d "$(Build.SourcesDirectory)/tests" ]; then
+                  uv run pytest tests -v --junitxml=pytest-results-root.xml || true
+                else
+                  echo "No root tests directory found."
+                fi
+                
+                # Run tests in each workspace package if that package has a tests/ folder.
+                echo "Running package tests..."
+                for pkg in packages/*; do
+                  if [ -d "$pkg/tests" ]; then
+                    pkgname=$(basename "$pkg")
+                    echo "Running tests for package: $pkgname"
+                    # produce a per-package junit xml so we can merge/publish them
+                    uv run pytest "$pkg/tests" -v --junitxml="pytest-results-$pkgname.xml" || true
+                  else
+                    echo "No tests directory in $pkg"
+                  fi
+                done
+
+          - task: PublishTestResults@2
+            displayName: Publish pytest results
+            inputs:
+              testResultsFiles: '**/pytest-results-*.xml'
+              testRunTitle: 'Pytest results'
+              mergeTestResults: true
