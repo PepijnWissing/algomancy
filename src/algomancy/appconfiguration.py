@@ -63,6 +63,7 @@ class AppConfiguration:
         use_data_page_spinner: bool = True,
         use_scenario_page_spinner: bool = True,
         use_compare_page_spinner: bool = True,
+        allow_parameter_upload_from_file: bool = False,
         # === authentication ===
         use_authentication: bool = False,
     ):
@@ -103,6 +104,7 @@ class AppConfiguration:
         self.show_loading_on_datapage = use_data_page_spinner
         self.show_loading_on_scenariopage = use_scenario_page_spinner
         self.show_loading_on_comparepage = use_compare_page_spinner
+        self.allow_parameter_upload_from_file = allow_parameter_upload_from_file
 
         # auth
         self.use_authentication = use_authentication
@@ -148,6 +150,7 @@ class AppConfiguration:
             "show_loading_on_datapage": self.show_loading_on_datapage,
             "show_loading_on_scenariopage": self.show_loading_on_scenariopage,
             "show_loading_on_comparepage": self.show_loading_on_comparepage,
+            "allow_param_upload_by_file": self.allow_parameter_upload_from_file,
             # === authentication ===
             "use_authentication": self.use_authentication,
         }

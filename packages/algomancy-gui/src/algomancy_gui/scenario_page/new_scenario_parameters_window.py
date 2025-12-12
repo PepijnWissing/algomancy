@@ -1,3 +1,4 @@
+from algomancy_gui.settingsmanager import SettingsManager
 import dash_bootstrap_components as dbc
 from dash import html, get_app, dcc
 from typing import Dict
@@ -116,25 +117,24 @@ def create_algo_parameters_entry_card_body(template_name: str) -> dbc.CardBody:
 
 
 def create_algo_parameters_window() -> dbc.Collapse:
-    param_entry_card = dbc.Card(id=ALGO_PARAMS_ENTRY_CARD, class_name="mt-3")
+    tabs = []
 
-    param_upload_card = dbc.Card(
-        dbc.CardBody(html.Strong("TO DO: file uploader.")), class_name="mt-3"
+    param_entry_card = dbc.Card(id=ALGO_PARAMS_ENTRY_CARD, class_name="mt-3")
+    tabs.append(
+        dbc.Tab(param_entry_card, label="Fill in", tab_id=ALGO_PARAMS_ENTRY_TAB)
     )
 
+    settings: SettingsManager = get_app().server.settings
+    if settings.allow_param_upload_by_file:
+        param_upload_card = dbc.Card(
+            dbc.CardBody(html.Strong("TO DO: file uploader.")), class_name="mt-3"
+        )
+        tabs.append(
+            dbc.Tab(param_upload_card, label="Upload", tab_id=ALGO_PARAMS_UPLOAD_TAB)
+        )
+
     window = dbc.Collapse(
-        children=[
-            dbc.Tabs(
-                [
-                    dbc.Tab(
-                        param_entry_card, label="Fill in", tab_id=ALGO_PARAMS_ENTRY_TAB
-                    ),
-                    dbc.Tab(
-                        param_upload_card, label="Upload", tab_id=ALGO_PARAMS_UPLOAD_TAB
-                    ),
-                ]
-            )
-        ],
+        children=[dbc.Tabs(tabs)],
         id=ALGO_PARAMS_WINDOW_ID,
         is_open=False,
     )
