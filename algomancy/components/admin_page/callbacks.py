@@ -52,48 +52,52 @@ def admin_sessions(session_id):
             [
                 dbc.Col(
                     [
-                        dbc.Row(html.Label("Select session:")),
-                        dbc.Row(
-                            dcc.Dropdown(
-                                id=ADMIN_SELECT_SESSION,
-                                options=[
-                                    {"label": session, "value": session}
-                                    for session in sessions
-                                ],
-                                value=session_id,
-                                clearable=False,
-                            )
+                        html.Label("Select session:"),
+                        dcc.Dropdown(
+                            id=ADMIN_SELECT_SESSION,
+                            options=[{"label": s, "value": s} for s in sessions],
+                            value=session_id,
+                            clearable=False,
                         ),
                     ],
-                    width=4,
+                    width="auto",
+                    className="d-flex flex-column justify-content-end",
+                    style={"minWidth": "250px"},
                 ),
+                # New Session button
                 dbc.Col(
                     dbc.Button(
                         "New Session",
                         id=ADMIN_NEW_SESSION,
-                        className="ms-2",
+                        className="ms-2 w-100",
                         style={
                             "backgroundColor": "var(--theme-secondary)",
                             "color": "var(--text-selected)",
                             "border": "none",
+                            "height": "38px",
                         },
                     ),
-                    width=2,
+                    width="auto",
+                    className="d-flex align-items-end",
                 ),
+                # Copy Session button
                 dbc.Col(
                     dbc.Button(
                         "Copy Session",
                         id=ADMIN_COPY_SESSION,
-                        className="ms-2",
+                        className="ms-2 w-100",
                         style={
                             "backgroundColor": "var(--theme-secondary)",
                             "color": "var(--text-selected)",
                             "border": "none",
+                            "height": "38px%",
                         },
                     ),
-                    width=2,
+                    width="auto",
+                    className="d-flex align-items-end",
                 ),
-            ]
+            ],
+            className="g-1",
         ),
     ]
 
