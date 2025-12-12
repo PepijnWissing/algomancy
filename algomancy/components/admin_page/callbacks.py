@@ -23,6 +23,8 @@ from algomancy.components.componentids import (
     ADMIN_COPY_SESSION,
     SESSION_CREATOR_MODAL,
     NEW_SESSION_BUTTON,
+    NEW_SESSION_NAME,
+    HOW_TO_CREATE_NEW_SESSION,
 )
 from algomancy.dashboardlogger.logger import MessageStatus
 
@@ -42,6 +44,10 @@ def admin_sessions(session_id):
 
     return [
         html.H3("Sessions"),
+        dcc.Store(
+            id=HOW_TO_CREATE_NEW_SESSION,
+            data=False,
+        ),
         dbc.Row(
             [
                 dbc.Col(
@@ -238,25 +244,82 @@ def update_log_window(n_intervals, filter_value):
 
 
 @callback(
-    Output(SESSION_CREATOR_MODAL, "is_open"),
-    Input(ADMIN_NEW_SESSION, "n_clicks"),
-    Input(ADMIN_COPY_SESSION, "n_clicks"),
-    Input(f"{NEW_SESSION_BUTTON}-cancel", "n_clicks"),
-    State(SESSION_CREATOR_MODAL, "is_open"),
-    State(ACTIVE_SESSION, "data"),
+    Output(NEW_SESSION_BUTTON, "disabled"),
+    Output(f"{NEW_SESSION_BUTTON}-tooltip-container", "children"),
+    Input(NEW_SESSION_NAME, "value"),
+)
+def validate_session_name(session_name):
+    existing_names = get_app().server.session_manager.sessions_names
+
+    if not session_name:
+        tooltip = dbc.Tooltip(
+            "Session name cannot be empty.",
+            target=f"{NEW_SESSION_BUTTON}-wrapper",
+            placement="top",
+            id=f"{NEW_SESSION_BUTTON}-tooltip",
+        )
+        return True, tooltip
+
+    if session_name in existing_names:
+        tooltip = dbc.Tooltip(
+            "Session name already exists.",
+            target=f"{NEW_SESSION_BUTTON}-wrapper",
+            placement="top",
+            id=f"{NEW_SESSION_BUTTON}-tooltip",
+        )
+        return True, tooltip
+
+    # valid -> enable button and remove tooltip from DOM
+    return False, None
+
+
+@callback(
+    [
+        Output(SESSION_CREATOR_MODAL, "is_open"),
+        Output(NEW_SESSION_NAME, "value"),
+        Output(HOW_TO_CREATE_NEW_SESSION, "data"),
+        Output(ADMIN_SELECT_SESSION, "value"),
+    ],
+    [
+        Input(ADMIN_NEW_SESSION, "n_clicks"),
+        Input(ADMIN_COPY_SESSION, "n_clicks"),
+        Input(NEW_SESSION_BUTTON, "n_clicks"),
+        Input(f"{NEW_SESSION_BUTTON}-cancel", "n_clicks"),
+    ],
+    [
+        State(NEW_SESSION_NAME, "value"),
+        State(SESSION_CREATOR_MODAL, "is_open"),
+        State(ACTIVE_SESSION, "data"),
+        State(HOW_TO_CREATE_NEW_SESSION, "data"),
+    ],
     prevent_initial_call=True,
 )
-def toggle_scenario_creator_modal(
-    open_new_click, open_copy_click, cancel_click, is_open, session_id: str
+def toggle_session_creator_modal(
+    open_new_click,
+    open_copy_click,
+    confirm_clicked,
+    cancel_click,
+    new_session_name,
+    is_open,
+    session_id: str,
+    copy_session,
 ):
     ctx = callback_context
     if not ctx.triggered:
-        return no_update
+        return no_update, no_update, no_update, no_update
     triggered_id = ctx.triggered[0]["prop_id"].split(".")[0]
     if triggered_id == ADMIN_NEW_SESSION and not is_open:
-        return True
+        return True, "", False, no_update
     if triggered_id == ADMIN_COPY_SESSION and not is_open:
-        return True
-    elif triggered_id in [f"{NEW_SESSION_BUTTON}-cancel"]:
-        return False
-    return is_open
+        return True, "", True, no_update
+    if triggered_id == NEW_SESSION_BUTTON and is_open:
+        session_manager = get_app().server.session_manager
+        if copy_session:
+            session_manager.copy_session(session_id, new_session_name)
+        else:
+            session_manager.create_new_session(new_session_name)
+
+        return False, "", no_update, new_session_name
+    if triggered_id == f"{NEW_SESSION_BUTTON}-cancel":
+        return False, "", no_update, no_update
+    return is_open, "", no_update, no_update

@@ -52,7 +52,14 @@ class SessionManager:
         autorun: bool = False,
     ) -> None:
         self.logger = logger if logger else Logger()
+        self.etl_factory = etl_factory
+        self.kpi_templates = kpi_templates
+        self.algo_templates = algo_templates
+        self.input_configs = input_configs
+        self.data_object_type = data_object_type
+        self.autorun = autorun
         self.scenario_save_location = scenario_save_location
+        self._data_folder = data_folder
         self._has_persistent_state = has_persistent_state
         self._auto_create_scenario = autocreate
         self._default_algo_name = default_algo_name
@@ -71,31 +78,22 @@ class SessionManager:
             sessions = self.determine_sessions_from_folder(data_folder)
             for session_name, session_path in sessions.items():
                 self._sessions[session_name] = ScenarioManager(
-                    etl_factory=etl_factory,
-                    kpi_templates=kpi_templates,
-                    algo_templates=algo_templates,
-                    input_configs=input_configs,
-                    data_object_type=data_object_type,
+                    etl_factory=self.etl_factory,
+                    kpi_templates=self.kpi_templates,
+                    algo_templates=self.algo_templates,
+                    input_configs=self.input_configs,
+                    data_object_type=self.data_object_type,
                     data_folder=session_path,
                     logger=self.logger,
                     has_persistent_state=self._has_persistent_state,
                     save_type=self._save_type,
                     autocreate=self._auto_create_scenario,
-                    default_algo_name=default_algo_name,
-                    default_param_values=default_param_values,
-                    autorun=autorun,
+                    default_algo_name=self._default_algo_name,
+                    default_param_values=self._default_param_values,
+                    autorun=self.autorun,
                 )
         if len(self._sessions) == 0:
-            self._sessions["main"] = self.create_default_scenario_manager(
-                etl_factory,
-                kpi_templates,
-                algo_templates,
-                input_configs,
-                data_object_type,
-                default_algo_name,
-                default_param_values,
-                autorun,
-            )
+            self.create_default_scenario_manager("main")
 
         self._start_session_name = list(self._sessions.keys())[0]
         self._algo_templates = algo_templates
@@ -119,30 +117,44 @@ class SessionManager:
         assert session_id in self._sessions, f"Scenario '{session_id}' not found."
         return self._sessions[session_id]
 
-    def create_default_scenario_manager(
-        self,
-        etl_factory,
-        kpi_templates,
-        algo_templates,
-        input_configs,
-        data_object_type,
-        default_algo_name,
-        default_param_values,
-        autorun,
-    ):
-        return ScenarioManager(
-            etl_factory=etl_factory,
-            kpi_templates=kpi_templates,
-            algo_templates=algo_templates,
-            input_configs=input_configs,
-            data_object_type=data_object_type,
+    def _create_folder(self, name: str) -> str:
+        session_folder = self._data_folder + "/" + name
+        os.makedirs(session_folder, exist_ok=True)
+        return session_folder
+
+    def create_default_scenario_manager(self, name: str) -> None:
+        if self._has_persistent_state:
+            session_path = self._create_folder(name)
+            self._sessions[name] = ScenarioManager(
+                etl_factory=self.etl_factory,
+                kpi_templates=self.kpi_templates,
+                algo_templates=self.algo_templates,
+                input_configs=self.input_configs,
+                data_object_type=self.data_object_type,
+                data_folder=session_path,
+                logger=self.logger,
+                has_persistent_state=self._has_persistent_state,
+                save_type=self._save_type,
+                autocreate=self._auto_create_scenario,
+                default_algo_name=self._default_algo_name,
+                default_param_values=self._default_param_values,
+                autorun=self.autorun,
+            )
+            return
+
+        self._sessions[name] = ScenarioManager(
+            etl_factory=self.etl_factory,
+            kpi_templates=self.kpi_templates,
+            algo_templates=self.algo_templates,
+            input_configs=self.input_configs,
+            data_object_type=self.data_object_type,
             logger=self.logger,
             has_persistent_state=self._has_persistent_state,
             save_type=self._save_type,
             autocreate=self._auto_create_scenario,
-            default_algo_name=default_algo_name,
-            default_param_values=default_param_values,
-            autorun=autorun,
+            default_algo_name=self._default_algo_name,
+            default_param_values=self._default_param_values,
+            autorun=self.autorun,
         )
 
     @property
@@ -155,3 +167,12 @@ class SessionManager:
 
     def get_algorithm_template(self, key) -> AlgorithmTemplate:
         return self._algo_templates.get(key)
+
+    def create_new_session(self, session_name: str) -> None:
+        self.create_default_scenario_manager(session_name)
+
+    def copy_session(self, session_name: str, new_session_name: str):
+        self._sessions[new_session_name] = self.get_scenario_manager(session_name)
+        if self._has_persistent_state:
+            session_path = self._create_folder(new_session_name)
+            self._sessions[new_session_name].data_folder = session_path

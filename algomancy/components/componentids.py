@@ -141,6 +141,7 @@ PERF_SBS_LEFT_COLLAPSE = "perf-sbs-left-collapse"
 PERF_SBS_RIGHT_COLLAPSE = "perf-sbs-right-collapse"
 PERF_KPI_COLLAPSE = "perf-kpi-collapse"
 PERF_COMPARE_COLLAPSE = "perf-compare-collapse"
+HOW_TO_CREATE_NEW_SESSION = "how-to-create-new-session"
 
 
 # === Compare Page IDs ===
@@ -162,6 +163,7 @@ ADMIN_LOG_INTERVAL = "admin-log-interval"
 ADMIN_LOG_FILTER = "admin-log-filter"
 NEW_SESSION_BUTTON = "new-session-button"
 SESSION_CREATOR_MODAL = "session-creator-modal"
+NEW_SESSION_NAME = "new-session-name"
 
 # === Layout IDs ===
 SIDEBAR = "sidebar"
