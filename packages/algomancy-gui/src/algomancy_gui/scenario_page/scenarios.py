@@ -1,3 +1,4 @@
+import pandas as pd
 from dash import (
     html,
     dcc,
@@ -46,6 +47,9 @@ from ..componentids import (
     ALGO_PARAMS_ENTRY_CARD,
     ALGO_PARAMS_WINDOW_ID,
     SCENARIO_PROCESS_BUTTON,
+    ALGO_PARAM_INPUT,
+    ALGO_PARAM_DATE_INPUT,
+    ALGO_PARAM_INTERVAL_INPUT,
 )
 from ..layouthelpers import create_wrapped_content_div
 from .delete_confirmation import delete_confirmation_modal
@@ -348,6 +352,8 @@ def open_algo_params_window(algo_name):
 
 
 # --- Scenario Creation Callback ---
+
+
 @callback(
     Output(SCENARIO_LIST_UPDATE_STORE, "data", allow_duplicate=True),
     Output(SCENARIO_ALERT, "children", allow_duplicate=True),
@@ -357,16 +363,24 @@ def open_algo_params_window(algo_name):
     State(SCENARIO_TAG_INPUT, "value"),
     State(SCENARIO_DATA_INPUT, "value"),
     State(SCENARIO_ALGO_INPUT, "value"),
-    State({"type": "algo-param-input", "param": ALL}, "value"),
+    State({"type": ALGO_PARAM_INPUT, "param": ALL}, "value"),
+    State({"type": ALGO_PARAM_DATE_INPUT, "param": ALL}, "date"),
+    State({"type": ALGO_PARAM_INTERVAL_INPUT, "param": ALL}, "start_date"),
+    State({"type": ALGO_PARAM_INTERVAL_INPUT, "param": ALL}, "end_date"),
     State(SCENARIO_SELECTED_ID_STORE, "data"),
     prevent_initial_call=True,
 )
 def create_scenario(
-    create_clicks, tag, dataset, algorithm, algo_param_values, selected_id
+    create_clicks,
+    tag,
+    dataset,
+    algorithm,
+    algo_param_values,
+    algo_param_dates,
+    algo_param_interval_starts,
+    algo_param_interval_ends,
+    selected_id,
 ):
-    # Now algo_param_values is a list containing the values of each param input, in DOM order!
-    # You can also get their IDs from dash.callback_context.inputs_list for mapping
-
     if not tag:
         return no_update, "Tag is required", True, False
     if not dataset:
@@ -374,12 +388,34 @@ def create_scenario(
     if not algorithm:
         return no_update, "Algorithm is required", True, False
 
-    scenario_manager = get_app().server.scenario_manager
+    scenario_manager: ScenarioManager = get_app().server.scenario_manager
 
-    param_ids = [s["id"] for s in callback_context.states_list[3]]
-    param_dict = {
-        pid["param"]: value for pid, value in zip(param_ids, algo_param_values)
-    }
+    # Build param_dict from the three separate param groups.
+    # Note: Dash provides these in DOM order per group; we map by the "param" key in the IDs.
+    states = callback_context.states_list
+
+    # indices correspond to the order of State(...) in the decorator
+    value_state_index = 3
+    date_state_index = 4
+    interval_start_state_index = 5
+
+    param_dict = {}
+
+    value_ids = [s["id"] for s in states[value_state_index]]
+    for pid, value in zip(value_ids, algo_param_values):
+        param_dict[pid["param"]] = value
+
+    date_ids = [s["id"] for s in states[date_state_index]]
+    for pid, value in zip(date_ids, algo_param_dates):
+        param_dict[pid["param"]] = list(pd.to_datetime([value]))[0]
+
+    interval_ids = [s["id"] for s in states[interval_start_state_index]]
+    for pid, start, end in zip(
+        interval_ids, algo_param_interval_starts, algo_param_interval_ends
+    ):
+        param_dict[pid["param"]] = list(pd.to_datetime([start])) + list(
+            pd.to_datetime([end])
+        )
 
     try:
         scenario_manager.create_scenario(tag, dataset, algorithm, param_dict)

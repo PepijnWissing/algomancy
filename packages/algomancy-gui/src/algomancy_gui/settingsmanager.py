@@ -37,3 +37,7 @@ class SettingsManager:
     @property
     def show_loading_on_comparepage(self):
         return self["show_loading_on_comparepage"]
+
+    @property
+    def allow_param_upload_by_file(self):
+        return self["allow_param_upload_by_file"]

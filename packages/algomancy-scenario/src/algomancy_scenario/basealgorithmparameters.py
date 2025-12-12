@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from enum import StrEnum
 from typing import Any, Dict, TypeVar
+from datetime import datetime
 
 
 class ParameterError(Exception):
@@ -15,6 +16,9 @@ class ParameterType(StrEnum):
     FLOAT = "float"
     BOOLEAN = "boolean"
     ENUM = "enum"
+    MULTI_ENUM = "multi_enum"
+    TIME = "time"
+    INTERVAL = "interval"
 
 
 class TypedParameter(ABC):
@@ -108,6 +112,41 @@ class EnumParameter(TypedParameter):
     def value(self) -> str:
         if self._value is None:
             return self.choices[0]
+        return self._value
+
+
+class MultiEnumParameter(TypedParameter):
+    def __init__(
+        self,
+        name: str,
+        choices: list[str],
+        value: list[str] = None,
+        required: bool = True,
+    ) -> None:
+        super().__init__(name, ParameterType.MULTI_ENUM, required)
+        assert len(choices) > 0, "Parameter must have at least one choice."
+        self.choices = choices
+        if value is not None:
+            self.set_validated_value(value)
+
+    def _validate(self, value_lst: list[str]):
+        if not isinstance(value_lst, list):
+            raise ParameterError(f"Parameter '{self.name}' must be a list.")
+        for value in value_lst:
+            if not isinstance(value, str):
+                raise ParameterError(f"Parameter '{self.name}' must be a string.")
+            if value not in self.choices:
+                raise ParameterError(
+                    f"Parameter '{self.name}' must be one of {self.choices}."
+                )
+
+    def _serialize(self) -> str:
+        return f"{self.name}: {self.value}"
+
+    @property
+    def value(self) -> list[str]:
+        if self._value is None:
+            return [self.choices[0]]
         return self._value
 
 
@@ -232,6 +271,98 @@ class BooleanParameter(TypedParameter):
     def value(self) -> bool:
         if self._value is None:
             return self.default
+        return self._value
+
+
+class TimeParameter(TypedParameter):
+    def __init__(
+        self,
+        name: str,
+        value: datetime | None = None,
+        required: bool = True,
+        default: datetime | None = None,
+    ) -> None:
+        super().__init__(name, ParameterType.TIME, required)
+        self._default = default
+        if value is not None:
+            self.set_validated_value(value)
+
+    def _validate(self, value) -> None:
+        if not isinstance(value, datetime):
+            raise ParameterError(f"Parameter '{self.name}' must be a datetime.")
+
+    def _serialize(self) -> str:
+        return f"{self.name}: {self.value.isoformat()}"
+
+    @property
+    def default(self) -> datetime:
+        if self._default is None:
+            return datetime.today()
+        else:
+            return self._default
+
+    @property
+    def value(self) -> datetime:
+        if self._value is None:
+            return self._default
+        return self._value
+
+
+class IntervalParameter(TypedParameter):
+    def __init__(
+        self,
+        name: str,
+        value: list[datetime] | tuple[datetime, datetime] | None = None,
+        required: bool = True,
+        default: tuple[datetime, datetime] | None = None,
+    ) -> None:
+        super().__init__(name, ParameterType.INTERVAL, required)
+        self.default = default
+        if value is not None:
+            self.set_validated_value(value)
+
+    def _validate(self, value) -> None:
+        if not (isinstance(value, (list, tuple)) and len(value) == 2):
+            raise ParameterError(
+                f"Parameter '{self.name}' must be a list/tuple of two datetimes."
+            )
+        start, end = value[0], value[1]
+        if not isinstance(start, datetime) or not isinstance(end, datetime):
+            raise ParameterError(
+                f"Parameter '{self.name}' must contain datetime values."
+            )
+        if end < start:
+            raise ParameterError(
+                f"Parameter '{self.name}' interval end must be greater than or equal to start."
+            )
+
+    def _serialize(self) -> str:
+        s, e = self.value
+        return f"{self.name}: [{s.isoformat()}, {e.isoformat()}]"
+
+    @property
+    def default_start(self) -> datetime:
+        if self.default:
+            return self.default[0]
+        else:
+            now = datetime.today()
+            return datetime(now.year, 1, 1)
+
+    @property
+    def default_end(self) -> datetime:
+        if self.default:
+            return self.default[1]
+        else:
+            now = datetime.today()
+            return datetime(now.year, 12, 31)
+
+    @property
+    def value(self) -> tuple[datetime, datetime]:
+        if self._value is None:
+            return self.default
+        # Normalize internal storage to tuple
+        if isinstance(self._value, list):
+            return (self._value[0], self._value[1])
         return self._value
 
 
