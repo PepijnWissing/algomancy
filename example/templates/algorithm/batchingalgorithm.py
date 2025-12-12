@@ -1,3 +1,6 @@
+from algomancy_scenario.basealgorithmparameters import TimeParameter
+from algomancy_scenario.basealgorithmparameters import IntervalParameter
+from algomancy_scenario.basealgorithmparameters import MultiEnumParameter
 from time import sleep
 
 from algomancy_data import DataSource
@@ -25,6 +28,13 @@ class BatchingAlgorithmParameters(BaseAlgorithmParameters):
                     name="search_direction", choices=["depth first", "breadth first"]
                 ),
                 BooleanParameter(name="use_cache"),
+                MultiEnumParameter(
+                    "multi_test", choices=["option 1", "option 2", "option 3"]
+                ),
+                TimeParameter("time_test"),
+                IntervalParameter(
+                    "interval_test",
+                ),
             ]
         )
 

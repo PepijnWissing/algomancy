@@ -111,6 +111,8 @@ ALGO_PARAMS_ENTRY_TAB = "algo-params-entry"
 ALGO_PARAMS_UPLOAD_TAB = "algo-params-upload"
 ALGO_PARAMS_ENTRY_CARD = "algo-params-entry-card"
 ALGO_PARAM_INPUT = "algo-param-input"
+ALGO_PARAM_DATE_INPUT = "algo-param-date-input"
+ALGO_PARAM_INTERVAL_INPUT = "algo-param-interval-input"
 
 SCENARIO_PROG_INTERVAL = "scenario-progress-polling-interval"
 SCENARIO_PROG_BAR = "scenario-progress-bar"

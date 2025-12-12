@@ -283,7 +283,7 @@ class TimeParameter(TypedParameter):
         default: datetime | None = None,
     ) -> None:
         super().__init__(name, ParameterType.TIME, required)
-        self.default = default
+        self._default = default
         if value is not None:
             self.set_validated_value(value)
 
@@ -295,9 +295,16 @@ class TimeParameter(TypedParameter):
         return f"{self.name}: {self.value.isoformat()}"
 
     @property
+    def default(self) -> datetime:
+        if self._default is None:
+            return datetime.today()
+        else:
+            return self._default
+
+    @property
     def value(self) -> datetime:
         if self._value is None:
-            return self.default
+            return self._default
         return self._value
 
 
@@ -332,6 +339,22 @@ class IntervalParameter(TypedParameter):
     def _serialize(self) -> str:
         s, e = self.value
         return f"{self.name}: [{s.isoformat()}, {e.isoformat()}]"
+
+    @property
+    def default_start(self) -> datetime:
+        if self.default:
+            return self.default[0]
+        else:
+            now = datetime.today()
+            return datetime(now.year, 1, 1)
+
+    @property
+    def default_end(self) -> datetime:
+        if self.default:
+            return self.default[1]
+        else:
+            now = datetime.today()
+            return datetime(now.year, 12, 31)
 
     @property
     def value(self) -> tuple[datetime, datetime]:

@@ -13,6 +13,8 @@ from algomancy_gui.componentids import (
     ALGO_PARAMS_UPLOAD_TAB,
     ALGO_PARAMS_WINDOW_ID,
     ALGO_PARAM_INPUT,
+    ALGO_PARAM_DATE_INPUT,
+    ALGO_PARAM_INTERVAL_INPUT,
 )
 
 
@@ -21,26 +23,54 @@ def prettify_label(key):
     return key.replace("_", " ").title()
 
 
-def create_parameter_input_component(param: TypedParameter, input_id: Dict[str, str]):
+def create_parameter_input_component(param: TypedParameter, param_name: str):
     typ = param.parameter_type
     match typ:
         case ParameterType.STRING:
-            return dbc.Input(id=input_id, type="text")
+            return dbc.Input(
+                id={"type": ALGO_PARAM_INPUT, "param": param_name}, type="text"
+            )
         case ParameterType.INTEGER:
-            return dbc.Input(id=input_id, type="number")
+            return dbc.Input(
+                id={"type": ALGO_PARAM_INPUT, "param": param_name}, type="number"
+            )
         case ParameterType.FLOAT:
-            return dbc.Input(id=input_id, type="number")
+            return dbc.Input(
+                id={"type": ALGO_PARAM_INPUT, "param": param_name}, type="number"
+            )
         case ParameterType.BOOLEAN:
             return dbc.Checklist(
-                options=[{"label": "On", "value": True}], id=input_id, switch=True
+                options=[{"label": "On", "value": True}],
+                id={"type": ALGO_PARAM_INPUT, "param": param_name},
+                switch=True,
             )
         case ParameterType.ENUM:
             return dcc.Dropdown(
-                id=input_id,
+                id={"type": ALGO_PARAM_INPUT, "param": param_name},
                 options=[
                     {"label": prettify_label(opt), "value": opt}
                     for opt in param.choices
                 ],
+            )
+        case ParameterType.MULTI_ENUM:
+            return dcc.Dropdown(
+                id={"type": ALGO_PARAM_INPUT, "param": param_name},
+                options=[
+                    {"label": prettify_label(opt), "value": opt}
+                    for opt in param.choices
+                ],
+                multi=True,
+            )
+        case ParameterType.TIME:
+            return dcc.DatePickerSingle(
+                id={"type": ALGO_PARAM_DATE_INPUT, "param": param_name},
+                date=param.default,
+            )
+        case ParameterType.INTERVAL:
+            return dcc.DatePickerRange(
+                id={"type": ALGO_PARAM_INTERVAL_INPUT, "param": param_name},
+                start_date=param.default_start,
+                end_date=param.default_end,
             )
         case _:
             raise ValueError(f"Unsupported parameter type: {typ}")
@@ -50,19 +80,27 @@ def create_input_group(param_dict: Dict[str, TypedParameter]):
     """
     Given a dictionary of parameter names and Python types,
     returns a list of input groups, each with a neat label and input.
-    The id of each input is f"{id_prefix}-{key}".
     """
     form_groups = []
     for param_name, param in param_dict.items():
         label = prettify_label(param_name)
 
-        input_id = {"type": ALGO_PARAM_INPUT, "param": param_name}
         html_id = f"{ALGO_PARAM_INPUT}-{param_name}"
 
-        component = create_parameter_input_component(param, input_id)
+        component = create_parameter_input_component(param, param_name)
 
         form_groups.append(
-            html.Div([dbc.Label(label, html_for=html_id), component], className="mb-3")
+            html.Div(
+                [
+                    dbc.Label(label, html_for=html_id, className="d-block"),
+                    html.Div(
+                        component,
+                        className="",
+                        style={"display": "block", "width": "100%"},
+                    ),
+                ],
+                className="mb-3",
+            )
         )
 
     return form_groups
