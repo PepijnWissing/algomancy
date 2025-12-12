@@ -21,7 +21,6 @@ from algomancy_gui.stylingconfigurator import (
 
 from example.data_handling.input_configs import example_input_configs
 from example.data_handling.factories import ExampleETLFactory
-from example.pages.exampledatapage import ExampleDataPage
 from example.templates import kpi_templates, algorithm_templates
 
 
@@ -63,7 +62,7 @@ def main(
         default_algo_params_values={"duration": 1},
         autorun=True,
         home_page="showcase",
-        data_page=ExampleDataPage,
+        data_page="standard",  # ExampleDataPage,
         # scenario_page="placeholder",  redundant
         # compare_page="placeholder",   redundant
         # overview_page="standard",     redundant
