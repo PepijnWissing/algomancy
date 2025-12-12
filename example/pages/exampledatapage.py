@@ -14,7 +14,7 @@ from ..IDs import (
 )
 
 
-class DataPageContentCreator:
+class ExampleDataPage:
     @staticmethod
     def _create_item_data_table(data: pd.DataFrame, table_page_size: int) -> html.Div:
         return html.Div(
@@ -59,13 +59,13 @@ class DataPageContentCreator:
                 dbc.Accordion(
                     [
                         dbc.AccordionItem(
-                            DataPageContentCreator._create_warehouse_layout_table(
+                            ExampleDataPage._create_warehouse_layout_table(
                                 data.tables["warehouse_layout"], table_page_size
                             ),
                             title="Warehouse Layout Data",
                         ),
                         dbc.AccordionItem(
-                            DataPageContentCreator._create_item_data_table(
+                            ExampleDataPage._create_item_data_table(
                                 data.tables["sku_data"], table_page_size
                             ),
                             title="SKU Data",
@@ -131,13 +131,17 @@ class DataPageContentCreator:
             ].to_dict("records")
 
     @staticmethod
-    def create_data_page_content(data: DataSource, table_page_size: int = 10):
-        data_view = DataPageContentCreator._create_raw_data_view(data, table_page_size)
-        layout = DataPageContentCreator._create_layout_plot(data)
+    def create_content(
+        data: DataSource, table_page_size: int = 10
+    ):  # may fail because if the table size
+        data_view = ExampleDataPage._create_raw_data_view(data, table_page_size)
+        layout = ExampleDataPage._create_layout_plot(data)
 
         # time.sleep(5) # uncomment to test spinners
-        return [
-            data_view,
-            html.Hr(),
-            layout,
-        ]
+        return html.Div(
+            [
+                data_view,
+                html.Hr(),
+                layout,
+            ]
+        )
