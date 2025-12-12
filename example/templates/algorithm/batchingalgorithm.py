@@ -35,6 +35,18 @@ class BatchingAlgorithmParameters(BaseAlgorithmParameters):
                 IntervalParameter(
                     "interval_test",
                 ),
+                IntervalParameter(
+                    "interval_test2",
+                ),
+                IntervalParameter(
+                    "interval_test3",
+                ),
+                IntervalParameter(
+                    "interval_test4",
+                ),
+                IntervalParameter(
+                    "interval_test5",
+                ),
             ]
         )
 
