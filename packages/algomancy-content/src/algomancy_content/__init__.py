@@ -1,23 +1,35 @@
-from .exampledatapage import ExampleDataPageContentCreator
+from .backend import (
+    PlaceholderSchema,
+    PlaceholderETLFactory,
+    placeholder_input_config,
+    PlaceholderKPI,
+    PlaceholderAlgorithm,
+    PlaceholderParams,
+)
+from .pages import (
+    PlaceholderDataPage,
+    ShowcaseHomePage,
+    StandardHomePage,
+    StandardDataPage,
+    PlaceholderComparePage,
+    PlaceholderScenarioPage,
+    StandardOverviewPage,
+)
 from .librarymanager import LibraryManager
-from .placeholderdatapage import PlaceholderDataPageContentCreator
-from .placeholderhomepagecontentcreator import PlaceholderHomePageContentCreator
-from .placeholdercomparepage import PlaceholderComparePageContentCreator
-from .placeholderscenariopage import PlaceholderScenarioPageContentCreator
-from .standarddatapage import StandardDataPageContentCreator
-from .standardhomepage import StandardHomePageContentCreator
-from .standardoverviewpage import StandardOverviewPageContentCreator
-from .placeholderetlfactory import PlaceholderETLFactory
 
 __all__ = [
     "LibraryManager",
-    "ExampleDataPageContentCreator",
-    "PlaceholderDataPageContentCreator",
-    "PlaceholderHomePageContentCreator",
-    "PlaceholderComparePageContentCreator",
-    "PlaceholderScenarioPageContentCreator",
-    "StandardDataPageContentCreator",
-    "StandardHomePageContentCreator",
-    "StandardOverviewPageContentCreator",
+    "ShowcaseHomePage",
+    "StandardHomePage",
+    "StandardDataPage",
+    "PlaceholderDataPage",
+    "PlaceholderComparePage",
+    "PlaceholderScenarioPage",
+    "StandardOverviewPage",
     "PlaceholderETLFactory",
+    "PlaceholderSchema",
+    "placeholder_input_config",
+    "PlaceholderKPI",
+    "PlaceholderAlgorithm",
+    "PlaceholderParams",
 ]

@@ -1,18 +1,20 @@
-from typing import Tuple, Callable
+from typing import Tuple, Dict
 
-from dash import html
+from algomancy_gui.page import (
+    HomePage,
+    DataPage,
+    ScenarioPage,
+    ComparePage,
+    OverviewPage,
+)
 
-from algomancy_data import BASE_DATA_BOUND
-from algomancy_scenario import Scenario
-
-from .standarddatapage import StandardDataPageContentCreator
-from .placeholderhomepagecontentcreator import PlaceholderHomePageContentCreator
-from .standardhomepage import StandardHomePageContentCreator
-from .exampledatapage import ExampleDataPageContentCreator
-from .placeholderdatapage import PlaceholderDataPageContentCreator
-from .placeholdercomparepage import PlaceholderComparePageContentCreator
-from .placeholderscenariopage import PlaceholderScenarioPageContentCreator
-from .standardoverviewpage import StandardOverviewPageContentCreator
+from algomancy_content.pages.standarddatapage import StandardDataPage
+from algomancy_content.pages.showcasehomepage import ShowcaseHomePage
+from algomancy_content.pages.standardhomepage import StandardHomePage
+from algomancy_content.pages.placeholderdatapage import PlaceholderDataPage
+from algomancy_content.pages.placeholdercomparepage import PlaceholderComparePage
+from algomancy_content.pages.placeholderscenariopage import PlaceholderScenarioPage
+from algomancy_content.pages.standardoverviewpage import StandardOverviewPage
 
 
 class LibraryManager:
@@ -20,236 +22,52 @@ class LibraryManager:
         pass
 
     @staticmethod
-    def get_home_content(
-        home_content: Callable[[], html.Div] | str,
-        home_callbacks: Callable[[], None] | str | None,
-    ) -> Tuple[
-        Callable[[], html.Div],
-        Callable[[], None] | None,
-    ]:
-        # If the input is a custom function, return the same function
-        if isinstance(home_content, Callable):
-            content = home_content
+    def get_pages(
+        cfg: Dict,
+    ) -> Tuple[HomePage, DataPage, ScenarioPage, ComparePage, OverviewPage]:
+        home_choices = {
+            "standard": StandardHomePage,
+            "showcase": ShowcaseHomePage,
+        }
+        home_page = LibraryManager._get_page(cfg["home_page"], "home", home_choices)
 
-        # Fetch prepared components if the input is a string
-        elif isinstance(home_content, str):
-            if home_content == "standard":
-                content = StandardHomePageContentCreator.create_content
-            elif home_content == "placeholder":
-                # pass
-                content = PlaceholderHomePageContentCreator.create_content
-            else:
-                raise ValueError(
-                    "Prepared component choices are: 'standard' or 'placeholder'"
-                )
+        data_choices = {
+            "standard": StandardDataPage,
+            "placeholder": PlaceholderDataPage,
+        }
+        data_page = LibraryManager._get_page(cfg["data_page"], "data", data_choices)
 
-        # Input types were not respected, throw an error
-        else:
-            raise ValueError("home_content_fn must be a string or a callable")
+        scenario_choices = {
+            "placeholder": PlaceholderScenarioPage,
+        }
+        scenario_page = LibraryManager._get_page(
+            cfg["scenario_page"], "scenario", scenario_choices
+        )
 
-        # If the input is a custom function, return the same function.
-        if isinstance(home_callbacks, Callable):
-            callbacks = home_callbacks
+        compare_choices = {
+            "placeholder": PlaceholderComparePage,
+        }
+        compare_page = LibraryManager._get_page(
+            cfg["compare_page"], "compare", compare_choices
+        )
 
-        # If the input was left empty, also leave it as is.
-        elif home_callbacks is None:
-            callbacks = None
+        overview_choices = {
+            "standard": StandardOverviewPage,
+        }
+        overview_page = LibraryManager._get_page(
+            cfg["overview_page"], "overview", overview_choices
+        )
 
-        # If the input is a string, fetch the prepared component
-        elif isinstance(home_callbacks, str):
-            if home_callbacks == "standard":
-                callbacks = StandardHomePageContentCreator.register_callbacks
-            elif home_callbacks == "placeholder":
-                # pass
-                callbacks = PlaceholderHomePageContentCreator.register_callbacks
-            else:
-                raise ValueError(
-                    "Prepared component choices are: 'standard' or 'placeholder'"
-                )
-
-        # Input types were not respected, throw an error
-        else:
-            raise ValueError("home_callbacks_fn must be a string or a callable or None")
-
-        return content, callbacks
+        return home_page, data_page, scenario_page, compare_page, overview_page
 
     @staticmethod
-    def get_data_content(
-        data_content: Callable[[BASE_DATA_BOUND], html.Div] | str,
-        data_callbacks: Callable[[], None] | str | None = None,
-    ) -> Tuple[
-        Callable[[BASE_DATA_BOUND], html.Div],
-        Callable[[BASE_DATA_BOUND], html.Div] | None,
-    ]:
-        # If the input is a custom function, return the function
-        if isinstance(data_content, Callable):
-            content = data_content
-
-        # If the input is a string, fetch the prepared components
-        elif isinstance(data_content, str):
-            if data_content == "placeholder":
-                content = PlaceholderDataPageContentCreator.create_data_page_content
-            elif data_content == "standard":
-                content = StandardDataPageContentCreator.create_content
-            elif data_content == "example":
-                content = ExampleDataPageContentCreator.create_data_page_content
-            else:
+    def _get_page(page, identifier: str, choices: Dict):
+        if isinstance(page, str):
+            found_page = choices.get(page, None)
+            if not found_page:
                 raise ValueError(
-                    "Prepared component choices are: 'placeholder', 'standard' or 'example'"
+                    f"Prepared component choices for {identifier} page are: {list(choices.keys())}"
                 )
-
-        # Input types were not respected, throw an error
+            return found_page
         else:
-            raise ValueError("data_content_fn must be a string or a callable")
-
-        # If the input is a custom function, return the same function.
-        if isinstance(data_callbacks, Callable):
-            callbacks = data_callbacks
-
-        # If the input was left empty, also leave it as is.
-        elif data_callbacks is None:
-            callbacks = None
-
-        # If the input is a string, fetch the prepared component
-        elif isinstance(data_callbacks, str):
-            if data_callbacks == "placeholder":
-                callbacks = PlaceholderDataPageContentCreator.register_callbacks
-            elif data_callbacks == "standard":
-                callbacks = StandardDataPageContentCreator.register_callbacks
-            elif data_callbacks == "example":
-                callbacks = ExampleDataPageContentCreator.register_callbacks
-            else:
-                raise ValueError(
-                    "Prepared component choices are: 'placeholder', 'standard' or 'example'"
-                )
-
-        # Input types were not respected, throw an error
-        else:
-            raise ValueError("data_callbacks must be a string or a callable or None")
-
-        # return the retrieved components
-        return content, callbacks
-
-    @staticmethod
-    def get_scenario_content(
-        scenario_content: Callable[[Scenario], html.Div] | str,
-        scenario_callbacks: Callable[[], None] | str | None = None,
-    ) -> Tuple[Callable[[Scenario], html.Div], Callable[[Scenario], html.Div] | None]:
-        if isinstance(scenario_content, Callable):
-            content = scenario_content
-        elif isinstance(scenario_content, str):
-            if scenario_content == "placeholder":
-                content = (
-                    PlaceholderScenarioPageContentCreator.create_scenario_page_content
-                )
-            else:
-                raise ValueError("Prepared component choices are: 'placeholder'")
-        else:
-            raise ValueError("scenario_content_fn must be a string or a callable")
-
-        if isinstance(scenario_callbacks, Callable):
-            callbacks = scenario_callbacks
-        elif scenario_callbacks is None:
-            callbacks = None
-        elif isinstance(scenario_callbacks, str):
-            if scenario_callbacks == "placeholder":
-                callbacks = PlaceholderScenarioPageContentCreator.register_callbacks
-            else:
-                raise ValueError("Prepared component choices are: 'placeholder'")
-        else:
-            raise ValueError(
-                "scenario_callbacks must be a string or a callable or None"
-            )
-
-        return content, callbacks
-
-    @staticmethod
-    def get_compare_content(
-        compare_content: Callable[[Scenario, str], html.Div] | str,
-        compare_compare: Callable[[Scenario, Scenario], html.Div] | str,
-        compare_details: Callable[[Scenario, Scenario], html.Div] | str,
-        compare_callbacks: Callable[[], None] | str | None = None,
-    ) -> Tuple[
-        Callable[[Scenario, str], html.Div],
-        Callable[[Scenario, Scenario], html.Div],
-        Callable[[Scenario, Scenario], html.Div],
-        Callable[[], None] | None,
-    ]:
-        if isinstance(compare_content, Callable):
-            content = compare_content
-        elif isinstance(compare_content, str):
-            if compare_content == "placeholder":
-                content = PlaceholderComparePageContentCreator.create_content
-            else:
-                raise ValueError("Prepared component choices are: 'placeholder'")
-        else:
-            raise ValueError("compare_content_fn must be a string or a callable")
-
-        if isinstance(compare_compare, Callable):
-            compare = compare_compare
-        elif isinstance(compare_compare, str):
-            if compare_compare == "placeholder":
-                compare = PlaceholderComparePageContentCreator.create_compare
-            else:
-                raise ValueError("Prepared component choices are: 'placeholder'")
-
-        else:
-            raise ValueError("compare_details_fn must be a string or a callable")
-
-        if isinstance(compare_details, Callable):
-            details = compare_details
-        elif isinstance(compare_details, str):
-            if compare_details == "placeholder":
-                details = PlaceholderComparePageContentCreator.create_details
-            else:
-                raise ValueError("Prepared component choices are: 'placeholder'")
-
-        else:
-            raise ValueError("compare_details_fn must be a string or a callable")
-
-        if isinstance(compare_callbacks, Callable):
-            callbacks = compare_callbacks
-        elif compare_callbacks is None:
-            callbacks = None
-        elif isinstance(compare_callbacks, str):
-            if compare_callbacks == "placeholder":
-                callbacks = PlaceholderComparePageContentCreator.register_callbacks
-            else:
-                raise ValueError("Prepared component choices are: 'placeholder'")
-        else:
-            raise ValueError("compare_callbacks must be a string or a callable or None")
-
-        return content, compare, details, callbacks
-
-    @staticmethod
-    def get_overview_content(
-        overview_content: Callable[[], html.Div] | str,
-        overview_callbacks: Callable[[], None] | str | None = None,
-    ) -> Tuple[Callable[[], html.Div], Callable[[], None] | None]:
-        if isinstance(overview_content, Callable):
-            content = overview_content
-        elif isinstance(overview_content, str):
-            if overview_content == "standard":
-                content = (
-                    StandardOverviewPageContentCreator.create_overview_page_content
-                )
-            else:
-                raise ValueError("Prepared component choices are: 'standard'")
-        else:
-            raise ValueError("overview_content_fn must be a string or a callable")
-
-        if isinstance(overview_callbacks, Callable):
-            callbacks = overview_callbacks
-        elif overview_callbacks is None:
-            callbacks = None
-        elif isinstance(overview_callbacks, str):
-            if overview_callbacks == "standard":
-                callbacks = StandardOverviewPageContentCreator.register_callbacks
-            else:
-                raise ValueError("Prepared component choices are: 'standard'")
-        else:
-            raise ValueError(
-                "overview_callbacks must be a string or a callable or None"
-            )
-
-        return content, callbacks
+            return page
