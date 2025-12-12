@@ -1,21 +1,12 @@
-from typing import Dict, Any, List
-
-from algomancy.appconfiguration import AppConfiguration
+from typing import Dict, List
 
 
 class SettingsManager:
-    def __init__(self, configurations: AppConfiguration | Dict):
-        # Accept either AppConfiguration or dict; store as dict internally
-        if hasattr(configurations, "as_dict") and callable(
-            getattr(configurations, "as_dict")
-        ):
-            self._configurations: Dict[str, Any] = configurations.as_dict()
-        elif isinstance(configurations, dict):
+    def __init__(self, configurations: Dict):
+        if isinstance(configurations, dict):
             self._configurations = configurations
         else:
-            raise TypeError(
-                "SettingsManager expects an AppConfiguration or a dict of settings"
-            )
+            raise TypeError("SettingsManager expects a dict of settings")
 
     def __getitem__(self, item):
         return self._configurations.get(item, [])

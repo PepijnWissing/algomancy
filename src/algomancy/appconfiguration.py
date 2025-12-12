@@ -1,9 +1,17 @@
 import platform
-from typing import Any, Callable, Dict, List, Type
+from typing import Any, Dict, List, Type
 import os
 
 from algomancy_data import InputFileConfiguration, BASE_DATA_BOUND
+from algomancy_gui.page import (
+    HomePage,
+    ScenarioPage,
+    ComparePage,
+    OverviewPage,
+    DataPage,
+)
 from algomancy_scenario import AlgorithmFactory, ALGORITHM, BASE_KPI
+from algomancy_content import LibraryManager as library
 
 from algomancy_gui.stylingconfigurator import StylingConfigurator
 
@@ -37,19 +45,11 @@ class AppConfiguration:
         default_algo_params_values: Dict[str, Any] | None = None,
         autorun: bool | None = None,
         # === content functions ===
-        home_content: Callable[..., Any] | str = "placeholder",
-        data_content: Callable[..., Any] | str = "placeholder",
-        scenario_content: Callable[..., Any] | str = "placeholder",
-        compare_content: Callable[..., Any] | str = "placeholder",
-        compare_compare: Callable[..., Any] | str = "placeholder",
-        compare_details: Callable[..., Any] | str = "placeholder",
-        overview_content: Callable[..., Any] | str = "placeholder",
-        # === callbacks ===
-        home_callbacks: Callable[..., Any] | str | None = "placeholder",
-        data_callbacks: Callable[..., Any] | str | None = "placeholder",
-        scenario_callbacks: Callable[..., Any] | str | None = "placeholder",
-        compare_callbacks: Callable[..., Any] | str | None = "placeholder",
-        overview_callbacks: Callable[..., Any] | str | None = "placeholder",
+        home_page: HomePage | str = "standard",
+        data_page: DataPage | str = "placeholder",
+        scenario_page: ScenarioPage | str = "placeholder",
+        compare_page: ComparePage | str = "placeholder",
+        overview_page: OverviewPage | str = "standard",
         # === styling configuration ===
         styling_config: Any | None = StylingConfigurator.get_cqm_config(),
         use_cqm_loader: bool = False,
@@ -84,19 +84,11 @@ class AppConfiguration:
         self.autorun = autorun
 
         # content + callbacks
-        self.home_content = home_content
-        self.data_content = data_content
-        self.scenario_content = scenario_content
-        self.compare_content = compare_content
-        self.compare_compare = compare_compare
-        self.compare_details = compare_details
-        self.overview_content = overview_content
-
-        self.home_callbacks = home_callbacks
-        self.data_callbacks = data_callbacks
-        self.scenario_callbacks = scenario_callbacks
-        self.compare_callbacks = compare_callbacks
-        self.overview_callbacks = overview_callbacks
+        self.home_page = home_page
+        self.data_page = data_page
+        self.scenario_page = scenario_page
+        self.compare_page = compare_page
+        self.overview_page = overview_page
 
         # styling + misc
         self.styling_config = styling_config
@@ -138,19 +130,11 @@ class AppConfiguration:
             "default_algo_params_values": self.default_algo_params_values,
             "autorun": self.autorun,
             # === content functions ===
-            "home_content": self.home_content,
-            "data_content": self.data_content,
-            "scenario_content": self.scenario_content,
-            "compare_content": self.compare_content,
-            "compare_compare": self.compare_compare,
-            "compare_details": self.compare_details,
-            "overview_content": self.overview_content,
-            # === callbacks ===
-            "home_callbacks": self.home_callbacks,
-            "data_callbacks": self.data_callbacks,
-            "scenario_callbacks": self.scenario_callbacks,
-            "compare_callbacks": self.compare_callbacks,
-            "overview_callbacks": self.overview_callbacks,
+            "home_page": self.home_page,
+            "data_page": self.data_page,
+            "scenario_page": self.scenario_page,
+            "compare_page": self.compare_page,
+            "overview_page": self.overview_page,
             # === styling configuration ===
             "styling_config": self.styling_config,
             "use_cqm_loader": self.use_cqm_loader,
@@ -172,6 +156,7 @@ class AppConfiguration:
     def _validate(self) -> None:
         self._validate_paths()
         self._validate_values()
+        self._validate_pages()
         self._validate_page_configurations()
         self._validate_algorithm_parameters()
 
@@ -232,6 +217,54 @@ class AppConfiguration:
         if self.port is not None:
             if not isinstance(self.port, int) or not (1 <= self.port <= 65535):
                 raise ValueError("port must be an integer between 1 and 65535")
+
+    def _validate_pages(self):
+        # fetch pages that were passed as str
+        home, data, scenario, compare, overview = library.get_pages(self.as_dict())
+
+        # check home page attributes
+        assert hasattr(home, "create_content")
+        assert hasattr(
+            home, "register_callbacks"
+        ), "home_page.register_callbacks must be a function"
+
+        # check data page attributes
+        assert hasattr(
+            data, "create_content"
+        ), "data_page.create_content must be a function"
+        assert hasattr(
+            data, "register_callbacks"
+        ), "data_page.register_callbacks must be a function"
+
+        # check scenario page attributes
+        assert hasattr(
+            scenario, "create_content"
+        ), "scenario_page.create_content must be a function"
+        assert hasattr(
+            scenario, "register_callbacks"
+        ), "scenario_page.register_callbacks must be a function"
+
+        # check compare page attributes
+        assert hasattr(compare, "create_side_by_side_content"), (
+            "compare_page.create_side_by_side_content " "must be a function"
+        )
+        assert hasattr(
+            compare, "create_compare_section"
+        ), "compare_page.create_compare_section must be a function"
+        assert hasattr(
+            compare, "create_details_section"
+        ), "compare_page.create_details_section must be a function"
+        assert hasattr(
+            compare, "register_callbacks"
+        ), "compare_page.register_callbacks must be a function"
+
+        # check overview page attributes
+        assert hasattr(
+            overview, "create_content"
+        ), "overview_page.create_content must be a function"
+        assert hasattr(
+            overview, "register_callbacks"
+        ), "scenario_page.register_callbacks must be a function"
 
     def _validate_page_configurations(self) -> None:
         # basic type checks for collections

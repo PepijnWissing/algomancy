@@ -3,14 +3,13 @@ from dash import html
 from algomancy_scenario import Scenario
 
 
-class ScenarioPageContentCreator:
+class PlaceholderScenarioPage:
     @staticmethod
     def register_callbacks():
         pass
 
     @staticmethod
-    def create_scenario_page_content(s: Scenario) -> html.Div:
-        # time.sleep(5)  # uncomment to test spinners
+    def create_content(s: Scenario) -> html.Div:
         page = html.Div(
             [
                 html.H5("Selected Scenario"),
