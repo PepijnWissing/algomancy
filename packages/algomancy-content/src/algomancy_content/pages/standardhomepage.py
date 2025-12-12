@@ -1,24 +1,28 @@
-import os
-
 from dash import html, get_app
 import dash
 import dash_bootstrap_components as dbc
 
-from scenario import ScenarioStatus
+from algomancy_scenario import ScenarioStatus
 
 
-class HomePageContentCreator:
+class StandardHomePage:
     @staticmethod
-    def create_home_page_content():
+    def create_content():
         """
         Creates the content for the home page, including logo, status indicators,
         and a summary of scenario processing status.
+
+        Implements the HomePage Protocol
 
         Returns:
             html.Div: A Dash HTML component representing the home page content
         """
         # Get scenario information
-        all_scenarios = get_app().server.scenario_manager.list_scenarios()
+        session_manager: SessionManager = get_app().server.session_manager
+        scenario_manager: ScenarioManager = session_manager.get_scenario_manager(
+            session_manager.start_session_name
+        )
+        all_scenarios = scenario_manager.list_scenarios()
 
         # Count scenarios in each status
         processing_count = sum(
@@ -39,30 +43,30 @@ class HomePageContentCreator:
 
         # Define status indicators
         status_indicators = [
-            HomePageContentCreator._create_status_card(
+            StandardHomePage._create_status_card(
                 "Processing",
                 processing_count,
                 "primary",
                 "Scenarios currently being processed",
             ),
-            HomePageContentCreator._create_status_card(
+            StandardHomePage._create_status_card(
                 "Queued", queued_count, "info", "Scenarios waiting to be processed"
             ),
-            HomePageContentCreator._create_status_card(
+            StandardHomePage._create_status_card(
                 "Completed",
                 completed_count,
                 "success",
                 "Successfully completed scenarios",
             ),
-            HomePageContentCreator._create_status_card(
+            StandardHomePage._create_status_card(
                 "Failed", failed_count, "danger", "Scenarios that encountered errors"
             ),
-            HomePageContentCreator._create_status_card(
+            StandardHomePage._create_status_card(
                 "Created", created_count, "secondary", "Newly created scenarios"
             ),
         ]
-        logo_url = dash.get_asset_url("Scholt_Energy.png")
-        print(os.getcwd())
+        logo_url = dash.get_asset_url("cqm-logo.png")
+
         return html.Div(
             [
                 # Header with logo
@@ -73,12 +77,12 @@ class HomePageContentCreator:
                             html.Div(
                                 [
                                     html.H1(
-                                        "E-Optimize",
+                                        "WARP Dashboard",
                                         className="display-4",
                                         style={"color": "var(--text-color)"},
                                     ),
                                     html.P(
-                                        "Charge Management and Optimization Platform",
+                                        "Workflow Analysis and Reporting Platform",
                                         className="lead",
                                         style={
                                             "color": "var(--text-color)",
@@ -91,7 +95,7 @@ class HomePageContentCreator:
                             className="d-flex align-items-center",
                         ),
                         dbc.Col(
-                            html.Img(src=logo_url, width="100%", className="mb-4"),
+                            html.Img(src=logo_url, height="80px", className="mb-4"),
                             width={"size": 2},
                             className="d-flex align-items-center",
                         ),
@@ -152,25 +156,25 @@ class HomePageContentCreator:
                         dbc.CardBody(
                             dbc.Row(
                                 [
-                                    HomePageContentCreator._create_quick_link(
+                                    StandardHomePage._create_quick_link(
                                         "Create Scenario",
                                         "/scenarios/create",
                                         "Create a new scenario",
                                         "primary",
                                     ),
-                                    HomePageContentCreator._create_quick_link(
+                                    StandardHomePage._create_quick_link(
                                         "View Scenarios",
                                         "/scenarios",
                                         "View all scenarios",
                                         "info",
                                     ),
-                                    HomePageContentCreator._create_quick_link(
-                                        "Performance",
-                                        "/performance",
-                                        "View performance metrics",
+                                    StandardHomePage._create_quick_link(
+                                        "Compare",
+                                        "/compare",
+                                        "Compare two scenarios",
                                         "success",
                                     ),
-                                    HomePageContentCreator._create_quick_link(
+                                    StandardHomePage._create_quick_link(
                                         "Data Import",
                                         "/data",
                                         "Import or manage data",
@@ -265,3 +269,7 @@ class HomePageContentCreator:
             width=3,
             className="mb-4",
         )
+
+    @staticmethod
+    def register_callbacks():
+        pass

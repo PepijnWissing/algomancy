@@ -10,7 +10,6 @@ import argparse
 import os
 import sys
 
-from algomancy_content import PlaceholderHomePageContentCreator
 from algomancy_data import DataSource
 from algomancy_gui.stylingconfigurator import (
     StylingConfigurator,
@@ -22,12 +21,9 @@ from algomancy_gui.stylingconfigurator import (
 
 from example.data_handling.input_configs import example_input_configs
 from example.data_handling.factories import ExampleETLFactory
-from example.pages.DataPageContent import DataPageContentCreator
-from example.pages.ScenarioPageContent import ScenarioPageContentCreator
-from example.templates import (
-    kpi_templates,
-    algorithm_templates,
-)
+from example.pages.exampledatapage import ExampleDataPage
+from example.templates import kpi_templates, algorithm_templates
+
 
 # Ensure project root is on sys.path so sibling packages (like `src`) can be imported
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -66,13 +62,11 @@ def main(
         default_algo="Slow",
         default_algo_params_values={"duration": 1},
         autorun=True,
-        home_content=PlaceholderHomePageContentCreator.create_default_elements_showcase,
-        data_content=DataPageContentCreator.create_data_page_content,
-        scenario_content=ScenarioPageContentCreator.create_scenario_page_content,
-        overview_content="standard",
-        home_callbacks="standard",
-        data_callbacks="example",
-        overview_callbacks="standard",
+        home_page="showcase",
+        data_page=ExampleDataPage,
+        # scenario_page="placeholder",  redundant
+        # compare_page="placeholder",   redundant
+        # overview_page="standard",     redundant
         styling_config=configure_styling(),
         use_cqm_loader=False,
         title="Example implementation of an Algomancy Dashboard",

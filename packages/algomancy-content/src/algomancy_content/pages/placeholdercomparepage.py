@@ -10,9 +10,9 @@ from dash import html
 from algomancy_scenario import Scenario
 
 
-class PlaceholderComparePageContentCreator:
+class PlaceholderComparePage:
     @staticmethod
-    def create_content(s: Scenario, side: str) -> html.Div:
+    def create_side_by_side_content(s: Scenario, side: str) -> html.Div:
         return html.Div(
             [
                 html.H5(f"{side.capitalize()} Scenario {s.tag}"),
@@ -26,7 +26,7 @@ class PlaceholderComparePageContentCreator:
         pass
 
     @staticmethod
-    def create_details(s1: Scenario, s2: Scenario) -> html.Div:
+    def create_details_section(s1: Scenario, s2: Scenario) -> html.Div:
         page = html.Div(
             [
                 html.H5("Selected Scenarios"),
@@ -38,7 +38,7 @@ class PlaceholderComparePageContentCreator:
         return page
 
     @staticmethod
-    def create_compare(s1: Scenario, s2: Scenario) -> html.Div:
+    def create_compare_section(s1: Scenario, s2: Scenario) -> html.Div:
         page = html.Div(
             [
                 html.H5("This section compares selected scenarios"),

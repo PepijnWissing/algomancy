@@ -1,8 +1,15 @@
-from typing import Callable
+from typing import Callable, List
 
 from dash import html
 
 from algomancy_data import BASE_DATA_BOUND
+from algomancy_gui.page import (
+    HomePage,
+    DataPage,
+    ScenarioPage,
+    ComparePage,
+    OverviewPage,
+)
 from algomancy_scenario import Scenario
 
 
@@ -14,56 +21,43 @@ class ContentRegistry:
         self._compare_side_by_side: Callable[[Scenario, str], html.Div] | None = None
         self._compare_compare: Callable[[Scenario, Scenario], html.Div] | None = None
         self._compare_details: Callable[[Scenario, Scenario], html.Div] | None = None
-        self._overview_content: Callable[[], html.Div] | None = None
+        self._overview_content: Callable[[List[Scenario]], html.Div] | None = None
 
-    def register_home_content(
+    def register_pages(
         self,
-        content_fn: Callable[[], html.Div],
-        callbacks: Callable[[], None] | None = None,
-    ):
-        self._home_content = content_fn
-        if callbacks:
-            callbacks()
+        home_page: HomePage,
+        data_page: DataPage,
+        scenario_page: ScenarioPage,
+        compare_page: ComparePage,
+        overview_page: OverviewPage,
+    ) -> None:
+        self._register_home_page(home_page)
+        self._register_data_page(data_page)
+        self._register_scenario_page(scenario_page)
+        self._register_compare_page(compare_page)
+        self._register_overview_page(overview_page)
 
-    def register_data_content(
-        self,
-        content_fn: Callable[[BASE_DATA_BOUND], html.Div],
-        callbacks: Callable[[], None] | None = None,
-    ):
-        self._data_content = content_fn
-        if callbacks:
-            callbacks()
+    def _register_home_page(self, page: HomePage) -> None:
+        self._home_content = page.create_content
+        page.register_callbacks()
 
-    def register_scenario_content(
-        self,
-        content_fn: Callable[[Scenario], html.Div],
-        callbacks: Callable[[], None] | None = None,
-    ):
-        self._scenario_content = content_fn
-        if callbacks:
-            callbacks()
+    def _register_data_page(self, page: DataPage) -> None:
+        self._data_content = page.create_content
+        page.register_callbacks()
 
-    def register_compare_content(
-        self,
-        content_fn: Callable[[Scenario, str], html.Div],
-        compare_fn: Callable[[Scenario, Scenario], html.Div] | None,
-        details_fn: Callable[[Scenario, Scenario], html.Div] | None,
-        callbacks: Callable[[], None] | None = None,
-    ):
-        self._compare_side_by_side = content_fn
-        self._compare_compare = compare_fn
-        self._compare_details = details_fn
-        if callbacks:
-            callbacks()
+    def _register_scenario_page(self, page: ScenarioPage) -> None:
+        self._scenario_content = page.create_content
+        page.register_callbacks()
 
-    def register_overview_content(
-        self,
-        content_fn: Callable[[], html.Div],
-        callbacks: Callable[[], None] | None = None,
-    ):
-        self._overview_content = content_fn
-        if callbacks:
-            callbacks()
+    def _register_compare_page(self, page: ComparePage) -> None:
+        self._compare_side_by_side = page.create_side_by_side_content
+        self._compare_compare = page.create_compare_section
+        self._compare_details = page.create_details_section
+        page.register_callbacks()
+
+    def _register_overview_page(self, page: OverviewPage) -> None:
+        self._overview_content = page.create_content
+        page.register_callbacks()
 
     @property
     def home_content(self) -> Callable[[], html.Div]:
@@ -158,12 +152,12 @@ class ContentRegistry:
             return default_content
 
     @property
-    def overview_content(self) -> Callable[[], html.Div]:
+    def overview_content(self) -> Callable[[List[Scenario]], html.Div]:
         if self._overview_content:
             return self._overview_content
         else:
 
-            def default_content():
+            def default_content(scenarios: List[Scenario]):
                 return html.Div(
                     [
                         html.H1("Overview content was not filled."),

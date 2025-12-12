@@ -9,9 +9,9 @@ OVERVIEW_TABLE = "overview-table"
 OVERVIEW_UPDATE_INTERVAL = "overview-update-interval"
 
 
-class StandardOverviewPageContentCreator:
+class StandardOverviewPage:
     @staticmethod
-    def create_overview_page_content():
+    def create_content():
         """
         Creates the overview page layout with a table of completed scenarios and their KPIs.
 

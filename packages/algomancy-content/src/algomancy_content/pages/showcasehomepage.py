@@ -5,23 +5,13 @@ import dash_bootstrap_components as dbc
 import dash_daq as daq
 
 
-class PlaceholderHomePageContentCreator:
-    @staticmethod
-    def create_content():
-        return [
-            html.H1("Welcome to WARP"),
-            html.P(
-                "This is a placeholder page for the home page of the WARP application."
-            ),
-            html.P("Please select a page from the navigation bar to continue."),
-        ]
-
+class ShowcaseHomePage:
     @staticmethod
     def register_callbacks():
         pass
 
     @staticmethod
-    def create_default_elements_showcase():
+    def create_content():
         """
         Creates a div containing a broad set of common HTML UI elements for CSS styling checks.
 

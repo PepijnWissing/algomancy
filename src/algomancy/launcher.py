@@ -85,42 +85,21 @@ class DashLauncher:
         app.server.styling_config = cfg.styling_config
 
         # register the settings manager on the app object for access in callbacks
-        app.server.settings = SettingsManager(cfg)
+        app.server.settings = SettingsManager(cfg.as_dict())
+
+        # fetch standard pages
+        home_page, data_page, scenario_page, compare_page, overview_page = lm.get_pages(
+            cfg.as_dict()
+        )
 
         # register the content register functions
         content_registry = ContentRegistry()
         app.server.content_registry = content_registry
 
-        # retrieve standard content functions
-        home_content, home_callbacks = lm.get_home_content(
-            cfg.home_content, cfg.home_callbacks
+        # register pages
+        content_registry.register_pages(
+            home_page, data_page, scenario_page, compare_page, overview_page
         )
-        data_content, data_callbacks = lm.get_data_content(
-            cfg.data_content, cfg.data_callbacks
-        )
-        scenario_content, scenario_callbacks = lm.get_scenario_content(
-            cfg.scenario_content, cfg.scenario_callbacks
-        )
-        perf_content, perf_compare, perf_details, perf_callbacks = (
-            lm.get_compare_content(
-                cfg.compare_content,
-                cfg.compare_compare,
-                cfg.compare_details,
-                cfg.compare_callbacks,
-            )
-        )
-        overview_content, overview_callbacks = lm.get_overview_content(
-            cfg.overview_content, cfg.overview_callbacks
-        )
-
-        # register the content functions for access in page creation
-        content_registry.register_home_content(home_content, home_callbacks)
-        content_registry.register_data_content(data_content, data_callbacks)
-        content_registry.register_scenario_content(scenario_content, scenario_callbacks)
-        content_registry.register_compare_content(
-            perf_content, perf_compare, perf_details, perf_callbacks
-        )
-        content_registry.register_overview_content(overview_content, overview_callbacks)
 
         # fill and run the app
         app.layout = html.Div(

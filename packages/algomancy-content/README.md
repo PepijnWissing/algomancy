@@ -15,20 +15,22 @@ pip install -e packages/algomancy-content
 Requires Python >= 3.14.
 
 #### Quick start
+
 ```python
-from algomancy_content import PlaceholderHomePageContentCreator
+from algomancy_content import ShowcaseHomePage
 
 # Plug into your AppConfiguration (see project root `example/main.py`)
-home_content = PlaceholderHomePageContentCreator.create_default_elements_showcase
-home_callbacks = PlaceholderHomePageContentCreator.register_callbacks
+home_content = ShowcaseHomePage.create_default_elements_showcase
+home_callbacks = ShowcaseHomePage.register_callbacks
 ```
 
 Use the prebuilt standard home page:
-```python
-from algomancy_content.standardhomepage import StandardHomePageContentCreator
 
-home_content = StandardHomePageContentCreator.create_content
-home_callbacks = StandardHomePageContentCreator.register_callbacks
+```python
+from algomancy_content.pages.standardhomepage import StandardHomePage
+
+home_content = StandardHomePage.create_content
+home_callbacks = StandardHomePage.register_callbacks
 ```
 
 #### Related docs and examples

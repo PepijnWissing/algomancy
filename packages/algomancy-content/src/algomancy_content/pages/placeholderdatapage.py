@@ -3,7 +3,7 @@ from dash import html
 from algomancy_data import DataSource
 
 
-class PlaceholderDataPageContentCreator:
+class PlaceholderDataPage:
     @staticmethod
     def register_callbacks():
         pass
