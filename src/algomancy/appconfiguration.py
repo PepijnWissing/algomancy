@@ -31,6 +31,7 @@ class AppConfiguration:
         kpi_templates: Dict[str, Type[BASE_KPI]] | None = None,
         algo_templates: Dict[str, Type[ALGORITHM]] | None = None,
         input_configs: List[InputFileConfiguration] | None = None,
+        # === auto start/create features ===
         autocreate: bool | None = None,
         default_algo: str | None = None,
         default_algo_params_values: Dict[str, Any] | None = None,
