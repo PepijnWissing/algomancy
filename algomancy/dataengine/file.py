@@ -34,31 +34,6 @@ class File(ABC):
             print(e)
             raise e
 
-    @staticmethod
-    def _set_content_from_uploader(content: str) -> str:
-        try:
-            # Extract the base64 content from the data URI
-            content_type, content_string = content.split(",", 1)
-            decoded = base64.b64decode(content_string)
-
-            if "csv" in content_type.lower():
-                # transform to textformat
-                csv_file = decoded.decode("utf-8")
-
-                return csv_file
-
-            elif "json" in content_type.lower():
-                # Transform the decoded data to json
-                json_data = json.loads(decoded)
-
-                return json.dumps(json_data)
-            else:
-                raise ValueError("Invalid content type.")
-
-        except Exception as e:
-            print(f"Error reading JSON file from uploader: {e}")
-            raise e
-
 
 class CSVFile(File):
     def __init__(
@@ -71,6 +46,22 @@ class CSVFile(File):
         if content is not None:
             self.content = self._set_content_from_uploader(content)
 
+    @staticmethod
+    def _set_content_from_uploader(content: str) -> str:
+        try:
+            # Extract the base64 content from the data URI
+            content_type, content_string = content.split(",", 1)
+            decoded = base64.b64decode(content_string)
+
+            # transform to textformat
+            csv_file = decoded.decode("utf-8")
+
+            return csv_file
+
+        except Exception as e:
+            print(f"Error reading CSV file from uploader: {e}")
+            raise e
+
 
 class JSONFile(File):
     def __init__(
@@ -82,6 +73,22 @@ class JSONFile(File):
         super().__init__(name, FileExtension.JSON, path, None)
         if content is not None:
             self.content = self._set_content_from_uploader(content)
+
+    @staticmethod
+    def _set_content_from_uploader(content: str) -> str:
+        try:
+            # Extract the base64 content from the data URI
+            content_type, content_string = content.split(",", 1)
+            decoded = base64.b64decode(content_string)
+
+            # Transform the decoded data to json
+            json_data = json.loads(decoded)
+
+            return json.dumps(json_data)
+
+        except Exception as e:
+            print(f"Error reading JSON file from uploader: {e}")
+            raise e
 
 
 class XLSXFile(File):
