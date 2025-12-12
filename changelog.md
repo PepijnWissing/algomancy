@@ -1,4 +1,123 @@
 # Change log
+## 0.3.2
+_Released at 12-12-2025_
+
+### Summary
+- **Breaking:** Content pages moved to a protocol/class-based system. Instead of passing content functions, the frontend now receives Page classes. This aligns page composition with the new `BaseAlgorithm`/`BaseKPI` patterns.
+- Parameters
+  - Added Multi-select parameter support via `MultiEnumParameter`.
+  - Added time-related parameters `TimeParameter` and `IntervalParameter` with frontend input components.
+- Added a configuration option that shows/hides the _Upload_ tab for parameter selection. Default is hidden. 
+- Added a _ standard_ data page that uses the `tables` attribute of the data container to render simple DashTables. 
+
+### Migration to Page classes (breaking)
+Prior to this release, pages were typically supplied to the app as plain content functions. As of v0.3.2, pages are defined as classes that satisfy the page protocol and are passed to the frontend by type (class) rather than by function reference.
+
+The content classes need to follow the appropriate `Protocol`s. That is, implement the required fuctions with signature.
+These protocols are enforced by validation of the AppConfiguration.
+An outline of the expected functions is included below. 
+- HomePage:
+  - `create_content() -> html.Div`
+  - `register_callbacks() -> None`
+- DataPage:
+  - `create_content(data: BASE_DATA_BOUND) -> html.Div`
+  - `register_callbacks() -> None`
+- ScenarioPage:
+  - `create_content(scenario: Scenario) -> html.Div`
+  - `register_callbacks() -> None`
+- ComparePage:
+  - `create_side_by_side_content(scenario: Scenario, side: str) -> html.Div`
+  - `create_compare_section(left: Scenario, right: Scenario) -> html.Div:`
+  - `create_details_section(left: Scenario, right: Scenario) -> html.Div`
+  - `register_callbacks() -> None`
+- OverviewPage:
+  - `create_content(List[Scenario]) -> html.Div`
+  - `register_callbacks() -> None`
+
+Below is a conceptual before/after to illustrate the change.
+
+**Old version (functions passed to the frontend)**
+```python
+# example (conceptual)
+from algomancy.appconfiguration import AppConfiguration
+
+class ExampleDataPage:
+  def create_content(self, data) -> html.Div:
+    ...
+  
+  def register_callbacks(self):
+    ...
+
+
+config = AppConfiguration(
+    home_page_content='standard',
+    data_page_content=ExampleDataPage.create_content,           # Callable[..., Div] or str
+    data_page_callbacks = ExampleDataPage.register_callbacks    # Callable[..., None] or str
+)
+```
+
+**New version (Page classes passed to the frontend)**
+```python
+# example (conceptual)
+from algomancy.appconfiguration import AppConfiguration
+
+class ExampleDataPage:
+  def create_content(self, data) -> html.Div:
+    ...
+  
+  def register_callbacks(self):
+    ...
+
+config = AppConfiguration(
+    home_page_content='standard'    # Protocol[HomePage] or str
+    data_page=ExampleDataPage,      # Protocol[DataPage] or str
+)
+```
+
+If you maintain custom pages, convert them into classes that implement the expected page protocol (constructor + render/handlers). For a minimal reference implementation, see `algomancy_content.pages.placeholderscenariopage.PlaceholderScenarioPage`.
+
+### New Typed Parameters (multi-select and time-related)
+Two new parameter families were added in `algomancy_scenario.basealgorithmparameters` and are fully supported in the GUI:
+
+- `MultiEnumParameter`: choose multiple options from a predefined list.
+- `TimeParameter` and `IntervalParameter`: capture a specific time (`HH:MM[:SS]`) and a time interval (start/end) respectively.
+
+#### Examples
+```python
+from algomancy_scenario.basealgorithmparameters import (
+    MultiEnumParameter,
+    TimeParameter,
+    IntervalParameter,
+)
+
+# Multi-select example
+select_products = MultiEnumParameter(
+    name="products",
+    choices=["A", "B", "C"],
+    value=["A", "C"],  # user may select multiple
+    required=True,
+)
+
+# Time of day example (24h)
+cutoff_time = TimeParameter(
+    name="cutoff_time",
+    value="14:30",
+    required=False,
+)
+
+# Interval example (start/end times)
+processing_window = IntervalParameter(
+    name="processing_window",
+    start="08:00",
+    end="17:30",
+)
+```
+
+In the frontend, these parameters render as:
+- Multi-select: a list with checkboxes or tags allowing multiple selections.
+- Time/Interval: time pickers; intervals present paired inputs for start and end values.
+
+
 ## 0.3.1
 _Released at 03-12-2025_
 
