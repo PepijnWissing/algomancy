@@ -113,7 +113,14 @@ def create_algo_parameters_entry_card_body(template_name: str) -> dbc.CardBody:
     assert algo_params.has_inputs(), "No parameters found for algorithm template."
     input_group = create_input_group(algo_params.get_parameters())
 
-    return dbc.CardBody(input_group)
+    return dbc.CardBody(
+        input_group,
+        style={
+            "maxHeight": "60vh",  # or e.g. "420px"
+            "overflowY": "auto",
+            "overflowX": "hidden",
+        },
+    )
 
 
 def create_algo_parameters_window() -> dbc.Collapse:
