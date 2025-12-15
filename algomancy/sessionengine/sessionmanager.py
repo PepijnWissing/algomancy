@@ -172,7 +172,8 @@ class SessionManager:
         self.create_default_scenario_manager(session_name)
 
     def copy_session(self, session_name: str, new_session_name: str):
-        self._sessions[new_session_name] = self.get_scenario_manager(session_name)
-        if self._has_persistent_state:
-            session_path = self._create_folder(new_session_name)
-            self._sessions[new_session_name].data_folder = session_path
+        self.create_default_scenario_manager(session_name)
+
+        for data_key in self.get_scenario_manager(session_name).get_data_keys():
+            data = self.get_scenario_manager(session_name).get_data(data_key)
+            self.get_scenario_manager(new_session_name).store_data(data_key, data)
