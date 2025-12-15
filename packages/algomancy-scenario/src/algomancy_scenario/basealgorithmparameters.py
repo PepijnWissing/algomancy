@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod, ABCMeta
 from enum import StrEnum
 from typing import Any, Dict, TypeVar
 from datetime import datetime
@@ -366,10 +366,20 @@ class IntervalParameter(TypedParameter):
         return self._value
 
 
-class BaseAlgorithmParameters(ABC):
+class PostInitMeta(ABCMeta):
+    def __call__(cls, *args, **kwargs):
+        instance = super().__call__(*args, **kwargs)
+        post_init = getattr(instance, "_post_init", None)
+        if callable(post_init):
+            post_init()
+        return instance
+
+
+class BaseAlgorithmParameters(ABC, metaclass=PostInitMeta):
     def __init__(self, name: str) -> None:
         self.name: str = name
         self._parameters: Dict[str, TypedParameter] = {}
+        self._is_locked = False
 
     def __str__(self):
         return str(self.serialize())
@@ -379,6 +389,10 @@ class BaseAlgorithmParameters(ABC):
 
     def __getitem__(self, key):
         return self._parameters[key].value
+
+    def _post_init(self):
+        """is called directly after the __init__ method in PostInitMeta classes"""
+        self._is_locked = True
 
     @abstractmethod
     def validate(self):
@@ -392,6 +406,8 @@ class BaseAlgorithmParameters(ABC):
         return {key: p.value for key, p in self._parameters.items()}
 
     def add_parameters(self, parameters: list[TypedParameter]):
+        if self._is_locked:
+            raise ParameterError("Cannot add parameter after initialization.")
         for parameter in parameters:
             self._parameters[parameter.name] = parameter
 
