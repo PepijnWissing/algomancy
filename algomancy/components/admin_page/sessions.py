@@ -10,6 +10,11 @@ from algomancy.stylingconfigurator import StylingConfigurator
 
 
 def create_new_session_window() -> dbc.Modal:
+    """Creates the modal for creating a new session.
+
+    Coping a session and creating a new session opens the same modal.
+    Therefore, the information of the button which is clicked is stored.
+    """
     sc: StylingConfigurator = get_app().server.styling_config
     window = dbc.Modal(
         [

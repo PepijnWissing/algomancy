@@ -14,11 +14,28 @@ from algomancy.scenarioengine import ScenarioManager
 import algomancy.components.data_page.dialogcallbacks  # noqa
 
 
+def data_page() -> html.Div:
+    """
+    Creates the data page layout with raw data view and warehouse layout visualization.
+
+    Returns:
+        html.Div: A Dash HTML component representing the data page
+    """
+    # Placeholder will be filled by callback
+    return html.Div(
+        [
+            html.H1("Data"),
+            html.Div(id=DATA_PAGE),
+        ]
+    )
+
+
 @callback(
     Output(DATA_PAGE, "children"),
     Input(ACTIVE_SESSION, "data"),
 )
 def render_data_page(active_session_name):
+    """Creates the data page layout with raw data view and warehouse layout visualization."""
     if not active_session_name:
         return html.Div("No active session selected")
 
@@ -37,22 +54,6 @@ def render_data_page(active_session_name):
         [
             top_bar(sm),
             main_div,
-        ]
-    )
-
-
-def data_page() -> html.Div:
-    """
-    Creates the data page layout with raw data view and warehouse layout visualization.
-
-    Returns:
-        html.Div: A Dash HTML component representing the data page
-    """
-    # Placeholder will be filled by callback
-    return html.Div(
-        [
-            html.H1("Data"),
-            html.Div(id=DATA_PAGE),
         ]
     )
 

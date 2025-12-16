@@ -38,11 +38,16 @@ from algomancy.settingsmanager import SettingsManager
 import algomancy.components.compare_page.callbacks  # noqa
 
 
+def compare_page():
+    return html.Div(id=COMPARE_PAGE, className="compare-page")
+
+
 @callback(
     Output(COMPARE_PAGE, "children"),
     Input(ACTIVE_SESSION, "data"),
 )
 def render_ordered_components(active_session_name):
+    """Creates the compare page layout with scenario management functionality."""
     sm: ScenarioManager = get_app().server.session_manager.get_scenario_manager(
         active_session_name
     )
@@ -62,10 +67,6 @@ def render_ordered_components(active_session_name):
 
     ordered_components = order_components(header, order, orderable_components, selector)
     return ordered_components
-
-
-def compare_page():
-    return html.Div(id=COMPARE_PAGE, className="compare-page")
 
 
 def order_components(

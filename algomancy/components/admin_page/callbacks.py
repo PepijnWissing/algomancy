@@ -30,6 +30,7 @@ from algomancy.dashboardlogger.logger import MessageStatus
 
 
 def admin_header():
+    """Creates the header for the admin page."""
     return [
         html.H1("Admin"),
         html.P(
@@ -39,6 +40,7 @@ def admin_header():
 
 
 def admin_sessions(session_id):
+    """Creates a page-section where sessions can be selected and created."""
     session_manager = get_app().server.session_manager
     sessions = session_manager.sessions_names
 
@@ -103,6 +105,7 @@ def admin_sessions(session_id):
 
 
 def admin_system_logs():
+    """Creates a page-section where system logs are displayed."""
     return [
         html.H3("System Logs"),
         html.P("This window displays logging messages from the scenario manager."),
@@ -160,7 +163,7 @@ def create_admin_page(session_id):
     and a scrollable window displaying logging messages from the scenario_manager.
 
     Returns:
-        html.Div: A Dash HTML component representing the admin page
+        List: to fill the Dash HTML component representing the admin page
     """
     admin_content = (
         admin_header()
@@ -178,6 +181,7 @@ def create_admin_page(session_id):
     Input(ADMIN_SELECT_SESSION, "value"),
 )
 def load_session(session_id):
+    """Updates the active session when a new session is selected using the dropdown."""
     return session_id
 
 
@@ -252,7 +256,13 @@ def update_log_window(n_intervals, filter_value):
     Output(f"{NEW_SESSION_BUTTON}-tooltip-container", "children"),
     Input(NEW_SESSION_NAME, "value"),
 )
-def validate_session_name(session_name):
+def validate_session_name(session_name: str):
+    """
+    Validates the session name before creating a new session.
+    The new session button is disabled if the session name is invalid.
+    A name is considered invalid if it is empty or already exists.
+    A tooltip is displayed if the session name is invalid with a short explanation.
+    """
     existing_names = get_app().server.session_manager.sessions_names
 
     if not session_name:
@@ -303,11 +313,19 @@ def toggle_session_creator_modal(
     open_copy_click,
     confirm_clicked,
     cancel_click,
-    new_session_name,
-    is_open,
+    new_session_name: str,
+    is_open: bool,
     session_id: str,
-    copy_session,
+    copy_session: bool,
 ):
+    """
+    Handles all buttons that have to do with creating a new session.
+    This is the opening of the model via the new or copy session buttons,
+    the creation of the new session, and the closing of the modal.
+
+    Coping a session and creating a new session opens the same modal.
+    Therefore, the information of the button which is clicked is stored.
+    """
     ctx = callback_context
     if not ctx.triggered:
         return no_update, no_update, no_update, no_update

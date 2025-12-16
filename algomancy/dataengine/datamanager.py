@@ -58,7 +58,7 @@ class DataManager(ABC):
     def get_data(self, data_key: str) -> BASE_DATA_BOUND | None:
         return self._data.get(data_key)
 
-    def set_data(self, data_key: str, data: BASE_DATA_BOUND):
+    def set_data(self, data_key: str, data: BASE_DATA_BOUND) -> None:
         self._data[data_key] = data
 
     # Derive/Delete
