@@ -58,6 +58,9 @@ class DataManager(ABC):
     def get_data(self, data_key: str) -> BASE_DATA_BOUND | None:
         return self._data.get(data_key)
 
+    def set_data(self, data_key: str, data: BASE_DATA_BOUND):
+        self._data[data_key] = data
+
     # Derive/Delete
     def derive_data(self, existing_key: str, derived_key: str) -> None:
         assert existing_key in self.get_data_keys(), f"Data '{existing_key}' not found."

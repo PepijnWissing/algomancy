@@ -172,8 +172,8 @@ class SessionManager:
         self.create_default_scenario_manager(session_name)
 
     def copy_session(self, session_name: str, new_session_name: str):
-        self.create_default_scenario_manager(session_name)
+        self.create_default_scenario_manager(new_session_name)
 
         for data_key in self.get_scenario_manager(session_name).get_data_keys():
             data = self.get_scenario_manager(session_name).get_data(data_key)
-            self.get_scenario_manager(new_session_name).store_data(data_key, data)
+            self.get_scenario_manager(new_session_name).set_data(data_key, data)

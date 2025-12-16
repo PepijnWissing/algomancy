@@ -160,6 +160,9 @@ class ScenarioManager:
     def get_data(self, data_key):
         return self._dm.get_data(data_key)
 
+    def set_data(self, data_key, data):
+        self._dm.set_data(data_key, data)
+
     def derive_data(self, derive_from_key: str, new_data_key: str) -> None:
         self._dm.derive_data(derive_from_key, new_data_key)
         if self._auto_create_scenario:
