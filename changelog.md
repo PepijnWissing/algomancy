@@ -37,40 +37,45 @@ An outline of the expected functions is included below.
 Below is a conceptual before/after to illustrate the change.
 
 **Old version (functions passed to the frontend)**
+
 ```python
 # example (conceptual)
-from algomancy.appconfiguration import AppConfiguration
+from algomancy_gui.appconfiguration import AppConfiguration
+
 
 class ExampleDataPage:
   def create_content(self, data) -> html.Div:
     ...
-  
+
   def register_callbacks(self):
     ...
 
 
 config = AppConfiguration(
-    home_page_content='standard',
-    data_page_content=ExampleDataPage.create_content,           # Callable[..., Div] or str
-    data_page_callbacks = ExampleDataPage.register_callbacks    # Callable[..., None] or str
+  home_page_content='standard',
+  data_page_content=ExampleDataPage.create_content,  # Callable[..., Div] or str
+  data_page_callbacks=ExampleDataPage.register_callbacks  # Callable[..., None] or str
 )
 ```
 
 **New version (Page classes passed to the frontend)**
+
 ```python
 # example (conceptual)
-from algomancy.appconfiguration import AppConfiguration
+from algomancy_gui.appconfiguration import AppConfiguration
+
 
 class ExampleDataPage:
   def create_content(self, data) -> html.Div:
     ...
-  
+
   def register_callbacks(self):
     ...
 
+
 config = AppConfiguration(
-    home_page_content='standard'    # Protocol[HomePage] or str
-    data_page=ExampleDataPage,      # Protocol[DataPage] or str
+  home_page_content='standard'  # Protocol[HomePage] or str
+data_page = ExampleDataPage,  # Protocol[DataPage] or str
 )
 ```
 
@@ -391,37 +396,37 @@ Your main method must be migrated to use the new class. An example is shown belo
 ```python
 # main method: preferred version
 
-from src.algomancy.launcher import DashLauncher
-from src.algomancy.appconfiguration import AppConfiguration
+from src.algomancy.gui_launcher import GuiLauncher
+from algomancy_gui.appconfiguration import AppConfiguration
 
 
 def main():
-    app_cfg = AppConfiguration(
-        data_path="data",
-        has_persistent_state=True,
-        #       ...
-    )
-    app = DashLauncher.build(app_cfg)
-    DashLauncher.run(app=app, host=app_cfg.host, port=app_cfg.port)
+  app_cfg = AppConfiguration(
+    data_path="data",
+    has_persistent_state=True,
+    #       ...
+  )
+  app = GuiLauncher.build(app_cfg)
+  GuiLauncher.run(app=app, host=app_cfg.host, port=app_cfg.port)
 ```
 For migration, the `AppConfiguration.from_dict(...)` method can be used to create an `AppConfiguration` object from a dictionary. Note that this is not advised, as this will not allow for IDE support.
 
 ```python
 # main method: migration alternative
 
-from src.algomancy.launcher import DashLauncher
-from src.algomancy.appconfiguration import AppConfiguration
+from src.algomancy.gui_launcher import GuiLauncher
+from algomancy_gui.appconfiguration import AppConfiguration
 
 
 def main():
-    configuration = {
-        "data_path": "data",
-        "has_persistent_state": True,
-        #       ...   
-    }
-    app_cfg = AppConfiguration.from_dict(configuration)
-    app = DashLauncher.build(app_cfg)
-    DashLauncher.run(app=app, host=app_cfg.host, port=app_cfg.port)
+  configuration = {
+    "data_path": "data",
+    "has_persistent_state": True,
+    #       ...   
+  }
+  app_cfg = AppConfiguration.from_dict(configuration)
+  app = GuiLauncher.build(app_cfg)
+  GuiLauncher.run(app=app, host=app_cfg.host, port=app_cfg.port)
 ```
 ### Autocreate
 Added automatic creation of scenarios. This will cause any creation of a `DataSource` (or derived) to spawn a `Scenario` with the same name (suffixed with `[auto]`). The algorithm template must be specified in the configuration dictionary.

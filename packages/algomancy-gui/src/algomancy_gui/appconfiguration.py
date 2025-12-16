@@ -10,13 +10,14 @@ from algomancy_gui.page import (
     OverviewPage,
     DataPage,
 )
-from algomancy_scenario import AlgorithmFactory, ALGORITHM, BASE_KPI
+from algomancy_scenario import ALGORITHM, BASE_KPI
 from algomancy_content import LibraryManager as library
 
 from algomancy_gui.stylingconfigurator import StylingConfigurator
+from algomancy_scenario.core_configuration import CoreConfiguration
 
 
-class AppConfiguration:
+class AppConfiguration(CoreConfiguration):
     """
     Central configuration object for the Algomancy dashboard.
 
@@ -28,7 +29,7 @@ class AppConfiguration:
     def __init__(
         self,
         # === path specifications ===
-        assets_path: str = "assets",
+        assets_path: str = "assets",  # gui
         data_path: str = "data",
         # === data manager configuration ===
         has_persistent_state: bool = False,
@@ -45,44 +46,47 @@ class AppConfiguration:
         default_algo_params_values: Dict[str, Any] | None = None,
         autorun: bool | None = None,
         # === content functions ===
-        home_page: HomePage | str = "standard",
-        data_page: DataPage | str = "placeholder",
-        scenario_page: ScenarioPage | str = "placeholder",
-        compare_page: ComparePage | str = "placeholder",
-        overview_page: OverviewPage | str = "standard",
+        home_page: HomePage | str = "standard",  # gui
+        data_page: DataPage | str = "placeholder",  # gui
+        scenario_page: ScenarioPage | str = "placeholder",  # gui
+        compare_page: ComparePage | str = "placeholder",  # gui
+        overview_page: OverviewPage | str = "standard",  # gui
         # === styling configuration ===
-        styling_config: Any | None = StylingConfigurator.get_cqm_config(),
-        use_cqm_loader: bool = False,
+        styling_config: Any | None = StylingConfigurator.get_cqm_config(),  # gui
+        use_cqm_loader: bool = False,  # gui
         # === misc dashboard configurations ===
         title: str = "Algomancy Dashboard",
-        host: str | None = None,
-        port: int | None = None,
+        host: str | None = None,  # gui/api
+        port: int | None = None,  # gui/api
         # === page configurations ===
-        compare_default_open: List[str] | None = None,
-        compare_ordered_list_components: List[str] | None = None,
-        use_data_page_spinner: bool = True,
-        use_scenario_page_spinner: bool = True,
-        use_compare_page_spinner: bool = True,
-        allow_parameter_upload_from_file: bool = False,
+        compare_default_open: List[str] | None = None,  # gui
+        compare_ordered_list_components: List[str] | None = None,  # gui
+        use_data_page_spinner: bool = True,  # gui
+        use_scenario_page_spinner: bool = True,  # gui
+        use_compare_page_spinner: bool = True,  # gui
+        allow_parameter_upload_from_file: bool = False,  # gui
         # === authentication ===
-        use_authentication: bool = False,
+        use_authentication: bool = False,  # gui
     ):
-        # paths
-        self.assets_path = assets_path
-        self.data_path = data_path
+        # initialize core part
+        super().__init__(
+            data_path=data_path,
+            has_persistent_state=has_persistent_state,
+            save_type=save_type,
+            data_object_type=data_object_type,
+            etl_factory=etl_factory,
+            kpi_templates=kpi_templates,
+            algo_templates=algo_templates,
+            input_configs=input_configs,
+            autocreate=autocreate,
+            default_algo=default_algo,
+            default_algo_params_values=default_algo_params_values,
+            autorun=autorun,
+            title=title,
+        )
 
-        # data / scenario manager
-        self.has_persistent_state = has_persistent_state
-        self.save_type = save_type
-        self.data_object_type = data_object_type
-        self.etl_factory = etl_factory
-        self.kpi_templates = kpi_templates
-        self.algo_templates = algo_templates
-        self.input_configs = input_configs
-        self.autocreate = autocreate
-        self.default_algo = default_algo
-        self.default_algo_params_values = default_algo_params_values
-        self.autorun = autorun
+        # paths (GUI)
+        self.assets_path = assets_path
 
         # content + callbacks
         self.home_page = home_page
@@ -94,7 +98,6 @@ class AppConfiguration:
         # styling + misc
         self.styling_config = styling_config
         self.use_cqm_loader = use_cqm_loader
-        self.title = title
         self.host = host or self._get_default_host()
         self.port = port or 8050
 
@@ -109,8 +112,8 @@ class AppConfiguration:
         # auth
         self.use_authentication = use_authentication
 
-        # validate immediately
-        self._validate()
+        # validate GUI-specific pieces immediately (core validated in super())
+        self._validate_gui()
 
     # public API
     def as_dict(self) -> Dict[str, Any]:
@@ -155,71 +158,12 @@ class AppConfiguration:
             "use_authentication": self.use_authentication,
         }
 
-    # validation helpers
-    def _validate(self) -> None:
-        self._validate_paths()
-        self._validate_values()
+    # validation helpers (GUI layer)
+    def _validate_gui(self) -> None:
+        self._validate_paths_gui()
+        self._validate_values_gui()
         self._validate_pages()
         self._validate_page_configurations()
-        self._validate_algorithm_parameters()
-
-    def _validate_paths(self) -> None:
-        if self.assets_path is None or self.assets_path == "":
-            raise ValueError("assets_path must be provided")
-        if not os.path.isdir(self.assets_path):
-            raise ValueError(
-                f"assets_path does not exist or is not a directory: {self.assets_path}"
-            )
-
-        if self.has_persistent_state:
-            if not os.path.isdir(self.data_path):
-                raise ValueError(
-                    f"data_path does not exist or is not a directory: {self.data_path}"
-                )
-            if self.data_path is None or self.data_path == "":
-                raise ValueError("data_path must be provided")
-
-    def _validate_values(self) -> None:
-        # required non-null entries for scenario/data managers
-        required_fields = {
-            "etl_factory": self.etl_factory,
-            "kpi_templates": self.kpi_templates,
-            "algo_templates": self.algo_templates,
-            "input_configs": self.input_configs,
-            "data_object_type": self.data_object_type,
-        }
-        missing = [k for k, v in required_fields.items() if v is None]
-        if missing:
-            raise ValueError(
-                f"Missing required configuration fields: {', '.join(missing)}"
-            )
-
-        # booleans allowed to be False, but must not be None if specified
-        for name, val in {
-            "has_persistent_state": self.has_persistent_state,
-            "autocreate": self.autocreate,
-            "autorun": self.autorun,
-            "use_authentication": self.use_authentication,
-        }.items():
-            if val is None:
-                raise ValueError(
-                    f"Boolean configuration '{name}' must be set to True or False, not None"
-                )
-
-        # save type
-        if self.save_type is None:
-            raise ValueError("save_type must be set to 'json' or 'parquet'")
-        if self.save_type not in {"json", "parquet"}:
-            raise ValueError("save_type must be either 'json' or 'parquet'")
-
-        # title
-        if not isinstance(self.title, str) or self.title.strip() == "":
-            raise ValueError("title must be a non-empty string")
-
-        # host and port (host may be filled elsewhere; allow None)
-        if self.port is not None:
-            if not isinstance(self.port, int) or not (1 <= self.port <= 65535):
-                raise ValueError("port must be an integer between 1 and 65535")
 
     def _validate_pages(self):
         # fetch pages that were passed as str
@@ -310,15 +254,25 @@ class AppConfiguration:
                 "compare_ordered_list_components contains duplicate values"
             )
 
-    def _validate_algorithm_parameters(self) -> None:
-        if self.autocreate:
-            tmp_factory = AlgorithmFactory(self.algo_templates)
-            test_algorithm = tmp_factory.create(
-                self.default_algo, self.default_algo_params_values
+    def _validate_paths_gui(self) -> None:
+        if self.assets_path is None or self.assets_path == "":
+            raise ValueError("assets_path must be provided")
+        if not os.path.isdir(self.assets_path):
+            raise ValueError(
+                f"assets_path does not exist or is not a directory: {self.assets_path}"
             )
-            assert test_algorithm.healthcheck(), "Failed to create default algorithm"
-        else:
-            pass
+
+    def _validate_values_gui(self) -> None:
+        # booleans allowed to be False, but must not be None if specified
+        if self.use_authentication is None:
+            raise ValueError(
+                "Boolean configuration 'use_authentication' must be set to True or False, not None"
+            )
+
+        # host and port (host may be filled elsewhere; allow None)
+        if self.port is not None:
+            if not isinstance(self.port, int) or not (1 <= self.port <= 65535):
+                raise ValueError("port must be an integer between 1 and 65535")
 
     @staticmethod
     def _get_default_host() -> str:

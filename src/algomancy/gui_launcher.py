@@ -19,9 +19,10 @@ from .contentregistry import ContentRegistry
 from .sessionengine.sessionmanager import SessionManager
 from .settingsmanager import SettingsManager
 from .appconfiguration import AppConfiguration
+from algomancy_gui.appconfiguration import AppConfiguration
 
 
-class DashLauncher:
+class GuiLauncher:
     @staticmethod
     def build(cfg: Union[AppConfiguration, Dict[str, Any]]) -> Dash:
         # Normalize configuration to AppConfiguration for a single source of truth
@@ -35,7 +36,7 @@ class DashLauncher:
         session_manager: SessionManager = SessionManager.from_config(cfg_obj)
 
         # Create the app
-        app = DashLauncher._construct(
+        app = GuiLauncher._construct(
             cfg=cfg_obj,
             session_manager=session_manager,
         )

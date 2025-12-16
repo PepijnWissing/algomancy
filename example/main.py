@@ -30,8 +30,8 @@ if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 # Suppress ruff linter for these two imports
-from src.algomancy.launcher import DashLauncher  # noqa: E402
-from src.algomancy.appconfiguration import AppConfiguration  # noqa: E402
+from src.algomancy.gui_launcher import GuiLauncher  # noqa: E402
+from algomancy_gui.appconfiguration import AppConfiguration  # noqa: E402
 
 
 def main(
@@ -87,10 +87,10 @@ def main(
     )
 
     # Build the app with AppConfiguration object directly
-    app = DashLauncher.build(app_cfg)
+    app = GuiLauncher.build(app_cfg)
 
     # Run the app
-    DashLauncher.run(
+    GuiLauncher.run(
         app=app,
         host=app_cfg.host,
         port=app_cfg.port,
