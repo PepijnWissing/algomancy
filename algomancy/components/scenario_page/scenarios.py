@@ -23,7 +23,7 @@ from algomancy.components.scenario_page.delete_confirmation import (
 )
 from algomancy.components.scenario_page.new_scenario_creator import new_scenario_creator
 
-import algomancy.components.scenario_page.callbacks
+import algomancy.components.scenario_page.callbacks  # noqa
 
 import dash_bootstrap_components as dbc
 

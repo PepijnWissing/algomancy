@@ -11,7 +11,8 @@ from algomancy.components.layouthelpers import create_wrapped_content_div
 from algomancy.contentregistry import ContentRegistry
 from algomancy.scenarioengine import ScenarioManager
 
-import algomancy.components.data_page.dialogcallbacks
+import algomancy.components.data_page.dialogcallbacks  # noqa
+
 
 @callback(
     Output(DATA_PAGE, "children"),

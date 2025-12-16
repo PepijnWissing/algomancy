@@ -35,7 +35,8 @@ from algomancy.contentregistry import ContentRegistry
 from algomancy.scenarioengine import ScenarioManager
 from algomancy.settingsmanager import SettingsManager
 
-import algomancy.components.compare_page.callbacks
+import algomancy.components.compare_page.callbacks  # noqa
+
 
 @callback(
     Output(COMPARE_PAGE, "children"),
