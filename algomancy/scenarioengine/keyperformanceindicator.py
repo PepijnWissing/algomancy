@@ -1,44 +1,41 @@
-from dataclasses import dataclass
-from typing import Callable, Dict, List
+from abc import ABC, abstractmethod
+from enum import StrEnum, auto
+from typing import TypeVar
 
-from algomancy.scenarioengine.enumtypes import ImprovementDirection
 from algomancy.scenarioengine.result import BASE_RESULT_BOUND
-from algomancy.scenarioengine.unit import BaseMeasurement, Measurement
-
-KPICalculationFunction = Callable[[BASE_RESULT_BOUND], float]
-
-# todo KpiType: at least value / at most value
+from algomancy.scenarioengine.unit import BaseMeasurement, Measurement, Unit
 
 
-@dataclass
-class KpiTemplate:
-    name: str
-    better_when: ImprovementDirection
-    callback: KPICalculationFunction
-    measurement_base: BaseMeasurement
-
-    def __post_init__(self):
-        if self.name == "":
-            raise TypeError("KPI name cannot be empty.")
-        if self.better_when not in ImprovementDirection:
-            raise TypeError("Invalid KPI direction.")
-        if not callable(self.callback):
-            raise TypeError("Callback function is not callable.")
+class ImprovementDirection(StrEnum):
+    HIGHER = auto()
+    LOWER = auto()
+    AT_LEAST = auto()
+    AT_MOST = auto()
 
 
-class KPI:
+class KpiError(Exception):
+    def __init__(self, message: str) -> None:
+        self.message = message
+        super().__init__(self.message)
+
+
+class BaseKPI(ABC):
     def __init__(
         self,
         name: str,
         better_when: ImprovementDirection,
-        callback: KPICalculationFunction,
-        bm: BaseMeasurement,
+        base_measurement: BaseMeasurement,
+        threshold: float | None = None,
     ) -> None:
         self._name = name
-        # self._type = type
         self._better_when = better_when
-        self._callback = callback
-        self._measurement = Measurement(bm)
+        self._measurement = Measurement(base_measurement)
+        self._threshold = (
+            Measurement(base_measurement, threshold) if threshold else None
+        )
+
+    def __str__(self):
+        self.pretty()
 
     @property
     def measurement(self) -> Measurement:
@@ -56,76 +53,84 @@ class KPI:
     def value(self) -> float | None:
         return self._measurement.value
 
+    @property
+    def is_binary_kpi(self) -> bool:
+        return self._better_when in [
+            ImprovementDirection.AT_MOST,
+            ImprovementDirection.AT_LEAST,
+        ]
+
+    @property
+    def success(self) -> bool:
+        # Check the validity of the call
+        if not self.is_binary_kpi:
+            raise ValueError(f"KPI success is not defined for {self.name}")
+        if self._threshold is None:
+            raise ValueError(f"KPI threshold is not defined for {self.name}")
+
+        # Compare with threshold and return
+        if self._better_when == ImprovementDirection.AT_MOST:
+            return self._measurement.value <= self._threshold.value
+        return self._measurement.value >= self._threshold.value
+
     @value.setter
     def value(self, value: float):
         self._measurement.value = value
 
-    def __str__(self):
-        self._measurement.pretty()
+    def get_threshold_str(self, unit: Unit | None = None) -> str:
+        if unit:
+            return self._threshold.scale_to_unit(unit).to_string()
+        else:
+            return self._threshold.pretty()
 
-    def compute(self, result: BASE_RESULT_BOUND) -> None:
+    def pretty(self, unit: Unit | None = None) -> str:
+        if self.is_binary_kpi:
+            return "✓" if self.success else "✗"
+        return self.details(unit)
+
+    def get_pretty_unit(self) -> Unit:
+        return self._measurement.scale().unit
+
+    def details(self, unit: Unit | None = None) -> str | None:
+        if unit:
+            return self._measurement.scale_to_unit(unit).to_string()
+        else:
+            return self._measurement.pretty()
+
+    @abstractmethod
+    def compute(self, result: BASE_RESULT_BOUND) -> float:
+        raise NotImplementedError("Abstract method")
+
+    def compute_and_check(self, result: BASE_RESULT_BOUND) -> None:
         """
         Computes a key performance indicator (KPI) value using the provided result data
         and a callback function.
 
         This method attempts to compute the KPI by invoking a specified callback with
         the result data. If an exception occurs during computation, it logs an error
-        message indicating the KPI name and raises a ValueError to indicate failure.
+        message indicating the KPI name and raises a KpiError to indicate failure.
 
         :param result: The result data of the type required for KPI computation.
         :type result: Derived from BaseScenarioResult
-        :raises ValueError: If an error occurs during the KPI computation.
+        :raises KpiError: If an error occurs during the KPI computation.
         """
         try:
-            value = self._callback(result)
+            value = self.compute(result)
             if not isinstance(value, (int, float)):
-                raise TypeError("KPI callback must return a numeric value.")
+                raise KpiError("KPI callback must return a numeric value.")
             self.value = value
-        except TypeError:
-            raise TypeError("KPI callback must return a numeric value.")
         except Exception as e:
             print(f"Error computing KPI {self.name}: {e}")
-            raise ValueError(f"Error computing KPI {self.name}")
+            raise KpiError(f"Error computing KPI {self.name}")
 
     def to_dict(self):
         return {
             "name": self.name,
             "better_when": self.better_when.name,
-            "callback": self._callback.__name__,
             "basis": self._measurement.base_measurement,
             "value": self.value,
+            "threshold": self._threshold,
         }
 
 
-def build_kpis(kpi_templates: List[KpiTemplate]) -> Dict[str, KPI]:
-    """
-    Creates a dictionary of KPIs using the provided list of KPI templates.
-
-    The function takes a list of KPI templates and creates a dictionary where
-    each template's name serves as the key. If duplicate names are found
-    across the templates, a ValueError is raised. For each unique template,
-    a corresponding KPI object is created and added to the dictionary.
-
-    :param kpi_templates: List of KPI templates to generate the KPI dictionary
-        from.
-    :type kpi_templates: List[KpiTemplate]
-    :raises ValueError: If duplicate KPI names are found in the provided
-        templates.
-    :return: A dictionary where the keys are KPI names and the
-        values are corresponding KPI objects.
-    :rtype: Dict[str, KPI]
-    """
-    kpi_dict = {}
-
-    for template in kpi_templates:
-        if template.name in kpi_dict:
-            raise ValueError(f"Duplicate KPI name '{template.name}' found.")
-
-        kpi_dict[template.name] = KPI(
-            name=template.name,
-            better_when=template.better_when,
-            callback=template.callback,
-            bm=template.measurement_base,
-        )
-
-    return kpi_dict
+BASE_KPI = TypeVar("BASE_KPI", bound=BaseKPI)

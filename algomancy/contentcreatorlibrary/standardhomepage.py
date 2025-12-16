@@ -2,8 +2,8 @@ from dash import html, get_app
 import dash
 import dash_bootstrap_components as dbc
 
+from algomancy.scenarioengine import ScenarioStatus
 from algomancy.scenarioengine import ScenarioManager
-from algomancy.scenarioengine.enumtypes import ScenarioStatus
 from algomancy.sessionengine import SessionManager
 
 

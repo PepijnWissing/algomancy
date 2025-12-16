@@ -2,27 +2,18 @@ import random
 
 from algomancy.scenarioengine import (
     ImprovementDirection,
-    KpiTemplate,
     ScenarioResult,
 )
+from algomancy.scenarioengine.keyperformanceindicator import BaseKPI
 from algomancy.scenarioengine.unit import QUANTITIES, BaseMeasurement
 
-
-def create_utilization_template():
-    def utilization_calculation(result: ScenarioResult) -> float:
-        return 50 * (1 + 0.5 * random.random())  # placeholder
-
-    percent = QUANTITIES["percentage"]
-    percent_percent = BaseMeasurement(
-        percent["%"], min_digits=1, max_digits=3, decimals=1
-    )
-
-    return KpiTemplate(
-        name="Utilization",
-        better_when=ImprovementDirection.HIGHER,
-        callback=utilization_calculation,
-        measurement_base=percent_percent,
-    )
+percent = QUANTITIES["percentage"]
+percent_percent = BaseMeasurement(percent["%"], min_digits=1, max_digits=3, decimals=1)
 
 
-utilization_template = create_utilization_template()
+class UtilizationKPI(BaseKPI):
+    def __init__(self):
+        super().__init__("Utilization", ImprovementDirection.HIGHER, percent_percent)
+
+    def compute(self, result: ScenarioResult) -> float:
+        return 50 * (1 + 0.5 * random.random())

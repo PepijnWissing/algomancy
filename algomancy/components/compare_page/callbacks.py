@@ -21,6 +21,7 @@ from algomancy.components.componentids import (
     PERF_TOGGLE_CHECKLIST_RIGHT,
 )
 from algomancy.components.compare_page.kpicard import kpi_card
+from algomancy.scenarioengine import ScenarioManager
 
 
 @callback(
@@ -32,8 +33,9 @@ from algomancy.components.compare_page.kpicard import kpi_card
 def update_kpi_comparison(left_id, right_id, session_id):
     if not left_id or not right_id:
         return html.P("Select two completed scenarios to compare KPIs.")
-
-    sm = get_app().server.session_manager.get_scenario_manager(session_id)
+    sm: ScenarioManager = get_app().server.session_manager.get_scenario_manager(
+        session_id
+    )
 
     left = sm.get_by_id(left_id)
     right = sm.get_by_id(right_id)
@@ -49,13 +51,11 @@ def update_kpi_comparison(left_id, right_id, session_id):
 
     cards = []
     for tag, left_kpi in left_kpis.items():
-        right_kpi = right_kpis.get(left_kpi.name)
+        right_kpi = right_kpis.get(tag)
 
         card = kpi_card(
-            kpi_name=left_kpi.name,
-            better_when=left_kpi.better_when,
-            left_measurement=left_kpi.measurement,
-            right_measurement=right_kpi.measurement,
+            left_kpi=left_kpi,
+            right_kpi=right_kpi,
         )
 
         cards.append(html.Div(card, className="kpi-card-wrapper"))

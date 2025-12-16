@@ -117,9 +117,7 @@ class StandardOverviewPageContentCreator:
 
             # Add columns for each KPI
             for kpi_id, kpi in first_scenario.kpis.items():
-                column_name = f"{kpi.name}" + (
-                    f" ({kpi.UOM})" if hasattr(kpi, "UOM") and kpi.UOM else ""
-                )
+                column_name = f"{kpi.name}"
                 columns.append({"name": column_name, "id": kpi_id})
 
             # Create data for the table
@@ -129,7 +127,9 @@ class StandardOverviewPageContentCreator:
 
                 # Add KPI values
                 for kpi_id, kpi in scenario.kpis.items():
-                    row[kpi_id] = kpi.value if hasattr(kpi, "value") else "N/A"
+                    row[kpi_id] = kpi.pretty() + (
+                        f" ({kpi.details()})" if kpi.details() else ""
+                    )
 
                 data.append(row)
 

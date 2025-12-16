@@ -13,7 +13,7 @@ from dash import (
 )
 from dash.exceptions import PreventUpdate
 
-from algomancy.scenarioengine.enumtypes import ScenarioStatus
+from algomancy.scenarioengine import ScenarioStatus
 from algomancy.components.componentids import (
     SCENARIO_PROCESS_BUTTON,
     SCENARIO_CREATOR_MODAL,
