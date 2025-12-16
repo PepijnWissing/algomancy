@@ -14,7 +14,9 @@ class ScenarioProcessor:
     def __init__(self, logger: Logger | None = None):
         self.logger = logger
         self._process_queue: queue.Queue[Scenario | None] = queue.Queue()
-        self._worker_thread = threading.Thread(target=self._process_scenarios_worker, daemon=True)
+        self._worker_thread = threading.Thread(
+            target=self._process_scenarios_worker, daemon=True
+        )
         self._currently_processing: Optional[Scenario] = None
         self._auto_run_scenarios = False
         self._worker_thread.start()

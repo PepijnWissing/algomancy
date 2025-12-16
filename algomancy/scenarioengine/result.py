@@ -10,7 +10,7 @@ class BaseScenarioResult(ABC):
 
     @abstractmethod
     def to_dict(self):
-        raise NotImplementedError('Abstract method')
+        raise NotImplementedError("Abstract method")
 
 
 BASE_RESULT_BOUND = TypeVar("BASE_RESULT_BOUND", bound=BaseScenarioResult)

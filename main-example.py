@@ -24,17 +24,17 @@ from example_implementation.data_handling.factories import ExampleETLFactory
 from example_implementation.pages.DataPageContent import DataPageContentCreator
 from example_implementation.pages.ScenarioPageContent import ScenarioPageContentCreator
 from example_implementation.templates import (
-    debug_create_example_scenarios,
-    kpi_templates, algorithm_templates,
+    kpi_templates,
+    algorithm_templates,
 )
 
 
 def main(
-        host: str | None = None,
-        port: int | None = None,
-        threads: int | None = None,
-        connection_limit: int | None = None,
-        debug: bool | None = None,
+    host: str | None = None,
+    port: int | None = None,
+    threads: int | None = None,
+    connection_limit: int | None = None,
+    debug: bool | None = None,
 ) -> None:
     """
     Main entry point for the application.
@@ -52,7 +52,9 @@ def main(
         algo_templates=algorithm_templates,
         input_configs=example_input_configs,
         data_object_type=DataSource,
-        autocreate=True, default_algo="Slow", default_algo_params_values={"duration": 1},
+        autocreate=True,
+        default_algo="Slow",
+        default_algo_params_values={"duration": 1},
         autorun=True,
         home_content=PlaceholderHomePageContentCreator.create_default_elements_showcase,
         data_content=DataPageContentCreator.create_data_page_content,
@@ -73,10 +75,10 @@ def main(
             # 'details',
         ],
         compare_ordered_list_components=[
-            'side-by-side',
-            'kpis',
-            'compare',
-            'details',
+            "side-by-side",
+            "kpis",
+            "compare",
+            "details",
         ],
         use_authentication=False,
     )
@@ -86,9 +88,14 @@ def main(
 
     # Run the app
     DashLauncher.run(
-        app=app, host=app_cfg.host, port=app_cfg.port, threads=threads,
-        connection_limit=connection_limit, debug=debug
+        app=app,
+        host=app_cfg.host,
+        port=app_cfg.port,
+        threads=threads,
+        connection_limit=connection_limit,
+        debug=debug,
     )
+
 
 def configure_styling() -> StylingConfigurator:
     dark_green = "#1F271B"
@@ -96,11 +103,7 @@ def configure_styling() -> StylingConfigurator:
     cornsilk = "#FEFAE0"
 
     white = "#FFFFFF"
-    purple = "#3EBDF3"
-    lightblue = "#4C0265"
-    bright_blue = ColorConfiguration.linear_combination_hex(lightblue, purple, 0.5)
     darkgrey = "#424242"
-    lightgrey = "#E3E3E3"
 
     styling = StylingConfigurator(
         layout_selection=LayoutSelection.SIDEBAR,
@@ -130,11 +133,19 @@ def _parse_cli_args():
     parser.add_argument("--host", help="Host to bind to", type=str, default=None)
     parser.add_argument("--port", help="Port number", type=int, default=None)
     parser.add_argument("--threads", help="Number of threads", type=int, default=8)
-    parser.add_argument("--connections", help="Number of connections", type=int, default=100)
+    parser.add_argument(
+        "--connections", help="Number of connections", type=int, default=100
+    )
     parser.add_argument("--debug", help="Enable debug mode", type=bool, default=None)
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     args = _parse_cli_args()
-    main(host=args.host, port=args.port, threads=args.threads, connection_limit=args.connections, debug=args.debug)
+    main(
+        host=args.host,
+        port=args.port,
+        threads=args.threads,
+        connection_limit=args.connections,
+        debug=args.debug,
+    )

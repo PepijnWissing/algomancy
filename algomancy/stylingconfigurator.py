@@ -23,19 +23,19 @@ class ButtonColorMode(StrEnum):
 
 class ColorConfiguration:
     def __init__(
-            self,
-            background_color: str = "#000000",
-            theme_color_primary: str = "#343a40",
-            theme_color_secondary: str = "#009688",
-            theme_color_tertiary: str = "#000000",
-            text_color: str = "#FFFFFF",
-            text_color_highlight: str = "#000000",
-            text_color_selected: str = "#FFFFFF",
-            menu_hover: str | None = None,
-            status_colors: dict[str, str] | None = None,
-            button_color_mode: ButtonColorMode = ButtonColorMode.SEPARATE,
-            button_text: str = "#FFFFFF",
-            button_colors: dict[str, str] | None = None,
+        self,
+        background_color: str = "#000000",
+        theme_color_primary: str = "#343a40",
+        theme_color_secondary: str = "#009688",
+        theme_color_tertiary: str = "#000000",
+        text_color: str = "#FFFFFF",
+        text_color_highlight: str = "#000000",
+        text_color_selected: str = "#FFFFFF",
+        menu_hover: str | None = None,
+        status_colors: dict[str, str] | None = None,
+        button_color_mode: ButtonColorMode = ButtonColorMode.SEPARATE,
+        button_text: str = "#FFFFFF",
+        button_colors: dict[str, str] | None = None,
     ):
         self._background_color = background_color
         self._theme_color_primary = theme_color_primary
@@ -53,18 +53,18 @@ class ColorConfiguration:
     @staticmethod
     def _hex_to_rgba(hex_str: str) -> tuple[int, ...]:
         """Convert hex color to RGBA tuple. If no alpha is provided, defaults to 255."""
-        h = hex_str.lstrip('#')
+        h = hex_str.lstrip("#")
         if len(h) == 6:
-            return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4)) + (255,)
+            return tuple(int(h[i : i + 2], 16) for i in (0, 2, 4)) + (255,)
         elif len(h) == 8:
-            return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4, 6))
+            return tuple(int(h[i : i + 2], 16) for i in (0, 2, 4, 6))
         else:
             raise ValueError("Invalid hex color format")
 
     @staticmethod
     def _rgba_to_hex(rgba: tuple[int, int, int, int]) -> str:
         """Convert RGBA tuple to hex string with an alpha channel."""
-        return '#%02x%02x%02x%02x' % rgba
+        return "#%02x%02x%02x%02x" % rgba
 
     @staticmethod
     def reduce_color_opacity(color: str, opacity: float) -> str:
@@ -128,16 +128,26 @@ class ColorConfiguration:
         ro = int(ao + (bo - ao) * t)
         return ColorConfiguration._rgba_to_hex((rr, rg, rb, ro))
 
-    def get_card_surface_shading(self, card_highlight_mode: str = CardHighlightMode.SUBTLE_DARK):
+    def get_card_surface_shading(
+        self, card_highlight_mode: str = CardHighlightMode.SUBTLE_DARK
+    ):
         match card_highlight_mode:
             case CardHighlightMode.SUBTLE_LIGHT:
-                return self.linear_combination_hex(self._background_color, "#FFFFFF", 0.1)
+                return self.linear_combination_hex(
+                    self._background_color, "#FFFFFF", 0.1
+                )
             case CardHighlightMode.LIGHT:
-                return self.linear_combination_hex(self._background_color, "#FFFFFF", 0.2)
+                return self.linear_combination_hex(
+                    self._background_color, "#FFFFFF", 0.2
+                )
             case CardHighlightMode.SUBTLE_DARK:
-                return self.linear_combination_hex(self._background_color, "#000000", 0.1)
+                return self.linear_combination_hex(
+                    self._background_color, "#000000", 0.1
+                )
             case CardHighlightMode.DARK:
-                return self.linear_combination_hex(self._background_color, "#000000", 0.2)
+                return self.linear_combination_hex(
+                    self._background_color, "#000000", 0.2
+                )
 
         raise ValueError(f"Invalid card highlight mode: {card_highlight_mode}")
 
@@ -156,7 +166,12 @@ class ColorConfiguration:
         bool
             True if the color is light, False otherwise.
         """
-        return self._hex_to_rgba(color)[0] + self._hex_to_rgba(color)[1] + self._hex_to_rgba(color)[2] > 384
+        return (
+            self._hex_to_rgba(color)[0]
+            + self._hex_to_rgba(color)[1]
+            + self._hex_to_rgba(color)[2]
+            > 384
+        )
 
     def default_hover_highlight(self, color: str) -> str:
         """
@@ -183,27 +198,37 @@ class ColorConfiguration:
 
     @property
     def status_processing(self):
-        default = self.linear_combination_hex(self._theme_color_secondary, self._theme_color_primary, 0)
+        default = self.linear_combination_hex(
+            self._theme_color_secondary, self._theme_color_primary, 0
+        )
         return self.status_colors.get("processing", default)
 
     @property
     def status_queued(self):
-        default = self.linear_combination_hex(self._theme_color_secondary, self._theme_color_primary, 0.25)
+        default = self.linear_combination_hex(
+            self._theme_color_secondary, self._theme_color_primary, 0.25
+        )
         return self.status_colors.get("queued", default)
 
     @property
     def status_completed(self):
-        default = self.linear_combination_hex(self._theme_color_secondary, self._theme_color_primary, 0.5)
+        default = self.linear_combination_hex(
+            self._theme_color_secondary, self._theme_color_primary, 0.5
+        )
         return self.status_colors.get("completed", default)
 
     @property
     def status_failed(self):
-        default = self.linear_combination_hex(self._theme_color_secondary, self._theme_color_primary, 0.75)
+        default = self.linear_combination_hex(
+            self._theme_color_secondary, self._theme_color_primary, 0.75
+        )
         return self.status_colors.get("failed", default)
 
     @property
     def status_created(self):
-        default = self.linear_combination_hex(self._theme_color_secondary, self._theme_color_primary, 1)
+        default = self.linear_combination_hex(
+            self._theme_color_secondary, self._theme_color_primary, 1
+        )
         return self.status_colors.get("created", default)
 
     def _get_button_color_with_default(self, tag, ratio):
@@ -226,7 +251,9 @@ class ColorConfiguration:
             str: The hex color code of the determined button color.
         """
         if self.button_color_mode == ButtonColorMode.SEPARATE:
-            default = self.linear_combination_hex(self._theme_color_secondary, self._theme_color_primary, ratio)
+            default = self.linear_combination_hex(
+                self._theme_color_secondary, self._theme_color_primary, ratio
+            )
             return self.dm_colors.get(tag, default)
         elif self.button_color_mode == ButtonColorMode.UNIFIED:
             default = self._theme_color_secondary
@@ -327,7 +354,9 @@ class ColorConfiguration:
 
     @property
     def derive_cancel_hover(self):
-        return self._get_button_hover_color_with_default(self.derive_cancel, "derive_cancel")
+        return self._get_button_hover_color_with_default(
+            self.derive_cancel, "derive_cancel"
+        )
 
     # Modal colors for delete
     @property
@@ -344,7 +373,9 @@ class ColorConfiguration:
 
     @property
     def delete_cancel_hover(self):
-        return self._get_button_hover_color_with_default(self.delete_cancel, "delete_cancel")
+        return self._get_button_hover_color_with_default(
+            self.delete_cancel, "delete_cancel"
+        )
 
     # Modal colors for save
     @property
@@ -361,7 +392,9 @@ class ColorConfiguration:
 
     @property
     def save_cancel_hover(self):
-        return self._get_button_hover_color_with_default(self.save_cancel, "save_cancel")
+        return self._get_button_hover_color_with_default(
+            self.save_cancel, "save_cancel"
+        )
 
     # Modal colors for import
     @property
@@ -378,7 +411,9 @@ class ColorConfiguration:
 
     @property
     def import_cancel_hover(self):
-        return self._get_button_hover_color_with_default(self.import_cancel, "import_cancel")
+        return self._get_button_hover_color_with_default(
+            self.import_cancel, "import_cancel"
+        )
 
     # Modal colors for upload
     @property
@@ -395,7 +430,9 @@ class ColorConfiguration:
 
     @property
     def upload_cancel_hover(self):
-        return self._get_button_hover_color_with_default(self.upload_cancel, "upload_cancel")
+        return self._get_button_hover_color_with_default(
+            self.upload_cancel, "upload_cancel"
+        )
 
     # Modal colors for download
     @property
@@ -412,7 +449,9 @@ class ColorConfiguration:
 
     @property
     def download_cancel_hover(self):
-        return self._get_button_hover_color_with_default(self.download_cancel, "download_cancel")
+        return self._get_button_hover_color_with_default(
+            self.download_cancel, "download_cancel"
+        )
 
     # Scenario actions
     @property
@@ -421,7 +460,9 @@ class ColorConfiguration:
 
     @property
     def new_scenario_hover(self):
-        return self._get_button_hover_color_with_default(self.new_scenario, "new_scenario")
+        return self._get_button_hover_color_with_default(
+            self.new_scenario, "new_scenario"
+        )
 
     @property
     def new_scenario_confirm(self):
@@ -437,7 +478,9 @@ class ColorConfiguration:
 
     @property
     def new_scenario_cancel_hover(self):
-        return self._get_button_hover_color_with_default(self.new_scenario_cancel, "new_scenario_cancel")
+        return self._get_button_hover_color_with_default(
+            self.new_scenario_cancel, "new_scenario_cancel"
+        )
 
     # Compare toggle
     @property
@@ -447,8 +490,12 @@ class ColorConfiguration:
     @staticmethod
     def _get_handle_url(color):
         color_no_hex = color.lstrip("#")
-        return (f"url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' "
-                f"viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23{color_no_hex}'/%3e%3c/svg%3e\")"),
+        return (
+            (
+                f"url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' "
+                f"viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23{color_no_hex}'/%3e%3c/svg%3e\")"
+            ),
+        )
 
     @property
     def compare_active_handle_url(self):
@@ -496,7 +543,9 @@ class ColorConfiguration:
             "save": "success",
         }
 
-    def get_theme_colors(self, card_highlight_mode: str = CardHighlightMode.SUBTLE_LIGHT):
+    def get_theme_colors(
+        self, card_highlight_mode: str = CardHighlightMode.SUBTLE_LIGHT
+    ):
         main_colors = {
             "--background-color": self._background_color,
             "--theme-primary": self._theme_color_primary,
@@ -534,32 +583,26 @@ class ColorConfiguration:
             "--derive-modal-confirm-color-hover": self.derive_confirm_hover,
             "--derive-modal-cancel-color": self.derive_cancel,
             "--derive-modal-cancel-color-hover": self.derive_cancel_hover,
-
             "--delete-modal-confirm-color": self.delete_confirm,
             "--delete-modal-confirm-color-hover": self.delete_confirm_hover,
             "--delete-modal-cancel-color": self.delete_cancel,
             "--delete-modal-cancel-color-hover": self.delete_cancel_hover,
-
             "--save-modal-confirm-color": self.save_confirm,
             "--save-modal-confirm-color-hover": self.save_confirm_hover,
             "--save-modal-cancel-color": self.save_cancel,
             "--save-modal-cancel-color-hover": self.save_cancel_hover,
-
             "--import-modal-confirm-color": self.import_confirm,
             "--import-modal-confirm-color-hover": self.import_confirm_hover,
             "--import-modal-cancel-color": self.import_cancel,
             "--import-modal-cancel-color-hover": self.import_cancel_hover,
-
             "--upload-modal-confirm-color": self.upload_confirm,
             "--upload-modal-confirm-color-hover": self.upload_confirm_hover,
             "--upload-modal-cancel-color": self.upload_cancel,
             "--upload-modal-cancel-color-hover": self.upload_cancel_hover,
-
             "--download-modal-confirm-color": self.download_confirm,
             "--download-modal-confirm-color-hover": self.download_confirm_hover,
             "--download-modal-cancel-color": self.download_cancel,
             "--download-modal-cancel-color-hover": self.download_cancel_hover,
-
         }
 
         scenarios_colors = {
@@ -601,12 +644,12 @@ class ColorConfiguration:
 
 class StylingConfigurator:
     def __init__(
-            self,
-            layout_selection: LayoutSelection = LayoutSelection.SIDEBAR,
-            color_configuration: ColorConfiguration = ColorConfiguration(),
-            logo_url: str = None,
-            button_url: str = None,
-            card_highlight_mode: str = CardHighlightMode.SUBTLE_LIGHT,
+        self,
+        layout_selection: LayoutSelection = LayoutSelection.SIDEBAR,
+        color_configuration: ColorConfiguration = ColorConfiguration(),
+        logo_url: str = None,
+        button_url: str = None,
+        card_highlight_mode: str = CardHighlightMode.SUBTLE_LIGHT,
     ):
         self.layout_selection = layout_selection
         self.color_configuration = color_configuration
@@ -616,7 +659,9 @@ class StylingConfigurator:
 
     @property
     def card_surface_shading(self):
-        return self.color_configuration.get_card_surface_shading(self.card_highlight_mode)
+        return self.color_configuration.get_card_surface_shading(
+            self.card_highlight_mode
+        )
 
     def initiate_theme_colors(self):
         return self.color_configuration.get_theme_colors(self.card_highlight_mode)

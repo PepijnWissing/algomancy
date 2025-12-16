@@ -14,7 +14,6 @@ DATA_RAW_VIEW = "standard-raw-data-view"
 
 
 class StandardDataPageContentCreator:
-
     @staticmethod
     def _create_item_data_table(data: pd.DataFrame, table_page_size: int) -> html.Div:
         return html.Div(
@@ -132,9 +131,10 @@ class StandardDataPageContentCreator:
 
     @staticmethod
     def create_content(data: DataSource, table_page_size: int = 10):
-        data_view = StandardDataPageContentCreator._create_raw_data_view(data, table_page_size)
+        data_view = StandardDataPageContentCreator._create_raw_data_view(
+            data, table_page_size
+        )
         layout = StandardDataPageContentCreator._create_layout_plot(data)
-
 
         return [
             data_view,

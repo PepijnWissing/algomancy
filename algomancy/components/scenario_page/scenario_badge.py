@@ -26,6 +26,11 @@ def status_badge(status):
         ScenarioStatus.QUEUED: "info",
         ScenarioStatus.PROCESSING: "warning",
         ScenarioStatus.COMPLETE: "success",
-        ScenarioStatus.FAILED: "danger"
+        ScenarioStatus.FAILED: "danger",
     }
-    return dbc.Badge(status.capitalize(), color=color_map.get(status, "dark"), className="ms-1", pill=True)
+    return dbc.Badge(
+        status.capitalize(),
+        color=color_map.get(status, "dark"),
+        className="ms-1",
+        pill=True,
+    )

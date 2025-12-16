@@ -1,10 +1,12 @@
 from typing import Dict, List, Optional, TypeVar, Type
 
-from algomancy.dataengine import (ETLFactory,
-                                  InputFileConfiguration,
-                                  StatefulDataManager,
-                                  StatelessDataManager,
-                                  BASE_DATA_BOUND)
+from algomancy.dataengine import (
+    ETLFactory,
+    InputFileConfiguration,
+    StatefulDataManager,
+    StatelessDataManager,
+    BASE_DATA_BOUND,
+)
 from algomancy.dashboardlogger.logger import Logger, MessageStatus
 from .basealgorithm import ALGORITHM
 from .basealgorithmparameters import BASE_PARAMS_BOUND
@@ -14,52 +16,31 @@ from .scenario import Scenario
 from .scenarioregistry import ScenarioRegistry
 from .scenariofactory import ScenarioFactory
 from .scenarioprocessor import ScenarioProcessor
-from ..appconfiguration import AppConfiguration
 
 
 class ScenarioManager:
     """
     Facade that coordinates data management, scenario creation/registry, and processing.
     """
+
     E = TypeVar("E", bound=ETLFactory)
 
-    @classmethod
-    def from_config(cls, cfg: "AppConfiguration") -> "ScenarioManager":
-        # Local import to avoid heavy top-level coupling
-        from algomancy.appconfiguration import AppConfiguration  # type: ignore
-        if not isinstance(cfg, AppConfiguration):
-            raise TypeError("from_config expects an AppConfiguration instance")
-        return cls(
-            etl_factory=cfg.etl_factory,
-            kpi_templates=cfg.kpi_templates,
-            algo_templates=cfg.algo_templates,
-            input_configs=cfg.input_configs,
-            data_object_type=cfg.data_object_type,
-            data_folder=cfg.data_path,
-            has_persistent_state=cfg.has_persistent_state,
-            save_type=cfg.save_type,
-            autocreate=cfg.autocreate,
-            default_algo_name=cfg.default_algo,
-            default_param_values=cfg.default_algo_params_values,
-            autorun=cfg.autorun,
-        )
-
     def __init__(
-            self,
-            etl_factory: type[E],
-            kpi_templates: Dict[str, Type[BASE_KPI]],
-            algo_templates: Dict[str, Type[ALGORITHM]],
-            input_configs: List[InputFileConfiguration],
-            data_object_type: type[BASE_DATA_BOUND],  # for extensions of datasource
-            data_folder: str = None,
-            logger: Logger = None,
-            scenario_save_location: str = "scenarios.json",
-            has_persistent_state: bool = False,
-            save_type: str = "json",  # adjusts the format
-            autocreate: bool = False,
-            default_algo_name: str = None,
-            default_param_values: Dict[str, any] = None,
-            autorun: bool = False,
+        self,
+        etl_factory: type[E],
+        kpi_templates: Dict[str, Type[BASE_KPI]],
+        algo_templates: Dict[str, Type[ALGORITHM]],
+        input_configs: List[InputFileConfiguration],
+        data_object_type: type[BASE_DATA_BOUND],  # for extensions of datasource
+        data_folder: str = None,
+        logger: Logger = None,
+        scenario_save_location: str = "scenarios.json",
+        has_persistent_state: bool = False,
+        save_type: str = "json",  # adjusts the format
+        autocreate: bool = False,
+        default_algo_name: str = None,
+        default_param_values: Dict[str, any] = None,
+        autorun: bool = False,
     ) -> None:
         self.logger = logger if logger else Logger()
         self.scenario_save_location = scenario_save_location
@@ -73,17 +54,33 @@ class ScenarioManager:
 
         # Components
         if self._has_persistent_state:
-            assert data_folder, "Data folder must be specified if data manager has state."
-            self._dm = StatefulDataManager(etl_factory=etl_factory, input_configs=input_configs,
-                                           data_folder=data_folder, save_type=save_type,
-                                           data_object_type=data_object_type, logger=self.logger)
+            assert (
+                data_folder
+            ), "Data folder must be specified if data manager has state."
+            self._dm = StatefulDataManager(
+                etl_factory=etl_factory,
+                input_configs=input_configs,
+                data_folder=data_folder,
+                save_type=save_type,
+                data_object_type=data_object_type,
+                logger=self.logger,
+            )
         else:
-            self._dm = StatelessDataManager(etl_factory=etl_factory, input_configs=input_configs, save_type=save_type,
-                                            logger=self.logger, data_object_type=data_object_type)
+            self._dm = StatelessDataManager(
+                etl_factory=etl_factory,
+                input_configs=input_configs,
+                save_type=save_type,
+                logger=self.logger,
+                data_object_type=data_object_type,
+            )
 
         self._registry = ScenarioRegistry(logger=self.logger)
-        self._factory = ScenarioFactory(kpi_templates=kpi_templates, algo_templates=algo_templates,
-                                        data_manager=self._dm, logger=self.logger)
+        self._factory = ScenarioFactory(
+            kpi_templates=kpi_templates,
+            algo_templates=algo_templates,
+            data_manager=self._dm,
+            logger=self.logger,
+        )
         self._processor = ScenarioProcessor(logger=self.logger)
         self.toggle_autorun(autorun)
 
@@ -141,14 +138,21 @@ class ScenarioManager:
     def get_data(self, data_key):
         return self._dm.get_data(data_key)
 
+    def set_data(self, data_key, data):
+        self._dm.set_data(data_key, data)
+
     def derive_data(self, derive_from_key: str, new_data_key: str) -> None:
         self._dm.derive_data(derive_from_key, new_data_key)
         if self._auto_create_scenario:
             self.auto_create_scenarios([new_data_key])
 
-    def delete_data(self, data_key: str, prevent_masterdata_removal: bool = False) -> None:
+    def delete_data(
+        self, data_key: str, prevent_masterdata_removal: bool = False
+    ) -> None:
         # prevent delete if used by scenarios
-        assert data_key not in self._registry.used_datasets(), f"Cannot delete data used in scenarios."
+        assert (
+            data_key not in self._registry.used_datasets()
+        ), "Cannot delete data used in scenarios."
         self._dm.delete_data(data_key, prevent_masterdata_removal)
 
     def store_data(self, dataset_name: str, data):
@@ -156,7 +160,9 @@ class ScenarioManager:
             self._dm.store_data(dataset_name, data)
         else:
             if self.logger:
-                self.logger.error(f"Store data is not supported for stateless data manager. ")
+                self.logger.error(
+                    "Store data is not supported for stateless data manager. "
+                )
             pass
 
     def toggle_autorun(self, value: bool = None) -> None:
@@ -177,13 +183,23 @@ class ScenarioManager:
         self._processor.shutdown()
 
     # Scenario creation/registry
-    def create_scenario(self, tag: str, dataset_key: str = "Master data", algo_name: str = "",
-                        algo_params=None) -> Scenario:
+    def create_scenario(
+        self,
+        tag: str,
+        dataset_key: str = "Master data",
+        algo_name: str = "",
+        algo_params=None,
+    ) -> Scenario:
         if self._registry.has_tag(tag):
             self.log(f"Scenario with tag '{tag}' already exists. Skipping creation.")
             raise ValueError(f"A scenario with tag '{tag}' already exists.")
 
-        scenario = self._factory.create(tag=tag, dataset_key=dataset_key, algo_name=algo_name, algo_params=algo_params)
+        scenario = self._factory.create(
+            tag=tag,
+            dataset_key=dataset_key,
+            algo_name=algo_name,
+            algo_params=algo_params,
+        )
         self._registry.add(scenario)
 
         if self._processor.auto_run_scenarios:
@@ -205,13 +221,19 @@ class ScenarioManager:
     def list_ids(self):
         return self._registry.list_ids()
 
-    def toggle_autocreate(self, value: bool = None, default_algo_name: str = "") -> None:
+    def toggle_autocreate(
+        self, value: bool = None, default_algo_name: str = ""
+    ) -> None:
         if value is None:
             self._auto_create_scenario = not self._auto_create_scenario
-            self._default_algo_name = default_algo_name if self._auto_create_scenario else None
+            self._default_algo_name = (
+                default_algo_name if self._auto_create_scenario else None
+            )
         else:
             self._auto_create_scenario = value
-            self._default_algo_name = default_algo_name if self._auto_create_scenario else None
+            self._default_algo_name = (
+                default_algo_name if self._auto_create_scenario else None
+            )
         self.log(f"Auto-create scenarios set to {self._auto_create_scenario}")
 
     def add_datasource_from_json(self, json_string):
@@ -249,18 +271,26 @@ class ScenarioManager:
         if isinstance(self._dm, StatefulDataManager):
             self._dm.store_data_source_as_json(set_name)
         else:
-            raise AttributeError("Stateless data manager does not support internal serialization.")
+            raise AttributeError(
+                "Stateless data manager does not support internal serialization."
+            )
 
     def debug_load_data(self, dataset_name: str) -> None:
         if isinstance(self._dm, StatefulDataManager):
             self._dm.load_data_from_dir("data")
         elif isinstance(self._dm, StatelessDataManager):
-            raise NotImplementedError("Todo: implement loading for stateless data manager.")
+            raise NotImplementedError(
+                "Todo: implement loading for stateless data manager."
+            )
         else:
             raise Exception("Data manager not initialized.")
 
     def debug_create_and_run_scenario(
-            self, scenario_tag: str, dataset_key: str, algo_name: str, algo_params: Dict[str, any]
+        self,
+        scenario_tag: str,
+        dataset_key: str,
+        algo_name: str,
+        algo_params: Dict[str, any],
     ) -> Scenario:
         """
         Creates and runs a scenario for debugging purposes. The method uses a factory to create a
@@ -280,7 +310,7 @@ class ScenarioManager:
             tag=scenario_tag,
             dataset_key=dataset_key,
             algo_name=algo_name,
-            algo_params=algo_params
+            algo_params=algo_params,
         )
         self._registry.add(scenario)
         self._processor.enqueue(scenario)
@@ -295,7 +325,9 @@ class ScenarioManager:
         if isinstance(self._dm, StatefulDataManager):
             self._dm.load_data_from_dir(dataset_name)
         else:
-            raise AttributeError("Stateless data manager does not support internal ETL.")
+            raise AttributeError(
+                "Stateless data manager does not support internal ETL."
+            )
 
     def debug_load_serialized_data(self, file_name: str):
         """
@@ -304,7 +336,9 @@ class ScenarioManager:
         if isinstance(self._dm, StatefulDataManager):
             self._dm.load_data_from_file(file_name)
         else:
-            raise AttributeError("Stateless data manager does not support internal deserialization.")
+            raise AttributeError(
+                "Stateless data manager does not support internal deserialization."
+            )
 
     def debug_import_data(self, directory: str) -> None:
         """

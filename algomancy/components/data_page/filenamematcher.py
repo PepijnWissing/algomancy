@@ -23,7 +23,10 @@ def hamming_distance(s1, s2):
     """
     return sum(c1 != c2 for c1, c2 in zip_longest(s1, s2))
 
-def find_closest_match(file_names: List[str], file_configuration: InputFileConfiguration)-> str:
+
+def find_closest_match(
+    file_names: List[str], file_configuration: InputFileConfiguration
+) -> str:
     """
     Finds the closest match to a file configuration's reference name.
 
@@ -41,10 +44,13 @@ def find_closest_match(file_names: List[str], file_configuration: InputFileConfi
     """
     return min(
         file_names,
-        key=lambda x: hamming_distance(x.lower(), file_configuration.file_name_with_extension.lower())
+        key=lambda x: hamming_distance(
+            x.lower(), file_configuration.file_name_with_extension.lower()
+        ),
     )
 
-def is_bijective_mapping(mapping: Dict[str, str])-> bool:
+
+def is_bijective_mapping(mapping: Dict[str, str]) -> bool:
     """
     Determines if the input mapping is bijective.
 
@@ -62,12 +68,14 @@ def is_bijective_mapping(mapping: Dict[str, str])-> bool:
     Returns:
         bool: True if the mapping is bijective, otherwise False.
     """
-    return len(mapping) == len(set(mapping.values())) and len(mapping) == len(set(mapping.keys()))
+    return len(mapping) == len(set(mapping.values())) and len(mapping) == len(
+        set(mapping.keys())
+    )
+
 
 def match_file_names(
-        file_configurations: List[InputFileConfiguration],
-        file_names: List[str]
-)-> Dict[str, str]:
+    file_configurations: List[InputFileConfiguration], file_names: List[str]
+) -> Dict[str, str]:
     """
     Matches file configurations to file names and attempts to create a bijective mapping.
 
@@ -92,7 +100,9 @@ def match_file_names(
     assert len(file_names) >= len(file_configurations), "Missing input files"
     assert len(file_names) <= len(file_configurations), "Too many input files"
 
-    initial_guess = {fc.file_name: find_closest_match(file_names, fc) for fc in file_configurations}
+    initial_guess = {
+        fc.file_name: find_closest_match(file_names, fc) for fc in file_configurations
+    }
     if is_bijective_mapping(initial_guess):
         return initial_guess
 

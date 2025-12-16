@@ -20,7 +20,7 @@ class PlaceholderETLFactory(de.ETLFactory):
                 file=cast(de.CSVFile, files[placeholder]),
                 schema=schemas[placeholder],
                 logger=self.logger,
-                separator=","
+                separator=",",
             )
         }
 

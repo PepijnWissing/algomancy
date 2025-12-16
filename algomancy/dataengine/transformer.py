@@ -3,11 +3,7 @@ import pandas as pd
 
 
 class Transformer(ABC):
-    def __init__(
-            self,
-            name: str = "Abstract Transformer",
-            logger=None
-    ) -> None:
+    def __init__(self, name: str = "Abstract Transformer", logger=None) -> None:
         self.name = name
         self._logger = logger
 
@@ -18,10 +14,7 @@ class Transformer(ABC):
 
 
 def fill_empty(data: pd.DataFrame) -> pd.DataFrame:
-    return data.fillna(
-        method="ffill",
-        axis=1
-    )
+    return data.fillna(method="ffill", axis=1)
 
 
 def drop_empty(data: pd.DataFrame) -> pd.DataFrame:
@@ -51,7 +44,9 @@ class CleanTransformer(Transformer):
 
 
 class JoinTransformer(Transformer):
-    def __init__(self, left: str, right: str, on: str, output: str, logger=None) -> None:
+    def __init__(
+        self, left: str, right: str, on: str, output: str, logger=None
+    ) -> None:
         super().__init__(name="Join transformer", logger=logger)
         self.left = left
         self.right = right
@@ -60,6 +55,8 @@ class JoinTransformer(Transformer):
 
     def transform(self, data: dict[str, pd.DataFrame]) -> None:
         if self._logger:
-            self._logger.log(f"Joining '{self.left}' and '{self.right}' on '{self.on}' into '{self.output}'")
+            self._logger.log(
+                f"Joining '{self.left}' and '{self.right}' on '{self.on}' into '{self.output}'"
+            )
         merged = data[self.left].merge(data[self.right], on=self.on)
         data[self.output] = merged

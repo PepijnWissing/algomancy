@@ -3,6 +3,7 @@ A module for representing and managing data sources. It defines an abstract
 base class for data sources as well as concrete implementations with
 serialization and deserialization functionality.
 """
+
 import json
 import uuid
 from abc import ABC, abstractmethod
@@ -34,16 +35,19 @@ class BaseDataSource(ABC):
         validation_messages (List[ValidationMessage] | None): List of validation messages for the data source.
     """
 
-    def __init__(self,
-                 ds_type: DataClassification,
-                 name: str = None,
-                 validation_messages: List[ValidationMessage] = None,
-                 ds_id: str | None = None,
-                 creation_datetime: datetime | None = None
-                 ) -> None:
+    def __init__(
+        self,
+        ds_type: DataClassification,
+        name: str = None,
+        validation_messages: List[ValidationMessage] = None,
+        ds_id: str | None = None,
+        creation_datetime: datetime | None = None,
+    ) -> None:
         self._ds_type = ds_type
         self._id: str = ds_id if ds_id else str(uuid.uuid4())
-        self._creation_datetime = creation_datetime if creation_datetime else datetime.now()
+        self._creation_datetime = (
+            creation_datetime if creation_datetime else datetime.now()
+        )
         self.validation_messages = validation_messages
         if not name and ds_type == DataClassification.MASTER_DATA:
             self._name = "Master Data"
@@ -97,12 +101,12 @@ class BaseDataSource(ABC):
 
     @abstractmethod
     def to_json(self) -> str:
-        raise NotImplementedError('Abstract method')
+        raise NotImplementedError("Abstract method")
 
     @classmethod
     @abstractmethod
-    def from_json(cls, json_string: str) -> 'BaseDataSource':
-        raise NotImplementedError('Abstract method')
+    def from_json(cls, json_string: str) -> "BaseDataSource":
+        raise NotImplementedError("Abstract method")
 
     def debug_mutate(self):
         raise NotImplementedError("Abstract method")
@@ -110,10 +114,17 @@ class BaseDataSource(ABC):
 
 BASE_DATA_BOUND = TypeVar("BASE_DATA_BOUND", bound=BaseDataSource)
 
+
 # todo: consider excluding from package
 class DataSource(BaseDataSource):
-    def __init__(self, ds_type: DataClassification, name: str = None, validation_messages: List[ValidationMessage] = None,
-                 ds_id: str | None = None, creation_datetime: datetime | None = None) -> None:
+    def __init__(
+        self,
+        ds_type: DataClassification,
+        name: str = None,
+        validation_messages: List[ValidationMessage] = None,
+        ds_id: str | None = None,
+        creation_datetime: datetime | None = None,
+    ) -> None:
         super().__init__(ds_type, name, validation_messages, ds_id, creation_datetime)
         self.tables: dict[str, pd.DataFrame] = {}
 
@@ -128,15 +139,15 @@ class DataSource(BaseDataSource):
         # Create a dictionary to hold all data
         data_dict = {
             # Metadata
-            'metadata': {
-                'id': self.id,
-                'name': self._name,
-                'type': str(self._ds_type),
-                'creation_datetime': str(self.creation_datetime),
-                'tables': self.list_tables()
+            "metadata": {
+                "id": self.id,
+                "name": self._name,
+                "type": str(self._ds_type),
+                "creation_datetime": str(self.creation_datetime),
+                "tables": self.list_tables(),
             },
             # Tables data
-            'tables': {}
+            "tables": {},
         }
 
         # Convert each table to a JSON-compatible representation
@@ -145,14 +156,16 @@ class DataSource(BaseDataSource):
             df_copy = df.copy()
 
             # Replace NaT with None for serialization
-            for col in df_copy.select_dtypes(include=['datetime64']):
-                df_copy[col] = df_copy[col].astype(object).where(~df_copy[col].isna(), None)
+            for col in df_copy.select_dtypes(include=["datetime64"]):
+                df_copy[col] = (
+                    df_copy[col].astype(object).where(~df_copy[col].isna(), None)
+                )
 
             # Replace NaN with None for better JSON serialization
             df_copy = df_copy.where(df_copy.notna(), None)
 
             # Convert DataFrame to records format (list of dictionaries)
-            records = df_copy.to_dict(orient='records')
+            records = df_copy.to_dict(orient="records")
 
             # Store column types for proper reconstruction
             column_types = {}
@@ -160,11 +173,11 @@ class DataSource(BaseDataSource):
                 dtype = str(df[col].dtype)
                 column_types[col] = dtype
 
-            data_dict['tables'][table_name] = {
-                'data': records,
-                'columns': df.columns.tolist(),
-                'dtypes': column_types,
-                'index': df.index.tolist()
+            data_dict["tables"][table_name] = {
+                "data": records,
+                "columns": df.columns.tolist(),
+                "dtypes": column_types,
+                "index": df.index.tolist(),
             }
 
         # Define a custom JSON encoder to handle special types
@@ -174,7 +187,7 @@ class DataSource(BaseDataSource):
                     return None
                 if isinstance(obj, pd.Timestamp):
                     return obj.isoformat()
-                if hasattr(obj, 'to_json'):
+                if hasattr(obj, "to_json"):
                     return obj.to_json()
                 return super().default(obj)
 
@@ -182,7 +195,7 @@ class DataSource(BaseDataSource):
         return json.dumps(data_dict, indent=2, cls=CustomJSONEncoder)
 
     @classmethod
-    def from_json(cls, json_string: str) -> 'DataSource':
+    def from_json(cls, json_string: str) -> "DataSource":
         """
         Creates a DataSource object from serialized JSON string.
 
@@ -196,27 +209,27 @@ class DataSource(BaseDataSource):
         data_dict = json.loads(json_string)
 
         # Extract metadata
-        metadata = data_dict.get('metadata', {})
+        metadata = data_dict.get("metadata", {})
         if not metadata:
             raise ValueError("No metadata found in the JSON data")
 
         # Create DataSource instance
-        ds_type = DataClassification(metadata['type'])
+        ds_type = DataClassification(metadata["type"])
         ds = cls(
             ds_type=ds_type,
-            name=metadata['name'],
+            name=metadata["name"],
             ds_id=metadata["id"],
-            creation_datetime=metadata["creation_datetime"]
+            creation_datetime=metadata["creation_datetime"],
         )
 
         # Process each table
-        tables_data = data_dict.get('tables', {})
+        tables_data = data_dict.get("tables", {})
         for table_name, table_info in tables_data.items():
             # Convert records back to DataFrame
-            records = table_info['data']
-            columns = table_info['columns']
-            index = table_info['index']
-            dtypes = table_info.get('dtypes', {})
+            records = table_info["data"]
+            columns = table_info["columns"]
+            index = table_info["index"]
+            dtypes = table_info.get("dtypes", {})
 
             # Create the DataFrame
             df = pd.DataFrame(records, columns=columns, index=index)
@@ -225,16 +238,18 @@ class DataSource(BaseDataSource):
             for col, dtype in dtypes.items():
                 if col in df.columns:
                     try:
-                        if 'datetime' in dtype:
-                            df[col] = pd.to_datetime(df[col], errors='coerce')
-                        elif dtype == 'category':
-                            df[col] = df[col].astype('category')
-                        elif 'int' in dtype:
+                        if "datetime" in dtype:
+                            df[col] = pd.to_datetime(df[col], errors="coerce")
+                        elif dtype == "category":
+                            df[col] = df[col].astype("category")
+                        elif "int" in dtype:
                             # Handle int columns that might have None values
-                            df[col] = pd.to_numeric(df[col], errors='coerce')
-                            if 'int' in dtype and 'float' not in dtype:
+                            df[col] = pd.to_numeric(df[col], errors="coerce")
+                            if "int" in dtype and "float" not in dtype:
                                 # Only convert to int if it was originally an int
-                                df[col] = df[col].fillna(pd.NA).astype('Int64')  # Pandas nullable integer type
+                                df[col] = (
+                                    df[col].fillna(pd.NA).astype("Int64")
+                                )  # Pandas nullable integer type
                         else:
                             df[col] = df[col].astype(dtype)
                     except (ValueError, TypeError):

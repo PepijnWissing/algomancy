@@ -1,6 +1,9 @@
-from dash import html, dash_table, callback, Output, Input, get_app
+from dash import html, dash_table, callback, Output, Input, get_app, State
 
 from dash import dcc
+
+from algomancy.components.componentids import ACTIVE_SESSION
+from algomancy.scenarioengine import ScenarioManager
 
 OVERVIEW_TABLE = "overview-table"
 OVERVIEW_UPDATE_INTERVAL = "overview-update-interval"
@@ -71,14 +74,17 @@ class StandardOverviewPageContentCreator:
             Output(OVERVIEW_TABLE, "columns"),
             Input(OVERVIEW_UPDATE_INTERVAL, "n_intervals"),
             Input("url", "pathname"),
+            State(ACTIVE_SESSION, "data"),
+            prevent_initial_call=True,
         )
-        def update_overview_table(n_intervals, pathname):
+        def update_overview_table(n_intervals, pathname, session_id: str):
             """
             Updates the overview table with completed scenarios and their KPIs.
 
             Args:
                 n_intervals (int): Number of intervals elapsed (from dcc.Interval)
                 pathname (str): Current URL pathname
+                session_id (str): ID of the active session
 
             Returns:
                 tuple: (
@@ -91,7 +97,9 @@ class StandardOverviewPageContentCreator:
                 return [], []
 
             # Get the scenario manager
-            scenario_manager = get_app().server.scenario_manager
+            scenario_manager: ScenarioManager = (
+                get_app().server.session_manager.get_scenario_manager(session_id)
+            )
 
             # Get completed scenarios
             completed_scenarios = [

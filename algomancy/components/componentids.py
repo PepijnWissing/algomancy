@@ -4,16 +4,19 @@ componentids.py - Component ID Constants
 This module defines constants for all component IDs used in the dashboard application.
 These IDs are used for callbacks and to reference components in the Dash application.
 """
-from jinja2.nodes import Compare
+
+# === Session IDs ===
+ACTIVE_SESSION = "active-session-id"
 
 # === Styling ===
 GLOBAL_STYLING_STORE = "global-styling"
-PAGE_CONTENT = 'page-content'
+PAGE_CONTENT = "page-content"
 
 # === Home IDs ===
 HOME_PAGE_CONTENT = "home-page-content"
 
 # === Data IDs ===
+DATA_PAGE = "data-page"
 DM_LIST_UPDATER_STORE = "dm-list-updater"
 
 DATA_PAGE_CONTENT = "data-page-content"
@@ -31,8 +34,8 @@ DM_DERIVE_SET_NAME_INPUT = "dm-derive-set-name-input"
 
 DM_DELETE_OPEN_BUTTON = "dm-delete-open-btn"
 DM_DELETE_SUBMIT_BUTTON = "DATA_MAN_DELETE_BTN"
-DM_DELETE_SET_SELECTOR= "data-man-delete-selector"
-DM_DELETE_CLOSE_BUTTON= "data-man-delete-close-btn"
+DM_DELETE_SET_SELECTOR = "data-man-delete-selector"
+DM_DELETE_CLOSE_BUTTON = "data-man-delete-close-btn"
 DM_DELETE_MODAL = "data-man-delete-modal"
 DM_DELETE_COLLAPSE = "data-man-delete-collapse"
 DM_DELETE_CONFIRM_INPUT = "data-man-delete-confirm-input"
@@ -71,6 +74,8 @@ DM_DOWNLOAD_SUBMIT_BUTTON = "dm-download-submit-btn"
 DM_DOWNLOAD_MODAL_CLOSE_BTN = "dm-download-modal-close-btn"
 
 # === Scenario IDs ===
+SCENARIO_PAGE = "scenario-page"
+
 SCENARIO_LIST = "scenario-list"
 SCENARIO_DELETE_MODAL = "delete-modal"
 SCENARIO_CREATE_STATUS = "create-status"
@@ -136,9 +141,11 @@ PERF_SBS_LEFT_COLLAPSE = "perf-sbs-left-collapse"
 PERF_SBS_RIGHT_COLLAPSE = "perf-sbs-right-collapse"
 PERF_KPI_COLLAPSE = "perf-kpi-collapse"
 PERF_COMPARE_COLLAPSE = "perf-compare-collapse"
+HOW_TO_CREATE_NEW_SESSION = "how-to-create-new-session"
 
 
 # === Compare Page IDs ===
+COMPARE_PAGE = "compare-page"
 COMPARE_DETAIL_VIEW = "compare-detail-view"
 
 # === Overview Page IDs ===
@@ -147,9 +154,16 @@ COMPARE_DETAIL_VIEW = "compare-detail-view"
 OVERVIEW_PAGE_CONTENT = "overview-page-content"
 
 # === Admin Page IDs ===
+ADMIN_PAGE = "admin-page"
+ADMIN_NEW_SESSION = "admin-new-session"
+ADMIN_COPY_SESSION = "admin-copy-session"
+ADMIN_SELECT_SESSION = "admin-select-session"
 ADMIN_LOG_WINDOW = "admin-log-window"
 ADMIN_LOG_INTERVAL = "admin-log-interval"
 ADMIN_LOG_FILTER = "admin-log-filter"
+NEW_SESSION_BUTTON = "new-session-button"
+SESSION_CREATOR_MODAL = "session-creator-modal"
+NEW_SESSION_NAME = "new-session-name"
 
 # === Layout IDs ===
 SIDEBAR = "sidebar"

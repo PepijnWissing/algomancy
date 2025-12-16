@@ -1,6 +1,6 @@
 from dash import html, get_app
 
-from algomancy.components.componentids import *
+from algomancy.components.componentids import OVERVIEW_PAGE_CONTENT
 from algomancy.contentregistry import ContentRegistry
 
 
@@ -15,9 +15,6 @@ def overview_page():
     """
     cr: ContentRegistry = get_app().server.content_registry
 
-    page = html.Div(
-        cr.overview_content(),
-        id=OVERVIEW_PAGE_CONTENT
-    )
+    page = html.Div(cr.overview_content(), id=OVERVIEW_PAGE_CONTENT)
 
     return page

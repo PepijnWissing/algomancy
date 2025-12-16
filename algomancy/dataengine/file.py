@@ -9,7 +9,13 @@ from algomancy.dataengine.inputfileconfiguration import FileExtension
 
 
 class File(ABC):
-    def __init__(self, name: str, extension: FileExtension, path: str = None, content: str = None, ):
+    def __init__(
+        self,
+        name: str,
+        extension: FileExtension,
+        path: str = None,
+        content: str = None,
+    ):
         self.name: str = name
         self.path: str | None = path
         self.extension: FileExtension = extension
@@ -28,44 +34,61 @@ class File(ABC):
             print(e)
             raise e
 
-    @staticmethod
-    def _set_content_from_uploader(content: str) -> str:
-        try:
-            # Extract the base64 content from the data URI
-            content_type, content_string = content.split(',', 1)
-            decoded = base64.b64decode(content_string)
-
-            if "csv" in content_type.lower():
-                # transform to textformat
-                csv_file = decoded.decode('utf-8')
-
-                return csv_file
-
-            elif "json" in content_type.lower():
-                # Transform the decoded data to json
-                json_data = json.loads(decoded)
-
-                return json.dumps(json_data)
-            else:
-                raise ValueError("Invalid content type.")
-
-        except Exception as e:
-            print(f"Error reading JSON file from uploader: {e}")
-            raise e
-
 
 class CSVFile(File):
-    def __init__(self, name: str, path: str = None, content: str = None, ):
+    def __init__(
+        self,
+        name: str,
+        path: str = None,
+        content: str = None,
+    ):
         super().__init__(name, FileExtension.CSV, path, None)
         if content is not None:
             self.content = self._set_content_from_uploader(content)
 
+    @staticmethod
+    def _set_content_from_uploader(content: str) -> str:
+        try:
+            # Extract the base64 content from the data URI
+            content_type, content_string = content.split(",", 1)
+            decoded = base64.b64decode(content_string)
+
+            # transform to textformat
+            csv_file = decoded.decode("utf-8")
+
+            return csv_file
+
+        except Exception as e:
+            print(f"Error reading CSV file from uploader: {e}")
+            raise e
+
 
 class JSONFile(File):
-    def __init__(self, name: str, path: str = None, content: str = None, ):
+    def __init__(
+        self,
+        name: str,
+        path: str = None,
+        content: str = None,
+    ):
         super().__init__(name, FileExtension.JSON, path, None)
         if content is not None:
             self.content = self._set_content_from_uploader(content)
+
+    @staticmethod
+    def _set_content_from_uploader(content: str) -> str:
+        try:
+            # Extract the base64 content from the data URI
+            content_type, content_string = content.split(",", 1)
+            decoded = base64.b64decode(content_string)
+
+            # Transform the decoded data to json
+            json_data = json.loads(decoded)
+
+            return json.dumps(json_data)
+
+        except Exception as e:
+            print(f"Error reading JSON file from uploader: {e}")
+            raise e
 
 
 class XLSXFile(File):
@@ -83,7 +106,7 @@ class XLSXFile(File):
         """
         try:
             # Extract the base64 content from the data URI
-            content_type, content_string = content.split(',', 1)
+            content_type, content_string = content.split(",", 1)
             decoded = base64.b64decode(content_string)
 
             # Use BytesIO instead of StringIO for binary data
@@ -125,9 +148,9 @@ class XLSXFile(File):
             "metadata": {
                 "sheet_count": len(sheet_names),
                 "sheet_names": sheet_names,
-                "index_to_sheet_name": self.index_to_sheet_name
+                "index_to_sheet_name": self.index_to_sheet_name,
             },
-            "sheets": all_sheets_data
+            "sheets": all_sheets_data,
         }
 
         # Return as JSON string

@@ -1,4 +1,17 @@
 # Change log
+
+## 0.3.2
+_Released at 16-12-2025_
+
+### Summary
+- Added Sessions to the App
+  - Sessions can be managed in the Admin page
+  - An empty session can be created by clicking the "New Session" button in the Admin page
+  - An copy of a session can be created by clicking the "Copy Session" button in the Compare page
+    - This copies only the datasets and not the scenarios
+- **Breaking**: When retrieving the scenario manager `get_app().server.scenario_manager` no longer works
+  - Scenario manager is now available through the session manager and the active session
+
 ## 0.3.1
 _Released at 03-12-2025_
 

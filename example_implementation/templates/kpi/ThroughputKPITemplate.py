@@ -11,8 +11,11 @@ from algomancy.scenarioengine.unit import QUANTITIES, BaseMeasurement
 class ThroughputKPI(BaseKPI):
     def __init__(self):
         super().__init__(
-            "Throughput", ImprovementDirection.HIGHER,
-            BaseMeasurement(QUANTITIES["mass"]["kg"], min_digits=1, max_digits=3, decimals=2)
+            "Throughput",
+            ImprovementDirection.HIGHER,
+            BaseMeasurement(
+                QUANTITIES["mass"]["kg"], min_digits=1, max_digits=3, decimals=2
+            ),
         )
 
     def compute(self, result: ScenarioResult) -> float:
