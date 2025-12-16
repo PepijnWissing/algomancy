@@ -4,7 +4,8 @@ from typing import Dict, List, TypeVar
 from algomancy.appconfiguration import AppConfiguration
 from algomancy.dashboardlogger import Logger, MessageStatus
 from algomancy.dataengine import ETLFactory, InputFileConfiguration, BASE_DATA_BOUND
-from algomancy.scenarioengine import KpiTemplate, AlgorithmTemplate, ScenarioManager
+from algomancy.scenarioengine import ScenarioManager, BaseKPI
+from algomancy.scenarioengine.basealgorithm import BaseAlgorithm
 
 
 class SessionManager:
@@ -40,8 +41,8 @@ class SessionManager:
     def __init__(
         self,
         etl_factory: type[E],
-        kpi_templates: List[KpiTemplate],
-        algo_templates: Dict[str, AlgorithmTemplate],
+        kpi_templates: List[BaseKPI],
+        algo_templates: Dict[str, BaseAlgorithm],
         input_configs: List[InputFileConfiguration],
         data_object_type: type[BASE_DATA_BOUND],  # for extensions of datasource
         data_folder: str = None,
@@ -143,7 +144,7 @@ class SessionManager:
     def start_session_name(self) -> str:
         return self._start_session_name
 
-    def get_algorithm_template(self, key) -> AlgorithmTemplate:
+    def get_algorithm_template(self, key) -> BaseAlgorithm:
         return self._algo_templates.get(key)
 
     def create_new_session(self, session_name: str) -> None:
