@@ -2,7 +2,9 @@ from dash import html, get_app
 import dash
 import dash_bootstrap_components as dbc
 
+from algomancy.scenarioengine import ScenarioManager
 from algomancy.scenarioengine.enumtypes import ScenarioStatus
+from algomancy.sessionengine import SessionManager
 
 
 class StandardHomePageContentCreator:
@@ -16,8 +18,8 @@ class StandardHomePageContentCreator:
             html.Div: A Dash HTML component representing the home page content
         """
         # Get scenario information
-        session_manager = get_app().server.session_manager
-        scenario_manager = session_manager.get_scenario_manager(
+        session_manager: SessionManager = get_app().server.session_manager
+        scenario_manager: ScenarioManager = session_manager.get_scenario_manager(
             session_manager.start_session_name
         )
         all_scenarios = scenario_manager.list_scenarios()

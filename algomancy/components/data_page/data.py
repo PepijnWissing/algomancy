@@ -12,6 +12,7 @@ from algomancy.contentregistry import ContentRegistry
 from algomancy.scenarioengine import ScenarioManager
 
 import algomancy.components.data_page.dialogcallbacks  # noqa
+from algomancy.sessionengine import SessionManager
 
 
 def data_page() -> html.Div:
@@ -39,8 +40,8 @@ def render_data_page(active_session_name):
     if not active_session_name:
         return html.Div("No active session selected")
 
-    session_manager = get_app().server.session_manager
-    sm = session_manager.get_scenario_manager(active_session_name)
+    session_manager: SessionManager = get_app().server.session_manager
+    sm: ScenarioManager = session_manager.get_scenario_manager(active_session_name)
 
     settings = get_app().server.settings
 
@@ -72,7 +73,7 @@ def content_div() -> html.Div:
     prevent_initial_call=True,
 )
 def fill_data_page_content(data_key: str, session_id: str):
-    session_manager = get_app().server.session_manager
+    session_manager: SessionManager = get_app().server.session_manager
     sm: ScenarioManager = session_manager.get_scenario_manager(session_id)
     cr: ContentRegistry = get_app().server.content_registry
 

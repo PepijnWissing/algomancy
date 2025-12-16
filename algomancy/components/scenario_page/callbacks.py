@@ -223,7 +223,9 @@ def initialize_page(pathname, selected_id, session_id):
             selected scenario ID
         )
     """
-    scenario_manager = get_app().server.session_manager.get_scenario_manager(session_id)
+    scenario_manager: ScenarioManager = (
+        get_app().server.session_manager.get_scenario_manager(session_id)
+    )
 
     # Only initialize on page load
     if pathname and "scenario" in pathname:
@@ -389,7 +391,9 @@ def create_scenario(
     if not algorithm:
         return no_update, "Algorithm is required", True, False
 
-    scenario_manager = get_app().server.session_manager.get_scenario_manager(session_id)
+    scenario_manager: ScenarioManager = (
+        get_app().server.session_manager.get_scenario_manager(session_id)
+    )
 
     param_ids = [s["id"] for s in callback_context.states_list[3]]
     param_dict = {
@@ -465,7 +469,9 @@ def confirm_delete_scenario(
             selected scenario ID
         )
     """
-    scenario_manager = get_app().server.session_manager.get_scenario_manager(session_id)
+    scenario_manager: ScenarioManager = (
+        get_app().server.session_manager.get_scenario_manager(session_id)
+    )
 
     if scenario_to_delete is not None:
         scenario_manager.delete_scenario(scenario_to_delete)
@@ -513,7 +519,9 @@ def trigger_refresh(msg):
 )
 def refresh_cards(message, selected_id, session_id):
     app = get_app()
-    scenario_manager = app.server.session_manager.get_scenario_manager(session_id)
+    scenario_manager: ScenarioManager = app.server.session_manager.get_scenario_manager(
+        session_id
+    )
 
     if selected_id in scenario_manager.list_ids():
         return scenario_cards(scenario_manager, selected_id)

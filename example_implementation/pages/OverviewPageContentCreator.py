@@ -5,6 +5,7 @@ from dash import dcc
 from src.IDs import OVERVIEW_TABLE, OVERVIEW_UPDATE_INTERVAL
 
 from algomancy.components.componentids import ACTIVE_SESSION
+from algomancy.scenarioengine import ScenarioManager
 
 
 class OverviewPageContentCreator:
@@ -93,8 +94,8 @@ class OverviewPageContentCreator:
                 return [], []
 
             # Get the scenario manager
-            scenario_manager = get_app().server.session_manager.get_scenario_manager(
-                session_id
+            scenario_manager: ScenarioManager = (
+                get_app().server.session_manager.get_scenario_manager(session_id)
             )
 
             # Get completed scenarios

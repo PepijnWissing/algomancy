@@ -29,7 +29,7 @@ class DashLauncher:
         else:
             raise TypeError("DashLauncher.build expects AppConfiguration or dict")
 
-        session_manager = SessionManager.from_config(cfg_obj)
+        session_manager: SessionManager = SessionManager.from_config(cfg_obj)
 
         # Create the app
         app = DashLauncher._construct(

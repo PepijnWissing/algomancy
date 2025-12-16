@@ -26,7 +26,9 @@ from algomancy.components.componentids import (
     NEW_SESSION_NAME,
     HOW_TO_CREATE_NEW_SESSION,
 )
+from algomancy.dashboardlogger import Logger
 from algomancy.dashboardlogger.logger import MessageStatus
+from algomancy.sessionengine import SessionManager
 
 
 def admin_header():
@@ -41,7 +43,7 @@ def admin_header():
 
 def admin_sessions(session_id):
     """Creates a page-section where sessions can be selected and created."""
-    session_manager = get_app().server.session_manager
+    session_manager: SessionManager = get_app().server.session_manager
     sessions = session_manager.sessions_names
 
     return [
@@ -203,10 +205,10 @@ def update_log_window(n_intervals, filter_value):
     """
     # Get the scenario manager
 
-    session_manager = get_app().server.session_manager
+    session_manager: SessionManager = get_app().server.session_manager
 
     # Get the logger from the session manager
-    logger = session_manager.logger
+    logger: Logger = session_manager.logger
 
     # Get logs based on filter
     if filter_value == "ALL":
@@ -335,7 +337,7 @@ def toggle_session_creator_modal(
     if triggered_id == ADMIN_COPY_SESSION and not is_open:
         return True, "", True, no_update
     if triggered_id == NEW_SESSION_BUTTON and is_open:
-        session_manager = get_app().server.session_manager
+        session_manager: SessionManager = get_app().server.session_manager
         if copy_session:
             session_manager.copy_session(session_id, new_session_name)
         else:
