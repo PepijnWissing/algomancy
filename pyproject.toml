@@ -31,6 +31,7 @@ dependencies = [
   "algomancy-scenario",
   "algomancy-utils",
   "algomancy-gui",
+  "algomancy-cli",
   "prek>=0.2.19",
   "pyrefly>=0.45.2",
   "basedpyright>=1.36.0"
@@ -47,10 +48,14 @@ readme = "README.md"
 requires-python = ">=3.14"
 version = "0.3.2"
 
+[project.scripts]
+algomancy-cli = "algomancy_cli.main:main"
+
 [tool.pytest.ini_options]
 pythonpath = ["."]
 
 [tool.uv.sources]
+algomancy-cli = {workspace = true}
 algomancy-content = {workspace = true}
 algomancy-data = {workspace = true}
 algomancy-gui = {workspace = true}
@@ -63,5 +68,6 @@ members = [
   "packages/algomancy-gui",
   "packages/algomancy-utils",
   "packages/algomancy-data",
-  "packages/algomancy-scenario"
+  "packages/algomancy-scenario",
+  "packages/algomancy-cli"
 ]

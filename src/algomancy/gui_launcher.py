@@ -14,10 +14,10 @@ from algomancy_scenario.scenariomanager import ScenarioManager
 from algomancy_content.librarymanager import LibraryManager as lm
 from algomancy_utils.logger import MessageStatus
 
-from .appconfiguration import AppConfiguration
+from algomancy_gui.appconfiguration import AppConfiguration
 
 
-class DashLauncher:
+class GuiLauncher:
     @staticmethod
     def build(cfg: Union[AppConfiguration, Dict[str, Any]]) -> Dash:
         # Normalize configuration to AppConfiguration for a single source of truth
@@ -32,7 +32,7 @@ class DashLauncher:
         sm = ScenarioManager.from_config(cfg_obj)
 
         # Create the app
-        app = DashLauncher._construct(
+        app = GuiLauncher._construct(
             cfg=cfg_obj,
             scenario_manager=sm,
         )
