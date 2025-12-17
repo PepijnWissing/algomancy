@@ -4,22 +4,17 @@ import os
 
 from waitress import serve
 import dash_auth
-from dash import get_app, Dash
+from dash import get_app, Dash, html, dcc
 from dash_bootstrap_components.themes import BOOTSTRAP
 
 from algomancy_gui.layout import LayoutCreator
 from algomancy_gui.contentregistry import ContentRegistry
 from algomancy_gui.settingsmanager import SettingsManager
-from algomancy_scenario.scenariomanager import ScenarioManager
+from algomancy_gui.sessionmanager import SessionManager
+from algomancy_gui.componentids import ACTIVE_SESSION
+from algomancy_gui.appconfiguration import AppConfiguration
 from algomancy_content.librarymanager import LibraryManager as lm
 from algomancy_utils.logger import MessageStatus
-
-from .components.componentids import ACTIVE_SESSION
-from .contentregistry import ContentRegistry
-from .sessionengine.sessionmanager import SessionManager
-from .settingsmanager import SettingsManager
-from .appconfiguration import AppConfiguration
-from algomancy_gui.appconfiguration import AppConfiguration
 
 
 class GuiLauncher:

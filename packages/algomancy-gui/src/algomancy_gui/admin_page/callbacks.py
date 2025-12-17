@@ -26,9 +26,8 @@ from ..componentids import (
     NEW_SESSION_NAME,
     HOW_TO_CREATE_NEW_SESSION,
 )
-from algomancy.dashboardlogger import Logger
-from algomancy.dashboardlogger.logger import MessageStatus
-from algomancy.sessionengine import SessionManager
+from algomancy_utils.logger import Logger, MessageStatus
+from ..sessionmanager import SessionManager
 
 
 def admin_header():
@@ -159,15 +158,15 @@ def admin_system_logs():
 )
 def create_admin_page(session_id):
     """
-    Creates the admin page layout.
+        Creates the admin page layout.
 
-from ..componentids import ADMIN_LOG_WINDOW, ADMIN_LOG_FILTER, ADMIN_LOG_INTERVAL
-from algomancy_utils import MessageStatus
-    This page provides settings management, an overview of system jobs,
-    and a scrollable window displaying logging messages from the scenario_manager.
+    from ..componentids import ADMIN_LOG_WINDOW, ADMIN_LOG_FILTER, ADMIN_LOG_INTERVAL
+    from algomancy_utils import MessageStatus
+        This page provides settings management, an overview of system jobs,
+        and a scrollable window displaying logging messages from the scenario_manager.
 
-    Returns:
-        List: to fill the Dash HTML component representing the admin page
+        Returns:
+            List: to fill the Dash HTML component representing the admin page
     """
     admin_content = (
         admin_header()
@@ -187,7 +186,6 @@ from algomancy_utils import MessageStatus
 def load_session(session_id):
     """Updates the active session when a new session is selected using the dropdown."""
     return session_id
-
 
 
 @callback(

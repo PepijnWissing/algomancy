@@ -2,7 +2,7 @@ from dash import html, get_app, callback, Output, Input, State
 
 from algomancy_scenario import ScenarioManager
 
-from ..componentids import(
+from ..componentids import (
     DATA_PAGE_CONTENT,
     DATA_SELECTOR_DROPDOWN,
     ACTIVE_SESSION,
@@ -11,10 +11,9 @@ from ..componentids import(
 from ..data_page.datamanagementtopbar import top_bar
 from ..layouthelpers import create_wrapped_content_div
 from ..contentregistry import ContentRegistry
-from ..settingsmanager import SettingsManager
 
 import algomancy.components.data_page.dialogcallbacks  # noqa
-from algomancy.sessionengine import SessionManager
+from ..sessionmanager import SessionManager
 
 
 def data_page() -> html.Div:

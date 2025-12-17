@@ -1,17 +1,19 @@
 from dash import (
+    callback_context,
+    html,
+    dcc,
+    callback,
     Output,
     Input,
-    callback_context,
-    no_update,
-    callback,
-    State,
     ALL,
     get_app,
     ctx,
+    no_update,
+    State,
 )
 from dash.exceptions import PreventUpdate
 
-from algomancy.scenarioengine import ScenarioStatus
+from algomancy_scenario import ScenarioStatus
 from ..componentids import (
     SCENARIO_PROCESS_BUTTON,
     SCENARIO_CREATOR_MODAL,
@@ -41,24 +43,24 @@ from ..componentids import (
     SCENARIO_SELECTED,
     SCENARIO_CARD,
 )
-from algomancy.components.scenario_page.new_scenario_parameters_window import (
+from .new_scenario_parameters_window import (
     create_algo_parameters_entry_card_body,
 )
-from gui.scenario_page.scenario_cards import scenario_cards
+from .scenario_cards import scenario_cards
+from ..contentregistry import ContentRegistry
 
-from algomancy.components.layouthelpers import create_wrapped_content_div
-from algomancy.components.scenario_page.delete_confirmation import (
+from ..layouthelpers import create_wrapped_content_div
+from .delete_confirmation import (
     delete_confirmation_modal,
 )
-from algomancy.components.scenario_page.new_scenario_creator import new_scenario_creator
+from .new_scenario_creator import new_scenario_creator
 
 
 import dash_bootstrap_components as dbc
 
-from algomancy.components.scenario_page.scenario_cards import hidden_card
-from algomancy.contentregistry import ContentRegistry
-from algomancy.scenarioengine import ScenarioManager
-from algomancy.settingsmanager import SettingsManager
+from .scenario_cards import hidden_card
+from algomancy_scenario import ScenarioManager
+from ..settingsmanager import SettingsManager
 
 
 # --- general page setup ---

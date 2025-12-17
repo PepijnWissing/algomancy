@@ -73,6 +73,7 @@ def render_ordered_components(active_session_name):
     page = html.Div(ordered_components, className="compare-page")
     return page
 
+
 def order_components(
     header: dbc.Row,
     order: list[str],

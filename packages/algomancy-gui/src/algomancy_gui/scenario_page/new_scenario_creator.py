@@ -12,10 +12,9 @@ from algomancy_gui.componentids import (
 from algomancy_gui.scenario_page.new_scenario_parameters_window import (
     create_algo_parameters_window,
 )
+from algomancy_scenario import ScenarioManager
+from algomancy_gui.sessionmanager import SessionManager
 from algomancy_gui.stylingconfigurator import StylingConfigurator
-from algomancy.scenarioengine import ScenarioManager
-from algomancy.sessionengine import SessionManager
-from algomancy.stylingconfigurator import StylingConfigurator
 
 
 def new_scenario_creator(session_id: str):

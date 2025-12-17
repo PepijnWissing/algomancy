@@ -5,6 +5,7 @@ import dash_bootstrap_components as dbc
 from dash import html, dcc, get_app, callback, Output, Input, State, no_update
 from dash.exceptions import PreventUpdate
 
+from algomancy_scenario import ScenarioManager
 from ..componentids import (
     DM_UPLOAD_MODAL_CLOSE_BTN,
     DM_UPLOAD_MODAL_FILEVIEWER_CARD,

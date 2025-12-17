@@ -104,7 +104,6 @@ def configure_styling() -> StylingConfigurator:
     dark_green = "#1F271B"
     sage_green = "#6DA34D"
     cornsilk = "#FEFAE0"
-
     white = "#FFFFFF"
     darkgrey = "#424242"
 
