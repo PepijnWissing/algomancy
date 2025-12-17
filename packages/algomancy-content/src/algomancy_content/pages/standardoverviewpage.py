@@ -2,8 +2,8 @@ from dash import html, dash_table, callback, Output, Input, get_app, State
 
 from dash import dcc
 
-from algomancy.components.componentids import ACTIVE_SESSION
-from algomancy.scenarioengine import ScenarioManager
+from algomancy_gui.componentids import ACTIVE_SESSION
+from algomancy_scenario import ScenarioManager
 
 OVERVIEW_TABLE = "overview-table"
 OVERVIEW_UPDATE_INTERVAL = "overview-update-interval"

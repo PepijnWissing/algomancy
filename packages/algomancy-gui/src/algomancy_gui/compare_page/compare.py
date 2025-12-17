@@ -38,8 +38,6 @@ from ..settingsmanager import SettingsManager
 from ..contentregistry import ContentRegistry
 from algomancy_scenario import ScenarioManager
 
-import algomancy.components.compare_page.callbacks  # noqa
-
 
 def compare_page():
     return html.Div(id=COMPARE_PAGE, className="compare-page")

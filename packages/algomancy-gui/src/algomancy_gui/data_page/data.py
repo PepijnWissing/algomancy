@@ -12,7 +12,7 @@ from ..data_page.datamanagementtopbar import top_bar
 from ..layouthelpers import create_wrapped_content_div
 from ..contentregistry import ContentRegistry
 
-import algomancy.components.data_page.dialogcallbacks  # noqa
+from ..data_page import dialogcallbacks  # noqa
 from ..sessionmanager import SessionManager
 
 
