@@ -16,6 +16,7 @@ from ..componentids import (
     DATA_MAN_SUCCESS_ALERT,
     DATA_MAN_ERROR_ALERT,
     DM_DELETE_OPEN_BUTTON,
+    ACTIVE_SESSION,
 )
 
 """
@@ -144,9 +145,10 @@ def reset_on_close(modal_is_open: bool):
         Output(DM_DELETE_CONFIRM_INPUT, "value"),
     ],
     Input(DM_DELETE_SET_SELECTOR, "value"),
+    State(ACTIVE_SESSION, "data"),
     prevent_initial_call=True,
 )
-def open_confirm_section(selected_data_key):
+def open_confirm_section(selected_data_key, session_id: str):
     """
     Controls the visibility of the confirmation section in the delete modal.
 
@@ -155,6 +157,7 @@ def open_confirm_section(selected_data_key):
 
     Args:
         selected_data_key: Key of the selected dataset
+        session_id: ID of the active session
 
     Returns:
         tuple: (is_open, confirm_input_value) where:
@@ -163,13 +166,13 @@ def open_confirm_section(selected_data_key):
     """
     if not selected_data_key:
         return False, ""
-    sm = get_app().server.scenario_manager
+    sm = get_app().server.session_manager.get_scenario_manager(session_id)
 
     is_master_data = sm.get_data(selected_data_key).is_master_data()
     if is_master_data:
-        return (True, "")
+        return True, ""
     else:
-        return (False, "DELETE")
+        return False, "DELETE"
 
 
 @callback(
@@ -182,10 +185,14 @@ def open_confirm_section(selected_data_key):
         Output(DM_DELETE_MODAL, "is_open", allow_duplicate=True),
     ],
     [Input(DM_DELETE_SUBMIT_BUTTON, "n_clicks")],
-    [State(DM_DELETE_SET_SELECTOR, "value"), State(DM_DELETE_CONFIRM_INPUT, "value")],
+    [
+        State(DM_DELETE_SET_SELECTOR, "value"),
+        State(DM_DELETE_CONFIRM_INPUT, "value"),
+        State(ACTIVE_SESSION, "data"),
+    ],
     prevent_initial_call=True,
 )
-def delete_data_callback(n_clicks, selected_data_key, confirm_str):
+def delete_data_callback(n_clicks, selected_data_key, confirm_str, session_id: str):
     """
     Deletes the selected dataset when the delete button is clicked.
 
@@ -197,6 +204,7 @@ def delete_data_callback(n_clicks, selected_data_key, confirm_str):
         n_clicks: Number of times the submit button has been clicked
         selected_data_key: Key of the dataset to delete
         confirm_str: Confirmation string that must equal "DELETE" to proceed
+        session_id: ID of the active session
 
     Returns:
         Tuple containing updated dropdown options, alert messages, and modal state
@@ -215,7 +223,7 @@ def delete_data_callback(n_clicks, selected_data_key, confirm_str):
         )
     if confirm_str != "DELETE":
         return no_update, no_update, no_update, no_update, no_update, no_update
-    sm = get_app().server.scenario_manager
+    sm = get_app().server.session_manager.get_scenario_manager(session_id)
     try:
         sm.delete_data(selected_data_key)
         return datetime.now(), "Dataset deleted successfully!", True, "", False, False

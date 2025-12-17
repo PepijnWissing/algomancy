@@ -12,6 +12,7 @@ from ..componentids import (
     DM_SAVE_OPEN_BUTTON,
     DATA_MAN_SUCCESS_ALERT,
     DATA_MAN_ERROR_ALERT,
+    ACTIVE_SESSION,
 )
 
 """
@@ -148,11 +149,13 @@ def reset_save_selection_on_close(modal_is_open: bool):
     Output(DATA_MAN_ERROR_ALERT, "is_open", allow_duplicate=True),
     Input(DM_SAVE_SUBMIT_BUTTON, "n_clicks"),
     State(DM_SAVE_SET_SELECTOR, "value"),
+    State(ACTIVE_SESSION, "data"),
     prevent_initial_call=True,
 )
 def save_derived_data(
     n_clicks,
     set_name: str,
+    session_id: str,
 ):
     """
     Saves a derived dataset as master data when the save button is clicked.
@@ -163,12 +166,15 @@ def save_derived_data(
     Args:
         n_clicks: Number of times the submit button has been clicked
         set_name: Name of the dataset to save
+        session_id: ID of the active session
 
     Returns:
         Tuple containing modal state and alert messages
     """
 
-    sm: ScenarioManager = get_app().server.scenario_manager
+    sm: ScenarioManager = get_app().server.session_manager.get_scenario_manager(
+        session_id
+    )
     try:
         data = sm.get_data(set_name)
         data.set_to_master_data()

@@ -1,5 +1,5 @@
 import os
-from typing import Dict, List, TypeVar
+from typing import Dict, List, TypeVar, Type
 
 from algomancy_gui.appconfiguration import AppConfiguration
 from algomancy_utils.logger import Logger, MessageStatus
@@ -40,8 +40,8 @@ class SessionManager:
     def __init__(
         self,
         etl_factory: type[E],
-        kpi_templates: List[BaseKPI],
-        algo_templates: Dict[str, BaseAlgorithm],
+        kpi_templates: Dict[str, Type[BaseKPI]],
+        algo_templates: Dict[str, Type[BaseAlgorithm]],
         input_configs: List[InputFileConfiguration],
         data_object_type: type[BASE_DATA_BOUND],  # for extensions of datasource
         data_folder: str = None,

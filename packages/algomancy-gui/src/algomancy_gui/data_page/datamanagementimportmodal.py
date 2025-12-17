@@ -24,6 +24,7 @@ from ..componentids import (
     DM_LIST_UPDATER_STORE,
     DATA_MAN_SUCCESS_ALERT,
     DATA_MAN_ERROR_ALERT,
+    ACTIVE_SESSION,
 )
 
 """
@@ -206,9 +207,10 @@ def render_file_mapping_table(mapping):
         Output(DM_IMPORT_MODAL_FILEVIEWER_ALERT, "children"),
     ],
     Input(DM_IMPORT_UPLOADER, "filename"),
+    State(ACTIVE_SESSION, "data"),
     prevent_initial_call=True,
 )
-def show_uploaded_filename(filename):
+def show_uploaded_filename(filename, session_id: str):
     """
     Displays information about uploaded files in the load modal.
 
@@ -217,6 +219,7 @@ def show_uploaded_filename(filename):
 
     Args:
         filename: String or list of strings containing uploaded filenames
+        session_id: ID of the active session
 
     Returns:
         tuple: (card_children, collapse_is_open, alert_is_open, alert_message) where:
@@ -228,7 +231,7 @@ def show_uploaded_filename(filename):
     if not filename:
         return no_update, False, False, ""
 
-    sm = get_app().server.scenario_manager
+    sm = get_app().server.session_manager.get_scenario_manager(session_id)
 
     # Allow for possible list/file array
     if isinstance(filename, list):
@@ -270,10 +273,11 @@ def show_uploaded_filename(filename):
         State(DM_IMPORT_UPLOADER, "contents"),
         State(DM_IMPORT_UPLOADER, "filename"),
         State(DM_IMPORT_MODAL_NAME_INPUT, "value"),
+        State(ACTIVE_SESSION, "data"),
     ],
     prevent_initial_call=True,
 )
-def process_imports(n_clicks, contents, filenames, dataset_name):
+def process_imports(n_clicks, contents, filenames, dataset_name, session_id: str):
     """
     Processes uploaded files when the import submit button is clicked.
 
@@ -282,6 +286,7 @@ def process_imports(n_clicks, contents, filenames, dataset_name):
         contents: Base64-encoded contents of the uploaded files
         filenames: Names of the uploaded files
         dataset_name: Name for the new dataset
+        session_id: ID of the active session
 
     Returns:
         Tuple containing updated dropdown options, modal state, and alert messages
@@ -291,13 +296,13 @@ def process_imports(n_clicks, contents, filenames, dataset_name):
         return no_update, no_update, "", False, "", False, ""
 
     # Get scenario manager from app context
-    sm = get_app().server.scenario_manager
+    sm = get_app().server.session_manager.get_scenario_manager(session_id)
 
     try:
         sm.log(f"Loading {filenames} into {dataset_name}")
 
         # Process the files
-        files = prepare_files_from_import(sm, filenames, contents)
+        files = prepare_files_from_upload(sm, filenames, contents)
 
         # Load the data
         sm.etl_data(files, dataset_name)
@@ -315,7 +320,7 @@ def process_imports(n_clicks, contents, filenames, dataset_name):
         return no_update, False, "", False, f"Problem with loading: {str(e)}", True, ""
 
 
-def prepare_files_from_import(sm, filenames, contents):
+def prepare_files_from_upload(sm, filenames, contents):
     """
     Prepares file objects from uploaded content.
 
@@ -367,3 +372,66 @@ def clean_contents_on_close(modal_is_open: bool):
     if not modal_is_open:
         return None, None
     return no_update, no_update
+
+
+def create_dropdown_options(sm):
+    """
+    Creates dropdown options from available data keys.
+
+    Args:
+        sm: Scenario manager instance
+
+    Returns:
+        List of option dictionaries for dropdowns
+    """
+    return [{"label": ds, "value": ds} for ds in sm.get_data_keys()]
+
+
+def create_derived_dropdown_options(sm):
+    """
+    Creates dropdown options for derived datasets only.
+
+    Args:
+        sm: Scenario manager instance
+
+    Returns:
+        List of option dictionaries for derived data dropdowns
+    """
+    return [
+        {"label": ds, "value": ds}
+        for ds in sm.get_data_keys()
+        if not sm.get_data(ds).is_master_data()
+    ]
+
+
+#
+# def decode_contents(contents):
+#     """
+#     Decodes the uploaded contents string from dcc.Upload.
+#
+#     Parameters:
+#         contents (str): The contents string (data URI) from the uploader
+#
+#     Returns:
+#         tuple: (mime_type, decoded_bytes)
+#     """
+#     if not contents:
+#         return None, None
+#
+#     content_type, content_string = contents.split(",", 1)
+#     mime_type = content_type.split(";")[0][5:]
+#     decoded = base64.b64decode(content_string)
+#     return mime_type, decoded
+#
+#
+# def handle_csv_upload(contents):
+#     mime_type, decoded = decode_contents(contents)
+#     if mime_type == "text/csv":
+#         from io import StringIO
+#
+#         data_str = decoded.decode("utf-8")
+#         df = pd.read_csv(StringIO(data_str))
+#         return df
+#     else:
+#         raise ValueError("Unsupported file type")
+#

@@ -310,11 +310,14 @@ def update_right_scenario_overview_detail(
     Output(KPI_IMPROVEMENT_SECTION, "children"),
     Input(LEFT_SCENARIO_DROPDOWN, "value"),
     Input(RIGHT_SCENARIO_DROPDOWN, "value"),
+    State(ACTIVE_SESSION, "data"),
 )
-def update_kpi_comparison(left_id, right_id):
+def update_kpi_comparison(left_id, right_id, active_session_name):
     if not left_id or not right_id:
         return html.P("Select two completed scenarios to compare KPIs.")
-    sm: ScenarioManager = get_app().server.scenario_manager
+    sm: ScenarioManager = get_app().server.session_manager.get_scenario_manager(
+        active_session_name
+    )
 
     left = sm.get_by_id(left_id)
     right = sm.get_by_id(right_id)

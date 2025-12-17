@@ -16,6 +16,7 @@ from ..componentids import (
     DATA_MAN_SUCCESS_ALERT,
     DATA_MAN_ERROR_ALERT,
     DM_DERIVE_OPEN_BTN,
+    ACTIVE_SESSION,
 )
 
 """
@@ -130,10 +131,14 @@ def _sanitize(name: str) -> str:
         Output(DM_DERIVE_MODAL, "is_open", allow_duplicate=True),
     ],
     [Input(DM_DERIVE_MODAL_SUBMIT_BTN, "n_clicks")],
-    [State(DM_DERIVE_SET_SELECTOR, "value"), State(DM_DERIVE_SET_NAME_INPUT, "value")],
+    [
+        State(DM_DERIVE_SET_SELECTOR, "value"),
+        State(DM_DERIVE_SET_NAME_INPUT, "value"),
+        State(ACTIVE_SESSION, "data"),
+    ],
     prevent_initial_call=True,
 )
-def derive_data_callback(n_clicks, selected_data_key, derived_name):
+def derive_data_callback(n_clicks, selected_data_key, derived_name, session_id: str):
     """
     Creates a derived dataset from an existing one when the derive button is clicked.
 
@@ -144,13 +149,16 @@ def derive_data_callback(n_clicks, selected_data_key, derived_name):
         n_clicks: Number of times the submit button has been clicked
         selected_data_key: Key of the dataset to derive from
         derived_name: Name for the new derived dataset
+        session_id: ID of the active session
 
     Returns:
         Tuple containing updated dropdown options, alert messages, and modal state
     """
     if not selected_data_key or not derived_name:
         return no_update, "", False, "Choose a dataset and enter a name!", True, False
-    sm: ScenarioManager = get_app().server.scenario_manager
+    sm: ScenarioManager = get_app().server.session_manager.get_scenario_manager(
+        session_id
+    )
     try:
         sanitized_name = _sanitize(derived_name)
         sm.derive_data(selected_data_key, sanitized_name)
