@@ -25,10 +25,7 @@ def data_page() -> html.Div:
     """
     # Placeholder will be filled by callback
     return html.Div(
-        [
-            html.H1("Data"),
-            html.Div(id=DATA_PAGE),
-        ]
+        id=DATA_PAGE,
     )
 
 
@@ -52,12 +49,7 @@ def render_data_page(active_session_name):
         settings.use_cqm_loader,
     )
 
-    return html.Div(
-        [
-            top_bar(sm),
-            main_div,
-        ]
-    )
+    return [html.H1("Data"), top_bar(sm), main_div]
 
 
 def content_div() -> html.Div:
