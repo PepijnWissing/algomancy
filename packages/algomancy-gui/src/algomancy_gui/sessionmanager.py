@@ -4,7 +4,12 @@ from typing import Dict, List, TypeVar, Type
 from algomancy_gui.appconfiguration import AppConfiguration
 from algomancy_utils.logger import Logger, MessageStatus
 from algomancy_data import ETLFactory, InputFileConfiguration, BASE_DATA_BOUND
-from algomancy_scenario import ScenarioManager, BaseKPI, BaseAlgorithm
+from algomancy_scenario import (
+    ScenarioManager,
+    BaseKPI,
+    BaseAlgorithm,
+    BaseAlgorithmParameters,
+)
 
 
 class SessionManager:
@@ -143,8 +148,11 @@ class SessionManager:
     def start_session_name(self) -> str:
         return self._start_session_name
 
-    def get_algorithm_template(self, key) -> BaseAlgorithm:
-        return self._algo_templates.get(key)
+    def get_algorithm_parameters(self, key) -> BaseAlgorithmParameters:
+        template: Type[BaseAlgorithm] = self._algo_templates.get(key)
+        if template is None:
+            raise KeyError(f"Unable to find template {key} in the available templates.")
+        return template.initialize_parameters()
 
     def create_new_session(self, session_name: str) -> None:
         self._create_default_scenario_manager(session_name)
