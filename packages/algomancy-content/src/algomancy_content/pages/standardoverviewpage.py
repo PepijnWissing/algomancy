@@ -75,7 +75,6 @@ class StandardOverviewPage:
             Input(OVERVIEW_UPDATE_INTERVAL, "n_intervals"),
             Input("url", "pathname"),
             State(ACTIVE_SESSION, "data"),
-            prevent_initial_call=True,
         )
         def update_overview_table(n_intervals, pathname, session_id: str):
             """
