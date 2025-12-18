@@ -112,9 +112,9 @@ def slow_sample_algorithm(
 from time import sleep
 from typing import Callable
 
-from algomancy.dataengine import BaseDataSource
-from algomancy.scenarioengine import ScenarioResult, AlgorithmTemplate
-from algomancy.scenarioengine.basealgorithmparameters import *
+from algomancy_data import BaseDataSource
+from scenario import ScenarioResult, AlgorithmTemplate
+from scenario import *
 
 
 # Define the parameters for the algorithm

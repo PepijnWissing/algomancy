@@ -3,12 +3,12 @@
 A lightweight framework for building interactive dashboards to visualize the performance of algorithms and/or simulations across scenarios. It provides data ingestion (ETL), scenario orchestration, KPI computation, and a Dash-based UI with modular pages.
 
 ### Overview
-- Language/stack: Python 3.11+, Dash (frontend/server), Waitress (production WSGI), PyTest (tests), Ruff (lint). Optional: uv as package manager (uv.lock present).
+- Language/stack: Python 3.14+, Dash (frontend/server), Waitress (production WSGI), PyTest (tests), Ruff (lint). Optional: uv as package manager (uv.lock present).
 - Package layout: Installable Python package (setuptools/pyproject). Library entry points are in algomancy/, with an example executable script main-example.py.
 - Use cases: Rapid prototyping of algorithm scenario experiments and visual inspection of results.
 
 ### Requirements
-- Python: 3.11+
+- Python: 3.14+
 - OS: Windows, macOS, or Linux
 - Dependencies (core): dash, dash-bootstrap-components, dash-auth (optional), dash-extensions, dash-iconify, pandas, fastparquet, openpyxl, diskcache, strenum, tabulate, waitress, python-dotenv
 - Dev/test tools: pytest, ruff, wheel
@@ -51,41 +51,41 @@ You can embed Algomancy into your own app using the DashLauncher helper.
 - Minimal sketch:
 
 ```python
-from algomancy.dataengine import BaseDataSource
-from algomancy.launcher import DashLauncher
-from algomancy.appconfiguration import AppConfiguration
+from src.algomancy import BaseDataSource
+from src.algomancy.gui_launcher import GuiLauncher
+from algomancy_gui.appconfiguration import AppConfiguration
 
 configuration = {
-    "assets_path": "assets",
-    "data_path": "tests/data",
-    "has_persistent_state": True,
-    "save_type": "json",
-    "data_object_type": BaseDataSource,
-    "etl_factory": YourETLFactory,
-    "kpi_templates": your_kpi_templates,
-    "algo_templates": your_algorithm_templates,
-    "input_configs": your_input_configs,
-    "autorun": False,
-    "home_content": "placeholder",
-    "data_content": "placeholder",
-    "scenario_content": "placeholder",
-    "compare_content": "placeholder",
-    "compare_compare": "placeholder",
-    "compare_details": "placeholder",
-    "overview_content": "placeholder",
-    "home_callbacks": None,
-    "data_callbacks": None,
-    "scenario_callbacks": None,
-    "compare_callbacks": None,
-    "overview_callbacks": None,
-    "styling_config": None,  # see StylingConfigurator for options
-    "title": "My Algomancy Dashboard",
-    "use_authentication": False,
+  "assets_path": "assets",
+  "data_path": "tests/data",
+  "has_persistent_state": True,
+  "save_type": "json",
+  "data_object_type": BaseDataSource,
+  "etl_factory": YourETLFactory,
+  "kpi_templates": your_kpi_templates,
+  "algo_templates": your_algorithm_templates,
+  "input_configs": your_input_configs,
+  "autorun": False,
+  "home_content": "placeholder",
+  "data_content": "placeholder",
+  "scenario_content": "placeholder",
+  "compare_content": "placeholder",
+  "compare_compare": "placeholder",
+  "compare_details": "placeholder",
+  "overview_content": "placeholder",
+  "home_callbacks": None,
+  "data_callbacks": None,
+  "scenario_callbacks": None,
+  "compare_callbacks": None,
+  "overview_callbacks": None,
+  "styling_config": None,  # see StylingConfigurator for options
+  "title": "My Algomancy Dashboard",
+  "use_authentication": False,
 }
 app_cfg = AppConfiguration.from_dict(configuration)  # or AppConfiguration(asset_path=...)
 
-app = DashLauncher.build(app_cfg)
-DashLauncher.run(app, host=app_cfg.host, port=app_cfg.port)
+app = GuiLauncher.build(app_cfg)
+GuiLauncher.run(app, host=app_cfg.host, port=app_cfg.port)
 ```
 ### Environment Variables
 - Authentication (optional): If configuration["use_authentication"] is True, set these before launching:
