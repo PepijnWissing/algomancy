@@ -21,8 +21,11 @@ from algomancy_gui.stylingconfigurator import (
 
 from example.data_handling.input_configs import example_input_configs
 from example.data_handling.factories import ExampleETLFactory
-from example.templates import kpi_templates, algorithm_templates
-
+from example.templates import (
+    kpi_templates,
+    algorithm_templates,
+    debug_create_example_scenarios,
+)
 
 # Ensure project root is on sys.path so sibling packages (like `src`) can be imported
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -88,6 +91,8 @@ def main(
 
     # Build the app with AppConfiguration object directly
     app = GuiLauncher.build(app_cfg)
+
+    debug_create_example_scenarios(app.server.session_manager)
 
     # Run the app
     GuiLauncher.run(

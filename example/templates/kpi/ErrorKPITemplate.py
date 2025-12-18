@@ -14,9 +14,9 @@ class ErrorKPI(BaseKPI):
             "Error Rate",
             ImprovementDirection.LOWER,
             BaseMeasurement(
-                QUANTITIES["default"]["unit"], min_digits=1, max_digits=3, decimals=1
+                QUANTITIES["default"]["unit"], min_digits=1, max_digits=3, decimals=2
             ),
         )
 
     def compute(self, result: ScenarioResult) -> float:
-        return 0.1 * (1 + 0.5 * random.random())
+        return 0.1 * (1 + 0.5 - random.random())
