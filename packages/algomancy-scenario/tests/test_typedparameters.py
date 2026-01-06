@@ -222,5 +222,5 @@ def test_base_algorithm_parameters_copy():
 
     # 3. Check that changing the copy doesn't affect the original
     params_copy.set_values({"mode": "slow"})
-    assert params["mode"] == "fast"
-    assert params_copy["mode"] == "intentionally-wrong"  # "slow"
+    assert params["mode"] == "fast", "original value has changed"
+    assert params_copy["mode"] == "slow", "copy value was not updated"
