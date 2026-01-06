@@ -85,29 +85,40 @@ stages:
           - task: CmdLine@2
             displayName: Run tests
             inputs:
-              script: |
-                # Ensure pytest is available (installed earlier)
-                # Run tests in the repo root 'tests' folder (if present)
-                set -e
-                echo "Running root tests (if any)..."
-                if [ -d "$(Build.SourcesDirectory)/tests" ]; then
-                  uv run pytest tests -v --junitxml=pytest-results-root.xml || true
-                else
-                  echo "No root tests directory found."
-                fi
-                
-                # Run tests in each workspace package if that package has a tests/ folder.
-                echo "Running package tests..."
-                for pkg in packages/*; do
-                  if [ -d "$pkg/tests" ]; then
-                    pkgname=$(basename "$pkg")
-                    echo "Running tests for package: $pkgname"
-                    # produce a per-package junit xml so we can merge/publish them
-                    uv run pytest "$pkg/tests" -v --junitxml="pytest-results-$pkgname.xml" || true
+               script: |
+                  # Ensure pytest is available (installed earlier)
+                  # Run tests in the repo root 'tests' folder (if present)
+                  set +e
+                  exit_code=0
+
+                  echo "Running root tests (if any)..."
+                  if [ -d "$(Build.SourcesDirectory)/tests" ]; then
+                    uv run pytest tests -v --junitxml=pytest-results-root.xml
+                    current_exit=$?
+                    if [ $current_exit -ne 0 ]; then exit_code=$current_exit; fi
                   else
-                    echo "No tests directory in $pkg"
+                    echo "No root tests directory found."
                   fi
-                done
+              
+                  # Run tests in each workspace package if that package has a tests/ folder.
+                  echo "Running package tests..."
+                  for pkg in packages/*; do
+                    if [ -d "$pkg/tests" ]; then
+                      pkgname=$(basename "$pkg")
+                      echo "Running tests for package: $pkgname"
+                      # produce a per-package junit xml so we can merge/publish them
+                      uv run pytest "$pkg/tests" -v --junitxml="pytest-results-$pkgname.xml"
+                      current_exit=$?
+                      if [ $current_exit -ne 0 ]; then exit_code=$current_exit; fi
+                    else
+                      echo "No tests directory in $pkg"
+                    fi
+                  done
+
+                  if [ $exit_code -ne 0 ]; then
+                    echo "Some tests failed. Failing the step."
+                    exit $exit_code
+                  fi
 
           - task: PublishTestResults@2
             displayName: Publish pytest results
