@@ -122,6 +122,7 @@ stages:
 
           - task: PublishTestResults@2
             displayName: Publish pytest results
+            condition: always()
             inputs:
               testResultsFiles: '**/pytest-results-*.xml'
               testRunTitle: 'Pytest results'
