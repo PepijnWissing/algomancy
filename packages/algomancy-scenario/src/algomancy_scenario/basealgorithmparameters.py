@@ -40,10 +40,6 @@ class TypedParameter(ABC):
     def _validate(self, value) -> None:
         pass
 
-    @abstractmethod
-    def _serialize(self) -> str:
-        pass
-
     def _check_required(self, value) -> None:
         if self.required and value is None:
             raise ParameterError(f"Parameter '{self.name}' is required.")
@@ -77,7 +73,7 @@ class StringParameter(TypedParameter):
         if not isinstance(value, str):
             raise ParameterError(f"Parameter '{self.name}' must be a string.")
 
-    def _serialize(self) -> str:
+    def __str__(self) -> str:
         return f"{self.name}: {self.value}"
 
     @property
@@ -97,6 +93,9 @@ class EnumParameter(TypedParameter):
         if value is not None:
             self.set_validated_value(value)
 
+    def __str__(self) -> str:
+        return f"{self.name}: {self.value}"
+
     def _validate(self, value: str):
         if not isinstance(value, str):
             raise ParameterError(f"Parameter '{self.name}' must be a string.")
@@ -104,9 +103,6 @@ class EnumParameter(TypedParameter):
             raise ParameterError(
                 f"Parameter '{self.name}' must be one of {self.choices}."
             )
-
-    def _serialize(self) -> str:
-        return f"{self.name}: {self.value}"
 
     @property
     def value(self) -> str:
@@ -129,6 +125,9 @@ class MultiEnumParameter(TypedParameter):
         if value is not None:
             self.set_validated_value(value)
 
+    def __str__(self) -> str:
+        return f"{self.name}: {self.value}"
+
     def _validate(self, value_lst: list[str]):
         if not isinstance(value_lst, list):
             raise ParameterError(f"Parameter '{self.name}' must be a list.")
@@ -139,9 +138,6 @@ class MultiEnumParameter(TypedParameter):
                 raise ParameterError(
                     f"Parameter '{self.name}' must be one of {self.choices}."
                 )
-
-    def _serialize(self) -> str:
-        return f"{self.name}: {self.value}"
 
     @property
     def value(self) -> list[str]:
@@ -213,7 +209,7 @@ class FloatParameter(NumericParameter):
             name, ParameterType.FLOAT, required, default, minvalue, maxvalue, value
         )
 
-    def _serialize(self) -> str:
+    def __str__(self) -> str:
         return f"{self.name}: {self.value:.2f}"
 
     @property
@@ -237,7 +233,7 @@ class IntegerParameter(NumericParameter):
             name, ParameterType.INTEGER, required, default, minvalue, maxvalue, value
         )
 
-    def _serialize(self) -> str:
+    def __str__(self) -> str:
         return f"{self.name}: {self.value}"
 
     @property
@@ -260,12 +256,15 @@ class BooleanParameter(TypedParameter):
         if value is not None:
             self.set_validated_value(value)
 
+    def __str__(self) -> str:
+        return f"{self.name}: {self.value}"
+
+    def serialize(self) -> str:
+        return str(self.value)
+
     def _validate(self, value):
         if not isinstance(value, bool):
             raise ParameterError(f"Parameter '{self.name}' must be a boolean.")
-
-    def _serialize(self) -> str:
-        return f"{self.name}: {self.value}"
 
     @property
     def value(self) -> bool:
@@ -287,12 +286,12 @@ class TimeParameter(TypedParameter):
         if value is not None:
             self.set_validated_value(value)
 
+    def __str__(self) -> str:
+        return f"{self.name}: {self.value.isoformat()}"
+
     def _validate(self, value) -> None:
         if not isinstance(value, datetime):
             raise ParameterError(f"Parameter '{self.name}' must be a datetime.")
-
-    def _serialize(self) -> str:
-        return f"{self.name}: {self.value.isoformat()}"
 
     @property
     def default(self) -> datetime:
@@ -321,6 +320,10 @@ class IntervalParameter(TypedParameter):
         if value is not None:
             self.set_validated_value(value)
 
+    def __str__(self) -> str:
+        s, e = self.value
+        return f"{self.name}: [{s.isoformat()}, {e.isoformat()}]"
+
     def _validate(self, value) -> None:
         if not (isinstance(value, (list, tuple)) and len(value) == 2):
             raise ParameterError(
@@ -335,10 +338,6 @@ class IntervalParameter(TypedParameter):
             raise ParameterError(
                 f"Parameter '{self.name}' interval end must be greater than or equal to start."
             )
-
-    def _serialize(self) -> str:
-        s, e = self.value
-        return f"{self.name}: [{s.isoformat()}, {e.isoformat()}]"
 
     @property
     def default_start(self) -> datetime:
@@ -359,7 +358,7 @@ class IntervalParameter(TypedParameter):
     @property
     def value(self) -> tuple[datetime, datetime]:
         if self._value is None:
-            return self.default
+            return self.default_start, self.default_end
         # Normalize internal storage to tuple
         if isinstance(self._value, list):
             return (self._value[0], self._value[1])
@@ -394,6 +393,9 @@ class BaseAlgorithmParameters(ABC, metaclass=PostInitMeta):
         """is called directly after the __init__ method in PostInitMeta classes"""
         self._is_locked = True
 
+    def copy(self):
+        return self.deserialize(self.serialize())
+
     @abstractmethod
     def validate(self):
         """Validates parameters, must be implemented in subclass."""
@@ -403,7 +405,23 @@ class BaseAlgorithmParameters(ABC, metaclass=PostInitMeta):
         return self._parameters
 
     def serialize(self):
-        return {key: p.value for key, p in self._parameters.items()}
+        import json
+
+        dct = {"name": self.name, "parameters": self.get_values()}
+        return json.dumps(dct)
+
+    @classmethod
+    def deserialize(cls, json_str: str):
+        import json
+
+        data = json.loads(json_str)
+        rv = cls()
+
+        # apply the stored values to the newly created instance.
+        if "parameters" in data:
+            rv.set_values(data["parameters"])
+
+        return rv
 
     def add_parameters(self, parameters: list[TypedParameter]):
         if self._is_locked:
