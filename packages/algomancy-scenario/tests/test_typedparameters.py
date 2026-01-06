@@ -19,6 +19,12 @@ class DummyParams(BaseAlgorithmParameters):
     def __init__(self):
         super().__init__(name="dummy")
 
+        bool_param = BooleanParameter("use_cache", default=False)
+        str_param = StringParameter("mode", default="fast")
+        int_param = IntegerParameter("retries", minvalue=0, maxvalue=10, default=3)
+
+        self.add_parameters([bool_param, str_param, int_param])
+
     def validate(self):
         # For testing, simply ensure all parameters have passable values
         for p in self.get_parameters().values():
@@ -159,12 +165,6 @@ def test_interval_parameter_defaults_and_validation():
 def test_base_algorithm_parameters_add_set_and_helpers():
     params = DummyParams()
 
-    bool_param = BooleanParameter("use_cache", default=False)
-    str_param = StringParameter("mode", default="fast")
-    int_param = IntegerParameter("retries", minvalue=0, maxvalue=10, default=3)
-
-    params.add_parameters([bool_param, str_param, int_param])
-
     # get_boolean_parameter_names should only list the boolean parameter
     assert params.get_boolean_parameter_names() == ["use_cache"]
 
@@ -185,10 +185,42 @@ def test_base_algorithm_parameters_add_set_and_helpers():
     with pytest.raises(ParameterError):
         params.set_values({"unknown": 123})
 
-    # serialize and get_values reflect current values
-    assert params.serialize() == {
+    # get_values reflects current values
+    assert params.get_values() == {
         "use_cache": True,
         "mode": "slow",
         "retries": 4,
     }
-    assert params.get_values() == params.serialize()
+
+    # serialization to appropriate json string
+    import json
+
+    assert params.serialize() == json.dumps(
+        {
+            "name": "dummy",
+            "parameters": {
+                "use_cache": True,
+                "mode": "slow",
+                "retries": 4,
+            },
+        }
+    )
+
+
+def test_base_algorithm_parameters_copy():
+    params = DummyParams()
+
+    # Create the copy
+    params_copy = params.copy()
+
+    # 1. Check they are different objects
+    assert params_copy is not params
+
+    # 2. Check the data is the same
+    assert params_copy.name == params.name
+    assert params_copy.get_values() == params.get_values()
+
+    # 3. Check that changing the copy doesn't affect the original
+    params_copy.set_values({"mode": "slow"})
+    assert params["mode"] == "fast"
+    assert params_copy["mode"] == "slow"
