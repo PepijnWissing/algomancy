@@ -1,4 +1,4 @@
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Optional, Callable
 
 """
 Measurement and unit scaling framework
@@ -76,7 +76,7 @@ Notes
 class Unit:
     """A single unit in a quantity (e.g., m, s, B)
 
-    A `Unit` knows its textual `name` and printable `symbol` and can be linked to
+    A `Unit` knows its printable `symbol` and can be linked to
     an adjacent smaller or larger unit with known conversion factors. These
     links are used by `Measurement` to automatically scale values up or down to
     keep within the configured digit bounds.
@@ -90,8 +90,7 @@ class Unit:
     - `__str__` prints a human-readable description for debugging.
     """
 
-    def __init__(self, name: str, symbol: str):
-        self.name: str = name
+    def __init__(self, symbol: str):
         self.symbol: str = symbol
         self.smaller_unit: "Unit | None" = None
         self.conversion_factor_to_smaller: float | None = None
@@ -99,7 +98,7 @@ class Unit:
         self.conversion_factor_to_larger: float | None = None
 
     def __str__(self):
-        return f"Unit: {self.name}, ({self.symbol})"
+        return f"Unit: {self.symbol}"
 
     def _set_smaller_unit(self, smaller_unit: "Unit", conversion_factor: float):
         self.smaller_unit = smaller_unit
@@ -124,7 +123,7 @@ class Quantity:
     Typical usage
     - Obtain a quantity from the global `QUANTITIES` registry (e.g.,
       `length = QUANTITIES["length"]`).
-    - Access a unit by name (e.g., `length["m"]`).
+    - Access a unit by symbol (e.g., `length["m"]`).
     - Define custom quantities and units if your domain requires them, then
       register them with `QuantityRegistry`.
 
@@ -139,7 +138,7 @@ class Quantity:
         self.name: str = name
         self.standard_unit: Unit = standard_unit
         self.sorted_units: List[Tuple[Unit, float]] = [(standard_unit, 1)]
-        self.associated_units: Dict[str, Unit] = {standard_unit.name: standard_unit}
+        self.associated_units: Dict[str, Unit] = {standard_unit.symbol: standard_unit}
 
     def __getitem__(self, key) -> Unit | None:
         try:
@@ -151,11 +150,11 @@ class Quantity:
             )
 
     def add_unit(self, base_unit: Unit, factor_to_base: float):
-        if base_unit.name in self.associated_units:
+        if base_unit.symbol in self.associated_units:
             raise ValueError(
-                f"Unit '{base_unit.name}' already exists in quantity '{self.name}'"
+                f"Unit '{base_unit.symbol}' already exists in quantity '{self.name}'"
             )
-        self.associated_units[base_unit.name] = base_unit
+        self.associated_units[base_unit.symbol] = base_unit
         self.sorted_units.append((base_unit, factor_to_base))
         self._sort_associated_units()
         self._relink_units()
@@ -189,6 +188,8 @@ class BaseMeasurement:
       value.
     - smallest_unit: Optional name of the smallest unit allowed during scaling.
     - largest_unit: Optional name of the largest unit allowed during scaling.
+    - formatting: Optional function to customize the pretty-printing function.
+    - use_scaling: Optional boolean to indicate whether to use auto-scaling or not.
 
     Typical usage
     ```python
@@ -212,6 +213,8 @@ class BaseMeasurement:
         decimals: int = 2,
         smallest_unit: str | None = None,
         largest_unit: str | None = None,
+        formatter: Optional[Callable[[Measurement], str]] = None,
+        use_scaling: bool = True,
     ):
         self.unit: Unit = base_unit
         self.min_digits: int = min_digits
@@ -219,12 +222,25 @@ class BaseMeasurement:
         self.decimals: int = decimals
         self.smallest_unit: str | None = smallest_unit
         self.largest_unit: str | None = largest_unit
+        self._formatter: Optional[Callable[[Measurement], str]] = formatter
+        self.use_scaling: bool = use_scaling
 
     def __str__(self):
         return (
-            f"{self.unit.name}, {self.unit.symbol} | {self.min_digits} to {self.max_digits} digits |"
+            f"{self.unit.symbol} | {self.min_digits} to {self.max_digits} digits |"
             f" {self.decimals} decimals"
         )
+
+    @property
+    def default_formatter(self) -> Callable[[Measurement], str]:
+        def default_format(measurement: Measurement) -> str:
+            return str(measurement)
+
+        return default_format
+
+    @property
+    def formatter(self) -> Callable[[Measurement], str]:
+        return self._formatter or self.default_formatter
 
 
 class Measurement:
@@ -246,6 +262,8 @@ class Measurement:
     Special values
     - INITIAL_VALUE: Sentinel used as default constructor value. Ensure you
       assign a real value before presenting to users.
+    - MAX_DECIMALS: Static maximum number of decimal places to show in the
+      final formatted string
 
     Common operations
     ```python
@@ -255,37 +273,42 @@ class Measurement:
     print(m.pretty())           # 2.50 km (auto-scales)
 
     other = Measurement(prefs, 1)    # 1 m
-    m.scale_to_unit(other)           # force same unit as `other` (meters)
+    m.scale_to_unit(other) # force same unit as `other` (meters)
     print(m.pretty())           # 2500.00 m
     ```
     """
 
     INITIAL_VALUE = -9999999999
+    MAX_DECIMALS = 10
 
-    def __init__(self, base_measurement: BaseMeasurement, value: float = INITIAL_VALUE):
+    def __init__(
+        self,
+        base_measurement: BaseMeasurement,
+        value: float = INITIAL_VALUE,
+        max_decimals=MAX_DECIMALS,
+    ) -> None:
         self.base_measurement: BaseMeasurement = base_measurement
         self.value: float = value
         self.unit: Unit = base_measurement.unit
+        self.max_decimals: int = max_decimals
 
     def __str__(self):
-        return self.to_string()
-
-    def to_string(self) -> str:
         return f"{self._format_value()} {self.unit.symbol}"
 
+    def get_display_measurement(self):
+        if self.base_measurement.use_scaling:
+            return self.scale()
+        else:
+            return self
+
     def pretty(self) -> str:
-        return f"{str(self.scale())}"
-        if self.value == Measurement.INITIAL_VALUE:
-            return "N/A"
-        scaled = self.scale()
-        formatted = scaled.to_string()
-        return formatted
+        return self.base_measurement.formatter(self.get_display_measurement())
 
     def _format_value(self) -> str:
         """Format the value according to the specified decimal places"""
         return f"{self.value:.{self.base_measurement.decimals}f}"
 
-    def scale(self) -> "Measurement":
+    def scale(self) -> Measurement:
         """Scale the measurement to fit within the desired digit range"""
         # If no value was set, do nothing
         if self.value == Measurement.INITIAL_VALUE:
@@ -352,7 +375,7 @@ class Measurement:
             ValueError: If the measurements are incompatible (different quantity types)
         """
         # If already the same unit, just return a copy with formatted value
-        if self.unit.name == other_unit.name:
+        if self.unit.symbol == other_unit.symbol:
             formatted_value = float(self._format_value())
             return Measurement(
                 BaseMeasurement(
@@ -371,7 +394,7 @@ class Measurement:
 
         if conversion_factor is None:
             raise ValueError(
-                f"Cannot convert from {self.unit.name} to {other_unit.name}: "
+                f"Cannot convert from {self.unit.symbol} to {other_unit.symbol}: "
                 f"units are not in the same quantity system"
             )
 
@@ -408,12 +431,12 @@ class Measurement:
         while queue:
             current_unit, current_factor = queue.pop(0)
 
-            if current_unit.name in visited:
+            if current_unit.symbol in visited:
                 continue
-            visited.add(current_unit.name)
+            visited.add(current_unit.symbol)
 
             # Found the target
-            if current_unit.name == target_unit.name:
+            if current_unit.symbol == target_unit.symbol:
                 return current_factor
 
             # Explore larger unit
@@ -439,7 +462,7 @@ class Measurement:
         # Check if largest_unit constraint prevents scaling
         if (
             self.base_measurement.largest_unit is not None
-            and self.unit.name == self.base_measurement.largest_unit
+            and self.unit.symbol == self.base_measurement.largest_unit
         ):
             formatted_value = float(self._format_value())
             return Measurement(self.base_measurement, formatted_value)
@@ -465,12 +488,20 @@ class Measurement:
         if self.unit.smaller_unit is None:
             # Already at smallest unit, return as is
             formatted_value = float(self._format_value())
+
+            # When formatted value equal to 0.0, add extra decimal. Stop if 9 decimals and still 0.0
+            while (formatted_value == 0.0) and (
+                self.base_measurement.decimals < self.max_decimals
+            ):
+                self.base_measurement.decimals = self.base_measurement.decimals + 1
+                formatted_value = float(self._format_value())
+
             return Measurement(self.base_measurement, formatted_value)
 
         # Check if smallest_unit constraint prevents scaling
         if (
             self.base_measurement.smallest_unit is not None
-            and self.unit.name == self.base_measurement.smallest_unit
+            and self.unit.symbol == self.base_measurement.smallest_unit
         ):
             formatted_value = float(self._format_value())
             return Measurement(self.base_measurement, formatted_value)
@@ -498,239 +529,239 @@ class Measurement:
 
 def create_length_quantity() -> Quantity:
     """Create a length quantity with metric units"""
-    length = Quantity("Length", Unit("m", "m"))
+    length = Quantity("Length", Unit("m"))
     # Smaller units
-    length.add_unit(Unit("mm", "mm"), 0.001)
-    length.add_unit(Unit("cm", "cm"), 0.01)
-    length.add_unit(Unit("dm", "dm"), 0.1)
+    length.add_unit(Unit("mm"), 0.001)
+    length.add_unit(Unit("cm"), 0.01)
+    length.add_unit(Unit("dm"), 0.1)
     # Larger units
-    length.add_unit(Unit("km", "km"), 1_000)
+    length.add_unit(Unit("km"), 1_000)
     # Micro and nano
-    length.add_unit(Unit("μm", "μm"), 0.000_001)
-    length.add_unit(Unit("nm", "nm"), 0.000_000_001)
+    length.add_unit(Unit("μm"), 0.000_001)
+    length.add_unit(Unit("nm"), 0.000_000_001)
     # Mega
-    length.add_unit(Unit("Mm", "Mm"), 1_000_000)
+    length.add_unit(Unit("Mm"), 1_000_000)
     return length
 
 
 def create_mass_quantity() -> Quantity:
     """Create a mass quantity with metric units"""
-    mass = Quantity("Mass", Unit("g", "g"))
+    mass = Quantity("Mass", Unit("g"))
     # Smaller units
-    mass.add_unit(Unit("mg", "mg"), 0.001)
-    mass.add_unit(Unit("μg", "μg"), 0.000_001)
+    mass.add_unit(Unit("mg"), 0.001)
+    mass.add_unit(Unit("μg"), 0.000_001)
     # Larger units
-    mass.add_unit(Unit("kg", "kg"), 1_000)
-    mass.add_unit(Unit("t", "t"), 1_000_000)  # metric ton
-    mass.add_unit(Unit("kt", "kt"), 1_000_000_000)  # kiloton
-    mass.add_unit(Unit("Mt", "Mt"), 1_000_000_000_000)  # megaton
+    mass.add_unit(Unit("kg"), 1_000)
+    mass.add_unit(Unit("t"), 1_000_000)  # metric ton
+    mass.add_unit(Unit("kt"), 1_000_000_000)  # kiloton
+    mass.add_unit(Unit("Mt"), 1_000_000_000_000)  # megaton
     return mass
 
 
 def create_time_quantity() -> Quantity:
     """Create a time quantity with various units"""
-    time = Quantity("Time", Unit("s", "s"))
+    time = Quantity("Time", Unit("s"))
     # Smaller units
-    time.add_unit(Unit("ms", "ms"), 0.001)
-    time.add_unit(Unit("μs", "μs"), 0.000_001)
-    time.add_unit(Unit("ns", "ns"), 0.000_000_001)
+    time.add_unit(Unit("ms"), 0.001)
+    time.add_unit(Unit("μs"), 0.000_001)
+    time.add_unit(Unit("ns"), 0.000_000_001)
     # Larger units
-    time.add_unit(Unit("min", "min"), 60)
-    time.add_unit(Unit("h", "h"), 3_600)
-    time.add_unit(Unit("d", "d"), 86_400)
-    time.add_unit(Unit("wk", "wk"), 604_800)
-    time.add_unit(Unit("yr", "yr"), 31_536_000)
+    time.add_unit(Unit("min"), 60)
+    time.add_unit(Unit("h"), 3_600)
+    time.add_unit(Unit("d"), 86_400)
+    time.add_unit(Unit("wk"), 604_800)
+    time.add_unit(Unit("yr"), 31_536_000)
     return time
 
 
 def create_area_quantity() -> Quantity:
     """Create an area quantity with metric units"""
-    area = Quantity("Area", Unit("m²", "m²"))
+    area = Quantity("Area", Unit("m²"))
     # Smaller units
-    area.add_unit(Unit("mm²", "mm²"), 0.000_001)
-    area.add_unit(Unit("cm²", "cm²"), 0.0001)
-    area.add_unit(Unit("dm²", "dm²"), 0.01)
+    area.add_unit(Unit("mm²"), 0.000_001)
+    area.add_unit(Unit("cm²"), 0.0001)
+    area.add_unit(Unit("dm²"), 0.01)
     # Larger units
-    area.add_unit(Unit("km²", "km²"), 1_000_000)
-    area.add_unit(Unit("ha", "ha"), 10_000)  # hectare
+    area.add_unit(Unit("km²"), 1_000_000)
+    area.add_unit(Unit("ha"), 10_000)  # hectare
     return area
 
 
 def create_volume_quantity() -> Quantity:
     """Create a volume quantity with metric units"""
-    volume = Quantity("Volume", Unit("L", "L"))
+    volume = Quantity("Volume", Unit("L"))
     # Smaller units
-    volume.add_unit(Unit("mL", "mL"), 0.001)
-    volume.add_unit(Unit("cL", "cL"), 0.01)
-    volume.add_unit(Unit("dL", "dL"), 0.1)
+    volume.add_unit(Unit("mL"), 0.001)
+    volume.add_unit(Unit("cL"), 0.01)
+    volume.add_unit(Unit("dL"), 0.1)
     # Larger units
-    volume.add_unit(Unit("m³", "m³"), 1_000)
-    volume.add_unit(Unit("kL", "kL"), 1_000)
+    volume.add_unit(Unit("m³"), 1_000)
+    volume.add_unit(Unit("kL"), 1_000)
     # Very small
-    volume.add_unit(Unit("μL", "μL"), 0.000_001)
+    volume.add_unit(Unit("μL"), 0.000_001)
     return volume
 
 
 def create_speed_quantity() -> Quantity:
     """Create a speed quantity"""
-    speed = Quantity("Speed", Unit("m/s", "m/s"))
-    speed.add_unit(Unit("km/h", "km/h"), 0.277778)
-    speed.add_unit(Unit("cm/s", "cm/s"), 0.01)
-    speed.add_unit(Unit("mm/s", "mm/s"), 0.001)
+    speed = Quantity("Speed", Unit("m/s"))
+    speed.add_unit(Unit("km/h"), 0.277778)
+    speed.add_unit(Unit("cm/s"), 0.01)
+    speed.add_unit(Unit("mm/s"), 0.001)
     return speed
 
 
 def create_temperature_quantity() -> Quantity:
     """Create a temperature quantity (Celsius scale)"""
-    temp = Quantity("Temperature", Unit("°C", "°C"))
+    temp = Quantity("Temperature", Unit("°C"))
     # Note: These are NOT convertible via simple multiplication
     # This is a simplified example - real temperature conversion needs offset
-    temp.add_unit(Unit("K", "K"), 1)  # Kelvin (simplified)
+    temp.add_unit(Unit("K"), 1)  # Kelvin (simplified)
     return temp
 
 
 def create_energy_quantity() -> Quantity:
     """Create an energy quantity"""
-    energy = Quantity("Energy", Unit("J", "J"))
+    energy = Quantity("Energy", Unit("J"))
     # Smaller units
-    energy.add_unit(Unit("mJ", "mJ"), 0.001)
-    energy.add_unit(Unit("μJ", "μJ"), 0.000_001)
+    energy.add_unit(Unit("mJ"), 0.001)
+    energy.add_unit(Unit("μJ"), 0.000_001)
     # Larger units
-    energy.add_unit(Unit("kJ", "kJ"), 1_000)
-    energy.add_unit(Unit("MJ", "MJ"), 1_000_000)
-    energy.add_unit(Unit("GJ", "GJ"), 1_000_000_000)
-    energy.add_unit(Unit("kWh", "kWh"), 3_600_000)
-    energy.add_unit(Unit("MWh", "MWh"), 3_600_000_000)
+    energy.add_unit(Unit("kJ"), 1_000)
+    energy.add_unit(Unit("MJ"), 1_000_000)
+    energy.add_unit(Unit("GJ"), 1_000_000_000)
+    energy.add_unit(Unit("kWh"), 3_600_000)
+    energy.add_unit(Unit("MWh"), 3_600_000_000)
     return energy
 
 
 def create_power_quantity() -> Quantity:
     """Create a power quantity"""
-    power = Quantity("Power", Unit("W", "W"))
+    power = Quantity("Power", Unit("W"))
     # Smaller units
-    power.add_unit(Unit("mW", "mW"), 0.001)
-    power.add_unit(Unit("μW", "μW"), 0.000_001)
+    power.add_unit(Unit("mW"), 0.001)
+    power.add_unit(Unit("μW"), 0.000_001)
     # Larger units
-    power.add_unit(Unit("kW", "kW"), 1_000)
-    power.add_unit(Unit("MW", "MW"), 1_000_000)
-    power.add_unit(Unit("GW", "GW"), 1_000_000_000)
+    power.add_unit(Unit("kW"), 1_000)
+    power.add_unit(Unit("MW"), 1_000_000)
+    power.add_unit(Unit("GW"), 1_000_000_000)
     return power
 
 
 def create_pressure_quantity() -> Quantity:
     """Create a pressure quantity"""
-    pressure = Quantity("Pressure", Unit("Pa", "Pa"))
+    pressure = Quantity("Pressure", Unit("Pa"))
     # Smaller/Larger units
-    pressure.add_unit(Unit("kPa", "kPa"), 1_000)
-    pressure.add_unit(Unit("MPa", "MPa"), 1_000_000)
-    pressure.add_unit(Unit("bar", "bar"), 100_000)
-    pressure.add_unit(Unit("mbar", "mbar"), 100)
+    pressure.add_unit(Unit("kPa"), 1_000)
+    pressure.add_unit(Unit("MPa"), 1_000_000)
+    pressure.add_unit(Unit("bar"), 100_000)
+    pressure.add_unit(Unit("mbar"), 100)
     return pressure
 
 
 def create_frequency_quantity() -> Quantity:
     """Create a frequency quantity"""
-    frequency = Quantity("Frequency", Unit("Hz", "Hz"))
-    frequency.add_unit(Unit("kHz", "kHz"), 1_000)
-    frequency.add_unit(Unit("MHz", "MHz"), 1_000_000)
-    frequency.add_unit(Unit("GHz", "GHz"), 1_000_000_000)
-    frequency.add_unit(Unit("mHz", "mHz"), 0.001)
+    frequency = Quantity("Frequency", Unit("Hz"))
+    frequency.add_unit(Unit("kHz"), 1_000)
+    frequency.add_unit(Unit("MHz"), 1_000_000)
+    frequency.add_unit(Unit("GHz"), 1_000_000_000)
+    frequency.add_unit(Unit("mHz"), 0.001)
     return frequency
 
 
 def create_data_quantity() -> Quantity:
     """Create a data storage quantity (binary)"""
-    data = Quantity("Data", Unit("B", "B"))
+    data = Quantity("Data", Unit("B"))
     # Binary prefixes (IEC standard)
-    data.add_unit(Unit("KiB", "KiB"), 1_024)
-    data.add_unit(Unit("MiB", "MiB"), 1_048_576)
-    data.add_unit(Unit("GiB", "GiB"), 1_073_741_824)
-    data.add_unit(Unit("TiB", "TiB"), 1_099_511_627_776)
-    data.add_unit(Unit("PiB", "PiB"), 1_125_899_906_842_624)
+    data.add_unit(Unit("KiB"), 1_024)
+    data.add_unit(Unit("MiB"), 1_048_576)
+    data.add_unit(Unit("GiB"), 1_073_741_824)
+    data.add_unit(Unit("TiB"), 1_099_511_627_776)
+    data.add_unit(Unit("PiB"), 1_125_899_906_842_624)
     return data
 
 
 def create_data_decimal_quantity() -> Quantity:
     """Create a data storage quantity (decimal)"""
-    data = Quantity("Data (Decimal)", Unit("B", "B"))
+    data = Quantity("Data (Decimal)", Unit("B"))
     # Decimal prefixes (SI standard)
-    data.add_unit(Unit("KB", "KB"), 1_000)
-    data.add_unit(Unit("MB", "MB"), 1_000_000)
-    data.add_unit(Unit("GB", "GB"), 1_000_000_000)
-    data.add_unit(Unit("TB", "TB"), 1_000_000_000_000)
-    data.add_unit(Unit("PB", "PB"), 1_000_000_000_000_000)
+    data.add_unit(Unit("KB"), 1_000)
+    data.add_unit(Unit("MB"), 1_000_000)
+    data.add_unit(Unit("GB"), 1_000_000_000)
+    data.add_unit(Unit("TB"), 1_000_000_000_000)
+    data.add_unit(Unit("PB"), 1_000_000_000_000_000)
     return data
 
 
 def create_money_quantity() -> Quantity:
     """Create a money quantity with scaling prefixes"""
-    money = Quantity("Money", Unit("$", "$"))
-    money.add_unit(Unit("k$", "k$"), 1_000)
-    money.add_unit(Unit("M$", "M$"), 1_000_000)
-    money.add_unit(Unit("B$", "B$"), 1_000_000_000)
-    money.add_unit(Unit("T$", "T$"), 1_000_000_000_000)
+    money = Quantity("Money", Unit("$"))
+    money.add_unit(Unit("k$"), 1_000)
+    money.add_unit(Unit("M$"), 1_000_000)
+    money.add_unit(Unit("B$"), 1_000_000_000)
+    money.add_unit(Unit("T$"), 1_000_000_000_000)
     # Cents
-    money.add_unit(Unit("¢", "¢"), 0.01)
+    money.add_unit(Unit("¢"), 0.01)
     return money
 
 
 def create_currency_quantity(symbol: str, name: str) -> Quantity:
     """Create a generic currency quantity"""
-    currency = Quantity(name, Unit(symbol, symbol))
-    currency.add_unit(Unit(f"k{symbol}", f"k{symbol}"), 1_000)
-    currency.add_unit(Unit(f"M{symbol}", f"M{symbol}"), 1_000_000)
-    currency.add_unit(Unit(f"B{symbol}", f"B{symbol}"), 1_000_000_000)
+    currency = Quantity(name, Unit(symbol))
+    currency.add_unit(Unit(f"k{symbol}"), 1_000)
+    currency.add_unit(Unit(f"M{symbol}"), 1_000_000)
+    currency.add_unit(Unit(f"B{symbol}"), 1_000_000_000)
     return currency
 
 
 def create_percentage_quantity() -> Quantity:
     """Create a percentage quantity"""
-    percentage = Quantity("Percentage", Unit("%", "%"))
-    percentage.add_unit(Unit("‰", "‰"), 0.1)  # per mille
-    percentage.add_unit(Unit("bp", "bp"), 0.01)  # basis points
+    percentage = Quantity("Percentage", Unit("%"))
+    percentage.add_unit(Unit("‰"), 0.1)  # per mille
+    percentage.add_unit(Unit("bp"), 0.01)  # basis points
     return percentage
 
 
 def create_count_quantity() -> Quantity:
     """Create a generic count quantity for items"""
-    count = Quantity("Count", Unit("", ""))
-    count.add_unit(Unit("k", "k"), 1_000)
-    count.add_unit(Unit("M", "M"), 1_000_000)
-    count.add_unit(Unit("B", "B"), 1_000_000_000)
+    count = Quantity("Count", Unit(""))
+    count.add_unit(Unit("k"), 1_000)
+    count.add_unit(Unit("M"), 1_000_000)
+    count.add_unit(Unit("B"), 1_000_000_000)
     return count
 
 
 def create_electric_current_quantity() -> Quantity:
     """Create an electric current quantity"""
-    current = Quantity("Electric Current", Unit("A", "A"))
-    current.add_unit(Unit("mA", "mA"), 0.001)
-    current.add_unit(Unit("μA", "μA"), 0.000_001)
-    current.add_unit(Unit("kA", "kA"), 1_000)
+    current = Quantity("Electric Current", Unit("A"))
+    current.add_unit(Unit("mA"), 0.001)
+    current.add_unit(Unit("μA"), 0.000_001)
+    current.add_unit(Unit("kA"), 1_000)
     return current
 
 
 def create_voltage_quantity() -> Quantity:
     """Create a voltage quantity"""
-    voltage = Quantity("Voltage", Unit("V", "V"))
-    voltage.add_unit(Unit("mV", "mV"), 0.001)
-    voltage.add_unit(Unit("μV", "μV"), 0.000_001)
-    voltage.add_unit(Unit("kV", "kV"), 1_000)
-    voltage.add_unit(Unit("MV", "MV"), 1_000_000)
+    voltage = Quantity("Voltage", Unit("V"))
+    voltage.add_unit(Unit("mV"), 0.001)
+    voltage.add_unit(Unit("μV"), 0.000_001)
+    voltage.add_unit(Unit("kV"), 1_000)
+    voltage.add_unit(Unit("MV"), 1_000_000)
     return voltage
 
 
 def create_resistance_quantity() -> Quantity:
     """Create an electrical resistance quantity"""
-    resistance = Quantity("Resistance", Unit("Ω", "Ω"))
-    resistance.add_unit(Unit("mΩ", "mΩ"), 0.001)
-    resistance.add_unit(Unit("kΩ", "kΩ"), 1_000)
-    resistance.add_unit(Unit("MΩ", "MΩ"), 1_000_000)
+    resistance = Quantity("Resistance", Unit("Ω"))
+    resistance.add_unit(Unit("mΩ"), 0.001)
+    resistance.add_unit(Unit("kΩ"), 1_000)
+    resistance.add_unit(Unit("MΩ"), 1_000_000)
     return resistance
 
 
 def create_default_quantity() -> Quantity:
     """Create a default quantity with a single unit"""
-    default = Quantity("Default", Unit("unit", ""))
+    default = Quantity("Default", Unit("unit"))
     # default.add_unit(BaseUnit("default", ""), 1)
     return default
 
@@ -828,7 +859,17 @@ def example_usage():
     length = QUANTITIES["length"]
     length_m = BaseMeasurement(length["m"], min_digits=1, max_digits=3, decimals=2)
 
-    examples = [0.000005, 0.025, 2.5, 250, 25_000, 2_500_000]
+    examples = [
+        0.000_000_000_01,
+        0.000_000_000_000_1,
+        0.000_000_000_000_000_000_1,
+        0.000_000_000_000_000_000_000_000_000_1,
+        0.025123,
+        2.5,
+        250,
+        25_000,
+        2_500_000,
+    ]
     for val in examples:
         m = Measurement(length_m, val)
         print(f"{val:>15} m -> {m.pretty()}")
@@ -839,6 +880,16 @@ def example_usage():
 
     for val in [0.5, 50, 5_000, 500_000, 50_000_000]:
         m = Measurement(mass_g, val)
+        print(f"{val:>15} g -> {m.pretty()}")
+
+    print("\n=== Mass Examples, no scaling ===")
+    mass = QUANTITIES["mass"]
+    mass_g_nsc = BaseMeasurement(
+        mass["g"], min_digits=1, max_digits=3, decimals=2, use_scaling=False
+    )
+
+    for val in [0.5, 50, 5_000, 500_000, 50_000_000]:
+        m = Measurement(mass_g_nsc, val)
         print(f"{val:>15} g -> {m.pretty()}")
 
     print("\n=== Time Examples ===")
@@ -856,6 +907,35 @@ def example_usage():
     for val in [0.50, 50, 1_234_567, 5_000_000_000, 1_500_000_000_000]:
         m = Measurement(money_usd, val)
         print(f"${val:>18,.2f} -> {m.pretty()}")
+
+    print("\n=== Custom Currency Example (EUR) ===")
+    eur = create_currency_quantity("€", "Euro")
+    eur_base = BaseMeasurement(eur["€"], min_digits=1, max_digits=3, decimals=2)
+
+    for val in [50, 5_000, 500_000, 50_000_000]:
+        m = Measurement(eur_base, val)
+        print(f"€{val:>15,.2f} -> {m.pretty()}")
+
+    def format_euro(meas: Measurement) -> str:
+        value = meas.value
+        unit = meas.unit.symbol
+
+        return f"{unit} {value:,.2f}"
+
+    print("\n=== Custom Currency Example (EUR), own formatting, no scaling ===")
+    eur = create_currency_quantity("€", "Euro")
+    eur_base = BaseMeasurement(
+        eur["€"],
+        min_digits=1,
+        max_digits=3,
+        decimals=2,
+        formatter=format_euro,
+        use_scaling=False,
+    )
+
+    for val in [50, 5_000, 500_000, 50_000_000]:
+        m = Measurement(eur_base, val)
+        print(f"€{val:>15,.2f} -> {m.pretty()}")
 
     print("\n=== Data Storage Examples (Binary) ===")
     data = QUANTITIES["data"]
@@ -880,14 +960,6 @@ def example_usage():
     for val in [0.5, 500, 500_000, 3_600_000, 3_600_000_000]:
         m = Measurement(energy_j, val)
         print(f"{val:>15} J -> {m.pretty()}")
-
-    print("\n=== Custom Currency Example (EUR) ===")
-    eur = create_currency_quantity("€", "Euro")
-    eur_base = BaseMeasurement(eur["€"], min_digits=1, max_digits=3, decimals=2)
-
-    for val in [50, 5_000, 500_000, 50_000_000]:
-        m = Measurement(eur_base, val)
-        print(f"€{val:>15,.2f} -> {m.pretty()}")
 
     print("\n=== Scale to Same Unit Examples ===")
     # Example 1: Different lengths in different units
