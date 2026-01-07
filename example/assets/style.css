@@ -1,7 +1,7 @@
-@import url('/example/assetse/assets/css/theme_colors.css');
-@import url('/example/assetse/assets/css/sidebar_layout.css');
-@import url('/example/assetse/assets/css/button_colors.css');
-@import url('/example/assetse/assets/css/cqm_loader.css');
+@import url('/example/assets/css/theme_colors.css');
+@import url('/example/assets/css/sidebar_layout.css');
+@import url('/example/assets/css/button_colors.css');
+@import url('/example/assets/css/cqm_loader.css');
 
 /* =========================
    Base elements & utilities
@@ -406,4 +406,16 @@ hr {
 
 .scenario-page-content {
     min-height: 500px;
+}
+
+/* Prevent initial flash of loading spinner */
+.loading-wrapper > div:first-child {
+    opacity: 0;
+    animation: fadeInSpinner 0.1s ease-in 2s forwards;
+}
+
+@keyframes fadeInSpinner {
+    to {
+        opacity: 1;
+    }
 }

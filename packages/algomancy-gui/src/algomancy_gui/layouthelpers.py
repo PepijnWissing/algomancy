@@ -22,7 +22,8 @@ def create_wrapped_content_div(
                 overlay_style={"visibility": "visible", "filter": "blur(2px)"},
                 custom_spinner=spinner,
                 delay_hide=0,
-                delay_show=100,
+                delay_show=200,
+                className="loading-wrapper",
             ),
         )
     else:
