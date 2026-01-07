@@ -4,12 +4,12 @@ from algomancy_data import DataSource
 from algomancy_scenario import (
     ScenarioResult,
     BaseAlgorithm,
-    BaseAlgorithmParameters,
+    BaseParameterSet,
     FloatParameter,
 )
 
 
-class RandomAlgorithmParameters(BaseAlgorithmParameters):
+class RandomParameterSet(BaseParameterSet):
     def __init__(
         self,
         name: str = "Random",
@@ -30,13 +30,13 @@ class RandomAlgorithmParameters(BaseAlgorithmParameters):
 class RandomAlgorithm(BaseAlgorithm):
     def __init__(
         self,
-        params: RandomAlgorithmParameters,
+        params: RandomParameterSet,
     ):
         super().__init__(name="Random", params=params)
 
     @staticmethod
-    def initialize_parameters() -> RandomAlgorithmParameters:
-        return RandomAlgorithmParameters()
+    def initialize_parameters() -> RandomParameterSet:
+        return RandomParameterSet()
 
     def run(self, data: DataSource) -> ScenarioResult:
         sleep(self.params.variance)

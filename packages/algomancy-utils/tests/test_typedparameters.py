@@ -1,6 +1,6 @@
 import pytest
 
-from algomancy_scenario.basealgorithmparameters import (
+from algomancy_utils.baseparameterset import (
     StringParameter,
     EnumParameter,
     MultiEnumParameter,
@@ -9,13 +9,13 @@ from algomancy_scenario.basealgorithmparameters import (
     BooleanParameter,
     TimeParameter,
     IntervalParameter,
-    BaseAlgorithmParameters,
+    BaseParameterSet,
     ParameterError,
 )
 from datetime import datetime, timedelta
 
 
-class DummyParams(BaseAlgorithmParameters):
+class DummyParams(BaseParameterSet):
     def __init__(self):
         super().__init__(name="dummy")
 

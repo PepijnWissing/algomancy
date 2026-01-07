@@ -167,9 +167,9 @@ class NumericParameter(TypedParameter, ABC):
         self.max = maxvalue
 
         if minvalue is not None and maxvalue is not None:
-            assert (
-                minvalue <= maxvalue
-            ), "Minimum value must be less than or equal to maximum value."
+            assert minvalue <= maxvalue, (
+                "Minimum value must be less than or equal to maximum value."
+            )
 
         if value is not None:
             self.set_validated_value(value)
@@ -374,7 +374,7 @@ class PostInitMeta(ABCMeta):
         return instance
 
 
-class BaseAlgorithmParameters(ABC, metaclass=PostInitMeta):
+class BaseParameterSet(ABC, metaclass=PostInitMeta):
     def __init__(self, name: str) -> None:
         self.name: str = name
         self._parameters: Dict[str, TypedParameter] = {}
@@ -468,10 +468,10 @@ class BaseAlgorithmParameters(ABC, metaclass=PostInitMeta):
                     dct[key] = False
 
 
-BASE_PARAMS_BOUND = TypeVar("BASE_PARAMS_BOUND", bound=BaseAlgorithmParameters)
+BASE_PARAMS_BOUND = TypeVar("BASE_PARAMS_BOUND", bound=BaseParameterSet)
 
 
-class EmptyParameters(BaseAlgorithmParameters):
+class EmptyParameters(BaseParameterSet):
     def __init__(self) -> None:
         super().__init__(name="empty")
 

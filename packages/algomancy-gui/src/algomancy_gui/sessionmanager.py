@@ -8,7 +8,7 @@ from algomancy_scenario import (
     ScenarioManager,
     BaseKPI,
     BaseAlgorithm,
-    BaseAlgorithmParameters,
+    BaseParameterSet,
 )
 
 
@@ -79,9 +79,9 @@ class SessionManager:
         # Components
         self._sessions = {}
         if self._has_persistent_state:
-            assert (
-                data_folder
-            ), "Data folder must be specified if a persistent state is used."
+            assert data_folder, (
+                "Data folder must be specified if a persistent state is used."
+            )
 
             sessions = self._determine_sessions_from_folder(data_folder)
             for session_name, session_path in sessions.items():
@@ -148,7 +148,7 @@ class SessionManager:
     def start_session_name(self) -> str:
         return self._start_session_name
 
-    def get_algorithm_parameters(self, key) -> BaseAlgorithmParameters:
+    def get_algorithm_parameters(self, key) -> BaseParameterSet:
         template: Type[BaseAlgorithm] = self._algo_templates.get(key)
         if template is None:
             raise KeyError(f"Unable to find template {key} in the available templates.")

@@ -4,10 +4,10 @@ import dash_bootstrap_components as dbc
 from dash import html, get_app, dcc
 from typing import Dict
 
-from algomancy_scenario.basealgorithmparameters import (
+from algomancy_utils.baseparameterset import (
     TypedParameter,
     ParameterType,
-    BaseAlgorithmParameters,
+    BaseParameterSet,
 )
 from algomancy_gui.componentids import (
     ALGO_PARAMS_ENTRY_CARD,
@@ -110,7 +110,7 @@ def create_input_group(param_dict: Dict[str, TypedParameter]):
 
 def create_algo_parameters_entry_card_body(template_name: str) -> dbc.CardBody:
     session_manager: SessionManager = get_app().server.session_manager
-    algo_params: BaseAlgorithmParameters = session_manager.get_algorithm_parameters(
+    algo_params: BaseParameterSet = session_manager.get_algorithm_parameters(
         template_name
     )
     assert algo_params.has_inputs(), "No parameters found for algorithm template."

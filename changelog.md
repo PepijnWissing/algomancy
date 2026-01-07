@@ -3,8 +3,9 @@
 _Changes since commit `caf15159` (as of 07-01-2026)_
 
 ### Added
-- Added `copy()` to `BaseAlgorithmParameters` and corresponding tests.
-- Introduced locking to `AlgorithmParameters` to prevent concurrent mutation.
+- **[Breaking]** Renamed `BaseAlgorithmParameters` to `BaseParameterSet` and moved to `algomancy-utils` in preparation for data parameters
+- Added `copy()` to `BaseParameterSet` and corresponding tests.
+- Introduced locking to `BaseParameterSet` to prevent concurrent mutation.
 - Added `get_parameters` responsibility across factories/facades and session manager.
 - Work-in-progress Command Line Interface (CLI).
 
@@ -112,33 +113,34 @@ Two new parameter families were added in `algomancy_scenario.basealgorithmparame
 - `TimeParameter` and `IntervalParameter`: capture a specific time (`HH:MM[:SS]`) and a time interval (start/end) respectively.
 
 #### Examples
+
 ```python
-from algomancy_scenario.basealgorithmparameters import (
-    MultiEnumParameter,
-    TimeParameter,
-    IntervalParameter,
+from algomancy_utils.baseparameterset import (
+  MultiEnumParameter,
+  TimeParameter,
+  IntervalParameter,
 )
 
 # Multi-select example
 select_products = MultiEnumParameter(
-    name="products",
-    choices=["A", "B", "C"],
-    value=["A", "C"],  # user may select multiple
-    required=True,
+  name="products",
+  choices=["A", "B", "C"],
+  value=["A", "C"],  # user may select multiple
+  required=True,
 )
 
 # Time of day example (24h)
 cutoff_time = TimeParameter(
-    name="cutoff_time",
-    value="14:30",
-    required=False,
+  name="cutoff_time",
+  value="14:30",
+  required=False,
 )
 
 # Interval example (start/end times)
 processing_window = IntervalParameter(
-    name="processing_window",
-    start="08:00",
-    end="17:30",
+  name="processing_window",
+  start="08:00",
+  end="17:30",
 )
 ```
 

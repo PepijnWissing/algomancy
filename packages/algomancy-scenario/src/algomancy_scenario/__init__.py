@@ -1,5 +1,5 @@
-from .basealgorithmparameters import (
-    BaseAlgorithmParameters,
+from algomancy_utils.baseparameterset import (
+    BaseParameterSet,
     IntegerParameter,
     StringParameter,
     EnumParameter,
@@ -15,7 +15,7 @@ from .basealgorithm import ALGORITHM, BaseAlgorithm
 
 
 __all__ = [
-    "BaseAlgorithmParameters",
+    "BaseParameterSet",
     "IntegerParameter",
     "StringParameter",
     "EnumParameter",

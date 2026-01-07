@@ -9,7 +9,7 @@ from algomancy_data import (
 )
 from algomancy_utils.logger import Logger, MessageStatus
 from .basealgorithm import ALGORITHM
-from .basealgorithmparameters import BASE_PARAMS_BOUND
+from algomancy_utils.baseparameterset import BASE_PARAMS_BOUND
 
 from .keyperformanceindicator import BASE_KPI
 from .scenario import Scenario
@@ -71,9 +71,9 @@ class ScenarioManager:
 
         # Components
         if self._has_persistent_state:
-            assert (
-                data_folder
-            ), "Data folder must be specified if data manager has state."
+            assert data_folder, (
+                "Data folder must be specified if data manager has state."
+            )
             self._dm = StatefulDataManager(
                 etl_factory=etl_factory,
                 input_configs=input_configs,
@@ -167,9 +167,9 @@ class ScenarioManager:
         self, data_key: str, prevent_masterdata_removal: bool = False
     ) -> None:
         # prevent delete if used by scenarios
-        assert (
-            data_key not in self._registry.used_datasets()
-        ), "Cannot delete data used in scenarios."
+        assert data_key not in self._registry.used_datasets(), (
+            "Cannot delete data used in scenarios."
+        )
         self._dm.delete_data(data_key, prevent_masterdata_removal)
 
     def store_data(self, dataset_name: str, data):

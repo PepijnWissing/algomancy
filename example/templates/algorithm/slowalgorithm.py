@@ -2,14 +2,14 @@ from time import sleep
 
 from algomancy_data import DataSource
 from algomancy_scenario import (
-    BaseAlgorithmParameters,
+    BaseParameterSet,
     ScenarioResult,
     BaseAlgorithm,
     IntegerParameter,
 )
 
 
-class SlowAlgorithmParams(BaseAlgorithmParameters):
+class SlowAlgorithmParams(BaseParameterSet):
     def __init__(self, name: str = "Slow") -> None:
         super().__init__(name=name)
 

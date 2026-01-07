@@ -1,6 +1,4 @@
-from algomancy_scenario.basealgorithmparameters import (
-    EmptyParameters,
-)
+from algomancy_utils.baseparameterset import EmptyParameters
 from typing import Dict, Any, List, Type, Generic
 
 from algomancy_utils.logger import Logger

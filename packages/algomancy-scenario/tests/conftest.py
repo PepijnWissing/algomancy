@@ -33,7 +33,7 @@ from algomancy_utils import Logger, BaseMeasurement, QUANTITIES
 from time import sleep
 
 from algomancy_scenario import (
-    BaseAlgorithmParameters,
+    BaseParameterSet,
     ScenarioResult,
     BaseAlgorithm,
     IntegerParameter,
@@ -309,7 +309,7 @@ class ExampleETLFactory(ETLFactory):
         return DataSourceLoader(self.logger)
 
 
-class SlowAlgorithmParams(BaseAlgorithmParameters):
+class SlowAlgorithmParams(BaseParameterSet):
     def __init__(self, name: str = "Slow") -> None:
         super().__init__(name=name)
 
