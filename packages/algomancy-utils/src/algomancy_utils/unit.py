@@ -246,6 +246,8 @@ class Measurement:
     Special values
     - INITIAL_VALUE: Sentinel used as default constructor value. Ensure you
       assign a real value before presenting to users.
+    - MAX_DECIMALS: Static maximum number of decimal places to show in the
+      final formatted string
 
     Common operations
     ```python
@@ -261,17 +263,20 @@ class Measurement:
     """
 
     INITIAL_VALUE = -9999999999
+    MAX_DECIMALS = 10
 
     def __init__(
         self,
         base_measurement: BaseMeasurement,
         value: float = INITIAL_VALUE,
+        max_decimals=MAX_DECIMALS,
         formatter: Optional[Callable[[Measurement], str]] = None,
         use_scaling: bool = True,
     ) -> None:
         self.base_measurement: BaseMeasurement = base_measurement
         self.value: float = value
         self.unit: Unit = base_measurement.unit
+        self.max_decimals: int = max_decimals
         self.format: Optional[Callable[[Measurement], str]] = formatter
         self.use_scaling: bool = use_scaling
 
@@ -474,8 +479,8 @@ class Measurement:
 
             # When formatted value equal to 0.0, add extra decimal. Stop if 9 decimals and still 0.0
             while (formatted_value == 0.0) and (
-                self.base_measurement.decimals < 10
-            ):  # todo remove magic number 10
+                self.base_measurement.decimals < self.max_decimals
+            ):
                 self.base_measurement.decimals = self.base_measurement.decimals + 1
                 formatted_value = float(self._format_value())
 
