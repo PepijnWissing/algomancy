@@ -1,4 +1,301 @@
 # Change log
+## 0.3.4
+_Released at 07-01-2026_
+
+### Added
+- Added `copy()` to `BaseParameterSet` and corresponding tests.
+- Introduced locking to `BaseParameterSet` to prevent concurrent mutation.
+- Added `get_parameters` responsibility across factories/facades and session manager.
+- Work-in-progress Command Line Interface (CLI).
+
+### Changed
+- **[Breaking]** Renamed `BaseAlgorithmParameters` to `BaseParameterSet` and moved to `algomancy-utils` in preparation for data parameters
+- Migration to UV workspaces for the monorepo structure.
+- Units/measurements refactor in `algomancy-utils`: moved formatting to `BaseMeasurement`; removed `Unit.name`.
+- Various import path updates across packages after workspace migration.
+- **[Breaking] algomancy-data (ETL): Unified ETL pipeline concepts.**
+  - Introduced `ExtractionSequence` and `TransformationSequence` as the orchestration primitives for extract and transform steps.
+  - `ETLPipeline` now accepts `extraction_sequence` and `transformation_sequence` instead of a dict of `extractors` and a list of `transformers`.
+  - `ETLFactory` abstract methods have been renamed:
+    - `create_extractors(...)` → `create_extraction_sequence(...)`
+    - `create_transformers()` → `create_transformation_sequence()`
+  - Validation continues to use `ValidationSequence` unchanged.
+  - See updated examples in `example/data_handling/factories.py` and implementation in:
+    - `packages/algomancy-data/src/algomancy_data/etl.py`
+    - `packages/algomancy-data/src/algomancy_data/extractor.py`
+    - `packages/algomancy-data/src/algomancy_data/transformer.py`
+
+#### Migration notes (ETL)
+- Replace factory method implementations and usages:
+  - Implement `create_extraction_sequence(files)` to build and return an `ExtractionSequence` (use `sequence.add_extractor(...)`).
+  - Implement `create_transformation_sequence()` to build and return a `TransformationSequence` (use `sequence.add_transformer(...)`).
+- When constructing `ETLPipeline`, pass the sequences instead of individual collections.
+
+### Fixed
+- GUI: fixed slider issue on showcase page; ensured overview loads immediately; reduced layout snapping on data page; hidden dummy card; hid initial loader flash via CSS; cleaned up legacy callbacks; verified callback field necessity using `get_parameters`.
+- Tests: updated and fixed several tests (including utils unit tests; temporary intentionally failing test removed/fixed).
+
+### CI/CD
+- Multiple pipeline updates for CI and CD, including result publication tweaks and cache adjustments.
+
+### Misc
+- Minor documentation updates and code cleanups.
+
+## 0.3.3
+_Released at 12-12-2025_
+
+### Summary
+- **Breaking:** Content pages moved to a protocol/class-based system. Instead of passing content functions, the frontend now receives Page classes. This aligns page composition with the new `BaseAlgorithm`/`BaseKPI` patterns.
+- Parameters
+  - Added Multi-select parameter support via `MultiEnumParameter`.
+  - Added time-related parameters `TimeParameter` and `IntervalParameter` with frontend input components.
+- Added a configuration option that shows/hides the _Upload_ tab for parameter selection. Default is hidden. 
+- Added a _ standard_ data page that uses the `tables` attribute of the data container to render simple DashTables. 
+
+### Migration to Page classes (breaking)
+Prior to this release, pages were typically supplied to the app as plain content functions. As of v0.3.2, pages are defined as classes that satisfy the page protocol and are passed to the frontend by type (class) rather than by function reference.
+
+The content classes need to follow the appropriate `Protocol`s. That is, implement the required fuctions with signature.
+These protocols are enforced by validation of the AppConfiguration.
+An outline of the expected functions is included below. 
+- HomePage:
+  - `create_content() -> html.Div`
+  - `register_callbacks() -> None`
+- DataPage:
+  - `create_content(data: BASE_DATA_BOUND) -> html.Div`
+  - `register_callbacks() -> None`
+- ScenarioPage:
+  - `create_content(scenario: Scenario) -> html.Div`
+  - `register_callbacks() -> None`
+- ComparePage:
+  - `create_side_by_side_content(scenario: Scenario, side: str) -> html.Div`
+  - `create_compare_section(left: Scenario, right: Scenario) -> html.Div:`
+  - `create_details_section(left: Scenario, right: Scenario) -> html.Div`
+  - `register_callbacks() -> None`
+- OverviewPage:
+  - `create_content(List[Scenario]) -> html.Div`
+  - `register_callbacks() -> None`
+
+Below is a conceptual before/after to illustrate the change.
+
+**Old version (functions passed to the frontend)**
+
+```python
+# example (conceptual)
+from algomancy_gui.appconfiguration import AppConfiguration
+
+
+class ExampleDataPage:
+  def create_content(self, data) -> html.Div:
+    ...
+
+  def register_callbacks(self):
+    ...
+
+
+config = AppConfiguration(
+  home_page_content='standard',
+  data_page_content=ExampleDataPage.create_content,  # Callable[..., Div] or str
+  data_page_callbacks=ExampleDataPage.register_callbacks  # Callable[..., None] or str
+)
+```
+
+**New version (Page classes passed to the frontend)**
+
+```python
+# example (conceptual)
+from algomancy_gui.appconfiguration import AppConfiguration
+
+
+class ExampleDataPage:
+  def create_content(self, data) -> html.Div:
+    ...
+
+  def register_callbacks(self):
+    ...
+
+
+config = AppConfiguration(
+  home_page_content='standard'  # Protocol[HomePage] or str
+data_page = ExampleDataPage,  # Protocol[DataPage] or str
+)
+```
+
+If you maintain custom pages, convert them into classes that implement the expected page protocol (constructor + render/handlers). For a minimal reference implementation, see `algomancy_content.pages.placeholderscenariopage.PlaceholderScenarioPage`.
+
+### New Typed Parameters (multi-select and time-related)
+Two new parameter families were added in `algomancy_scenario.basealgorithmparameters` and are fully supported in the GUI:
+
+- `MultiEnumParameter`: choose multiple options from a predefined list.
+- `TimeParameter` and `IntervalParameter`: capture a specific time (`HH:MM[:SS]`) and a time interval (start/end) respectively.
+
+#### Examples
+
+```python
+from algomancy_utils.baseparameterset import (
+  MultiEnumParameter,
+  TimeParameter,
+  IntervalParameter,
+)
+
+# Multi-select example
+select_products = MultiEnumParameter(
+  name="products",
+  choices=["A", "B", "C"],
+  value=["A", "C"],  # user may select multiple
+  required=True,
+)
+
+# Time of day example (24h)
+cutoff_time = TimeParameter(
+  name="cutoff_time",
+  value="14:30",
+  required=False,
+)
+
+# Interval example (start/end times)
+processing_window = IntervalParameter(
+  name="processing_window",
+  start="08:00",
+  end="17:30",
+)
+```
+
+In the frontend, these parameters render as:
+- Multi-select: a list with checkboxes or tags allowing multiple selections.
+- Time/Interval: time pickers; intervals present paired inputs for start and end values.
+
+
+
+## 0.3.2
+_Released at 16-12-2025_
+
+### Summary
+- Added Sessions to the App
+  - Sessions can be managed in the Admin page
+  - An empty session can be created by clicking the "New Session" button in the Admin page
+  - An copy of a session can be created by clicking the "Copy Session" button in the Compare page
+    - This copies only the datasets and not the scenarios
+- **Breaking**: When retrieving the scenario manager `get_app().server.scenario_manager` no longer works
+  - Scenario manager is now available through the session manager and the active session
+
+## 0.3.1
+_Released at 03-12-2025_
+
+### Summary
+- **Breaking:** Revised `AlgorithmTemplate` pattern to `BaseAlgorithm` workflow, analog to `BaseDataSource` 
+- **Breaking:** Also revised `KPITemplate` pattern to `BaseKPI` workflow
+- Scenario engine
+  - Export and typing cleanups in `scenario` to support `BaseAlgorithm`/`BaseKPI` patterns.
+  - Measurement/unit utilities updated in `scenario.unit`.
+  - Added threshold KPIs; `ImprovementDirection.AT_LEAST`, `.AT_MOST`, and argument `threshold`
+- Components and pages
+  - Updated Compare and Scenario page callbacks and KPI Card to align with the new KPI base class and thresholds.
+  - Minor adjustments to Standard Home and Overview pages.
+- Examples
+  - Replaced example KPI template with a `BaseKPI` implementation (`DelayKPI`).
+
+### Migration to BaseAlgorithm
+To align the development patterns, the template pattern has been substituted for a basemodel pattern, similarly to the
+creation of custom `DataSource`s. Below is an example of the before and after. 
+
+**Old version**
+```python
+def batching_algorithm(
+    data: DataSource,
+    parameters: BatchingAlgorithmParameters,
+    set_progress: Callable[[float], None],
+) -> ScenarioResult:
+    sleep(parameters.batch_size)
+    set_progress(100)
+    return ScenarioResult(data_id=data.id) 
+
+
+batching_algorithm_template = AlgorithmTemplate(
+    name="Batching",
+    param_type=BatchingAlgorithmParameters,   # Parameter type used to be passed 
+    main_method_template=batching_algorithm,  # as well as the main method handle. 
+)
+```
+
+**New version**
+```python
+class BatchingAlgorithm(BaseAlgorithm):
+    """ From v0.3.1, create your own algorithm by deriving BaseAlgorithm """
+    def __init__(self, params: BatchingAlgorithmParameters):
+        super().__init__("Batching", params)
+
+    @staticmethod
+    def initialize_parameters() -> BatchingAlgorithmParameters:
+        """ Minimal bit of boilerplate, necessary for internal handling """
+        return BatchingAlgorithmParameters()
+    
+    def run(self, data: DataSource) -> ScenarioResult:
+        """ Derived Algorithms now have to implement their own run() method """
+        sleep(self.params.batch_size)
+        self.set_progress(100)
+        return ScenarioResult(data_id=data.id)
+```
+
+
+
+### Migration to BaseKPI
+Similarly, the KPI creation has also been moved to the basemodel pattern. 
+
+**Old version**
+```python
+default = QUANTITIES["default"]
+default_unit = BaseMeasurement(default["unit"], min_digits=1, max_digits=3, decimals=1)
+
+def create_error_template():
+    def error_rate_calculation(result: ScenarioResult) -> float:
+        return 0.1 * (1 + 0.5 * random.random())  # placeholder
+    
+    return KpiTemplate(
+        name="Error Rate",
+        better_when=ImprovementDirection.LOWER,
+        callback=error_rate_calculation,
+        measurement_base=default_unit,
+    )
+```
+
+**New version**
+```python
+default = QUANTITIES["default"]
+default_unit = BaseMeasurement(default["unit"], min_digits=1, max_digits=3, decimals=1)
+
+class ErrorKPI(BaseKPI):
+    def __init__(self):
+        """ Basic configurations are now made by passing them to the base object """
+        super().__init__(
+            name             = "Error Rate",
+            better_when      = ImprovementDirection.LOWER,
+            base_measurement = default_unit,
+        )
+
+    def compute(self, result: ScenarioResult) -> float:
+        """ The user defines the compute function, as before"""
+        return 0.1 * (1 + 0.5 * random.random())  # placeholder
+```
+
+### Threshold KPIs
+A threshold KPI is initialized with a `threshold` value and appropriate `ImprovementDirection`, in addition to the usual arguments. 
+It is considered to be a 'success' if the value of the kpi exceeds (or does not exceed, in the case of `AT_MOST`) the threshold value. 
+The `.pretty()` function will format a threshold as either a checkmark or a cross, depending on the value relative to the threshold. 
+
+An example is included below
+```python
+# noinspection PyUnresolvedReferences
+class DelayKPI(BaseKPI):
+    def __init__(self):
+        super().__init__(
+            name="Average Delay",
+            better_when=ImprovementDirection.AT_MOST,
+            base_measurement=BaseMeasurement(QUANTITIES["time"]["s"], min_digits=1, max_digits=3, decimals=1),
+            threshold=1200,
+        )
+```
+
 ## 0.2.15
 _Released at 28-11-2025_
 
@@ -138,37 +435,41 @@ _Released at 05-11-2025_
 Added `AppConfiguration` class to manage and validate the launch configuration. Conceptually, this class is a wrapper that provides a consistent interface for the configuration fields and their validation.
 This class is now used to manage the launch sequence. In particular, DashLauncher.build(...) now takes an `AppConfiguration` object as an argument, instead of a dictionary.
 Your main method must be migrated to use the new class. An example is shown below:
+
 ```python
 # main method: preferred version
 
-from algomancy.launcher import DashLauncher
-from algomancy.appconfiguration import AppConfiguration
+from src.algomancy.gui_launcher import GuiLauncher
+from algomancy_gui.appconfiguration import AppConfiguration
+
 
 def main():
-    app_cfg = AppConfiguration(
-        data_path="data",
-        has_persistent_state=True,
-#       ...
-    )
-    app = DashLauncher.build(app_cfg)
-    DashLauncher.run(app=app, host=app_cfg.host, port=app_cfg.port)
+  app_cfg = AppConfiguration(
+    data_path="data",
+    has_persistent_state=True,
+    #       ...
+  )
+  app = GuiLauncher.build(app_cfg)
+  GuiLauncher.run(app=app, host=app_cfg.host, port=app_cfg.port)
 ```
-For migration, the `AppConfiguration.from_dict(...)` method can be used to create an `AppConfiguration` object from a dictionary. Note that this is not advised, as this will not allow for IDE support. 
+For migration, the `AppConfiguration.from_dict(...)` method can be used to create an `AppConfiguration` object from a dictionary. Note that this is not advised, as this will not allow for IDE support.
+
 ```python
 # main method: migration alternative
 
-from algomancy.launcher import DashLauncher
-from algomancy.appconfiguration import AppConfiguration
+from src.algomancy.gui_launcher import GuiLauncher
+from algomancy_gui.appconfiguration import AppConfiguration
+
 
 def main():
-    configuration = {
-        "data_path": "data",
-        "has_persistent_state": True,
-#       ...   
-    }
-    app_cfg = AppConfiguration.from_dict(configuration)   
-    app = DashLauncher.build(app_cfg)
-    DashLauncher.run(app=app, host=app_cfg.host, port=app_cfg.port)
+  configuration = {
+    "data_path": "data",
+    "has_persistent_state": True,
+    #       ...   
+  }
+  app_cfg = AppConfiguration.from_dict(configuration)
+  app = GuiLauncher.build(app_cfg)
+  GuiLauncher.run(app=app, host=app_cfg.host, port=app_cfg.port)
 ```
 ### Autocreate
 Added automatic creation of scenarios. This will cause any creation of a `DataSource` (or derived) to spawn a `Scenario` with the same name (suffixed with `[auto]`). The algorithm template must be specified in the configuration dictionary.
@@ -195,31 +496,34 @@ At a later time, this button will also support a cancel operation.
 - KPI templates should be migrated to `BaseMeasurement`/`Measurement`. See `algomancy\\scenarioengine\\keyperformanceindicator.py` for how KPIs surface measurements.
 - Extensive examples are available in `algomancy\\scenarioengine\\unit.py\\example_usage()`.
 - KPI Template creation should now follow the following pattern:
+
 ```python
 import random
 
-from algomancy.scenarioengine import ImprovementDirection, KpiTemplate, ScenarioResult
-from algomancy.scenarioengine.unit import QUANTITIES, BaseMeasurement
+from src.algomancy import ImprovementDirection, KpiTemplate, ScenarioResult
+from scenario import QUANTITIES, BaseMeasurement
+
 
 def throughput_calculation(result: ScenarioResult) -> float:
     return 100 * (1 + 0.5 * random.random())  # placeholder
 
+
 mass = QUANTITIES["mass"]
 mass_kg = BaseMeasurement(
-    mass["kg"],                                 # the default unit is kg; the associated quantity is mass
-    min_digits=1,                               # the minimum number of nonzero digits before the decimal point
-    max_digits=3,                               # the maximum number of nonzero digits before the decimal point
-    decimals=2,                                 # the number of decimal places to display
-    smallest_unit = "g",                        # the smallest unit to display - overrides min_digits
-    largest_unit = "ton",                       # the largest unit to display - overrides max_digits
+    mass["kg"],  # the default unit is kg; the associated quantity is mass
+    min_digits=1,  # the minimum number of nonzero digits before the decimal point
+    max_digits=3,  # the maximum number of nonzero digits before the decimal point
+    decimals=2,  # the number of decimal places to display
+    smallest_unit="g",  # the smallest unit to display - overrides min_digits
+    largest_unit="ton",  # the largest unit to display - overrides max_digits
 )
 
 template = KpiTemplate(
     name="Throughput",
     # type=KpiType.NUMERIC,                     # KpiType has become redundant, formatting is now handled by Measurement
-    better_when=ImprovementDirection.HIGHER,    
+    better_when=ImprovementDirection.HIGHER,
     callback=throughput_calculation,
-    measurement_base=mass_kg,                   # Pass the measurement to use as a basis for the kpi value
+    measurement_base=mass_kg,  # Pass the measurement to use as a basis for the kpi value
 )
 ```
 
@@ -304,14 +608,9 @@ The expected keys are `side-by-side`, `kpis`, `compare`, and `details`. An examp
 ```python
 # framework configuration
 configuration = {
-    ...,
-    "compare_ordered_list_components": [
-        'side-by-side',
-        'kpis',
-        'compare',
-        'details',
-    ],
-    ...
+    # ...
+    "compare_ordered_list_components": [ 'side-by-side', 'kpis', 'compare', 'details']
+    # ...
 }
 ```
 

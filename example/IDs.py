@@ -1,0 +1,6 @@
+DATA_TABLE_ITEMS_STORE = "data-table-items-store"
+DATA_TABLE_ITEMS = "data-table-items"
+DATA_TABLE_LAYOUT_STORE = "data-table-layout-store"
+DATA_TABLE_LAYOUT = "data-table-layout"
+DATA_LAYOUT_FIGURE = "data-layout-figure"
+DATA_RAW_VIEW = "raw-data-view"

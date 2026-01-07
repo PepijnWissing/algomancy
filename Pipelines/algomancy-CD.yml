@@ -1,37 +1,91 @@
+# language: yaml
 variables:
-  python.version: 3.11
+  python.version: 3.14
 trigger:
   - main
 name: $(date:yyyyMMdd)$(rev:.r)
 stages:
-- stage: __default
-  jobs:
-  - job: Phase_1
-    displayName: Publish
-    pool:
-      vmImage: ubuntu-latest
-    steps:
-    - task: UsePythonVersion@0
-      displayName: Use Python $(python.version)
-      inputs:
-        versionSpec: $(python.version)
-    - task: CmdLine@2
-      displayName: Install and update pip
-      inputs:
-        script: python -m pip install --upgrade pip
-    - task: CmdLine@2
-      displayName: Install build and publish packages
-      inputs:
-        script: python -m pip install twine keyring artifacts-keyring build
-    - task: CmdLine@2
-      displayName: Build
-      inputs:
-        script: python -m build -w
-    - task: TwineAuthenticate@1
-      displayName: 'Twine authenticate'
-      inputs:
-        artifactFeed: WARP/WarpPython
-    - task: CmdLine@2
-      displayName: Upload to feed
-      inputs:
-        script: twine upload --config-file $(PYPIRC_PATH) --verbose -r WarpPython dist/*
+  - stage: __default
+    displayName: Build-Test-Publish
+    jobs:
+
+      - job: Build
+        displayName: Build
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - task: UsePythonVersion@0
+            displayName: Use Python $(python.version)
+            inputs:
+              versionSpec: $(python.version)
+
+          - task: CmdLine@2
+            displayName: Upgrade pip and install uv and build tools
+            inputs:
+              script: |
+                python -m pip install --upgrade pip
+                python -m pip install uv build
+
+          - task: CmdLine@2
+            displayName: Install project dependencies with uv (workspace-aware)
+            inputs:
+              script: |
+                uv sync --frozen
+
+          - task: CmdLine@2
+            displayName: Validate lockfile
+            inputs:
+              script: |
+                uv lock --check || (echo "Lockfile out of date" && exit 1)
+
+          - task: CmdLine@2
+            displayName: Build source and wheels with uv
+            inputs:
+              script: |
+                uv build --wheel
+
+          - task: PublishPipelineArtifact@1
+            displayName: Publish dist artifacts
+            inputs:
+              targetPath: 'dist'
+              artifact: 'dist'
+              publishLocation: 'pipeline'
+
+      - job: Publish
+        displayName: Publish to feed
+        dependsOn:
+          - Build
+        condition: succeeded()
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+          - task: UsePythonVersion@0
+            displayName: Use Python $(python.version)
+            inputs:
+              versionSpec: $(python.version)
+
+          - task: CmdLine@2
+            displayName: Upgrade pip and install publishing tools
+            inputs:
+              script: |
+                python -m pip install --upgrade pip
+                python -m pip install uv build twine keyring artifacts-keyring
+
+          - task: DownloadPipelineArtifact@2
+            displayName: Download dist artifact
+            inputs:
+              artifact: 'dist'
+              path: 'dist_downloaded'
+
+          - task: TwineAuthenticate@1
+            displayName: 'Twine authenticate'
+            condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
+            inputs:
+              artifactFeed: WARP/WarpPython
+
+          - task: CmdLine@2
+            displayName: Upload to feed
+            condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
+            inputs:
+              script: |
+                twine upload --config-file $(PYPIRC_PATH) --verbose -r WarpPython dist_downloaded/*

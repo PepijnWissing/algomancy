@@ -1,0 +1,74 @@
+[
+    {
+      "id": 1,
+      "name": "John Doe",
+      "email": "john.doe@example.com",
+      "age": 32,
+      "is_active": true,
+      "joined_date": "2023-01-15",
+      "last_login": "2025-02-06 10:23:44",
+      "attributes": {
+        "department": "Engineering",
+        "position": "Senior Developer",
+        "skills": ["Python", "JavaScript", "SQL"]
+      }
+    },
+    {
+      "id": 2,
+      "name": "Jane Smith",
+      "email": "jane.smith@example.com",
+      "age": 28,
+      "is_active": true,
+      "joined_date": "2023-03-21",
+      "last_login": "2025-02-06 10:23:44",
+      "dates_with_typo": "202e5-02-06",
+      "attributes": {
+        "department": "Marketing",
+        "position": "Content Manager",
+        "skills": ["Content Writing", "SEO", "Social Media"]
+      }
+    },
+    {
+      "id": 3,
+      "name": "Bob Johnson",
+      "email": "bob.johnson@example.com",
+      "age": 41,
+      "is_active": false,
+      "joined_date": "2022-11-05",
+      "last_login": "2025-02-06 21:37:44",
+      "attributes": {
+        "department": "Finance",
+        "position": "Financial Analyst",
+        "skills": ["Accounting", "Excel", "Data Analysis"]
+      }
+    },
+    {
+      "id": 4,
+      "name": "Alice Brown",
+      "email": "alice.brown@example.com",
+      "age": 35,
+      "is_active": true,
+      "joined_date": "2023-05-10",
+      "last_login": "2025-02-06 12:23:44",
+      "attributes": {
+        "department": "HR",
+        "position": "HR Manager",
+        "skills": ["Recruitment", "Training", "Conflict Resolution"]
+      }
+    },
+    {
+      "id": 5,
+      "name": "Charlie Wilson",
+      "email": "charlie.wilson@example.com",
+      "age": 29,
+      "is_active": true,
+      "joined_date": "2023-02-18",
+      "last_login": "2025-02-06 10:41:44",
+      "attributes": {
+        "department": "Sales",
+        "position": "Account Executive",
+        "skills": ["Negotiation", "CRM", "Presentation"]
+      }
+    }
+  ]
+

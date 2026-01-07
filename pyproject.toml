@@ -1,56 +1,74 @@
+[build-system]
+build-backend = "uv_build"
+requires = ["uv_build>=0.9.6,<0.10.0"]
+
 [project]
-name = "Algomancy"
-version = "0.2.15"
-description = "A dashboarding framework for visualizing performances of algorithms or simulations in various scenarios."
-requires-python = ">=3.14"
-dependencies = [
-    "dash>=3.2.0",
-    "dash-auth>=2.3.0",
-    "dash-bootstrap-components>=2.0.3",
-    "dash-daq>=0.6.0",
-    "dash-iconify>=0.1.2",
-    "openpyxl>=3.1.5",
-    "pandas>=2.3.1",
-    "prek>=0.2.1",
-    "pytest>=8.4.2",
-    "ruff>=0.13.1",
-    "strenum>=0.4.15",
-    "tabulate>=0.9.0",
-    "waitress>=3.0.2",
-    "wheel>=0.45.1",
-]
 authors = [
-    {name = "Pepijn Wissing", email = "pepijn.wissing@cqm.nl"},
-    {name = "Bart Post", email = "bart.post@cqm.nl"}
+  {email = "pepijn.wissing@cqm.nl", name = "Pepijn Wissing"},
+  {email = "bart.post@cqm.nl", name = "Bart Post"}
 ]
-maintainers = [
-    {name = "Pepijn Wissing", email = "pepijn.wissing@cqm.nl"},
-    {name = "Bart Post", email = "bart.post@cqm.nl"}
-]
-readme = "README.md"
-license = {text = "Restricted"}
-keywords = ["visualization", "algorithm", "simulation", "scenario"]
 classifiers = [
   "Development Status :: 4 - Beta",
   "Programming Language :: Python"
 ]
+dependencies = [
+  "dash>=3.2.0",
+  "dash-auth>=2.3.0",
+  "dash-bootstrap-components>=2.0.3",
+  "dash-daq>=0.6.0",
+  "dash-iconify>=0.1.2",
+  "openpyxl>=3.1.5",
+  "pandas>=2.3.1",
+  "pytest>=8.4.2",
+  "ruff>=0.13.1",
+  "strenum>=0.4.15",
+  "tabulate>=0.9.0",
+  "waitress>=3.0.2",
+  "wheel>=0.45.1",
+  "uv_build>=0.9.6,<0.10.0",
+  "algomancy-content",
+  "algomancy-data",
+  "algomancy-scenario",
+  "algomancy-utils",
+  "algomancy-gui",
+  "algomancy-cli",
+  "prek>=0.2.19",
+  "pyrefly>=0.45.2",
+  "basedpyright>=1.36.0",
+  "ipykernel>=7.1.0"
+]
+description = "A dashboarding framework for visualizing performances of algorithms or simulations in various scenarios."
+keywords = ["visualization", "algorithm", "simulation", "scenario"]
+license = {text = "Restricted"}
+maintainers = [
+  {email = "pepijn.wissing@cqm.nl", name = "Pepijn Wissing"},
+  {email = "bart.post@cqm.nl", name = "Bart Post"}
+]
+name = "Algomancy"
+readme = "README.md"
+requires-python = ">=3.14"
+version = "0.3.4"
 
-[build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
+[project.scripts]
+algomancy-cli = "algomancy_cli.main:main"
 
-[tool.setuptools]
-packages = [
-    "algomancy",
-    "algomancy.components",
-    "algomancy.components.admin_page",
-    "algomancy.components.data_page",
-    "algomancy.components.home_page",
-    "algomancy.components.overview_page",
-    "algomancy.components.compare_page",
-    "algomancy.components.scenario_page",
-    "algomancy.contentcreatorlibrary",
-    "algomancy.dashboardlogger",
-    "algomancy.dataengine",
-    "algomancy.scenarioengine",
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
+[tool.uv.sources]
+algomancy-cli = {workspace = true}
+algomancy-content = {workspace = true}
+algomancy-data = {workspace = true}
+algomancy-gui = {workspace = true}
+algomancy-scenario = {workspace = true}
+algomancy-utils = {workspace = true}
+
+[tool.uv.workspace]
+members = [
+  "packages/algomancy-content",
+  "packages/algomancy-gui",
+  "packages/algomancy-utils",
+  "packages/algomancy-data",
+  "packages/algomancy-scenario",
+  "packages/algomancy-cli"
 ]

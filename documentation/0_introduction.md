@@ -1,17 +1,18 @@
 # Introduction
 
-#@ Overview
-The WARP framework is a web-based application for the analysis and visualization of complex analytical scenarios. It is designed to be flexible and extensible, enabling users to implement their own algorithms and data sources.
+## Overview
+The Algomancy framework is a web-based application for the analysis and visualization of complex analytical scenarios. It is designed to be flexible and extensible, enabling users to implement their own algorithms and data processes.
 
 ### Organization
 
-Below is a list of the main sections of the documentation, organized by topic. We first discuss the 
+Below is a list of the main sections of the documentation, organized by topic. 
 1. [Introduction](0_introduction.md)
-2. [Data](1_data.md)
-2. [Templates](2_templates.md)
-3. [Dash contents and styling](3_dash_contents.md)
-4. [Practical implementation](4_implementation.md)
-5. [Deployment](5_deployment.md)
+2. [Getting started](1_getting_started.md)
+3. [Data](2_data.md)
+4. [Algorithms](3_algorithms.md)
+5. [Dash contents and styling](4_dash_contents.md)
+6. [Practical implementation](5_implementation.md)
+7. [Deployment](5_deployment.md)
 
 
 ## Design goals
@@ -57,7 +58,7 @@ A `DataSource` serves as the foundation for any scenario, encapsulating the raw 
 Often times, deciding where to draw the line between _data transformation_ and _decision-making_ is not a black and white issue. There may be several ways to achieve the same end-goal, none of which are strictly enforced or prohibited by the framework. We feel that this is an important design decision that has a significant impact on the long-term maintainability of a project.  We aim to stick to the line below:
 > A DataSource should **define** the world, in which one is trying to solve a problem. It should **not** contain any logic about **how** to solve the problem.
 
-### Algorithm: Transformign Data into Results
+### Algorithm: Transforming Data into Results
 The `Algorithm` component defines the logic that processes a `DataSource` and produces a `ScenarioResult`. This transformation can range from straightforward business rule evaluations to sophisticated decision-making procedures. Depending on the use case, an algorithm might be implemented directly within the framework or act as an interface to external services, such as optimization solvers or machine learning models. This flexibility enables users to address a wide variety of analytical challenges, ensuring that the framework remains adaptable to evolving needs.
 
 ### Scenario: Combining Data and Logic
@@ -77,7 +78,7 @@ The frontend architecture is organized into several pages:
 ## Features and limitations
 - Data import/export, through ETL as well as Serialized files
 - Scenario creation and execution
-- Side by side scenario comparison
+- Side-by-side scenario comparison
 - Asyncronous running of scenarios, with progress tracking
 - Extensive logging 
 - Basic authentication
