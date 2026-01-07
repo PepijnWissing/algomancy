@@ -71,3 +71,6 @@ class ScenarioFactory:
         )
         self.log(f"Scenario '{scenario.tag}' created.")
         return scenario
+
+    def get_associated_parameters(self, algo_name: str):
+        return self._algorithm_factory.get_parameters(algo_name)

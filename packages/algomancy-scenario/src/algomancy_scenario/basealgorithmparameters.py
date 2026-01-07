@@ -404,6 +404,9 @@ class BaseAlgorithmParameters(ABC, metaclass=PostInitMeta):
     def get_parameters(self) -> Dict[str, TypedParameter]:
         return self._parameters
 
+    def contains(self, param_name: str) -> bool:
+        return param_name in self._parameters
+
     def serialize(self):
         import json
 
@@ -466,3 +469,11 @@ class BaseAlgorithmParameters(ABC, metaclass=PostInitMeta):
 
 
 BASE_PARAMS_BOUND = TypeVar("BASE_PARAMS_BOUND", bound=BaseAlgorithmParameters)
+
+
+class EmptyParameters(BaseAlgorithmParameters):
+    def __init__(self) -> None:
+        super().__init__(name="empty")
+
+    def validate(self):
+        pass

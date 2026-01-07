@@ -200,6 +200,9 @@ class ScenarioManager:
         self._processor.shutdown()
 
     # Scenario creation/registry
+    def get_associated_parameters(self, algo_name: str):
+        return self._factory.get_associated_parameters(algo_name)
+
     def create_scenario(
         self,
         tag: str,

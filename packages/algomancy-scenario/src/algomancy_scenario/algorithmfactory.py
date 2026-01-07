@@ -1,3 +1,6 @@
+from algomancy_scenario.basealgorithmparameters import (
+    EmptyParameters,
+)
 from typing import Dict, Any, List, Type, Generic
 
 from algomancy_utils.logger import Logger
@@ -38,3 +41,15 @@ class AlgorithmFactory(Generic[ALGORITHM]):
         algo_params.set_validated_values(input_params)
 
         return template(algo_params)
+
+    def get_parameters(self, algo_name: str):
+        template: Type[ALGORITHM] = (
+            self._templates[algo_name] if algo_name in self._templates else None
+        )
+        assert template, f"Algorithm template '{algo_name}' not found."
+
+        algo_params = template.initialize_parameters()
+
+        data_params = EmptyParameters()
+
+        return algo_params, data_params
