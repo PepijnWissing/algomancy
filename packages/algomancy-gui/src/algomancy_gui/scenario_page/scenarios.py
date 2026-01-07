@@ -78,7 +78,7 @@ def content_div() -> html.Div:
     Output(SCENARIO_PAGE, "children"),
     Input(ACTIVE_SESSION, "data"),
 )
-def render_data_page(active_session_name):
+def render_scenario_page(active_session_name):
     """
     Creates the scenarios page layout with scenario management functionality.
 
@@ -123,7 +123,6 @@ def render_data_page(active_session_name):
                                             disabled=False,
                                         ),
                                         dcc.Store(id=SCENARIO_CURRENTLY_RUNNING_STORE),
-                                        # dcc.Store(id=SCENARIO_PROCESSING_MESSAGE),
                                         html.P(
                                             "Processing: placeholder",
                                             id=SCENARIO_PROG_TEXT,
@@ -239,7 +238,7 @@ def initialize_page(pathname, selected_id, session_id):
 
 # --- Process Scenario Callback ---
 @callback(
-    Output(SCENARIO_PROG_INTERVAL, "disabled"),
+    Output(SCENARIO_PROG_INTERVAL, "disabled", allow_duplicate=True),
     Input({"type": SCENARIO_PROCESS_BUTTON, "index": ALL}, "n_clicks"),
     State(ACTIVE_SESSION, "data"),
     prevent_initial_call=True,
@@ -372,6 +371,7 @@ def open_algo_params_window(algo_name, session_id):
     Output(SCENARIO_ALERT, "children", allow_duplicate=True),
     Output(SCENARIO_ALERT, "is_open", allow_duplicate=True),
     Output(SCENARIO_CREATOR_MODAL, "is_open", allow_duplicate=True),
+    Output(SCENARIO_PROG_INTERVAL, "disabled", allow_duplicate=True),
     Input(SCENARIO_NEW_BUTTON, "n_clicks"),
     State(SCENARIO_TAG_INPUT, "value"),
     State(SCENARIO_DATA_INPUT, "value"),
@@ -388,27 +388,35 @@ def create_scenario(
     # You can also get their IDs from dash.callback_context.inputs_list for mapping
 
     if not tag:
-        return no_update, "Tag is required", True, False
+        return no_update, "Tag is required", True, False, no_update
     if not dataset:
-        return no_update, "Dataset is required", True, False
+        return no_update, "Dataset is required", True, False, no_update
     if not algorithm:
-        return no_update, "Algorithm is required", True, False
+        return no_update, "Algorithm is required", True, False, no_update
 
     scenario_manager: ScenarioManager = (
         get_app().server.session_manager.get_scenario_manager(session_id)
     )
 
+    interval_disabled = False if scenario_manager.auto_run_scenarios else no_update
+
+    algo_param_shell, data_param_shell = scenario_manager.get_associated_parameters(
+        algorithm
+    )
+
     param_ids = [s["id"] for s in callback_context.states_list[3]]
-    param_dict = {
-        pid["param"]: value for pid, value in zip(param_ids, algo_param_values)
+    algo_params = {
+        pid["param"]: value
+        for pid, value in zip(param_ids, algo_param_values)
+        if algo_param_shell.contains(pid["param"])
     }
 
     try:
-        scenario_manager.create_scenario(tag, dataset, algorithm, param_dict)
-        return "new scenario created", "", False, False
+        scenario_manager.create_scenario(tag, dataset, algorithm, algo_params)
+        return "new scenario created", "", False, False, interval_disabled
     except Exception as e:
         get_app().server.session_manager.logger.log_traceback(e)
-        return no_update, f"Error: {e}", True, False
+        return no_update, f"Error: {e}", True, False, no_update
 
 
 # --- Delete Modal Open Callback ---
