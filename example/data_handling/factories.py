@@ -1,86 +1,109 @@
-from typing import List, Dict, TypeVar, cast
+from typing import Dict, TypeVar, cast
 
-import algomancy_data as de
+from algomancy_data import (
+    File,
+    CSVFile,
+    JSONFile,
+    XLSXFile,
+    ETLFactory,
+    ValidationSequence,
+    ExtractionSuccessVerification,
+    InputConfigurationValidator,
+    ValidationSeverity,
+    Loader,
+    DataSourceLoader,
+)
+from algomancy_data.extractor import (
+    ExtractionSequence,
+    CSVSingleExtractor,
+    JSONSingleExtractor,
+    XLSXSingleExtractor,
+    XLSXMultiExtractor,
+)
+from algomancy_data.transformer import TransformationSequence, CleanTransformer
 
-F = TypeVar("F", bound=de.File)
+F = TypeVar("F", bound=File)
 
 
-class ExampleETLFactory(de.ETLFactory):
+class ExampleETLFactory(ETLFactory):
     def __init__(self, configs, logger=None):
         super().__init__(configs, logger)
 
-    def create_extractors(
+    def create_extraction_sequence(
         self,
         files: Dict[str, F],  # name to path format
-    ) -> Dict[str, de.Extractor]:
+    ) -> ExtractionSequence:
         """
         Input:
             files: A dictionary mapping file names to file paths.
 
         Output:
-            A dictionary mapping file names to Extractor objects.
+            An extraction sequence object
 
         raises:
             ETLConstructionError: If any of the expected files or configurations are missing.
         """
-        # declare expected names
-        sku_data = "sku_data"
-        warehouse_layout = "warehouse_layout"
-        employee = "employees"
-        inventory = "inventory"
-        multisheet = "multisheet"
+        sequence = ExtractionSequence()
 
-        # time.sleep(5)
-
-        extractors = {
-            sku_data: de.CSVSingleExtractor(
-                file=cast(de.CSVFile, files[sku_data]),
-                schema=self.get_schemas(sku_data),
+        sequence.add_extractor(
+            CSVSingleExtractor(
+                file=cast(CSVFile, files["sku_data"]),
+                schema=self.get_schemas("sku_data"),
                 logger=self.logger,
                 separator=";",
-            ),
-            warehouse_layout: de.CSVSingleExtractor(
-                file=cast(de.CSVFile, files[warehouse_layout]),
-                schema=self.get_schemas(warehouse_layout),
+            )
+        )
+        sequence.add_extractor(
+            CSVSingleExtractor(
+                file=cast(CSVFile, files["warehouse_layout"]),
+                schema=self.get_schemas("warehouse_layout"),
                 logger=self.logger,
                 separator=";",
-            ),
-            employee: de.JSONSingleExtractor(
-                file=cast(de.JSONFile, files[employee]),
-                schema=self.get_schemas(employee),
+            )
+        )
+        sequence.add_extractor(
+            JSONSingleExtractor(
+                file=cast(JSONFile, files["employees"]),
+                schema=self.get_schemas("employees"),
                 logger=self.logger,
-            ),
-            inventory: de.XLSXSingleExtractor(
-                file=cast(de.XLSXFile, files[inventory]),
-                schema=self.get_schemas(inventory),
+            )
+        )
+        sequence.add_extractor(
+            XLSXSingleExtractor(
+                file=cast(XLSXFile, files["inventory"]),
+                schema=self.get_schemas("inventory"),
                 sheet_name=1,
                 logger=self.logger,
-            ),
-            multisheet: de.XLSXMultiExtractor(
-                file=cast(de.XLSXFile, files[multisheet]),
-                schemas=self.get_schemas(multisheet),
+            )
+        )
+        sequence.add_extractor(
+            XLSXMultiExtractor(
+                file=cast(XLSXFile, files["multisheet"]),
+                schemas=self.get_schemas("multisheet"),
                 logger=self.logger,
-            ),
-        }
+            )
+        )
 
-        return extractors
+        return sequence
 
-    def create_validation_sequence(self) -> de.ValidationSequence:
-        vs = de.ValidationSequence(logger=self.logger)
+    def create_validation_sequence(self) -> ValidationSequence:
+        vs = ValidationSequence(logger=self.logger)
 
-        vs.add_validator(de.ExtractionSuccessVerification())
+        vs.add_validator(ExtractionSuccessVerification())
 
-        vs.add_validator(  # todo this is currently broken because of multiextractor
-            de.InputConfigurationValidator(
+        vs.add_validator(
+            InputConfigurationValidator(
                 configs=self.input_configurations,
-                severity=de.ValidationSeverity.CRITICAL,
+                severity=ValidationSeverity.CRITICAL,
             )
         )
 
         return vs
 
-    def create_transformers(self) -> List[de.Transformer]:
-        return [de.CleanTransformer(self.logger)]
+    def create_transformation_sequence(self) -> TransformationSequence:
+        sequence = TransformationSequence()
+        sequence.add_transformer(CleanTransformer(self.logger))
+        return sequence
 
-    def create_loader(self) -> de.Loader:
-        return de.DataSourceLoader(self.logger)
+    def create_loader(self) -> Loader:
+        return DataSourceLoader(self.logger)

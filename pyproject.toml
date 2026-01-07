@@ -34,7 +34,8 @@ dependencies = [
   "algomancy-cli",
   "prek>=0.2.19",
   "pyrefly>=0.45.2",
-  "basedpyright>=1.36.0"
+  "basedpyright>=1.36.0",
+  "ipykernel>=7.1.0"
 ]
 description = "A dashboarding framework for visualizing performances of algorithms or simulations in various scenarios."
 keywords = ["visualization", "algorithm", "simulation", "scenario"]
