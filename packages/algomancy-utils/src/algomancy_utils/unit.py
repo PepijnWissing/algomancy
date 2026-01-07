@@ -1,4 +1,4 @@
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Optional, Callable
 
 """
 Measurement and unit scaling framework
@@ -262,10 +262,18 @@ class Measurement:
 
     INITIAL_VALUE = -9999999999
 
-    def __init__(self, base_measurement: BaseMeasurement, value: float = INITIAL_VALUE):
+    def __init__(
+        self,
+        base_measurement: BaseMeasurement,
+        value: float = INITIAL_VALUE,
+        formatter: Optional[Callable[[Measurement], str]] = None,
+        use_scaling: bool = True,
+    ) -> None:
         self.base_measurement: BaseMeasurement = base_measurement
         self.value: float = value
         self.unit: Unit = base_measurement.unit
+        self.format: Optional[Callable[[Measurement], str]] = formatter
+        self.use_scaling: bool = use_scaling
 
     def __str__(self):
         return self.to_string()
@@ -274,18 +282,16 @@ class Measurement:
         return f"{self._format_value()} {self.unit.symbol}"
 
     def pretty(self) -> str:
-        return f"{str(self.scale())}"
-        if self.value == Measurement.INITIAL_VALUE:
-            return "N/A"
-        scaled = self.scale()
-        formatted = scaled.to_string()
-        return formatted
+        display_value = self.scale() if self.use_scaling else self
+        if self.format:
+            return self.format(display_value)
+        return f"{str(display_value)}"
 
     def _format_value(self) -> str:
         """Format the value according to the specified decimal places"""
         return f"{self.value:.{self.base_measurement.decimals}f}"
 
-    def scale(self) -> "Measurement":
+    def scale(self) -> Measurement:
         """Scale the measurement to fit within the desired digit range"""
         # If no value was set, do nothing
         if self.value == Measurement.INITIAL_VALUE:
@@ -465,6 +471,14 @@ class Measurement:
         if self.unit.smaller_unit is None:
             # Already at smallest unit, return as is
             formatted_value = float(self._format_value())
+
+            # When formatted value equal to 0.0, add extra decimal. Stop if 9 decimals and still 0.0
+            while (formatted_value == 0.0) and (
+                self.base_measurement.decimals < 10
+            ):  # todo remove magic number 10
+                self.base_measurement.decimals = self.base_measurement.decimals + 1
+                formatted_value = float(self._format_value())
+
             return Measurement(self.base_measurement, formatted_value)
 
         # Check if smallest_unit constraint prevents scaling
@@ -828,7 +842,17 @@ def example_usage():
     length = QUANTITIES["length"]
     length_m = BaseMeasurement(length["m"], min_digits=1, max_digits=3, decimals=2)
 
-    examples = [0.000005, 0.025, 2.5, 250, 25_000, 2_500_000]
+    examples = [
+        0.000_000_000_01,
+        0.000_000_000_000_1,
+        0.000_000_000_000_000_000_1,
+        0.000_000_000_000_000_000_000_000_000_1,
+        0.025123,
+        2.5,
+        250,
+        25_000,
+        2_500_000,
+    ]
     for val in examples:
         m = Measurement(length_m, val)
         print(f"{val:>15} m -> {m.pretty()}")
@@ -856,6 +880,19 @@ def example_usage():
     for val in [0.50, 50, 1_234_567, 5_000_000_000, 1_500_000_000_000]:
         m = Measurement(money_usd, val)
         print(f"${val:>18,.2f} -> {m.pretty()}")
+
+    print("\n=== Money Examples (custom formatting) ===")
+    euro = Quantity("Euro", Unit("€", "€"))
+
+    def format_euro(meas: Measurement) -> str:
+        value = meas.value
+        unit = meas.unit.symbol
+        return f"{unit} {value:,.2f}"
+
+    money_eur = BaseMeasurement(euro["€"], min_digits=1, max_digits=3, decimals=2)
+    for val in [12345]:
+        m = Measurement(money_eur, val, formatter=format_euro)
+        print(f"€{val:>10,.2f} -> {m.pretty()}")
 
     print("\n=== Data Storage Examples (Binary) ===")
     data = QUANTITIES["data"]
