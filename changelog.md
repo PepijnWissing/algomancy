@@ -1,6 +1,6 @@
 # Change log
-## Unreleased
-_Changes since commit `caf15159` (as of 07-01-2026)_
+## 0.3.4
+_Released at 07-01-2026_
 
 ### Added
 - **[Breaking]** Renamed `BaseAlgorithmParameters` to `BaseParameterSet` and moved to `algomancy-utils` in preparation for data parameters
