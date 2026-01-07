@@ -211,6 +211,8 @@ class BaseMeasurement:
         decimals: int = 2,
         smallest_unit: str | None = None,
         largest_unit: str | None = None,
+        formatter: Optional[Callable[[Measurement], str]] = None,
+        use_scaling: bool = True,
     ):
         self.unit: Unit = base_unit
         self.min_digits: int = min_digits
@@ -218,12 +220,25 @@ class BaseMeasurement:
         self.decimals: int = decimals
         self.smallest_unit: str | None = smallest_unit
         self.largest_unit: str | None = largest_unit
+        self._formatter: Optional[Callable[[Measurement], str]] = formatter
+        self.use_scaling: bool = use_scaling
 
     def __str__(self):
         return (
             f"{self.unit.symbol} | {self.min_digits} to {self.max_digits} digits |"
             f" {self.decimals} decimals"
         )
+
+    @property
+    def default_formatter(self) -> Callable[[Measurement], str]:
+        def default_format(measurement: Measurement) -> str:
+            return str(measurement)
+
+        return default_format
+
+    @property
+    def formatter(self) -> Callable[[Measurement], str]:
+        return self._formatter or self.default_formatter
 
 
 class Measurement:
@@ -269,27 +284,23 @@ class Measurement:
         base_measurement: BaseMeasurement,
         value: float = INITIAL_VALUE,
         max_decimals=MAX_DECIMALS,
-        formatter: Optional[Callable[[Measurement], str]] = None,
-        use_scaling: bool = True,
     ) -> None:
         self.base_measurement: BaseMeasurement = base_measurement
         self.value: float = value
         self.unit: Unit = base_measurement.unit
         self.max_decimals: int = max_decimals
-        self.format: Optional[Callable[[Measurement], str]] = formatter
-        self.use_scaling: bool = use_scaling
 
     def __str__(self):
-        return self.to_string()
-
-    def to_string(self) -> str:
         return f"{self._format_value()} {self.unit.symbol}"
 
+    def get_display_measurement(self):
+        if self.base_measurement.use_scaling:
+            return self.scale()
+        else:
+            return self
+
     def pretty(self) -> str:
-        display_value = self.scale() if self.use_scaling else self
-        if self.format:
-            return self.format(display_value)
-        return f"{str(display_value)}"
+        return self.base_measurement.formatter(self.get_display_measurement())
 
     def _format_value(self) -> str:
         """Format the value according to the specified decimal places"""
@@ -869,6 +880,16 @@ def example_usage():
         m = Measurement(mass_g, val)
         print(f"{val:>15} g -> {m.pretty()}")
 
+    print("\n=== Mass Examples, no scaling ===")
+    mass = QUANTITIES["mass"]
+    mass_g_nsc = BaseMeasurement(
+        mass["g"], min_digits=1, max_digits=3, decimals=2, use_scaling=False
+    )
+
+    for val in [0.5, 50, 5_000, 500_000, 50_000_000]:
+        m = Measurement(mass_g_nsc, val)
+        print(f"{val:>15} g -> {m.pretty()}")
+
     print("\n=== Time Examples ===")
     time = QUANTITIES["time"]
     time_s = BaseMeasurement(time["s"], min_digits=1, max_digits=3, decimals=1)
@@ -885,18 +906,34 @@ def example_usage():
         m = Measurement(money_usd, val)
         print(f"${val:>18,.2f} -> {m.pretty()}")
 
-    print("\n=== Money Examples (custom formatting) ===")
-    euro = Quantity("Euro", Unit("€"))
+    print("\n=== Custom Currency Example (EUR) ===")
+    eur = create_currency_quantity("€", "Euro")
+    eur_base = BaseMeasurement(eur["€"], min_digits=1, max_digits=3, decimals=2)
+
+    for val in [50, 5_000, 500_000, 50_000_000]:
+        m = Measurement(eur_base, val)
+        print(f"€{val:>15,.2f} -> {m.pretty()}")
 
     def format_euro(meas: Measurement) -> str:
         value = meas.value
         unit = meas.unit.symbol
+
         return f"{unit} {value:,.2f}"
 
-    money_eur = BaseMeasurement(euro["€"], min_digits=1, max_digits=3, decimals=2)
-    for val in [12345]:
-        m = Measurement(money_eur, val, formatter=format_euro)
-        print(f"€{val:>10,.2f} -> {m.pretty()}")
+    print("\n=== Custom Currency Example (EUR), own formatting, no scaling ===")
+    eur = create_currency_quantity("€", "Euro")
+    eur_base = BaseMeasurement(
+        eur["€"],
+        min_digits=1,
+        max_digits=3,
+        decimals=2,
+        formatter=format_euro,
+        use_scaling=False,
+    )
+
+    for val in [50, 5_000, 500_000, 50_000_000]:
+        m = Measurement(eur_base, val)
+        print(f"€{val:>15,.2f} -> {m.pretty()}")
 
     print("\n=== Data Storage Examples (Binary) ===")
     data = QUANTITIES["data"]
@@ -921,14 +958,6 @@ def example_usage():
     for val in [0.5, 500, 500_000, 3_600_000, 3_600_000_000]:
         m = Measurement(energy_j, val)
         print(f"{val:>15} J -> {m.pretty()}")
-
-    print("\n=== Custom Currency Example (EUR) ===")
-    eur = create_currency_quantity("€", "Euro")
-    eur_base = BaseMeasurement(eur["€"], min_digits=1, max_digits=3, decimals=2)
-
-    for val in [50, 5_000, 500_000, 50_000_000]:
-        m = Measurement(eur_base, val)
-        print(f"€{val:>15,.2f} -> {m.pretty()}")
 
     print("\n=== Scale to Same Unit Examples ===")
     # Example 1: Different lengths in different units

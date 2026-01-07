@@ -79,7 +79,7 @@ class BaseKPI(ABC):
 
     def get_threshold_str(self, unit: Unit | None = None) -> str:
         if unit:
-            return self._threshold.scale_to_unit(unit).to_string()
+            return str(self._threshold.scale_to_unit(unit))
         else:
             return self._threshold.pretty()
 
@@ -93,7 +93,7 @@ class BaseKPI(ABC):
 
     def details(self, unit: Unit | None = None) -> str | None:
         if unit:
-            return self._measurement.scale_to_unit(unit).to_string()
+            return str(self._measurement.scale_to_unit(unit))
         else:
             return self._measurement.pretty()
 
