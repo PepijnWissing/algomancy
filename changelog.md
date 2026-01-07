@@ -1,4 +1,28 @@
 # Change log
+## Unreleased
+_Changes since commit `caf15159` (as of 07-01-2026)_
+
+### Added
+- Added `copy()` to `BaseAlgorithmParameters` and corresponding tests.
+- Introduced locking to `AlgorithmParameters` to prevent concurrent mutation.
+- Added `get_parameters` responsibility across factories/facades and session manager.
+- Work-in-progress Command Line Interface (CLI).
+
+### Changed
+- Migration to UV workspaces for the monorepo structure.
+- Units/measurements refactor in `algomancy-utils`: moved formatting to `BaseMeasurement`; removed `Unit.name`.
+- Various import path updates across packages after workspace migration.
+
+### Fixed
+- GUI: fixed slider issue on showcase page; ensured overview loads immediately; reduced layout snapping on data page; hidden dummy card; hid initial loader flash via CSS; cleaned up legacy callbacks; verified callback field necessity using `get_parameters`.
+- Tests: updated and fixed several tests (including utils unit tests; temporary intentionally failing test removed/fixed).
+
+### CI/CD
+- Multiple pipeline updates for CI and CD, including result publication tweaks and cache adjustments.
+
+### Misc
+- Minor documentation updates and code cleanups.
+
 ## 0.3.3
 _Released at 12-12-2025_
 
