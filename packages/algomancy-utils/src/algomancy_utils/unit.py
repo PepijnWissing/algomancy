@@ -76,7 +76,7 @@ Notes
 class Unit:
     """A single unit in a quantity (e.g., m, s, B)
 
-    A `Unit` knows its textual `name` and printable `symbol` and can be linked to
+    A `Unit` knows its printable `symbol` and can be linked to
     an adjacent smaller or larger unit with known conversion factors. These
     links are used by `Measurement` to automatically scale values up or down to
     keep within the configured digit bounds.
@@ -123,7 +123,7 @@ class Quantity:
     Typical usage
     - Obtain a quantity from the global `QUANTITIES` registry (e.g.,
       `length = QUANTITIES["length"]`).
-    - Access a unit by name (e.g., `length["m"]`).
+    - Access a unit by symbol (e.g., `length["m"]`).
     - Define custom quantities and units if your domain requires them, then
       register them with `QuantityRegistry`.
 
@@ -188,6 +188,8 @@ class BaseMeasurement:
       value.
     - smallest_unit: Optional name of the smallest unit allowed during scaling.
     - largest_unit: Optional name of the largest unit allowed during scaling.
+    - formatting: Optional function to customize the pretty-printing function.
+    - use_scaling: Optional boolean to indicate whether to use auto-scaling or not.
 
     Typical usage
     ```python
@@ -271,7 +273,7 @@ class Measurement:
     print(m.pretty())           # 2.50 km (auto-scales)
 
     other = Measurement(prefs, 1)    # 1 m
-    m.scale_to_unit(other)           # force same unit as `other` (meters)
+    m.scale_to_unit(other) # force same unit as `other` (meters)
     print(m.pretty())           # 2500.00 m
     ```
     """
