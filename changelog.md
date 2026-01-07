@@ -3,16 +3,33 @@
 _Released at 07-01-2026_
 
 ### Added
-- **[Breaking]** Renamed `BaseAlgorithmParameters` to `BaseParameterSet` and moved to `algomancy-utils` in preparation for data parameters
 - Added `copy()` to `BaseParameterSet` and corresponding tests.
 - Introduced locking to `BaseParameterSet` to prevent concurrent mutation.
 - Added `get_parameters` responsibility across factories/facades and session manager.
 - Work-in-progress Command Line Interface (CLI).
 
 ### Changed
+- **[Breaking]** Renamed `BaseAlgorithmParameters` to `BaseParameterSet` and moved to `algomancy-utils` in preparation for data parameters
 - Migration to UV workspaces for the monorepo structure.
 - Units/measurements refactor in `algomancy-utils`: moved formatting to `BaseMeasurement`; removed `Unit.name`.
 - Various import path updates across packages after workspace migration.
+- **[Breaking] algomancy-data (ETL): Unified ETL pipeline concepts.**
+  - Introduced `ExtractionSequence` and `TransformationSequence` as the orchestration primitives for extract and transform steps.
+  - `ETLPipeline` now accepts `extraction_sequence` and `transformation_sequence` instead of a dict of `extractors` and a list of `transformers`.
+  - `ETLFactory` abstract methods have been renamed:
+    - `create_extractors(...)` → `create_extraction_sequence(...)`
+    - `create_transformers()` → `create_transformation_sequence()`
+  - Validation continues to use `ValidationSequence` unchanged.
+  - See updated examples in `example/data_handling/factories.py` and implementation in:
+    - `packages/algomancy-data/src/algomancy_data/etl.py`
+    - `packages/algomancy-data/src/algomancy_data/extractor.py`
+    - `packages/algomancy-data/src/algomancy_data/transformer.py`
+
+#### Migration notes (ETL)
+- Replace factory method implementations and usages:
+  - Implement `create_extraction_sequence(files)` to build and return an `ExtractionSequence` (use `sequence.add_extractor(...)`).
+  - Implement `create_transformation_sequence()` to build and return a `TransformationSequence` (use `sequence.add_transformer(...)`).
+- When constructing `ETLPipeline`, pass the sequences instead of individual collections.
 
 ### Fixed
 - GUI: fixed slider issue on showcase page; ensured overview loads immediately; reduced layout snapping on data page; hidden dummy card; hid initial loader flash via CSS; cleaned up legacy callbacks; verified callback field necessity using `get_parameters`.

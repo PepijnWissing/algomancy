@@ -1,4 +1,5 @@
 # --- Abstract Factory ---
+from algomancy_data.transformer import TransformationSequence
 from abc import ABC, abstractmethod
 from typing import Dict, List
 
@@ -6,10 +7,9 @@ from algomancy_utils import Logger
 
 from .schema import Schema
 from .datasource import BASE_DATA_BOUND, DataClassification
-from .extractor import Extractor
+from .extractor import ExtractionSequence
 from .file import File
 from .loader import Loader
-from .transformer import Transformer
 from .validator import ValidationError, ValidationSequence
 from .inputfileconfiguration import (
     InputFileConfiguration,
@@ -22,16 +22,16 @@ class ETLPipeline:
     def __init__(
         self,
         destination_name: str,
-        extractors: Dict[str, Extractor],
+        extraction_sequence: ExtractionSequence,
         validation_sequence: ValidationSequence,
-        transformers: List[Transformer],  # todo refactor to transformationsequence
+        transformation_sequence: TransformationSequence,
         loader: Loader,
         logger: Logger,
     ) -> None:
         self.destination_name = destination_name
-        self.extractors = extractors
+        self.extraction_sequence = extraction_sequence
         self.validation_sequence = validation_sequence
-        self.transformers = transformers
+        self.transformation_sequence = transformation_sequence
         self.loader = loader
         self.logger = logger
 
@@ -50,13 +50,12 @@ class ETLPipeline:
             BASE_DATA_BOUND: The resultant DataSource object containing the processed and loaded data.
         """
         # Extraction
-        data = {}
-        for extractor in self.extractors.values():
-            dfs = extractor.extract()
-            data.update(dfs)
+        raw_data = self.extraction_sequence.data
 
         # Validation
-        is_valid, validation_messages = self.validation_sequence.run_validation(data)
+        is_valid, validation_messages = self.validation_sequence.run_validation(
+            raw_data
+        )
 
         if not is_valid:
             raise ValidationError(
@@ -64,13 +63,12 @@ class ETLPipeline:
             )
 
         # Transformation
-        for transformer in self.transformers:
-            transformer.transform(data)
+        transformed_data = self.transformation_sequence.run_transformation(raw_data)
 
         # Load into DataSource
         datasource = self.loader.load(
             name=self.destination_name,
-            data=data,
+            data=transformed_data,
             validation_messages=validation_messages,
             ds_type=DataClassification.MASTER_DATA,
         )
@@ -113,7 +111,7 @@ class ETLFactory(ABC):
             )
 
     @abstractmethod
-    def create_extractors(self, files: Dict[str, File]) -> Dict[str, Extractor]:
+    def create_extraction_sequence(self, files: Dict[str, File]) -> ExtractionSequence:
         pass
 
     @abstractmethod
@@ -121,7 +119,7 @@ class ETLFactory(ABC):
         pass
 
     @abstractmethod
-    def create_transformers(self) -> List[Transformer]:
+    def create_transformation_sequence(self) -> TransformationSequence:
         pass
 
     @abstractmethod
@@ -131,10 +129,8 @@ class ETLFactory(ABC):
     def build_pipeline(
         self, dataset_name: str, files: Dict[str, File], logger: Logger
     ) -> ETLPipeline:
-        extractors = self.create_extractors(files)
-        validations = self.create_validation_sequence()
-        transformers = self.create_transformers()
+        e_seq = self.create_extraction_sequence(files)
+        v_seq = self.create_validation_sequence()
+        t_seq = self.create_transformation_sequence()
         loader = self.create_loader()
-        return ETLPipeline(
-            dataset_name, extractors, validations, transformers, loader, logger
-        )
+        return ETLPipeline(dataset_name, e_seq, v_seq, t_seq, loader, logger)
