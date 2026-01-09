@@ -1,7 +1,7 @@
 [project]
 name = "algomancy-utils"
 version = "0.1.0"
-description = "Add your description here"
+description = "Miscellaneous modules used in the Algomancy library"
 readme = "README.md"
 authors = [
     { name = "Pepijn Wissing", email = "Wsg@cqm.nl" }

@@ -1,7 +1,7 @@
 [project]
 name = "algomancy-scenario"
 version = "0.1.0"
-description = "Add your description here"
+description = "Scenario management model for the Algomancy library"
 readme = "README.md"
 authors = [
     { name = "Pepijn Wissing", email = "Wsg@cqm.nl" }
