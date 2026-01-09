@@ -12,12 +12,12 @@ classifiers = [
   "Programming Language :: Python"
 ]
 dependencies = [
-  "algomancy-cli",
-  "algomancy-content",
-  "algomancy-data",
-  "algomancy-gui",
-  "algomancy-scenario",
-  "algomancy-utils",
+  "algomancy-cli >= 0.1.0",
+  "algomancy-content>= 0.1.1",
+  "algomancy-data>= 0.1.0",
+  "algomancy-gui>= 0.1.1",
+  "algomancy-scenario>= 0.1.0",
+  "algomancy-utils>= 0.1.0",
   "dash>=3.2.0",
   "dash-auth>=2.3.0",
   "dash-bootstrap-components>=2.0.3",
@@ -47,7 +47,7 @@ maintainers = [
 name = "Algomancy"
 readme = "README.md"
 requires-python = ">=3.14"
-version = "0.3.6"
+version = "0.3.7"
 
 [project.scripts]
 algomancy-cli = "algomancy_cli.main:main"
