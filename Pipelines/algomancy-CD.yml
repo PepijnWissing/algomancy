@@ -42,7 +42,7 @@ stages:
             displayName: Build source and wheels with uv
             inputs:
               script: |
-                uv build --wheel
+                uv build --all-packages --wheel
 
           - task: PublishPipelineArtifact@1
             displayName: Publish dist artifacts
