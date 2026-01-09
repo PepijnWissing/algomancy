@@ -28,6 +28,7 @@ class SessionManager:
         if not isinstance(configuration, AppConfiguration):
             raise TypeError("from_config expects an AppConfiguration instance")
         return cls(
+            use_sessions=configuration.use_sessions,
             etl_factory=configuration.etl_factory,
             kpi_templates=configuration.kpi_templates,
             algo_templates=configuration.algo_templates,
@@ -44,6 +45,7 @@ class SessionManager:
 
     def __init__(
         self,
+        use_sessions: bool,
         etl_factory: type[E],
         kpi_templates: Dict[str, Type[BaseKPI]],
         algo_templates: Dict[str, Type[BaseAlgorithm]],
@@ -59,6 +61,7 @@ class SessionManager:
         default_param_values: Dict[str, any] = None,
         autorun: bool = False,
     ) -> None:
+        # Store general information
         self.logger = logger if logger else Logger()
         self._etl_factory = etl_factory
         self._kpi_templates = kpi_templates
@@ -72,27 +75,34 @@ class SessionManager:
         self._auto_create_scenario = auto_create
         self._default_algo_name = default_algo_name
         self._default_param_values = default_param_values
+        self._algo_templates = algo_templates
 
         assert save_type in ["json"], "Save type must be parquet or json."
         self._save_type = save_type
 
-        # Components
+        # Create sessions
+        self.use_sessions = use_sessions
         self._sessions = {}
+        self._create_default_scenario_managers()
+        self._start_session_name = list(self._sessions.keys())[0]
+
+        self.log("SessionManager initialized.")
+
+    def _create_default_scenario_managers(self) -> None:
+        if not self.use_sessions:
+            self._create_default_scenario_manager("main", self._data_folder)
+            return
+
         if self._has_persistent_state:
-            assert data_folder, (
+            assert self._data_folder, (
                 "Data folder must be specified if a persistent state is used."
             )
 
-            sessions = self._determine_sessions_from_folder(data_folder)
+            sessions = self._determine_sessions_from_folder(self._data_folder)
             for session_name, session_path in sessions.items():
                 self._create_default_scenario_manager(session_name, session_path)
         if len(self._sessions) == 0:
             self._create_default_scenario_manager("main")
-
-        self._start_session_name = list(self._sessions.keys())[0]
-        self._algo_templates = algo_templates
-
-        self.log("SessionManager initialized.")
 
     def log(self, message: str, status: MessageStatus = MessageStatus.INFO) -> None:
         if self.logger:
@@ -105,7 +115,14 @@ class SessionManager:
         }
         return session_folders
 
-    def get_scenario_manager(self, session_id: str) -> ScenarioManager:
+    def get_scenario_manager(self, session_id: None | str) -> ScenarioManager:
+        if not self.use_sessions:
+            return self._sessions["main"]
+
+        if session_id is None:
+            assert not self.use_sessions, (
+                "No session specified and sessions are enabled."
+            )
         if session_id not in self._sessions:
             self.log(f"Session '{session_id}' not found.")
         assert session_id in self._sessions, f"Scenario '{session_id}' not found."
@@ -119,10 +136,10 @@ class SessionManager:
     def _create_default_scenario_manager(
         self, name: str, session_path: str = None
     ) -> None:
-        if self._has_persistent_state and session_path is None:
-            session_path = self._create_folder(name)
-        elif not self._has_persistent_state:
+        if not self._has_persistent_state:
             session_path = None
+        elif self._has_persistent_state and session_path is None:
+            session_path = self._create_folder(name)
 
         self._sessions[name] = ScenarioManager(
             etl_factory=self._etl_factory,
@@ -155,9 +172,13 @@ class SessionManager:
         return template.initialize_parameters()
 
     def create_new_session(self, session_name: str) -> None:
+        assert self.use_sessions, (
+            "Cannot create a new session when sessions are disabled."
+        )
         self._create_default_scenario_manager(session_name)
 
     def copy_session(self, session_name: str, new_session_name: str):
+        assert self.use_sessions, "Cannot copy a session when sessions are disabled."
         self._create_default_scenario_manager(new_session_name)
 
         for data_key in self.get_scenario_manager(session_name).get_data_keys():

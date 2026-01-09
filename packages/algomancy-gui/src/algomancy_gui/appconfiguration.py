@@ -28,6 +28,8 @@ class AppConfiguration(CoreConfiguration):
 
     def __init__(
         self,
+        # === session manager configuration ===
+        use_sessions: bool = False,
         # === path specifications ===
         assets_path: str = "assets",  # gui
         data_path: str = "data",
@@ -70,6 +72,7 @@ class AppConfiguration(CoreConfiguration):
     ):
         # initialize core part
         super().__init__(
+            use_sessions=use_sessions,
             data_path=data_path,
             has_persistent_state=has_persistent_state,
             save_type=save_type,
@@ -118,6 +121,8 @@ class AppConfiguration(CoreConfiguration):
     # public API
     def as_dict(self) -> Dict[str, Any]:
         return {
+            # === session manager configuration ===
+            "use_sessions": self.use_sessions,
             # === path specifications ===
             "assets_path": self.assets_path,
             "data_path": self.data_path,
@@ -171,47 +176,47 @@ class AppConfiguration(CoreConfiguration):
 
         # check home page attributes
         assert hasattr(home, "create_content")
-        assert hasattr(
-            home, "register_callbacks"
-        ), "home_page.register_callbacks must be a function"
+        assert hasattr(home, "register_callbacks"), (
+            "home_page.register_callbacks must be a function"
+        )
 
         # check data page attributes
-        assert hasattr(
-            data, "create_content"
-        ), "data_page.create_content must be a function"
-        assert hasattr(
-            data, "register_callbacks"
-        ), "data_page.register_callbacks must be a function"
+        assert hasattr(data, "create_content"), (
+            "data_page.create_content must be a function"
+        )
+        assert hasattr(data, "register_callbacks"), (
+            "data_page.register_callbacks must be a function"
+        )
 
         # check scenario page attributes
-        assert hasattr(
-            scenario, "create_content"
-        ), "scenario_page.create_content must be a function"
-        assert hasattr(
-            scenario, "register_callbacks"
-        ), "scenario_page.register_callbacks must be a function"
+        assert hasattr(scenario, "create_content"), (
+            "scenario_page.create_content must be a function"
+        )
+        assert hasattr(scenario, "register_callbacks"), (
+            "scenario_page.register_callbacks must be a function"
+        )
 
         # check compare page attributes
         assert hasattr(compare, "create_side_by_side_content"), (
-            "compare_page.create_side_by_side_content " "must be a function"
+            "compare_page.create_side_by_side_content must be a function"
         )
-        assert hasattr(
-            compare, "create_compare_section"
-        ), "compare_page.create_compare_section must be a function"
-        assert hasattr(
-            compare, "create_details_section"
-        ), "compare_page.create_details_section must be a function"
-        assert hasattr(
-            compare, "register_callbacks"
-        ), "compare_page.register_callbacks must be a function"
+        assert hasattr(compare, "create_compare_section"), (
+            "compare_page.create_compare_section must be a function"
+        )
+        assert hasattr(compare, "create_details_section"), (
+            "compare_page.create_details_section must be a function"
+        )
+        assert hasattr(compare, "register_callbacks"), (
+            "compare_page.register_callbacks must be a function"
+        )
 
         # check overview page attributes
-        assert hasattr(
-            overview, "create_content"
-        ), "overview_page.create_content must be a function"
-        assert hasattr(
-            overview, "register_callbacks"
-        ), "scenario_page.register_callbacks must be a function"
+        assert hasattr(overview, "create_content"), (
+            "overview_page.create_content must be a function"
+        )
+        assert hasattr(overview, "register_callbacks"), (
+            "scenario_page.register_callbacks must be a function"
+        )
 
     def _validate_page_configurations(self) -> None:
         # basic type checks for collections
