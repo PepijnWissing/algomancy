@@ -49,6 +49,7 @@ def main(
     """
     # framework configuration via AppConfiguration
     app_cfg = AppConfiguration(
+        use_sessions=True,
         data_path="example/data",
         assets_path="example/assets",
         has_persistent_state=True,

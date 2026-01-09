@@ -42,6 +42,7 @@ def admin_header():
         html.P(
             "This is where settings are managed and an overview of the jobs is provided."
         ),
+        html.Hr(),
     ]
 
 
@@ -49,6 +50,9 @@ def admin_sessions(session_id):
     """Creates a page-section where sessions can be selected and created."""
     session_manager: SessionManager = get_app().server.session_manager
     sessions = session_manager.sessions_names
+
+    if not session_manager.use_sessions:
+        return []
 
     return [
         html.H3("Sessions"),
@@ -107,6 +111,7 @@ def admin_sessions(session_id):
             ],
             className="g-1",
         ),
+        html.Hr(),
     ]
 
 
@@ -175,9 +180,7 @@ def create_admin_page(session_id):
     """
     admin_content = (
         admin_header()
-        + [html.Hr()]
         + admin_sessions(session_id)
-        + [html.Hr()]
         + admin_system_logs()
         + [create_new_session_window()]
     )
