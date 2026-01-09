@@ -47,7 +47,7 @@ maintainers = [
 name = "Algomancy"
 readme = "README.md"
 requires-python = ">=3.14"
-version = "0.3.7"
+version = "0.3.8"
 
 [project.scripts]
 algomancy-cli = "algomancy_cli.main:main"
