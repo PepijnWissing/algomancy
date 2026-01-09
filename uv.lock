@@ -75,7 +75,7 @@ requires-dist = [
 
 [[package]]
 name = "algomancy-cli"
-version = "0.1.0"
+version = "0.1.2"
 source = { editable = "packages/algomancy-cli" }
 dependencies = [
     { name = "algomancy-data" },
@@ -94,12 +94,12 @@ requires-dist = [
 
 [[package]]
 name = "algomancy-content"
-version = "0.1.1"
+version = "0.1.2"
 source = { editable = "packages/algomancy-content" }
 
 [[package]]
 name = "algomancy-data"
-version = "0.1.0"
+version = "0.1.2"
 source = { editable = "packages/algomancy-data" }
 dependencies = [
     { name = "pandas" },
@@ -110,7 +110,7 @@ requires-dist = [{ name = "pandas" }]
 
 [[package]]
 name = "algomancy-gui"
-version = "0.1.1"
+version = "0.1.2"
 source = { editable = "packages/algomancy-gui" }
 dependencies = [
     { name = "dash" },
@@ -125,17 +125,17 @@ requires-dist = [
 
 [[package]]
 name = "algomancy-installer"
-version = "0.1.0"
+version = "0.1.2"
 source = { editable = "packages/algomancy-installer" }
 
 [[package]]
 name = "algomancy-scenario"
-version = "0.1.0"
+version = "0.1.2"
 source = { editable = "packages/algomancy-scenario" }
 
 [[package]]
 name = "algomancy-utils"
-version = "0.1.0"
+version = "0.1.2"
 source = { editable = "packages/algomancy-utils" }
 
 [[package]]
