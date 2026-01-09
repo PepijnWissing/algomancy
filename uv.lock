@@ -9,6 +9,7 @@ members = [
     "algomancy-content",
     "algomancy-data",
     "algomancy-gui",
+    "algomancy-installer",
     "algomancy-scenario",
     "algomancy-utils",
 ]
@@ -22,6 +23,7 @@ dependencies = [
     { name = "algomancy-content" },
     { name = "algomancy-data" },
     { name = "algomancy-gui" },
+    { name = "algomancy-installer" },
     { name = "algomancy-scenario" },
     { name = "algomancy-utils" },
     { name = "basedpyright" },
@@ -50,6 +52,7 @@ requires-dist = [
     { name = "algomancy-content", editable = "packages/algomancy-content" },
     { name = "algomancy-data", editable = "packages/algomancy-data" },
     { name = "algomancy-gui", editable = "packages/algomancy-gui" },
+    { name = "algomancy-installer", editable = "packages/algomancy-installer" },
     { name = "algomancy-scenario", editable = "packages/algomancy-scenario" },
     { name = "algomancy-utils", editable = "packages/algomancy-utils" },
     { name = "basedpyright", specifier = ">=1.36.0" },
@@ -121,6 +124,11 @@ requires-dist = [
     { name = "dash" },
     { name = "dash-bootstrap-components" },
 ]
+
+[[package]]
+name = "algomancy-installer"
+version = "0.1.0"
+source = { editable = "packages/algomancy-installer" }
 
 [[package]]
 name = "algomancy-scenario"

@@ -104,6 +104,8 @@ def main():
     packages = []
     for whl_file in whl_files:
         package_name = extract_package_name(whl_file.name)
+        if package_name == "algomancy-installer":
+            continue
         if package_name:
             packages.append((package_name, whl_file))
             print(f"  ✓ Found: {whl_file.name} -> {package_name}")
