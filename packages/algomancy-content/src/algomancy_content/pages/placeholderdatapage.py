@@ -9,7 +9,7 @@ class PlaceholderDataPage:
         pass
 
     @staticmethod
-    def create_data_page_content(data: DataSource):
+    def create_content(data: DataSource):
         return [
             html.H5("Selected Dataset"),
             html.P(f"ID: {data.id}"),

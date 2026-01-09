@@ -1,7 +1,7 @@
 [project]
 name = "algomancy-content"
-version = "0.1.0"
-description = "Add your description here"
+version = "0.1.1"
+description = "Placeholder content for quick start to the Algomancy library"
 readme = "README.md"
 authors = [
     { name = "Pepijn Wissing", email = "Wsg@cqm.nl" }

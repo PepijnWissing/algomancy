@@ -16,7 +16,7 @@ members = [
 
 [[package]]
 name = "algomancy"
-version = "0.3.6"
+version = "0.3.7"
 source = { editable = "." }
 dependencies = [
     { name = "algomancy-cli" },
@@ -94,7 +94,7 @@ requires-dist = [
 
 [[package]]
 name = "algomancy-content"
-version = "0.1.0"
+version = "0.1.1"
 source = { editable = "packages/algomancy-content" }
 
 [[package]]
@@ -110,7 +110,7 @@ requires-dist = [{ name = "pandas" }]
 
 [[package]]
 name = "algomancy-gui"
-version = "0.1.0"
+version = "0.1.1"
 source = { editable = "packages/algomancy-gui" }
 dependencies = [
     { name = "dash" },

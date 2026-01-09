@@ -1,7 +1,7 @@
 [project]
 name = "algomancy-gui"
-version = "0.1.0"
-description = "Add your description here"
+version = "0.1.1"
+description = "Dash components for the Algomancy library"
 readme = "README.md"
 authors = [
     { name = "Pepijn Wissing", email = "Wsg@cqm.nl" }
