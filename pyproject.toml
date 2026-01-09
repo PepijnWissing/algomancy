@@ -26,12 +26,6 @@ dependencies = [
   "waitress>=3.0.2",
   "wheel>=0.45.1",
   "uv_build>=0.9.6,<0.10.0",
-  "algomancy-content",
-  "algomancy-data",
-  "algomancy-scenario",
-  "algomancy-utils",
-  "algomancy-gui",
-  "algomancy-cli",
   "prek>=0.2.19",
   "pyrefly>=0.45.2",
   "basedpyright>=1.36.0",
@@ -47,7 +41,7 @@ maintainers = [
 name = "Algomancy"
 readme = "README.md"
 requires-python = ">=3.14"
-version = "0.3.4"
+version = "0.3.5"
 
 [project.scripts]
 algomancy-cli = "algomancy_cli.main:main"

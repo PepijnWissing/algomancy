@@ -18,12 +18,6 @@ name = "algomancy"
 version = "0.3.4"
 source = { editable = "." }
 dependencies = [
-    { name = "algomancy-cli" },
-    { name = "algomancy-content" },
-    { name = "algomancy-data" },
-    { name = "algomancy-gui" },
-    { name = "algomancy-scenario" },
-    { name = "algomancy-utils" },
     { name = "basedpyright" },
     { name = "dash" },
     { name = "dash-auth" },
@@ -46,12 +40,6 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "algomancy-cli", editable = "packages/algomancy-cli" },
-    { name = "algomancy-content", editable = "packages/algomancy-content" },
-    { name = "algomancy-data", editable = "packages/algomancy-data" },
-    { name = "algomancy-gui", editable = "packages/algomancy-gui" },
-    { name = "algomancy-scenario", editable = "packages/algomancy-scenario" },
-    { name = "algomancy-utils", editable = "packages/algomancy-utils" },
     { name = "basedpyright", specifier = ">=1.36.0" },
     { name = "dash", specifier = ">=3.2.0" },
     { name = "dash-auth", specifier = ">=2.3.0" },
