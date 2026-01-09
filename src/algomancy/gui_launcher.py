@@ -14,6 +14,7 @@ from algomancy_gui.sessionmanager import SessionManager
 from algomancy_gui.componentids import ACTIVE_SESSION
 from algomancy_gui.appconfiguration import AppConfiguration
 from algomancy_content.librarymanager import LibraryManager as lm
+from algomancy_scenario import ScenarioManager
 from algomancy_utils.logger import MessageStatus
 
 
@@ -28,12 +29,15 @@ class GuiLauncher:
         else:
             raise TypeError("DashLauncher.build expects AppConfiguration or dict")
 
-        session_manager: SessionManager = SessionManager.from_config(cfg_obj)
+        if cfg_obj.use_sessions:
+            manager: SessionManager = SessionManager.from_config(cfg_obj)
+        else:
+            manager: ScenarioManager = ScenarioManager.from_config(cfg_obj)
 
         # Create the app
         app = GuiLauncher._construct(
             cfg=cfg_obj,
-            session_manager=session_manager,
+            manager=manager,
         )
 
         # register authentication if enabled
@@ -55,7 +59,7 @@ class GuiLauncher:
     @staticmethod
     def _construct(
         cfg: AppConfiguration,
-        session_manager: SessionManager,
+        manager: SessionManager | ScenarioManager,
     ) -> Dash:
         # Initialize the app
         external_stylesheets = [
@@ -75,7 +79,16 @@ class GuiLauncher:
         app.title = cfg.title
 
         # register the scenario manager on the app object
-        app.server.session_manager = session_manager
+        if isinstance(manager, SessionManager):
+            app.server.session_manager = manager
+            default_session_name = app.server.session_manager.start_session_name
+        elif isinstance(manager, ScenarioManager):
+            app.server.scenario_manager = manager
+            default_session_name = None
+        else:
+            raise TypeError(
+                "DashLauncher._construct expects SessionManager or ScenarioManager"
+            )
 
         # register the styling configuration on the app object
         app.server.styling_config = cfg.styling_config
@@ -104,7 +117,7 @@ class GuiLauncher:
                 dcc.Store(
                     id=ACTIVE_SESSION,
                     storage_type="session",
-                    data=session_manager.start_session_name,
+                    data=default_session_name,
                 ),
             ]
         )

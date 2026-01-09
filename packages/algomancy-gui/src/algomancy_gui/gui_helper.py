@@ -1,0 +1,19 @@
+from algomancy_gui.sessionmanager import SessionManager
+from algomancy_scenario import ScenarioManager
+
+
+def get_scenario_manager(
+    server, active_session_name: str | None = None
+) -> ScenarioManager:
+    """Returns the scenario manager.
+    When sessions are enabled, this will return the active scenario manager via the session manager.
+    When sessions are disabled, this will return the scenario manager that was registered on the server object
+    """
+    if hasattr(server, "session_manager"):
+        session_manager: SessionManager = server.session_manager
+        sm: ScenarioManager = session_manager.get_scenario_manager(active_session_name)
+    elif hasattr(server, "scenario_manager"):
+        sm: ScenarioManager = server.scenario_manager
+    else:
+        raise Exception("No sessionmanager or scenario manager available")
+    return sm
