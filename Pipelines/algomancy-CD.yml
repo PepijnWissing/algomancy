@@ -42,7 +42,7 @@ stages:
             displayName: Build source and wheels with uv
             inputs:
               script: |
-                uv build --wheel
+                uv build --all-packages --wheel
 
           - task: PublishPipelineArtifact@1
             displayName: Publish dist artifacts
@@ -81,11 +81,11 @@ stages:
             displayName: 'Twine authenticate'
             condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
             inputs:
-              artifactFeed: WARP/WarpPython
+              artifactFeed: Algomancy/AlgomancyPython
 
           - task: CmdLine@2
             displayName: Upload to feed
             condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
             inputs:
               script: |
-                twine upload --config-file $(PYPIRC_PATH) --verbose -r WarpPython dist_downloaded/*
+                twine upload --config-file $(PYPIRC_PATH) --verbose -r AlgomancyPython dist_downloaded/*
