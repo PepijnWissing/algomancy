@@ -63,9 +63,6 @@ def main(
         autorun=True,
         home_page="showcase",
         data_page="standard",  # ExampleDataPage,
-        # scenario_page="placeholder",  redundant
-        # compare_page="placeholder",   redundant
-        # overview_page="standard",     redundant
         styling_config=configure_styling(),
         use_cqm_loader=False,
         title="Example implementation of an Algomancy Dashboard",
