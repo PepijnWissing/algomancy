@@ -69,7 +69,7 @@ stages:
             inputs:
               script: |
                 python -m pip install --upgrade pip
-                python -m pip install uv build twine keyring artifacts-keyring
+                python -m pip install uv build twine keyring artifacts-keyring packaging
 
           - task: DownloadPipelineArtifact@2
             displayName: Download dist artifact
@@ -84,8 +84,78 @@ stages:
               artifactFeed: Algomancy/AlgomancyPython
 
           - task: CmdLine@2
-            displayName: Upload to feed
+            displayName: Upload to feed (skip existing versions)
             condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
             inputs:
               script: |
-                twine upload --config-file $(PYPIRC_PATH) --verbose -r AlgomancyPython dist_downloaded/*
+                python << 'EOF'
+                import subprocess
+                import sys
+                from pathlib import Path
+                
+                dist_dir = Path("dist_downloaded")
+                packages = list(dist_dir.glob("*.whl")) + list(dist_dir.glob("*.tar.gz"))
+                
+                if not packages:
+                    print("No packages found to upload")
+                    sys.exit(0)
+                
+                uploaded = []
+                skipped = []
+                failed = []
+                
+                for package in packages:
+                    print(f"\n{'='*60}")
+                    print(f"Processing: {package.name}")
+                    print(f"{'='*60}")
+                
+                    result = subprocess.run(
+                        ["twine", "upload", "--config-file", "$(PYPIRC_PATH)", 
+                         "--verbose", "--skip-existing", "-r", "AlgomancyPython", str(package)],
+                        capture_output=True,
+                        text=True
+                    )
+                
+                    if result.returncode == 0:
+                        if "Skipping" in result.stdout or "already exists" in result.stdout.lower():
+                            print(f"✓ Skipped (version already exists): {package.name}")
+                            skipped.append(package.name)
+                        else:
+                            print(f"✓ Successfully uploaded: {package.name}")
+                            uploaded.append(package.name)
+                    else:
+                        # Check if it's a "version already exists" error
+                        if "already exists" in result.stderr.lower() or "file already exists" in result.stderr.lower():
+                            print(f"✓ Skipped (version already exists): {package.name}")
+                            skipped.append(package.name)
+                        else:
+                            print(f"✗ Failed to upload: {package.name}")
+                            print(f"Error: {result.stderr}")
+                            failed.append(package.name)
+                
+                # Print summary
+                print(f"\n{'='*60}")
+                print("UPLOAD SUMMARY")
+                print(f"{'='*60}")
+                print(f"✓ Uploaded: {len(uploaded)}")
+                for pkg in uploaded:
+                    print(f"  - {pkg}")
+                print(f"⊘ Skipped: {len(skipped)}")
+                for pkg in skipped:
+                    print(f"  - {pkg}")
+                if failed:
+                    print(f"✗ Failed: {len(failed)}")
+                    for pkg in failed:
+                        print(f"  - {pkg}")
+                
+                # Only fail if there were genuine failures (not version conflicts)
+                if failed:
+                    print("\nSome packages failed to upload with non-version errors")
+                    sys.exit(1)
+                elif uploaded:
+                    print(f"\n✓ Successfully published {len(uploaded)} package(s)")
+                    sys.exit(0)
+                else:
+                    print("\n⊘ No new versions to publish (all packages already exist)")
+                    sys.exit(0)
+                EOF
