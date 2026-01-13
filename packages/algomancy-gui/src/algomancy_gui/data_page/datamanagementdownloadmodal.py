@@ -22,7 +22,7 @@ import tempfile
 import threading
 
 from algomancy_scenario import ScenarioManager
-
+from ..gui_helper import get_scenario_manager
 
 """
 Modal component for downloading data files into the application.
@@ -140,9 +140,7 @@ def download_modal_children(n, selected_keys, session_id: str):
         # nothing selected -> ignore
         raise PreventUpdate
 
-    sm: ScenarioManager = get_app().server.session_manager.get_scenario_manager(
-        session_id
-    )
+    sm: ScenarioManager = get_scenario_manager(get_app().server, session_id)
 
     # Build file contents mapping
     files = {}

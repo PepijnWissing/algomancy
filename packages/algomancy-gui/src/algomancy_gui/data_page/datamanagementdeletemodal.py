@@ -18,6 +18,7 @@ from ..componentids import (
     DM_DELETE_OPEN_BUTTON,
     ACTIVE_SESSION,
 )
+from ..gui_helper import get_scenario_manager
 
 """
 Modal component for deleting datasets from the application.
@@ -166,7 +167,7 @@ def open_confirm_section(selected_data_key, session_id: str):
     """
     if not selected_data_key:
         return False, ""
-    sm = get_app().server.session_manager.get_scenario_manager(session_id)
+    sm: ScenarioManager = get_scenario_manager(get_app().server, session_id)
 
     is_master_data = sm.get_data(selected_data_key).is_master_data()
     if is_master_data:
@@ -223,7 +224,7 @@ def delete_data_callback(n_clicks, selected_data_key, confirm_str, session_id: s
         )
     if confirm_str != "DELETE":
         return no_update, no_update, no_update, no_update, no_update, no_update
-    sm = get_app().server.session_manager.get_scenario_manager(session_id)
+    sm: ScenarioManager = get_scenario_manager(get_app().server, session_id)
     try:
         sm.delete_data(selected_data_key)
         return datetime.now(), "Dataset deleted successfully!", True, "", False, False

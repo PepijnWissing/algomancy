@@ -7,6 +7,7 @@ import dash_auth
 from dash import get_app, Dash, html, dcc
 from dash_bootstrap_components.themes import BOOTSTRAP
 
+from algomancy_gui.gui_helper import get_manager
 from algomancy_gui.layout import LayoutCreator
 from algomancy_gui.contentregistry import ContentRegistry
 from algomancy_gui.settingsmanager import SettingsManager
@@ -81,9 +82,11 @@ class GuiLauncher:
         # register the scenario manager on the app object
         if isinstance(manager, SessionManager):
             app.server.session_manager = manager
+            app.server.use_sessions = True
             default_session_name = app.server.session_manager.start_session_name
         elif isinstance(manager, ScenarioManager):
             app.server.scenario_manager = manager
+            app.server.use_sessions = False
             default_session_name = None
         else:
             raise TypeError(
@@ -133,25 +136,25 @@ class GuiLauncher:
         connection_limit: int = 100,
         debug: bool = False,
     ) -> None:
-        sm = get_app().server.session_manager
+        manager = get_manager(get_app().server)
 
         algomancy_version = importlib.metadata.version("algomancy")
-        sm.log(f"Algomancy version: {algomancy_version}", MessageStatus.INFO)
+        manager.log(f"Algomancy version: {algomancy_version}", MessageStatus.INFO)
 
         if not debug:
-            sm.log(
+            manager.log(
                 "--------------------------------------------------------------------",
                 MessageStatus.SUCCESS,
             )
-            sm.log(
+            manager.log(
                 f"Starting Dashboard server with Waitress on {host}:{port}...",
                 MessageStatus.SUCCESS,
             )
-            sm.log(
+            manager.log(
                 f"  threads:{threads}, connection limit: {connection_limit}",
                 MessageStatus.SUCCESS,
             )
-            sm.log(
+            manager.log(
                 "--------------------------------------------------------------------",
                 MessageStatus.SUCCESS,
             )
@@ -163,7 +166,7 @@ class GuiLauncher:
                 connection_limit=connection_limit,
             )
         else:
-            sm.log(
+            manager.log(
                 f"Starting Dashboard server in debug mode on {host}:{port}...",
                 MessageStatus.SUCCESS,
             )

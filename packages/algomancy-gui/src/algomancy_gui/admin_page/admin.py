@@ -27,6 +27,7 @@ from ..componentids import (
     HOW_TO_CREATE_NEW_SESSION,
 )
 from algomancy_utils.logger import Logger, MessageStatus
+from ..gui_helper import get_manager
 from ..sessionmanager import SessionManager
 
 
@@ -48,11 +49,12 @@ def admin_header():
 
 def admin_sessions(session_id):
     """Creates a page-section where sessions can be selected and created."""
+
+    if not get_app().server.use_sessions:
+        return []
+
     session_manager: SessionManager = get_app().server.session_manager
     sessions = session_manager.sessions_names
-
-    if not session_manager.use_sessions:
-        return []
 
     return [
         html.H3("Sessions"),
@@ -214,10 +216,10 @@ def update_log_window(n_intervals, filter_value):
     """
     # Get the scenario manager
 
-    session_manager: SessionManager = get_app().server.session_manager
+    manager = get_manager(get_app().server)
 
     # Get the logger from the session manager
-    logger: Logger = session_manager.logger
+    logger: Logger = manager.logger
 
     # Get logs based on filter
     if filter_value == "ALL":

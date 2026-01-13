@@ -1,9 +1,11 @@
+from algomancy_gui.gui_helper import get_manager
 from algomancy_gui.sessionmanager import SessionManager
 from algomancy_gui.settingsmanager import SettingsManager
 import dash_bootstrap_components as dbc
 from dash import html, get_app, dcc
 from typing import Dict
 
+from algomancy_scenario import ScenarioManager
 from algomancy_utils.baseparameterset import (
     TypedParameter,
     ParameterType,
@@ -109,7 +111,7 @@ def create_input_group(param_dict: Dict[str, TypedParameter]):
 
 
 def create_algo_parameters_entry_card_body(template_name: str) -> dbc.CardBody:
-    session_manager: SessionManager = get_app().server.session_manager
+    session_manager: SessionManager | ScenarioManager = get_manager(get_app().server)
     algo_params: BaseParameterSet = session_manager.get_algorithm_parameters(
         template_name
     )

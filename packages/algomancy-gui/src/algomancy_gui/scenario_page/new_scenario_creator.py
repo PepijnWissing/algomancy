@@ -9,17 +9,16 @@ from algomancy_gui.componentids import (
     SCENARIO_CREATE_STATUS,
     SCENARIO_CREATOR_MODAL,
 )
+from algomancy_gui.gui_helper import get_scenario_manager
 from algomancy_gui.scenario_page.new_scenario_parameters_window import (
     create_algo_parameters_window,
 )
 from algomancy_scenario import ScenarioManager
-from algomancy_gui.sessionmanager import SessionManager
 from algomancy_gui.stylingconfigurator import StylingConfigurator
 
 
 def new_scenario_creator(session_id: str):
-    session_manager: SessionManager = get_app().server.session_manager
-    sm: ScenarioManager = session_manager.get_scenario_manager(session_id)
+    sm: ScenarioManager = get_scenario_manager(get_app().server, session_id)
     sc: StylingConfigurator = get_app().server.styling_config
 
     # Modal for creating a new scenario
