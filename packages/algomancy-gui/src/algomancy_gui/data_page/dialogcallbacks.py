@@ -10,6 +10,7 @@ from ..componentids import (
     DM_LIST_UPDATER_STORE,
     ACTIVE_SESSION,
 )
+from ..gui_helper import get_scenario_manager
 
 """
 Callback functions for data management dialogs in the dashboard application.
@@ -38,7 +39,7 @@ and data flow between the UI and the backend ScenarioManager.
     prevent_initial_call=True,
 )
 def get_options_for_lists(data, session_id: str):
-    sm = get_app().server.session_manager.get_scenario_manager(session_id)
+    sm = get_scenario_manager(get_app().server, session_id)
 
     options = [{"label": ds, "value": ds} for ds in sm.get_data_keys()]
     derived_options = [

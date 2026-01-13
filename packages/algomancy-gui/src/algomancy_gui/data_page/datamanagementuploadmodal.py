@@ -22,6 +22,7 @@ from ..componentids import (
 )
 from ..cqmloader import cqm_loader
 from ..defaultloader import default_loader
+from ..gui_helper import get_scenario_manager
 from ..settingsmanager import SettingsManager
 
 
@@ -247,7 +248,7 @@ def _render_uploaded_files(filenames, wrong_filenames) -> html.Div:
 
 
 def check_files(filenames, session_id: str):
-    sm = get_app().server.session_manager.get_scenario_manager(session_id)
+    sm: ScenarioManager = get_scenario_manager(get_app().server, session_id)
     allowed_type = sm.save_type
 
     filenames_with_wrong_type = [
@@ -328,8 +329,7 @@ def process_uploaded_files(n_clicks, contents, filenames, session_id: str):
     if n_clicks is None or not n_clicks or contents is None or filenames is None:
         raise PreventUpdate
 
-    app = get_app()
-    sm = app.server.session_manager.get_scenario_manager(session_id)
+    sm: ScenarioManager = get_scenario_manager(get_app().server, session_id)
 
     # Make sure we're working with lists
     if not isinstance(filenames, list):
