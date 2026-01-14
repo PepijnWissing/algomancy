@@ -172,6 +172,19 @@ def update_root_dependencies(new_version: str, package_names: list[str]):
         sys.exit(1)
 
 
+def update_lockfile():
+    try:
+        _ = subprocess.run(
+            ["uv", "lock"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        print("✓ Updated lockfile")
+    except Exception as e:
+        print(f"Error updating lockfile: {e}", file=sys.stderr)
+
+
 def main():
     """Main entry point."""
     args = parse_args()
@@ -213,6 +226,13 @@ def main():
 
     # Update dependency versions in root pyproject.toml
     update_root_dependencies(new_version, package_names)
+
+    print("\n" + "=" * 50)
+    print("Updating lock file...")
+    print("=" * 50)
+
+    # Update lock file
+    update_lockfile()
 
     print("\n" + "=" * 50)
     print(f"✓ Version bump complete! All packages now at version {new_version}")

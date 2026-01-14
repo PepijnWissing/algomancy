@@ -127,47 +127,47 @@ stages:
               testResultsFiles: '**/pytest-results-*.xml'
               testRunTitle: 'Pytest results'
               mergeTestResults: true
-
-      - job: Publish
-        displayName: Publish to TestPyPI
-        dependsOn:
-          - Build
-          - Test
-        condition: succeeded()
-        pool:
-          vmImage: ubuntu-latest
-        steps:
-          - task: UsePythonVersion@0
-            displayName: Use Python $(python.version)
-            inputs:
-              versionSpec: $(python.version)
-
-          - task: CmdLine@2
-            displayName: Upgrade pip and install publishing tools
-            inputs:
-              script: |
-                python -m pip install --upgrade pip
-                python -m pip install twine
-
-          - task: DownloadPipelineArtifact@2
-            displayName: Download dist artifact
-            inputs:
-              artifact: 'dist'
-              path: 'dist_downloaded'
-
-          - task: TwineAuthenticate@1
-            displayName: 'Twine authenticate to TestPyPI'
-            condition: eq(variables['Build.SourceBranch'], 'refs/heads/development')
-            inputs:
-              pythonUploadServiceConnection: 'TestPyPI'
-
-          - task: CmdLine@2
-            displayName: Upload to TestPyPI
-            condition: eq(variables['Build.SourceBranch'], 'refs/heads/development')
-            inputs:
-              script: |
-                twine upload --repository TestPyPI \
-                  --config-file $(PYPIRC_PATH) \
-                  --non-interactive \
-                  --verbose \
-                  dist_downloaded/*
+#
+#      - job: Publish
+#        displayName: Publish to TestPyPI
+#        dependsOn:
+#          - Build
+#          - Test
+#        condition: succeeded()
+#        pool:
+#          vmImage: ubuntu-latest
+#        steps:
+#          - task: UsePythonVersion@0
+#            displayName: Use Python $(python.version)
+#            inputs:
+#              versionSpec: $(python.version)
+#
+#          - task: CmdLine@2
+#            displayName: Upgrade pip and install publishing tools
+#            inputs:
+#              script: |
+#                python -m pip install --upgrade pip
+#                python -m pip install twine
+#
+#          - task: DownloadPipelineArtifact@2
+#            displayName: Download dist artifact
+#            inputs:
+#              artifact: 'dist'
+#              path: 'dist_downloaded'
+#
+#          - task: TwineAuthenticate@1
+#            displayName: 'Twine authenticate to TestPyPI'
+#            condition: eq(variables['Build.SourceBranch'], 'refs/heads/development')
+#            inputs:
+#              pythonUploadServiceConnection: 'TestPyPI'
+#
+#          - task: CmdLine@2
+#            displayName: Upload to TestPyPI
+#            condition: eq(variables['Build.SourceBranch'], 'refs/heads/development')
+#            inputs:
+#              script: |
+#                twine upload --repository TestPyPI \
+#                  --config-file $(PYPIRC_PATH) \
+#                  --non-interactive \
+#                  --verbose \
+#                  dist_downloaded/*
