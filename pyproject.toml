@@ -24,7 +24,6 @@ dependencies = [
 ]
 description = "A dashboarding framework for visualizing performances of algorithms or simulations in various scenarios."
 keywords = ["visualization", "algorithm", "simulation", "scenario"]
-license = "MIT"
 license-files = ["LICENSE*"]
 maintainers = [
   {email = "pepijn.wissing@cqm.nl", name = "Pepijn Wissing"},
