@@ -180,7 +180,7 @@ stages:
             condition: eq(variables['Build.SourceBranch'], 'refs/heads/development')
             inputs:
               script: |
-                twine upload --repository-url https://test.pypi.org/legacy/ \
+                twine upload --repository TestPyPI \
                   --config-file $(PYPIRC_PATH) \
                   --non-interactive \
                   --verbose \

@@ -88,7 +88,8 @@ stages:
             condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
             inputs:
               script: |
-                twine upload --config-file $(PYPIRC_PATH) \
+                twine upload --repository PyPI \
+                  --config-file $(PYPIRC_PATH) \
                   --non-interactive \
                   --verbose \
                   dist_downloaded/*
