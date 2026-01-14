@@ -162,6 +162,20 @@ stages:
               pythonUploadServiceConnection: 'TestPyPI'
 
           - task: CmdLine@2
+            displayName: Debug - Check PYPIRC_PATH
+            condition: eq(variables['Build.SourceBranch'], 'refs/heads/development')
+            inputs:
+              script: |
+                echo "PYPIRC_PATH is: $(PYPIRC_PATH)"
+                if [ -f "$(PYPIRC_PATH)" ]; then
+                  echo "File exists at $(PYPIRC_PATH)"
+                  echo "Content (masked):"
+                  cat "$(PYPIRC_PATH)" | sed 's/password = .*/password = ***/'
+                else
+                  echo "ERROR: PYPIRC_PATH file not found!"
+                fi
+
+          - task: CmdLine@2
             displayName: Upload to TestPyPI
             condition: eq(variables['Build.SourceBranch'], 'refs/heads/development')
             inputs:
