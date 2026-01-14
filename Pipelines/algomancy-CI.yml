@@ -188,8 +188,13 @@ stages:
                     print(f"{'='*60}")
                 
                     result = subprocess.run(
-                        ["twine", "upload", "--config-file", "$(PYPIRC_PATH)", 
-                         "--verbose", "--skip-existing", str(package)],
+                        ["twine", "upload", 
+                         "--repository-url", "https://test.pypi.org/legacy/",
+                         "--config-file", "$(PYPIRC_PATH)", 
+                         "--non-interactive",
+                         "--verbose", 
+                         "--skip-existing", 
+                         str(package)],
                         capture_output=True,
                         text=True
                     )
