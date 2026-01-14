@@ -42,7 +42,7 @@ stages:
             displayName: Build source and wheels with uv
             inputs:
               script: |
-                uv build --wheel
+                uv build --all-packages --wheel
 
           - task: PublishPipelineArtifact@1
             displayName: Publish dist artifacts
@@ -160,20 +160,6 @@ stages:
             condition: eq(variables['Build.SourceBranch'], 'refs/heads/development')
             inputs:
               pythonUploadServiceConnection: 'TestPyPI'
-
-          - task: CmdLine@2
-            displayName: Debug - Check PYPIRC_PATH
-            condition: eq(variables['Build.SourceBranch'], 'refs/heads/development')
-            inputs:
-              script: |
-                echo "PYPIRC_PATH is: $(PYPIRC_PATH)"
-                if [ -f "$(PYPIRC_PATH)" ]; then
-                  echo "File exists at $(PYPIRC_PATH)"
-                  echo "Content (masked):"
-                  cat "$(PYPIRC_PATH)" | sed 's/password = .*/password = ***/'
-                else
-                  echo "ERROR: PYPIRC_PATH file not found!"
-                fi
 
           - task: CmdLine@2
             displayName: Upload to TestPyPI
