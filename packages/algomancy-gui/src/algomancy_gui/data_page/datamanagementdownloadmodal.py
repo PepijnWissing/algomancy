@@ -22,7 +22,7 @@ import tempfile
 import threading
 
 from algomancy_scenario import ScenarioManager
-from ..gui_helper import get_scenario_manager
+from algomancy_gui.managergetters import get_scenario_manager
 
 """
 Modal component for downloading data files into the application.

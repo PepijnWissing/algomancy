@@ -2,8 +2,8 @@ from dash import html, get_app
 import dash
 import dash_bootstrap_components as dbc
 
-from algomancy_gui.gui_helper import get_scenario_manager
-from algomancy_scenario import ScenarioStatus, ScenarioManager
+from algomancy_scenario import ScenarioStatus
+from algomancy_gui.managergetters import get_scenario_manager
 
 
 class StandardHomePage:
@@ -19,7 +19,7 @@ class StandardHomePage:
             html.Div: A Dash HTML component representing the home page content
         """
         # Get scenario information
-        scenario_manager: ScenarioManager = get_scenario_manager(
+        scenario_manager = get_scenario_manager(
             get_app().server, get_app().server.start_session_name
         )
         all_scenarios = scenario_manager.list_scenarios()

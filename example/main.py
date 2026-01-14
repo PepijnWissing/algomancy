@@ -48,9 +48,15 @@ def main(
     and starts the web server.
     """
     # framework configuration via AppConfiguration
+    use_sessions = False
+    if use_sessions:
+        data_path = ("example/data",)
+    else:
+        data_path = "example/data/default_session"
+
     app_cfg = AppConfiguration(
-        use_sessions=True,
-        data_path="example/data",
+        use_sessions=use_sessions,
+        data_path=data_path,
         assets_path="example/assets",
         has_persistent_state=True,
         etl_factory=ExampleETLFactory,

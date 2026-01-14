@@ -48,7 +48,7 @@ from .new_scenario_parameters_window import (
 )
 from .scenario_cards import scenario_cards
 from ..contentregistry import ContentRegistry
-from ..gui_helper import get_scenario_manager, get_manager
+from algomancy_gui.managergetters import get_scenario_manager, get_manager
 
 from ..layouthelpers import create_wrapped_content_div
 from .delete_confirmation import (

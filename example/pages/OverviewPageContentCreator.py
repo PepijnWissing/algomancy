@@ -7,7 +7,7 @@ from src.IDs import OVERVIEW_TABLE, OVERVIEW_UPDATE_INTERVAL
 from algomancy.components.componentids import ACTIVE_SESSION
 from algomancy.scenarioengine import ScenarioManager
 
-from algomancy_gui.gui_helper import get_scenario_manager
+from algomancy_gui.managergetters import get_scenario_manager
 
 
 class OverviewPageContentCreator:
