@@ -96,13 +96,13 @@ stages:
 
           - task: TwineAuthenticate@1
             displayName: 'Twine authenticate to PyPI'
-            condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
+#            condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
             inputs:
               pythonUploadServiceConnection: 'PyPI'
 
           - task: CmdLine@2
             displayName: Upload to PyPI
-            condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
+#            condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
             inputs:
               script: |
                 twine upload --repository PyPI \
