@@ -156,7 +156,7 @@ stages:
 
           - task: CmdLine@2
             displayName: Upload to TestPyPI with uv
-            condition: eq(variables['Build.SourceBranch'], 'refs/heads/development')
+#            condition: eq(variables['Build.SourceBranch'], 'refs/heads/development')
             env:
               UV_PUBLISH_TOKEN: $(TestPyPI.Token)
             inputs:
