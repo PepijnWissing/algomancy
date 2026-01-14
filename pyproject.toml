@@ -4,8 +4,7 @@ requires = ["uv_build>=0.9.22,<0.10.0"]
 
 [project]
 authors = [
-  {email = "pepijn.wissing@cqm.nl", name = "Pepijn Wissing"},
-  {email = "bart.post@cqm.nl", name = "Bart Post"}
+  {email = "pepijn.wissing@cqm.nl", name = "Pepijn Wissing"}
 ]
 classifiers = [
   "Development Status :: 4 - Beta",
