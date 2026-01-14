@@ -79,7 +79,7 @@ stages:
 
           - task: CmdLine@2
             displayName: Upload to PyPI with uv
-            condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
+#            condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
             env:
               UV_PUBLISH_TOKEN: $(PyPI.Token)
             inputs:
