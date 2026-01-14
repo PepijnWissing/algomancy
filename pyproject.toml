@@ -11,12 +11,12 @@ classifiers = [
   "Programming Language :: Python"
 ]
 dependencies = [
-  "algomancy-cli >= 0.3.11",
-  "algomancy-content >= 0.3.11",
-  "algomancy-data >= 0.3.11",
-  "algomancy-gui >= 0.3.11",
-  "algomancy-scenario >= 0.3.11",
-  "algomancy-utils >= 0.3.11",
+  "algomancy-cli >= 0.3.12",
+  "algomancy-content >= 0.3.12",
+  "algomancy-data >= 0.3.12",
+  "algomancy-gui >= 0.3.12",
+  "algomancy-scenario >= 0.3.12",
+  "algomancy-utils >= 0.3.12",
   "pytest>=8.4.2",
   "ruff>=0.13.1",
   "strenum>=0.4.15"
@@ -31,7 +31,7 @@ maintainers = [
 name = "Algomancy"
 readme = "README.md"
 requires-python = ">=3.14"
-version = "0.3.11"
+version = "0.3.12"
 
 [project.scripts]
 algomancy-cli = "algomancy_cli.main:main"
