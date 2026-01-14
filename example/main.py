@@ -50,7 +50,7 @@ def main(
     # framework configuration via AppConfiguration
     use_sessions = False
     if use_sessions:
-        data_path = ("example/data",)
+        data_path = "example/data"
     else:
         data_path = "example/data/default_session"
 

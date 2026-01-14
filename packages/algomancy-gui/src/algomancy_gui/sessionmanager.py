@@ -28,7 +28,6 @@ class SessionManager:
         if not isinstance(configuration, AppConfiguration):
             raise TypeError("from_config expects an AppConfiguration instance")
         return cls(
-            use_sessions=configuration.use_sessions,
             etl_factory=configuration.etl_factory,
             kpi_templates=configuration.kpi_templates,
             algo_templates=configuration.algo_templates,
@@ -45,7 +44,6 @@ class SessionManager:
 
     def __init__(
         self,
-        use_sessions: bool,
         etl_factory: type[E],
         kpi_templates: Dict[str, Type[BaseKPI]],
         algo_templates: Dict[str, Type[BaseAlgorithm]],
@@ -81,7 +79,6 @@ class SessionManager:
         self._save_type = save_type
 
         # Create sessions
-        self.use_sessions = use_sessions
         self._sessions = {}
         self._create_default_scenario_managers()
         self._start_session_name = list(self._sessions.keys())[0]
@@ -89,10 +86,6 @@ class SessionManager:
         self.log("SessionManager initialized.")
 
     def _create_default_scenario_managers(self) -> None:
-        if not self.use_sessions:
-            self._create_default_scenario_manager("main", self._data_folder)
-            return
-
         if self._has_persistent_state:
             assert self._data_folder, (
                 "Data folder must be specified if a persistent state is used."
@@ -115,14 +108,7 @@ class SessionManager:
         }
         return session_folders
 
-    def get_scenario_manager(self, session_id: None | str) -> ScenarioManager:
-        if not self.use_sessions:
-            return self._sessions["main"]
-
-        if session_id is None:
-            assert not self.use_sessions, (
-                "No session specified and sessions are enabled."
-            )
+    def get_scenario_manager(self, session_id: str) -> ScenarioManager:
         if session_id not in self._sessions:
             self.log(f"Session '{session_id}' not found.")
         assert session_id in self._sessions, f"Scenario '{session_id}' not found."
@@ -172,13 +158,9 @@ class SessionManager:
         return template.initialize_parameters()
 
     def create_new_session(self, session_name: str) -> None:
-        assert self.use_sessions, (
-            "Cannot create a new session when sessions are disabled."
-        )
         self._create_default_scenario_manager(session_name)
 
     def copy_session(self, session_name: str, new_session_name: str):
-        assert self.use_sessions, "Cannot copy a session when sessions are disabled."
         self._create_default_scenario_manager(new_session_name)
 
         for data_key in self.get_scenario_manager(session_name).get_data_keys():
