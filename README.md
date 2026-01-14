@@ -17,27 +17,12 @@ A lightweight framework for building interactive dashboards to visualize the per
 ## Installation
 You can install the published package from the private Azure Artifacts feed (keep this section) or install locally in editable/development mode.
 
-### From Azure Artifacts (requires artifacts-keyring):
-- Ensure artifacts-keyring is installed and your credentials are configured for the feed.
+### From PyPI
 - Install Algomancy:
-  `pip install --index-url=https://pkgs.dev.azure.com/cqmbv/WARP/_packaging/WarpPython/pypi/simple/ algomancy`
+```
+uv add algomancy
+```
 
-### Local development (from this repository):
-- Using pip:
-```
-  python -m venv .venv
-  .venv\Scripts\activate  # Windows
-   source .venv/bin/activate  # macOS/Linux
-  pip install -U pip setuptools wheel
-  pip install -e .
-```
-- Using uv (optional):
-```
-  uv venv
-  # On Windows PowerShell: . .venv\Scripts\Activate.ps1
-  # On macOS/Linux: source .venv/bin/activate
-  uv pip install -e .
-```
 ### Running the Example App
 This repo includes an example application that exercises the framework components.
 - CLI
