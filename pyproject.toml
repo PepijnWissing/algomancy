@@ -12,19 +12,18 @@ classifiers = [
   "Programming Language :: Python"
 ]
 dependencies = [
-  "algomancy-cli >= 0.1.2",
-  "algomancy-content>= 0.1.2",
-  "algomancy-data>= 0.1.2",
-  "algomancy-gui>= 0.1.2",
-  "algomancy-scenario>= 0.1.2",
-  "algomancy-utils>= 0.1.2",
+  "algomancy-cli >= 0.3.11",
+  "algomancy-content >= 0.3.11",
+  "algomancy-data >= 0.3.11",
+  "algomancy-gui >= 0.3.11",
+  "algomancy-scenario >= 0.3.11",
+  "algomancy-utils >= 0.3.11",
   "pytest>=8.4.2",
   "ruff>=0.13.1",
   "strenum>=0.4.15"
 ]
 description = "A dashboarding framework for visualizing performances of algorithms or simulations in various scenarios."
 keywords = ["visualization", "algorithm", "simulation", "scenario"]
-license = "MIT"
 license-files = ["LICENSE*"]
 maintainers = [
   {email = "pepijn.wissing@cqm.nl", name = "Pepijn Wissing"},
@@ -33,7 +32,7 @@ maintainers = [
 name = "Algomancy"
 readme = "README.md"
 requires-python = ">=3.14"
-version = "0.3.8"
+version = "0.3.11"
 
 [project.scripts]
 algomancy-cli = "algomancy_cli.main:main"
