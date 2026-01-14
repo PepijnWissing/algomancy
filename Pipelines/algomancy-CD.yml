@@ -77,6 +77,17 @@ stages:
               artifact: 'dist'
               path: 'dist_downloaded'
 
+          - task: CmdLine@2
+            displayName: Debug - Inspect package metadata
+            inputs:
+              script: |
+                echo "Inspecting package metadata..."
+                for wheel in dist_downloaded/*.whl; do
+                  echo "=== $wheel ==="
+                  unzip -q -c "$wheel" "*/METADATA" 2>/dev/null | head -50 || echo "Could not extract METADATA"
+                  echo ""
+                done
+
           - task: TwineAuthenticate@1
             displayName: 'Twine authenticate to PyPI'
             condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
