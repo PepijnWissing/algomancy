@@ -3,7 +3,7 @@ from typing import Callable, List
 from dash import html
 
 from algomancy_data import BASE_DATA_BOUND
-from algomancy_gui.page import (
+from algomancy_content.pages.page import (
     HomePage,
     DataPage,
     ScenarioPage,

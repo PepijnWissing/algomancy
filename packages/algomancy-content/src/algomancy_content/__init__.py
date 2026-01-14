@@ -7,6 +7,11 @@ from .backend import (
     PlaceholderParams,
 )
 from .pages import (
+    HomePage,
+    DataPage,
+    ScenarioPage,
+    ComparePage,
+    OverviewPage,
     PlaceholderDataPage,
     ShowcaseHomePage,
     StandardHomePage,
@@ -19,6 +24,11 @@ from .librarymanager import LibraryManager
 
 __all__ = [
     "LibraryManager",
+    "HomePage",
+    "DataPage",
+    "ScenarioPage",
+    "ComparePage",
+    "OverviewPage",
     "ShowcaseHomePage",
     "StandardHomePage",
     "StandardDataPage",

@@ -1,7 +1,7 @@
 [project]
 name = "algomancy-data"
-version = "0.1.0"
-description = "Add your description here"
+version = "0.3.12"
+description = "Data management model for the Algomancy library"
 readme = "README.md"
 authors = [
     { name = "Pepijn Wissing", email = "Wsg@cqm.nl" }
@@ -9,6 +9,8 @@ authors = [
 requires-python = ">=3.14"
 dependencies = [
     "pandas",
+    "openpyxl>=3.1.5",
+    "algomancy-utils"
 ]
 
 [build-system]

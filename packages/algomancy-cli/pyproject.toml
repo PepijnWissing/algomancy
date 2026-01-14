@@ -1,6 +1,6 @@
 [project]
 name = "algomancy-cli"
-version = "0.1.0"
+version = "0.3.12"
 description = "CLI shell for Algomancy to exercise backend functionality without the GUI."
 readme = "README.md"
 requires-python = ">=3.14"
@@ -8,7 +8,6 @@ dependencies = [
   "algomancy-utils",
   "algomancy-scenario",
   "algomancy-data",
-  "algomancy-gui",
 ]
 
 [build-system]
