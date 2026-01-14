@@ -18,28 +18,14 @@ dependencies = [
   "algomancy-gui>= 0.1.2",
   "algomancy-scenario>= 0.1.2",
   "algomancy-utils>= 0.1.2",
-  "dash>=3.2.0",
-  "dash-auth>=2.3.0",
-  "dash-bootstrap-components>=2.0.3",
-  "dash-daq>=0.6.0",
-  "dash-iconify>=0.1.2",
-  "openpyxl>=3.1.5",
-  "pandas>=2.3.1",
   "pytest>=8.4.2",
   "ruff>=0.13.1",
-  "strenum>=0.4.15",
-  "tabulate>=0.9.0",
-  "waitress>=3.0.2",
-  "wheel>=0.45.1",
-  "uv-build>=0.9.22,<0.10.0",
-  "prek>=0.2.19",
-  "pyrefly>=0.45.2",
-  "basedpyright>=1.36.0",
-  "ipykernel>=7.1.0"
+  "strenum>=0.4.15"
 ]
 description = "A dashboarding framework for visualizing performances of algorithms or simulations in various scenarios."
 keywords = ["visualization", "algorithm", "simulation", "scenario"]
-license = {text = "Restricted"}
+license = "MIT"
+license-files = ["LICENSE*"]
 maintainers = [
   {email = "pepijn.wissing@cqm.nl", name = "Pepijn Wissing"},
   {email = "bart.post@cqm.nl", name = "Bart Post"}
@@ -60,7 +46,6 @@ algomancy-cli = {workspace = true}
 algomancy-content = {workspace = true}
 algomancy-data = {workspace = true}
 algomancy-gui = {workspace = true}
-algomancy-installer = {workspace = true}
 algomancy-scenario = {workspace = true}
 algomancy-utils = {workspace = true}
 
@@ -71,6 +56,5 @@ members = [
   "packages/algomancy-utils",
   "packages/algomancy-data",
   "packages/algomancy-scenario",
-  "packages/algomancy-cli",
-  "packages/algomancy-installer"
+  "packages/algomancy-cli"
 ]

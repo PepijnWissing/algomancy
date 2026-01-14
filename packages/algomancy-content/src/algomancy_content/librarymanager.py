@@ -1,6 +1,6 @@
 from typing import Tuple, Dict
 
-from algomancy_gui.page import (
+from algomancy_content.pages.page import (
     HomePage,
     DataPage,
     ScenarioPage,

@@ -52,7 +52,7 @@ stages:
               publishLocation: 'pipeline'
 
       - job: Publish
-        displayName: Publish to feed
+        displayName: Publish to PyPI
         dependsOn:
           - Build
         condition: succeeded()
@@ -69,7 +69,7 @@ stages:
             inputs:
               script: |
                 python -m pip install --upgrade pip
-                python -m pip install uv build twine keyring artifacts-keyring
+                python -m pip install twine
 
           - task: DownloadPipelineArtifact@2
             displayName: Download dist artifact
@@ -78,14 +78,18 @@ stages:
               path: 'dist_downloaded'
 
           - task: TwineAuthenticate@1
-            displayName: 'Twine authenticate'
+            displayName: 'Twine authenticate to PyPI'
             condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
             inputs:
-              artifactFeed: Algomancy/AlgomancyPython
+              pythonUploadServiceConnection: 'PyPI'
 
           - task: CmdLine@2
-            displayName: Upload to feed
+            displayName: Upload to PyPI
             condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
             inputs:
               script: |
-                twine upload --config-file $(PYPIRC_PATH) --verbose -r AlgomancyPython dist_downloaded/*
+                twine upload --repository PyPI \
+                  --config-file $(PYPIRC_PATH) \
+                  --non-interactive \
+                  --verbose \
+                  dist_downloaded/*

@@ -2,18 +2,17 @@ import platform
 from typing import Any, Dict, List, Type
 import os
 
+from algomancy_content import LibraryManager as library
 from algomancy_data import InputFileConfiguration, BASE_DATA_BOUND
-from algomancy_gui.page import (
+from algomancy_content.pages.page import (
     HomePage,
     ScenarioPage,
     ComparePage,
     OverviewPage,
     DataPage,
 )
-from algomancy_scenario import ALGORITHM, BASE_KPI
-from algomancy_content import LibraryManager as library
-
 from algomancy_gui.stylingconfigurator import StylingConfigurator
+from algomancy_scenario import ALGORITHM, BASE_KPI
 from algomancy_scenario.core_configuration import CoreConfiguration
 
 
@@ -285,15 +284,3 @@ class AppConfiguration(CoreConfiguration):
     @classmethod
     def from_dict(cls, config: Dict[str, Any]) -> "AppConfiguration":
         return cls(**config)
-
-
-# stub_configuration = AppConfiguration(
-#     etl_factory=PlaceholderETLFactory,
-#     kpi_templates={
-#         str(PlaceholderKPI.name): PlaceholderKPI,
-#     },
-#     algo_templates={
-#         str(PlaceholderAlgorithm.name): PlaceholderAlgorithm,
-#     },
-#     input_configs=[placeholder_input_config],
-# )

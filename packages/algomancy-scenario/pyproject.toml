@@ -7,7 +7,10 @@ authors = [
     { name = "Pepijn Wissing", email = "Wsg@cqm.nl" }
 ]
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "algomancy-utils",
+    "algomancy-data",
+]
 
 [build-system]
 requires = ["uv_build>=0.9.6,<0.10.0"]

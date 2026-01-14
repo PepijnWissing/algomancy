@@ -161,12 +161,10 @@ class CliShell:
         self.sm.log(f"Scenario '{s.tag}' completed.", MessageStatus.SUCCESS)
 
     def _cmd_status(self, _: list[str]) -> None:
-        processing = self.sm.currently_processing()
+        processing = self.sm.currently_processing
         if processing:
-            print("Processing queue:")
-            for s in processing:
-                print(
-                    f"  - id={s.id} tag={s.tag} status={getattr(s, 'status', 'processing')}"
-                )
+            print(
+                f"  - id={processing.id} tag={processing.tag} status={getattr(processing, 'status', 'processing')}"
+            )
         else:
             print("No scenarios processing.")
