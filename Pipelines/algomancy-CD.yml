@@ -78,6 +78,12 @@ stages:
               path: 'dist_downloaded'
 
           - task: CmdLine@2
+            displayName: Validate packages with twine check
+            inputs:
+              script: |
+                twine check dist_downloaded/*
+
+          - task: CmdLine@2
             displayName: Debug - Inspect package metadata
             inputs:
               script: |
