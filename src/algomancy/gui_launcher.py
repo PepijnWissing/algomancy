@@ -7,7 +7,6 @@ import dash_auth
 from dash import get_app, Dash, html, dcc
 from dash_bootstrap_components.themes import BOOTSTRAP
 
-from algomancy_gui.gui_helper import get_manager
 from algomancy_gui.layout import LayoutCreator
 from algomancy_gui.contentregistry import ContentRegistry
 from algomancy_gui.settingsmanager import SettingsManager
@@ -136,7 +135,13 @@ class GuiLauncher:
         connection_limit: int = 100,
         debug: bool = False,
     ) -> None:
-        manager = get_manager(get_app().server)
+        server = get_app().server
+        if hasattr(server, "session_manager"):
+            manager = server.session_manager
+        elif hasattr(server, "scenario_manager"):
+            manager = server.scenario_manager
+        else:
+            raise Exception("No manager available")
 
         algomancy_version = importlib.metadata.version("algomancy")
         manager.log(f"Algomancy version: {algomancy_version}", MessageStatus.INFO)

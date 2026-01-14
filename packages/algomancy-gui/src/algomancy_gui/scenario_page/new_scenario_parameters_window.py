@@ -1,4 +1,4 @@
-from algomancy_gui.gui_helper import get_manager
+from algomancy_gui.managergetters import get_manager
 from algomancy_gui.sessionmanager import SessionManager
 from algomancy_gui.settingsmanager import SettingsManager
 import dash_bootstrap_components as dbc

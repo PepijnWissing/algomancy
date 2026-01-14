@@ -10,7 +10,7 @@ from .filenamematcher import match_file_names
 
 from ..cqmloader import cqm_loader
 from ..defaultloader import default_loader
-from ..gui_helper import get_scenario_manager
+from algomancy_gui.managergetters import get_scenario_manager
 from ..settingsmanager import SettingsManager
 from ..componentids import (
     DM_IMPORT_MODAL_CLOSE_BTN,

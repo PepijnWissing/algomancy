@@ -27,7 +27,7 @@ from ..componentids import (
     HOW_TO_CREATE_NEW_SESSION,
 )
 from algomancy_utils.logger import Logger, MessageStatus
-from ..gui_helper import get_manager
+from algomancy_gui.managergetters import get_manager
 from ..sessionmanager import SessionManager
 
 

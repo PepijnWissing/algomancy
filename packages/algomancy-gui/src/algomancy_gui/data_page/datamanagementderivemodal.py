@@ -18,7 +18,7 @@ from ..componentids import (
     DM_DERIVE_OPEN_BTN,
     ACTIVE_SESSION,
 )
-from ..gui_helper import get_scenario_manager
+from algomancy_gui.managergetters import get_scenario_manager
 
 """
 Modal component for deriving new datasets from existing ones.

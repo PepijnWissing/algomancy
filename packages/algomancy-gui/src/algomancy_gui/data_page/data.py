@@ -9,7 +9,7 @@ from ..componentids import (
     DATA_PAGE,
 )
 from ..data_page.datamanagementtopbar import top_bar
-from ..gui_helper import get_scenario_manager
+from algomancy_gui.managergetters import get_scenario_manager
 from ..layouthelpers import create_wrapped_content_div
 from ..contentregistry import ContentRegistry
 

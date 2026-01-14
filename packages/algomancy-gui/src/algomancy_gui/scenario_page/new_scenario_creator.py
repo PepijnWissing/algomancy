@@ -9,7 +9,7 @@ from algomancy_gui.componentids import (
     SCENARIO_CREATE_STATUS,
     SCENARIO_CREATOR_MODAL,
 )
-from algomancy_gui.gui_helper import get_scenario_manager
+from algomancy_gui.managergetters import get_scenario_manager
 from algomancy_gui.scenario_page.new_scenario_parameters_window import (
     create_algo_parameters_window,
 )
