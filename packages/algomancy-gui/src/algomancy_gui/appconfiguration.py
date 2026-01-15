@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Type
 import os
 
 from algomancy_content import LibraryManager as library
-from algomancy_data import InputFileConfiguration, BASE_DATA_BOUND
+from algomancy_data import InputFileConfiguration, BASE_DATA_BOUND, DataSource
 from algomancy_content.pages.page import (
     HomePage,
     ScenarioPage,
@@ -33,7 +33,7 @@ class AppConfiguration(CoreConfiguration):
         # === data manager configuration ===
         has_persistent_state: bool = False,
         save_type: str | None = "json",
-        data_object_type: type[BASE_DATA_BOUND] | None = None,
+        data_object_type: type[BASE_DATA_BOUND] | None = DataSource,
         # === scenario manager configuration ===
         etl_factory: Any | None = None,
         kpi_templates: Dict[str, Type[BASE_KPI]] | None = None,

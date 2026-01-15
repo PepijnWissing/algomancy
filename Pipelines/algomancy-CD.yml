@@ -65,11 +65,11 @@ stages:
               versionSpec: $(python.version)
 
           - task: CmdLine@2
-            displayName: Upgrade pip and install publishing tools
+            displayName: Install uv
             inputs:
               script: |
                 python -m pip install --upgrade pip
-                python -m pip install twine
+                python -m pip install uv
 
           - task: DownloadPipelineArtifact@2
             displayName: Download dist artifact
@@ -78,35 +78,10 @@ stages:
               path: 'dist_downloaded'
 
           - task: CmdLine@2
-            displayName: Validate packages with twine check
+            displayName: Upload to PyPI with uv
+#            condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
+            env:
+              UV_PUBLISH_TOKEN: $(PyPI.Token)
             inputs:
               script: |
-                twine check dist_downloaded/*
-
-          - task: CmdLine@2
-            displayName: Debug - Inspect package metadata
-            inputs:
-              script: |
-                echo "Inspecting package metadata..."
-                for wheel in dist_downloaded/*.whl; do
-                  echo "=== $wheel ==="
-                  unzip -q -c "$wheel" "*/METADATA" 2>/dev/null | head -50 || echo "Could not extract METADATA"
-                  echo ""
-                done
-
-          - task: TwineAuthenticate@1
-            displayName: 'Twine authenticate to PyPI'
-            condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
-            inputs:
-              pythonUploadServiceConnection: 'PyPI'
-
-          - task: CmdLine@2
-            displayName: Upload to PyPI
-            condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
-            inputs:
-              script: |
-                twine upload --repository PyPI \
-                  --config-file $(PYPIRC_PATH) \
-                  --non-interactive \
-                  --verbose \
-                  dist_downloaded/*
+                uv publish --token $UV_PUBLISH_TOKEN dist_downloaded/*
