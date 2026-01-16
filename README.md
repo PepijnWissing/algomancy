@@ -39,8 +39,9 @@ root/
 > Only the items marked (*) are required.
 
 2. create `main.py`
+
 ```python
-from algomancy.gui_launcher import GuiLauncher
+from algomancy_gui.gui_launcher import GuiLauncher
 from algomancy_gui.appconfiguration import AppConfiguration
 from algomancy_content import (
     PlaceholderETLFactory,

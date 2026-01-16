@@ -1,6 +1,6 @@
 [project]
 name = "algomancy-cli"
-version = "0.3.15"
+version = "0.3.16"
 description = "CLI shell for Algomancy to exercise backend functionality without the GUI."
 readme = "README.md"
 requires-python = ">=3.14"

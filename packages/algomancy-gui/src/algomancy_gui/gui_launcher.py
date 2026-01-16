@@ -7,12 +7,12 @@ import dash_auth
 from dash import get_app, Dash, html, dcc
 from dash_bootstrap_components.themes import BOOTSTRAP
 
-from algomancy_gui.layout import LayoutCreator
-from algomancy_gui.contentregistry import ContentRegistry
-from algomancy_gui.settingsmanager import SettingsManager
-from algomancy_gui.sessionmanager import SessionManager
-from algomancy_gui.componentids import ACTIVE_SESSION
-from algomancy_gui.appconfiguration import AppConfiguration
+from .layout import LayoutCreator
+from .contentregistry import ContentRegistry
+from .settingsmanager import SettingsManager
+from .sessionmanager import SessionManager
+from .componentids import ACTIVE_SESSION
+from .appconfiguration import AppConfiguration
 from algomancy_content.librarymanager import LibraryManager as lm
 from algomancy_scenario import ScenarioManager
 from algomancy_utils.logger import MessageStatus

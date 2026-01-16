@@ -30,7 +30,7 @@ if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 # Suppress ruff linter for these two imports
-from src.algomancy.gui_launcher import GuiLauncher  # noqa: E402
+from algomancy_gui.gui_launcher import GuiLauncher  # noqa: E402
 from algomancy_gui.appconfiguration import AppConfiguration  # noqa: E402
 
 
@@ -48,7 +48,7 @@ def main(
     and starts the web server.
     """
     # framework configuration via AppConfiguration
-    use_sessions = False
+    use_sessions = True
     if use_sessions:
         data_path = "example/data"
     else:
