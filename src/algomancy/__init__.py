@@ -7,10 +7,3 @@ and interactions between these subsystems.
 """
 
 __version__ = "0.3.16"
-
-from .test_docs import solve_problem, Problem
-
-__all__ = [
-    "solve_problem",
-    "Problem",
-]
