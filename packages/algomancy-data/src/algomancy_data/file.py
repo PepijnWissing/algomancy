@@ -1,3 +1,10 @@
+"""Lightweight file abstractions used by extractors.
+
+This module defines simple wrappers around uploaded or on-disk files and
+provides helpers to normalize their contents to strings/JSON that the
+extractors can consume.
+"""
+
 from abc import ABC
 from io import BytesIO
 from typing import Dict
@@ -9,6 +16,8 @@ from .inputfileconfiguration import FileExtension
 
 
 class File(ABC):
+    """Base file representation with name, extension, and content source."""
+
     def __init__(
         self,
         name: str,
@@ -27,6 +36,7 @@ class File(ABC):
             self.content = self.read_contents_from_path()
 
     def read_contents_from_path(self) -> str:
+        """Read textual contents of the file from ``self.path``."""
         try:
             with open(self.path, "r") as f:
                 return f.read()
@@ -36,6 +46,8 @@ class File(ABC):
 
 
 class CSVFile(File):
+    """CSV file backed by uploader content or a filesystem path."""
+
     def __init__(
         self,
         name: str,
@@ -48,6 +60,7 @@ class CSVFile(File):
 
     @staticmethod
     def _set_content_from_uploader(content: str) -> str:
+        """Decode data-URI CSV content and return it as UTF-8 text."""
         try:
             # Extract the base64 content from the data URI
             content_type, content_string = content.split(",", 1)
@@ -64,6 +77,8 @@ class CSVFile(File):
 
 
 class JSONFile(File):
+    """JSON file backed by uploader content or a filesystem path."""
+
     def __init__(
         self,
         name: str,
@@ -76,6 +91,7 @@ class JSONFile(File):
 
     @staticmethod
     def _set_content_from_uploader(content: str) -> str:
+        """Decode data-URI JSON content and return a canonical JSON string."""
         try:
             # Extract the base64 content from the data URI
             content_type, content_string = content.split(",", 1)
@@ -92,6 +108,12 @@ class JSONFile(File):
 
 
 class XLSXFile(File):
+    """Excel file that exposes its sheets as a JSON payload.
+
+    The content string contains JSON with metadata (sheet names and order)
+    and a ``sheets`` mapping where each sheet is a list of records.
+    """
+
     def __init__(self, name: str, path: str = None, content: str = None):
         super().__init__(name, FileExtension.XLSX, path, None)
         self.index_to_sheet_name: Dict[int, str] = {}
@@ -120,6 +142,7 @@ class XLSXFile(File):
             raise e
 
     def read_contents_from_path(self) -> str:
+        """Read and convert the Excel file to the standard JSON payload."""
         try:
             # Read all sheets from the Excel file
             excel_file = pd.ExcelFile(self.path)
@@ -130,6 +153,7 @@ class XLSXFile(File):
             raise e
 
     def _process_excel_file(self, excel_file):
+        """Convert all sheets in the given ``ExcelFile`` to a JSON payload."""
         sheet_names = excel_file.sheet_names
 
         # Store mapping of index to sheet name

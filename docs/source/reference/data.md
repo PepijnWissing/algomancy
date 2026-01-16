@@ -1,9 +1,18 @@
-# Algomancy-data
+# Data
 
-```{eval-rst}
-.. automodule:: algomancy_data
-   :members:
-   :undoc-members:
-   :show-inheritance:
-```
+Below you will find API reference pages for each module in the `algomancy_data` package.
+
+```{toctree}
+:maxdepth: 1
+
+data/datamanager
+data/datasource
+data/etl
+data/extractor
+data/schema
+data/inputfileconfiguration
+data/file
+data/validator
+data/transformer
+data/loader
 ```
