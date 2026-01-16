@@ -10,6 +10,7 @@ from .filenamematcher import match_file_names
 
 from ..cqmloader import cqm_loader
 from ..defaultloader import default_loader
+from algomancy_gui.managergetters import get_scenario_manager
 from ..settingsmanager import SettingsManager
 from ..componentids import (
     DM_IMPORT_MODAL_CLOSE_BTN,
@@ -231,7 +232,7 @@ def show_uploaded_filename(filename, session_id: str):
     if not filename:
         return no_update, False, False, ""
 
-    sm = get_app().server.session_manager.get_scenario_manager(session_id)
+    sm: ScenarioManager = get_scenario_manager(get_app().server, session_id)
 
     # Allow for possible list/file array
     if isinstance(filename, list):
@@ -296,7 +297,7 @@ def process_imports(n_clicks, contents, filenames, dataset_name, session_id: str
         return no_update, no_update, "", False, "", False, ""
 
     # Get scenario manager from app context
-    sm = get_app().server.session_manager.get_scenario_manager(session_id)
+    sm: ScenarioManager = get_scenario_manager(get_app().server, session_id)
 
     try:
         sm.log(f"Loading {filenames} into {dataset_name}")

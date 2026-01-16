@@ -5,7 +5,7 @@ This module defines the layout and components for the compare dashboard page.
 It includes scenario selection, KPI improvement displays, and secondary results sections.
 """
 
-from typing import Any
+from typing import Any, Optional
 
 from dash import html, get_app, callback, Output, Input, State
 import dash_bootstrap_components as dbc
@@ -33,10 +33,11 @@ from ..compare_page.scenarioselector import (
     create_side_by_side_viewer,
     create_side_by_side_selector,
 )
+from algomancy_gui.managergetters import get_scenario_manager
 
 from ..settingsmanager import SettingsManager
 from ..contentregistry import ContentRegistry
-from algomancy_scenario import ScenarioManager
+from algomancy_scenario import ScenarioManager, Scenario
 
 
 def compare_page():
@@ -49,9 +50,9 @@ def compare_page():
 )
 def render_ordered_components(active_session_name):
     """Creates the compare page layout with scenario management functionality."""
-    sm: ScenarioManager = get_app().server.session_manager.get_scenario_manager(
-        active_session_name
-    )
+
+    sm: ScenarioManager = get_scenario_manager(get_app().server, active_session_name)
+
     settings: SettingsManager = get_app().server.settings
 
     header = create_header(settings)
@@ -204,15 +205,14 @@ def create_header(settings: SettingsManager) -> dbc.Row:
     State(ACTIVE_SESSION, "data"),
     prevent_initial_call=True,
 )
-def update_left_scenario_overview(scenario_id, session_id) -> html.Div | str:
+def update_left_scenario_overview(scenario_id: str, session_id: str) -> html.Div | str:
     if not scenario_id:
         return "No scenario selected."
-
-    s = (
-        get_app()
-        .server.session_manager.get_scenario_manager(session_id)
-        .get_by_id(scenario_id)
+    scenario_manager = get_scenario_manager(
+        server=get_app().server, active_session_name=session_id
     )
+    s: Optional[Scenario] = scenario_manager.get_by_id(scenario_id)
+
     cr: ContentRegistry = get_app().server.content_registry
 
     if not s:
@@ -230,12 +230,10 @@ def update_left_scenario_overview(scenario_id, session_id) -> html.Div | str:
 def update_right_scenario_overview(scenario_id, session_id) -> html.Div | str:
     if not scenario_id:
         return "No scenario selected."
-
-    s = (
-        get_app()
-        .server.session_manager.get_scenario_manager(session_id)
-        .get_by_id(scenario_id)
+    scenario_manager: ScenarioManager = get_scenario_manager(
+        get_app().server, session_id
     )
+    s = scenario_manager.get_by_id(scenario_id)
     cr: ContentRegistry = get_app().server.content_registry
 
     if not s:
@@ -254,9 +252,7 @@ def update_right_scenario_overview(scenario_id, session_id) -> html.Div | str:
 def update_right_scenario_overview_primary(
     left_scenario_id, right_scenario_id, session_id
 ) -> html.Div:
-    sm: ScenarioManager = get_app().server.session_manager.get_scenario_manager(
-        session_id
-    )
+    sm: ScenarioManager = get_scenario_manager(get_app().server, session_id)
     cr: ContentRegistry = get_app().server.content_registry
 
     # check the inputs
@@ -287,9 +283,7 @@ def update_right_scenario_overview_detail(
     right_scenario_id,
     session_id: str,
 ) -> html.Div | str:
-    sm: ScenarioManager = get_app().server.session_manager.get_scenario_manager(
-        session_id
-    )
+    sm: ScenarioManager = get_scenario_manager(get_app().server, session_id)
     cr: ContentRegistry = get_app().server.content_registry
 
     if not left_scenario_id or not right_scenario_id:
@@ -315,9 +309,7 @@ def update_right_scenario_overview_detail(
 def update_kpi_comparison(left_id, right_id, active_session_name):
     if not left_id or not right_id:
         return html.P("Select two completed scenarios to compare KPIs.")
-    sm: ScenarioManager = get_app().server.session_manager.get_scenario_manager(
-        active_session_name
-    )
+    sm: ScenarioManager = get_scenario_manager(get_app().server, active_session_name)
 
     left = sm.get_by_id(left_id)
     right = sm.get_by_id(right_id)

@@ -1,4 +1,7 @@
 # Change log
+## 0.3.13
+- Added `use_sessions` atribute to `AppConfiguration` to allow disabling sessions. 
+
 ## 0.3.4
 _Released at 07-01-2026_
 

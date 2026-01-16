@@ -2,7 +2,9 @@ from dash import html, dash_table, callback, Output, Input, get_app, State
 
 from dash import dcc
 
+from algomancy_gui.managergetters import get_scenario_manager
 from algomancy_gui.componentids import ACTIVE_SESSION
+
 from algomancy_scenario import ScenarioManager
 
 OVERVIEW_TABLE = "overview-table"
@@ -96,8 +98,8 @@ class StandardOverviewPage:
                 return [], []
 
             # Get the scenario manager
-            scenario_manager: ScenarioManager = (
-                get_app().server.session_manager.get_scenario_manager(session_id)
+            scenario_manager: ScenarioManager = get_scenario_manager(
+                get_app().server, session_id
             )
 
             # Get completed scenarios

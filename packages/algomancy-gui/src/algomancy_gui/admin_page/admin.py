@@ -27,6 +27,7 @@ from ..componentids import (
     HOW_TO_CREATE_NEW_SESSION,
 )
 from algomancy_utils.logger import Logger, MessageStatus
+from algomancy_gui.managergetters import get_manager
 from ..sessionmanager import SessionManager
 
 
@@ -42,11 +43,16 @@ def admin_header():
         html.P(
             "This is where settings are managed and an overview of the jobs is provided."
         ),
+        html.Hr(),
     ]
 
 
 def admin_sessions(session_id):
     """Creates a page-section where sessions can be selected and created."""
+
+    if not get_app().server.use_sessions:
+        return []
+
     session_manager: SessionManager = get_app().server.session_manager
     sessions = session_manager.sessions_names
 
@@ -107,6 +113,7 @@ def admin_sessions(session_id):
             ],
             className="g-1",
         ),
+        html.Hr(),
     ]
 
 
@@ -175,9 +182,7 @@ def create_admin_page(session_id):
     """
     admin_content = (
         admin_header()
-        + [html.Hr()]
         + admin_sessions(session_id)
-        + [html.Hr()]
         + admin_system_logs()
         + [create_new_session_window()]
     )
@@ -211,10 +216,10 @@ def update_log_window(n_intervals, filter_value):
     """
     # Get the scenario manager
 
-    session_manager: SessionManager = get_app().server.session_manager
+    manager = get_manager(get_app().server)
 
     # Get the logger from the session manager
-    logger: Logger = session_manager.logger
+    logger: Logger = manager.logger
 
     # Get logs based on filter
     if filter_value == "ALL":
@@ -271,6 +276,8 @@ def validate_session_name(session_name: str):
     A name is considered invalid if it is empty or already exists.
     A tooltip is displayed if the session name is invalid with a short explanation.
     """
+    if not get_app().server.use_sessions:
+        return no_update, no_update
     existing_names = get_app().server.session_manager.sessions_names
 
     if not session_name:
