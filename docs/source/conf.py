@@ -36,6 +36,8 @@ myst_enable_extensions = [
     "deflist",  # optional but useful
 ]
 
+myst_heading_anchors = 3
+
 autodoc_default_options = {
     "members": True,
     "undoc-members": False,

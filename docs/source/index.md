@@ -18,8 +18,8 @@ getting_started/quickstart
 :maxdepth: 2
 :caption: Fundamentals
 
-fundamentals/concepts
 fundamentals/architecture
+fundamentals/concepts
 ```
 ```{toctree}
 :maxdepth: 2
@@ -28,15 +28,6 @@ fundamentals/architecture
 how_to/basic_usage
 how_to/advanced_usage
 ```
-
-```{toctree}
-:maxdepth: 2
-:caption: Examplers
-
-examples/example_1
-examples/example_2
-```
-
 ```{toctree}
 :maxdepth: 2
 :caption: Reference

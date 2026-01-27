@@ -1,3 +1,4 @@
+(file-ref)=
 # File
 
 ```{eval-rst}

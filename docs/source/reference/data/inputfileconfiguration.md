@@ -1,3 +1,4 @@
+(input-file-config-ref)=
 # InputFileConfiguration
 
 ```{eval-rst}

@@ -1,3 +1,4 @@
+(loader-ref)=
 # Loader
 
 ```{eval-rst}

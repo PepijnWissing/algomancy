@@ -1,3 +1,4 @@
+(data-manager-ref)=
 # DataManager
 
 The DataManager class is responsible for data ingestion and internal storage. 

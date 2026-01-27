@@ -1,29 +1,8 @@
-# Data
-This document describes the data engine and data sources used in the Dash framework. We start with an overview of the underlying data container, the `DataSource` class, and then discuss the ETL process.
+# Data Container
+This document describes the data engine and data sources used in the Dash framework. We start with an overview of the 
+underlying data container, the `DataSource` class, and then discuss the ETL process.
 
-# **Contents**
-1. [DataSource](#the-datasource-class)
-   1. [Overview](#overview)
-   2. [Description](#description)
-   3. [Attributes and Methods](#attributes-and-methods)
-   4. [DataSourceType Enum](#datasourcetype-enum)
-   5. [Usage](#usage)
-   6. [Custom data source](#custom-data-source)
-2. [ETL](#etl)
-   1. [Overview](#overview-1)
-   2. [Components of ETL](#components-of-etl)
-   3. [Abstract Factory pattern](#abstract-factory-pattern)
-   4. [InputFileConfiguration](#inputfileconfiguration)
-   5. [Extractor](#extractor)
-   6. [ValidationSequence](#validation-sequence)
-   7. [Transformer](#transformer)
-   8. [Loader](#loader)
-   9. [ETLFactory](#etl-factory)
-   10. [ETLFactory implementation](#etl-factory-implementation)
-
-# **The DataSource class**
 ## **Overview**
-[To contents](#contents)
 
 The `DataSource` class provides a standardized interface for managing tabular data in Python projects, typically using
 pandas DataFrames. It supports serialization to and from JSON and Parquet formats, enabling easy saving and loading of 
@@ -32,7 +11,6 @@ A `DataSource` instance contains all necessary information to be processed by an
 normally used within ETL workflows.
 
 ## **Description**
-[To contents](#contents)
 
 The `DataSource` class serves as a base class for various data sources,
 providing a standardized interface for handling tabular data, typically stored in pandas DataFrames.
@@ -41,23 +19,7 @@ Conceptually, a `DataSource` is expected to contain all the necessary informatio
 to get a `Scenario`.  
 
 ### **Attributes and Methods**
-| Attribute / Method                  | Type / Signature            | Description                             |  
-|-------------------------------------|-----------------------------|-----------------------------------------|  
-| `name`                              | `property: str`             | Returns the name                        |  
-| `id`                                | `property: str`             | Returns the ID                          |  
-| `creation_datetime `                | `property: datetime`        | Returns the creation datetime           |
-| `tables`                            | `dict[str, pd.DataFrame] `  | Stores table dataframes by name         |  
-| `validation_messages`               | `List[ValidationMessage]`   | Validation messages (optional)          |    
-| `is_master_data()`                  | `bool `                     | Checks if type is MASTER_DATA           |  
-| `set_to_master_data()`              | `None`                      | Sets type to MASTER_DATA                |  
-| `add_table(name, df, logger=None)`  | `None`                      | Adds a table to the data source         |  
-| `get_table(name)`                   | `pd.DataFrame`              | Retrieves a table by name               |  
-| `list_tables() `                    | `list[str]`                 | Lists all table names                   |  
-| `copy_contents_from(ds_to_copy)`    | `None `                     | Copies tables from another DataSource   |  
-| `to_parquet_bytes()`                | `bytes `                    | Serializes the object to Parquet bytes  |  
-| `from_parquet_bytes(parquet_bytes)` | `classmethod -> DataSource` | Deserializes from Parquet bytes         |  
-| `to_json()`                         | `str `                      | Serializes the object to JSON           |  
-| `from_json(json_string)`            | `classmethod -> DataSource` | Deserializes from JSON string           |
+See {ref}`API reference<datasource-ref>` for details.
 
 ### **DataSourceType Enum**
 The `ds_type` attribute of a `DataSource` instance indicates its type. 
@@ -96,7 +58,6 @@ it avoids the need to create custom subclasses and implement serialization metho
 > an `ETL` process (link).
 
 ## **Custom data source**
-[To contents](#contents)
 
 For a typical project, you will likely need to create a custom subclass of `DataSource` to encapsulate project-specific logic,
 attributes, and behaviors. This section outlines the recommended patterns and practices for implementing such subclasses.
@@ -154,14 +115,12 @@ class MyCustomSource(BaseDataSource):
 
 # **ETL**
 ## **Overview**
-[To contents](#contents)
 
 The ETL (Extract, Transform, Load) process is a fundamental component of data engineering and analytics workflows.
 It involves extracting data from various sources, transforming it into a suitable format, and loading it into a target 
 system for analysis or further processing. In this case, the target format is a `DataSource,` or a class derived thereof. 
 
 ## **Components of ETL**
-[To contents](#contents)
 
 1. **Extract**: The extraction phase involves retrieving data from different sources, which can include databases, APIs, flat files, or other data repositories. The goal is to gather all relevant data needed for analysis.
 2. (**Validation**): After extraction, the data should optionally be validated to ensure it meets the required quality standards. 
@@ -190,7 +149,6 @@ graph LR
 
 
 ## **Abstract Factory pattern**
-[To contents](#contents)
 
 The ETL process is, in this case, implemented the Abstract Factory design pattern. This allows for flexibility and 
 extensibility in the ETL process, as different implementations can be created for different data sources. 
@@ -242,7 +200,6 @@ We will now discuss the following five components of the ETL process in more det
 5. `Loader`
 
 ## **InputFileConfiguration**
-[To contents](#contents)
 
 The `InputFileConfiguration` class is used to configure the extractors. It is a simple data structure that contains the following attributes:
 - `extension`: The file type of the associated raw data. For example, CSV, JSON, or XLSX.
@@ -311,7 +268,6 @@ match the extractor to the corresponding file, which is discussed in the next se
 
 
 ## **Extractor**
-[To contents](#contents)
 
 The ETL pipeline expects a single `Extractor` for each `File`. In practice, the user will use either a `SingleExtractor`
 or a `MultiExtractor`; the latter is used when the file contains multiple data sets, though both are structurally similar.
@@ -428,7 +384,6 @@ class JSONExtractor(de.SingleExtractor):
 ```
 
 ## **Validators**
-[To contents](#contents)
 
 The `Validators` aim to check the integrity of the raw data. Each `Validator` should be responsible for checking a single 
 aspect of the data. The `Validator` class has a single exposed method, `validate()`, which takes a dictionary of
@@ -533,8 +488,6 @@ depends mostly on the extracted data, in context. Two points to note:
 
 ## **Transformers**
 > _DeprecatedWarning: At some point, this will be moved to a TransformerSequence._ 
-> 
-[To contents](#contents)
 
 Transformers are a critical component of the ETL process, responsible for cleaning, normalizing, and reshaping raw data into a consistent and usable structure. Each `Transformer` operates on a dictionary of input `DataFrame`s, performing its transformation in-place or creating new tables as needed.
 
@@ -598,7 +551,6 @@ class CleanTransformer(de.Transformer):
 ```
 
 ## **Loader**
-[To contents](#contents)
 
 The Loader is responsible for the final step of the ETL process: persisting or handing off the transformed data to its destination format, which is a `DataSource` or a class derived from `DataSource`.
 This means combining the (possibly multiple) DataFrames to create some number of persistent object, to be stored in the `DataSource` model.

@@ -1,3 +1,4 @@
+(schema-ref)=
 # Schema
 
 ```{eval-rst}
