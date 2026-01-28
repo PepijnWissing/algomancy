@@ -1,26 +1,5 @@
 # Architecture
 
-## Overview
-The Algomancy framework is a web-based application for the analysis and visualization of complex analytical scenarios. It is designed to be flexible and extensible, enabling users to implement their own algorithms and data processes.
-
-## Design goals
-The following design goals were chosen to guide the development of the framework
-
-### Robust and reliable
-The framework is designed with a strong emphasis on robustness, reliability, and flexibility. Its modular backend architecture divides the system into smaller, manageable components, making development and maintenance straightforward. Leveraging the mature Dash framework for the frontend ensures extensibility and ease of customization, while integrated logging facilitates effective debugging and monitoring.
-
-### Customizable backend
-A key design goal is to provide a customizable backend. Users are encouraged to implement their own algorithms and data sources, allowing the framework to support a wide range of applications without being limited to a specific use case. For more advanced requirements, users can extend the standard classes, using the framework as a library and tailoring its core functionality to their needs.
-
-### Minimize boiler plate code
-The framework is designed to minimize the amount of boilerplate code required to implement a new algorithm or data source. This approach ensures that users can focus on the core logic of their application, while the framework handles the details of data management, processing, and visualization.
-
-### Case-dependent frontend
-The frontend is intentionally case-dependent, offering only the scaffolding dictated by the backend architecture. It is designed for easy extension, enabling users to supply functions that render page content and define custom callback functions for interactive elements. This approach ensures a highly flexible and customizable frontend, empowering developers to focus on creating visualizations specific to their scenarios.
-
-### Single-responsibility principle
-Adhering to the single-responsibility principle, the framework breaks down requirements into distinct components, each with a clear and focused purpose. This structure enhances code clarity, simplifies testing, and improves maintainability.
-
 ## Backend architecture
 The backend of the framework is structured around a clear conceptual model, ensuring both extensibility and maintainability. At its core, the model consists of three primary components: `DataSource`, `Algorithm`, and `Scenario`. Each plays a distinct role in representing, processing, and analyzing data within the system.
 The following diagram illustrates the overall architecture:
@@ -79,3 +58,11 @@ The frontend architecture is organized into several pages:
 - A library of re-usable visualziation components
 - Loading/saving of completed scenarios
 
+## More
+For an in-depth discussion of the underlying concepts, visit the pages below. 
+```{toctree}
+:maxdepth: 1
+
+data
+algorithms
+```

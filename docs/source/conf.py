@@ -24,6 +24,8 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "myst_parser",
+    "sphinx_design",
+    "sphinx_copybutton",
 ]
 
 source_suffix = {
@@ -62,12 +64,21 @@ autodoc_member_order = "bysource"
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = "sphinx_rtd_theme"
+html_favicon = "_static/icon.png"
+
+html_theme = "furo"
 
 html_theme_options = {
-    "navigation_depth": 4,
-    "collapse_navigation": False,
-    "sticky_navigation": True,
+    "announcement": "You are looking at a beta version of the docs - work is in progress!",
+    "sidebar_hide_name": True,
+    "light_logo": "algomancy_logo_light.png",
+    "dark_logo": "algomancy_logo_dark.png",
 }
 
 html_static_path = ["_static"]
+
+# html_logo = "_static/algomancy_logo_light.png"
+
+# html_css_files = [
+#     "custom.css",
+# ]

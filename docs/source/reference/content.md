@@ -20,6 +20,6 @@ content/backend/kpi
 content/pages/page
 content/pages/placeholders
 content/pages/standardpages
-content/pages/showcasehompage
+content/pages/showcasehomepage
 ```
 
