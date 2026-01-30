@@ -16,7 +16,16 @@ dependencies = [
   "algomancy-data >= 0.3.16",
   "algomancy-gui >= 0.3.16",
   "algomancy-scenario >= 0.3.16",
-  "algomancy-utils >= 0.3.16"
+  "algomancy-utils >= 0.3.16",
+  "furo>=2025.12.19",
+  "myst-parser>=5.0.0",
+  "pydata-sphinx-theme>=0.16.1",
+  "sphinx>=9.1.0",
+  "sphinx-autobuild>=2025.8.25",
+  "sphinx-autodoc2>=0.5.0",
+  "sphinx-copybutton>=0.5.2",
+  "sphinx-design>=0.7.0",
+  "sphinx-rtd-theme>=3.1.0"
 ]
 description = "A dashboarding framework for visualizing performances of algorithms or simulations in various scenarios."
 keywords = ["visualization", "algorithm", "simulation", "scenario"]

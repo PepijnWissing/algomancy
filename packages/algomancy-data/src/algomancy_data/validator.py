@@ -1,3 +1,10 @@
+"""Validation primitives for ETL data quality checks.
+
+Provides a small framework for validating extracted data prior to loading. It
+includes a ``Validator`` base class, a few concrete validators, and a
+``ValidationSequence`` to compose multiple validators and collect messages.
+"""
+
 from abc import ABC, abstractmethod
 from enum import StrEnum
 from typing import List, Dict
@@ -13,6 +20,8 @@ from .inputfileconfiguration import (
 
 
 class ValidationSeverity(StrEnum):
+    """Severity levels used in validation messages."""
+
     INFO = "INFO"
     WARNING = "WARNING"
     ERROR = "ERROR"
@@ -41,12 +50,15 @@ class ValidationError(Exception):
 
 
 class ValidationMessage:
+    """Simple container for a validation message and its severity."""
+
     def __init__(self, severity: ValidationSeverity, message: str) -> None:
         self.severity = severity
         self.message = self.clean(message)
 
     @staticmethod
     def clean(message):
+        """Normalize message by escaping newlines/tabs for single-line logs."""
         return message.replace("\n", "\\n").replace("\t", "\\t")
 
     def __str__(self):
@@ -54,6 +66,8 @@ class ValidationMessage:
 
 
 class Validator(ABC):
+    """Abstract validator that appends messages during ``validate``."""
+
     def __init__(self) -> None:
         self._messages = []
         self._message_buffer = []
@@ -71,6 +85,7 @@ class Validator(ABC):
         self._message_buffer.append(ValidationMessage(severity, message))
 
     def flush_buffer(self, success_message: str = None) -> None:
+        """Move buffered messages into the main list; add optional success note."""
         if len(self._message_buffer) == 0 and success_message:
             self.add_message(ValidationSeverity.INFO, success_message)
         else:
@@ -80,10 +95,13 @@ class Validator(ABC):
 
     @abstractmethod
     def validate(self, data: Dict[str, pd.DataFrame]) -> List[ValidationMessage]:
+        """Validate the provided data and return collected messages."""
         pass
 
 
 class DefaultValidator(Validator):
+    """No-op validator that always returns a single success INFO message."""
+
     def __init__(self) -> None:
         super().__init__()
 
@@ -92,6 +110,8 @@ class DefaultValidator(Validator):
 
 
 class ExtractionSuccessVerification(Validator):
+    """Validator that ensures extracted DataFrames are not empty."""
+
     def __init__(self) -> None:
         super().__init__()
 
@@ -172,6 +192,8 @@ class InputConfigurationValidator(Validator):
 
 
 class ValidationSequence:
+    """A sequence of validators executed in order with message aggregation."""
+
     def __init__(self, validators: List[Validator] = None, logger: Logger = None):
         self._messages: List[ValidationMessage] = []
         self._validators: List[Validator] = []
@@ -185,6 +207,7 @@ class ValidationSequence:
 
     @property
     def is_valid(self) -> bool:
+        """Return True when completed and no CRITICAL messages are present."""
         if not self._completed:
             return False
 
@@ -210,6 +233,7 @@ class ValidationSequence:
     def run_validation(
         self, data: Dict[str, pd.DataFrame]
     ) -> (bool, List[ValidationMessage]):
+        """Execute validators, collect messages, and return (is_valid, messages)."""
         for validator in self._validators:
             messages = validator.validate(data=data)
             self._add_messages(messages)
@@ -217,10 +241,12 @@ class ValidationSequence:
         return self.is_valid, self._messages
 
     def add_validators(self, validators: List[Validator]):
+        """Append multiple validators to the sequence."""
         for validator in validators:
             self._validators.append(validator)
 
     def add_validator(self, validator: Validator):
+        """Append a single validator to the sequence."""
         self._validators.append(validator)
 
     def _add_messages(self, messages: List[ValidationMessage]):
@@ -232,6 +258,7 @@ class ValidationSequence:
         self._log(message)
 
     def _log(self, validation_message: ValidationMessage) -> None:
+        """Log a validation message through the configured logger, if any."""
         if not self._logger:
             return None
 
