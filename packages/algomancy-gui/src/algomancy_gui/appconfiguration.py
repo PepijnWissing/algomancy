@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Type
 import os
 
 from algomancy_content import LibraryManager as library
-from algomancy_data import InputFileConfiguration, BASE_DATA_BOUND
+from algomancy_data import InputFileConfiguration, BASE_DATA_BOUND, DataSource
 from algomancy_content.pages.page import (
     HomePage,
     ScenarioPage,
@@ -27,13 +27,15 @@ class AppConfiguration(CoreConfiguration):
 
     def __init__(
         self,
+        # === session manager configuration ===
+        use_sessions: bool = False,
         # === path specifications ===
         assets_path: str = "assets",  # gui
         data_path: str = "data",
         # === data manager configuration ===
         has_persistent_state: bool = False,
         save_type: str | None = "json",
-        data_object_type: type[BASE_DATA_BOUND] | None = None,
+        data_object_type: type[BASE_DATA_BOUND] | None = DataSource,
         # === scenario manager configuration ===
         etl_factory: Any | None = None,
         kpi_templates: Dict[str, Type[BASE_KPI]] | None = None,
@@ -69,6 +71,7 @@ class AppConfiguration(CoreConfiguration):
     ):
         # initialize core part
         super().__init__(
+            use_sessions=use_sessions,
             data_path=data_path,
             has_persistent_state=has_persistent_state,
             save_type=save_type,
@@ -117,6 +120,8 @@ class AppConfiguration(CoreConfiguration):
     # public API
     def as_dict(self) -> Dict[str, Any]:
         return {
+            # === session manager configuration ===
+            "use_sessions": self.use_sessions,
             # === path specifications ===
             "assets_path": self.assets_path,
             "data_path": self.data_path,

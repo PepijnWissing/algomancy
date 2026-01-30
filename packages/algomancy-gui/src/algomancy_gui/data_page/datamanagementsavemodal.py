@@ -14,6 +14,7 @@ from ..componentids import (
     DATA_MAN_ERROR_ALERT,
     ACTIVE_SESSION,
 )
+from algomancy_gui.managergetters import get_scenario_manager
 
 """
 Modal component for saving derived datasets as master data.
@@ -172,9 +173,8 @@ def save_derived_data(
         Tuple containing modal state and alert messages
     """
 
-    sm: ScenarioManager = get_app().server.session_manager.get_scenario_manager(
-        session_id
-    )
+    sm: ScenarioManager = get_scenario_manager(get_app().server, session_id)
+
     try:
         data = sm.get_data(set_name)
         data.set_to_master_data()

@@ -127,7 +127,6 @@ stages:
               testResultsFiles: '**/pytest-results-*.xml'
               testRunTitle: 'Pytest results'
               mergeTestResults: true
-
       - job: Publish
         displayName: Publish to TestPyPI
         dependsOn:
@@ -143,11 +142,11 @@ stages:
               versionSpec: $(python.version)
 
           - task: CmdLine@2
-            displayName: Upgrade pip and install publishing tools
+            displayName: Install uv
             inputs:
               script: |
                 python -m pip install --upgrade pip
-                python -m pip install twine
+                python -m pip install uv
 
           - task: DownloadPipelineArtifact@2
             displayName: Download dist artifact
@@ -155,19 +154,13 @@ stages:
               artifact: 'dist'
               path: 'dist_downloaded'
 
-          - task: TwineAuthenticate@1
-            displayName: 'Twine authenticate to TestPyPI'
-            condition: eq(variables['Build.SourceBranch'], 'refs/heads/development')
-            inputs:
-              pythonUploadServiceConnection: 'TestPyPI'
-
           - task: CmdLine@2
-            displayName: Upload to TestPyPI
-            condition: eq(variables['Build.SourceBranch'], 'refs/heads/development')
+            displayName: Upload to TestPyPI with uv
+#            condition: eq(variables['Build.SourceBranch'], 'refs/heads/development')
+            env:
+              UV_PUBLISH_TOKEN: $(TestPyPI.Token)
             inputs:
               script: |
-                twine upload --repository TestPyPI \
-                  --config-file $(PYPIRC_PATH) \
-                  --non-interactive \
-                  --verbose \
+                uv publish --publish-url https://test.pypi.org/legacy/ \
+                  --token $UV_PUBLISH_TOKEN \
                   dist_downloaded/*

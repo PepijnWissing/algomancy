@@ -1,6 +1,6 @@
 [project]
 name = "algomancy-scenario"
-version = "0.3.12"
+version = "0.3.16"
 description = "Scenario management model for the Algomancy library"
 readme = "README.md"
 authors = [
@@ -10,6 +10,7 @@ requires-python = ">=3.14"
 dependencies = [
     "algomancy-utils",
     "algomancy-data",
+    "strenum>=0.4.15",
 ]
 
 [build-system]

@@ -1,0 +1,21 @@
+/* Set the overall page background to light grey */
+body {
+    background-color: #fcfcfc !important;
+}
+
+/* Make the content wider and centered */
+.wy-nav-content {
+    max-width: 1200px !important;  /* Adjust this value to your preference */
+    margin: 0 auto;  /* Center the content */
+}
+
+/* Push the sidebar away from the left edge */
+.wy-nav-side {
+    left: 50%;
+    margin-left: -750px;  /* Half of (content width + sidebar width) */
+}
+
+/* Ensure content stays properly positioned */
+.wy-nav-content-wrap {
+    margin-left: 300px;  /* Standard sidebar width */
+}

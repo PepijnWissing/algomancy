@@ -48,6 +48,7 @@ from .new_scenario_parameters_window import (
 )
 from .scenario_cards import scenario_cards
 from ..contentregistry import ContentRegistry
+from algomancy_gui.managergetters import get_scenario_manager, get_manager
 
 from ..layouthelpers import create_wrapped_content_div
 from .delete_confirmation import (
@@ -184,9 +185,7 @@ def render_scenario_page(active_session_name):
     prevent_initial_call=True,
 )
 def select_scenario(card_clicks, session_id: str):
-    sm: ScenarioManager = get_app().server.session_manager.get_scenario_manager(
-        session_id
-    )
+    sm: ScenarioManager = get_scenario_manager(get_app().server, session_id)
     cr: ContentRegistry = get_app().server.content_registry
 
     triggered = ctx.triggered_id
@@ -225,8 +224,8 @@ def initialize_page(pathname, selected_id, session_id):
             selected scenario ID
         )
     """
-    scenario_manager: ScenarioManager = (
-        get_app().server.session_manager.get_scenario_manager(session_id)
+    scenario_manager: ScenarioManager = get_scenario_manager(
+        get_app().server, session_id
     )
 
     # Only initialize on page load
@@ -258,7 +257,7 @@ def process_scenario(process_clicks, session_id):
     Returns:
         bool | dash.no_update: Whether the progress interval should be disabled.
     """
-    sm = get_app().server.session_manager.get_scenario_manager(session_id)
+    sm: ScenarioManager = get_scenario_manager(get_app().server, session_id)
 
     triggered = ctx.triggered_id
     if (
@@ -305,7 +304,7 @@ def get_currently_processing_info(sm):
     prevent_initial_call=True,
 )
 def update_progress(n_intervals, msg, session_id):
-    sm = get_app().server.session_manager.get_scenario_manager(session_id=session_id)
+    sm: ScenarioManager = get_scenario_manager(get_app().server, session_id)
     if sm.currently_processing:
         value, label, message = get_currently_processing_info(sm)
         if message != msg:
@@ -360,7 +359,6 @@ def open_algo_params_window(algo_name, session_id):
         try:
             return True, create_algo_parameters_entry_card_body(algo_name)
         except AssertionError:
-            # get_app().server.session_manager.get_scenario_manager(session_id).logger.log_traceback(ae)
             return False, ""
     return False, ""
 
@@ -394,10 +392,9 @@ def create_scenario(
     if not algorithm:
         return no_update, "Algorithm is required", True, False, no_update
 
-    scenario_manager: ScenarioManager = (
-        get_app().server.session_manager.get_scenario_manager(session_id)
+    scenario_manager: ScenarioManager = get_scenario_manager(
+        get_app().server, session_id
     )
-
     interval_disabled = False if scenario_manager.auto_run_scenarios else no_update
 
     algo_param_shell, data_param_shell = scenario_manager.get_associated_parameters(
@@ -415,7 +412,7 @@ def create_scenario(
         scenario_manager.create_scenario(tag, dataset, algorithm, algo_params)
         return "new scenario created", "", False, False, interval_disabled
     except Exception as e:
-        get_app().server.session_manager.logger.log_traceback(e)
+        get_manager(get_app().server).logger.log_traceback(e)
         return no_update, f"Error: {e}", True, False, no_update
 
 
@@ -442,8 +439,8 @@ def open_delete_modal(delete_clicks, session_id):
                 return no_update, no_update
             # Check that idx is a valid index in the list
             if 0 <= idx < len(delete_clicks) and delete_clicks[idx]:
-                return True, get_app().server.session_manager.get_scenario_manager(
-                    session_id
+                return True, get_scenario_manager(
+                    get_app().server, session_id
                 ).list_scenarios()[idx].id
     return no_update, no_update
 
@@ -480,10 +477,9 @@ def confirm_delete_scenario(
             selected scenario ID
         )
     """
-    scenario_manager: ScenarioManager = (
-        get_app().server.session_manager.get_scenario_manager(session_id)
+    scenario_manager: ScenarioManager = get_scenario_manager(
+        get_app().server, session_id
     )
-
     if scenario_to_delete is not None:
         scenario_manager.delete_scenario(scenario_to_delete)
 
@@ -529,9 +525,8 @@ def trigger_refresh(msg):
     prevent_initial_call=True,
 )
 def refresh_cards(message, selected_id, session_id):
-    app = get_app()
-    scenario_manager: ScenarioManager = app.server.session_manager.get_scenario_manager(
-        session_id
+    scenario_manager: ScenarioManager = get_scenario_manager(
+        get_app().server, session_id
     )
 
     if selected_id in scenario_manager.list_ids():

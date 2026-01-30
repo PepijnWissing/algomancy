@@ -1,6 +1,6 @@
 [project]
 name = "algomancy-gui"
-version = "0.3.12"
+version = "0.3.16"
 description = "Dash components for the Algomancy library"
 readme = "README.md"
 authors = [
@@ -14,7 +14,9 @@ dependencies = [
     "algomancy-data",
     "algomancy-scenario",
     "algomancy-content",
+    "algomancy-utils",
     "waitress>=3.0.2",
+    "strenum>=0.4.15",
 ]
 
 [build-system]

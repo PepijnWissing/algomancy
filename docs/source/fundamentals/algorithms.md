@@ -4,12 +4,8 @@ Parts of the framework are reliant on user-defined templates.
 Conceptually, the user defines a mold, which may be used internally to create an object of a certain type.
 For example, an algorithm template may define a set of parameters, which are then used to create
 
-## Contents
-1. [Algorithm Templates](#algorithm-templates)
-2. [KPI Templates](#kpi-templates)
 
 ## Algorithm Templates
-[To content](0_introduction.md#)
 
 Oftentimes, an Algorithm will be dependent on a few key parameters to define its exact behavior. 
 To accommodate this, the framework provides a template mechanism.
@@ -160,4 +156,5 @@ slow_sample_algorithm_template = AlgorithmTemplate(
 ```
 
 ## KPI Templates
-[To content](0_introduction.md#)
+
+todo

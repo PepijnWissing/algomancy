@@ -9,11 +9,11 @@ from ..componentids import (
     DATA_PAGE,
 )
 from ..data_page.datamanagementtopbar import top_bar
+from algomancy_gui.managergetters import get_scenario_manager
 from ..layouthelpers import create_wrapped_content_div
 from ..contentregistry import ContentRegistry
 
 from ..data_page import dialogcallbacks  # noqa
-from ..sessionmanager import SessionManager
 
 
 def data_page() -> html.Div:
@@ -38,8 +38,7 @@ def render_data_page(active_session_name):
     if not active_session_name:
         return html.Div("No active session selected")
 
-    session_manager: SessionManager = get_app().server.session_manager
-    sm: ScenarioManager = session_manager.get_scenario_manager(active_session_name)
+    sm: ScenarioManager = get_scenario_manager(get_app().server, active_session_name)
 
     settings = get_app().server.settings
 
@@ -66,8 +65,7 @@ def content_div() -> html.Div:
     prevent_initial_call=True,
 )
 def fill_data_page_content(data_key: str, session_id: str):
-    session_manager: SessionManager = get_app().server.session_manager
-    sm: ScenarioManager = session_manager.get_scenario_manager(session_id)
+    sm: ScenarioManager = get_scenario_manager(get_app().server, session_id)
     cr: ContentRegistry = get_app().server.content_registry
 
     if data_key not in sm.get_data_keys():
