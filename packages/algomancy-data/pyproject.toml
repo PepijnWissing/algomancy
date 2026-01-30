@@ -1,6 +1,6 @@
 [project]
 name = "algomancy-data"
-version = "0.3.17"
+version = "0.3.18"
 description = "Data management model for the Algomancy library"
 readme = "README.md"
 authors = [
