@@ -19,9 +19,7 @@ class StandardHomePage:
             html.Div: A Dash HTML component representing the home page content
         """
         # Get scenario information
-        scenario_manager = get_scenario_manager(
-            get_app().server, get_app().server.start_session_name
-        )
+        scenario_manager = get_scenario_manager(get_app().server)
         all_scenarios = scenario_manager.list_scenarios()
 
         # Count scenarios in each status
