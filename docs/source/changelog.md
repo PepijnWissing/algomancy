@@ -1,4 +1,6 @@
 # Change log
+## 0.3.17
+- `StandardHomePage` and `StandardDataPage` now work again when sessions are disabled
 ## 0.3.16
 - `GuiLauncher` was moved to `algomancy-gui`
 - Updated `numpy` dependency to `2.4.1` due to yanked version `2.4.0`
