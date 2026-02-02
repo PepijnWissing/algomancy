@@ -35,10 +35,7 @@ def data_page() -> html.Div:
 )
 def render_data_page(active_session_name):
     """Creates the data page layout with raw data view and warehouse layout visualization."""
-    if not active_session_name:
-        return html.Div("No active session selected")
-
-    sm: ScenarioManager = get_scenario_manager(get_app().server, active_session_name)
+    sm: ScenarioManager = get_scenario_manager(get_app().server)
 
     settings = get_app().server.settings
 
