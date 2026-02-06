@@ -1,6 +1,6 @@
 [project]
 name = "algomancy-scenario"
-version = "0.3.19"
+version = "0.3.20"
 description = "Scenario management model for the Algomancy library"
 readme = "README.md"
 authors = [
