@@ -1,11 +1,11 @@
-from algomancy_scenario.basealgorithmparameters import TimeParameter
-from algomancy_scenario.basealgorithmparameters import IntervalParameter
-from algomancy_scenario.basealgorithmparameters import MultiEnumParameter
+from algomancy_utils.baseparameterset import TimeParameter
+from algomancy_utils.baseparameterset import IntervalParameter
+from algomancy_utils.baseparameterset import MultiEnumParameter
 from time import sleep
 
 from algomancy_data import DataSource
 from algomancy_scenario import (
-    BaseAlgorithmParameters,
+    BaseParameterSet,
     IntegerParameter,
     EnumParameter,
     BooleanParameter,
@@ -14,7 +14,7 @@ from algomancy_scenario import (
 )
 
 
-class BatchingAlgorithmParameters(BaseAlgorithmParameters):
+class BatchingParameterSet(BaseParameterSet):
     def __init__(
         self,
         name: str = "Batching",
@@ -67,12 +67,12 @@ class BatchingAlgorithmParameters(BaseAlgorithmParameters):
 
 
 class BatchingAlgorithm(BaseAlgorithm):
-    def __init__(self, params: BatchingAlgorithmParameters):
+    def __init__(self, params: BatchingParameterSet):
         super().__init__("Batching", params)
 
     @staticmethod
-    def initialize_parameters() -> BatchingAlgorithmParameters:
-        return BatchingAlgorithmParameters()
+    def initialize_parameters() -> BatchingParameterSet:
+        return BatchingParameterSet()
 
     def run(self, data: DataSource) -> ScenarioResult:
         sleep(self.params.batch_size)

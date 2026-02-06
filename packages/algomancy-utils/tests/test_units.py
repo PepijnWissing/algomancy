@@ -3,10 +3,10 @@ from algomancy_utils import QUANTITIES, BaseMeasurement, Measurement, Quantity, 
 
 def create_currency_quantity(symbol: str, name: str) -> Quantity:
     """Create a generic currency quantity"""
-    currency = Quantity(name, Unit(symbol, symbol))
-    currency.add_unit(Unit(f"k{symbol}", f"k{symbol}"), 1_000)
-    currency.add_unit(Unit(f"M{symbol}", f"M{symbol}"), 1_000_000)
-    currency.add_unit(Unit(f"B{symbol}", f"B{symbol}"), 1_000_000_000)
+    currency = Quantity(name, Unit(symbol))
+    currency.add_unit(Unit(f"k{symbol}"), 1_000)
+    currency.add_unit(Unit(f"M{symbol}"), 1_000_000)
+    currency.add_unit(Unit(f"B{symbol}"), 1_000_000_000)
     return currency
 
 
@@ -21,12 +21,12 @@ def test_length_scaling_outputs_reasonable_units():
     small_pretty = small.pretty()
     large_pretty = large.pretty()
 
-    assert (
-        isinstance(small_pretty, str) and small_pretty
-    ), "pretty() should return non-empty string"
-    assert (
-        isinstance(large_pretty, str) and large_pretty
-    ), "pretty() should return non-empty string"
+    assert isinstance(small_pretty, str) and small_pretty, (
+        "pretty() should return non-empty string"
+    )
+    assert isinstance(large_pretty, str) and large_pretty, (
+        "pretty() should return non-empty string"
+    )
 
     assert "μm" in small_pretty, "μm is the expected small-unit"
     assert "Mm" in large_pretty, "Mm is the expected large-unit"
@@ -50,12 +50,12 @@ def test_length_scaling_respects_max_min_unit():
     small_pretty = small.pretty()
     large_pretty = large.pretty()
 
-    assert (
-        isinstance(small_pretty, str) and small_pretty
-    ), "pretty() should return non-empty string"
-    assert (
-        isinstance(large_pretty, str) and large_pretty
-    ), "pretty() should return non-empty string"
+    assert isinstance(small_pretty, str) and small_pretty, (
+        "pretty() should return non-empty string"
+    )
+    assert isinstance(large_pretty, str) and large_pretty, (
+        "pretty() should return non-empty string"
+    )
 
     assert "mm" in small_pretty, "mm is the expected small-unit"
     assert "km" in large_pretty, "km is the expected large-unit"
@@ -117,8 +117,8 @@ def test_scale_to_same_unit_behaviour():
     assert isinstance(str(m2_to_m1), str) and str(m2_to_m1)
 
     # Units should now match the target's current unit
-    assert m1_to_m2.unit.name == m2.unit.name
-    assert m2_to_m1.unit.name == m1.unit.name
+    assert m1_to_m2.unit.symbol == m2.unit.symbol
+    assert m2_to_m1.unit.symbol == m1.unit.symbol
 
     # Money example: $ vs M$
     money = QUANTITIES["money"]
@@ -128,8 +128,8 @@ def test_scale_to_same_unit_behaviour():
     rev_in_budget_units = revenue.scale_to_unit(budget.unit)
     bud_in_revenue_units = budget.scale_to_unit(revenue.unit)
 
-    assert rev_in_budget_units.unit.name == budget.unit.name
-    assert bud_in_revenue_units.unit.name == revenue.unit.name
+    assert rev_in_budget_units.unit.symbol == budget.unit.symbol
+    assert bud_in_revenue_units.unit.symbol == revenue.unit.symbol
 
 
 def test_auto_scaled_and_matched_time_examples():
@@ -149,5 +149,5 @@ def test_auto_scaled_and_matched_time_examples():
     matched_1 = t1.scale_to_unit(t2_scaled.unit)
     matched_2 = t2.scale_to_unit(t1_scaled.unit)
 
-    assert matched_1.unit.name == t2_scaled.unit.name
-    assert matched_2.unit.name == t1_scaled.unit.name
+    assert matched_1.unit.symbol == t2_scaled.unit.symbol
+    assert matched_2.unit.symbol == t1_scaled.unit.symbol

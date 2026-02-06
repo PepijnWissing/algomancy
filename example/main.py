@@ -33,7 +33,7 @@ if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 # Suppress ruff linter for these two imports
-from src.algomancy.gui_launcher import GuiLauncher  # noqa: E402
+from algomancy_gui.gui_launcher import GuiLauncher  # noqa: E402
 from algomancy_gui.appconfiguration import AppConfiguration  # noqa: E402
 
 
@@ -51,8 +51,15 @@ def main(
     and starts the web server.
     """
     # framework configuration via AppConfiguration
+    use_sessions = True
+    if use_sessions:
+        data_path = "example/data"
+    else:
+        data_path = "example/data/default_session"
+
     app_cfg = AppConfiguration(
-        data_path="example/data",
+        use_sessions=use_sessions,
+        data_path=data_path,
         assets_path="example/assets",
         has_persistent_state=True,
         etl_factory=ExampleETLFactory,
@@ -66,9 +73,6 @@ def main(
         autorun=True,
         home_page="showcase",
         data_page="standard",  # ExampleDataPage,
-        # scenario_page="placeholder",  redundant
-        # compare_page="placeholder",   redundant
-        # overview_page="standard",     redundant
         styling_config=configure_styling(),
         use_cqm_loader=False,
         title="Example implementation of an Algomancy Dashboard",

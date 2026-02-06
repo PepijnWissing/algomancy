@@ -1,44 +1,35 @@
 [build-system]
 build-backend = "uv_build"
-requires = ["uv_build>=0.9.6,<0.10.0"]
+requires = ["uv_build>=0.9.22,<0.10.0"]
 
 [project]
 authors = [
-  {email = "pepijn.wissing@cqm.nl", name = "Pepijn Wissing"},
-  {email = "bart.post@cqm.nl", name = "Bart Post"}
+  {email = "pepijn.wissing@cqm.nl", name = "Pepijn Wissing"}
 ]
 classifiers = [
   "Development Status :: 4 - Beta",
   "Programming Language :: Python"
 ]
 dependencies = [
-  "dash>=3.2.0",
-  "dash-auth>=2.3.0",
-  "dash-bootstrap-components>=2.0.3",
-  "dash-daq>=0.6.0",
-  "dash-iconify>=0.1.2",
-  "openpyxl>=3.1.5",
-  "pandas>=2.3.1",
-  "pytest>=8.4.2",
-  "ruff>=0.13.1",
-  "strenum>=0.4.15",
-  "tabulate>=0.9.0",
-  "waitress>=3.0.2",
-  "wheel>=0.45.1",
-  "uv_build>=0.9.6,<0.10.0",
-  "algomancy-content",
-  "algomancy-data",
-  "algomancy-scenario",
-  "algomancy-utils",
-  "algomancy-gui",
-  "algomancy-cli",
-  "prek>=0.2.19",
-  "pyrefly>=0.45.2",
-  "basedpyright>=1.36.0"
+  "algomancy-cli >= 0.3.19",
+  "algomancy-content >= 0.3.19",
+  "algomancy-data >= 0.3.19",
+  "algomancy-gui >= 0.3.19",
+  "algomancy-scenario >= 0.3.19",
+  "algomancy-utils >= 0.3.19",
+  "furo>=2025.12.19",
+  "myst-parser>=5.0.0",
+  "pydata-sphinx-theme>=0.16.1",
+  "sphinx>=9.1.0",
+  "sphinx-autobuild>=2025.8.25",
+  "sphinx-autodoc2>=0.5.0",
+  "sphinx-copybutton>=0.5.2",
+  "sphinx-design>=0.7.0",
+  "sphinx-rtd-theme>=3.1.0"
 ]
 description = "A dashboarding framework for visualizing performances of algorithms or simulations in various scenarios."
 keywords = ["visualization", "algorithm", "simulation", "scenario"]
-license = {text = "Restricted"}
+license-files = ["LICENSE"]
 maintainers = [
   {email = "pepijn.wissing@cqm.nl", name = "Pepijn Wissing"},
   {email = "bart.post@cqm.nl", name = "Bart Post"}
@@ -46,10 +37,14 @@ maintainers = [
 name = "Algomancy"
 readme = "README.md"
 requires-python = ">=3.14"
-version = "0.3.2"
+version = "0.3.19"
 
 [project.scripts]
 algomancy-cli = "algomancy_cli.main:main"
+
+[project.urls]
+Documentation = "https://algomancy.readthedocs.io/en/latest/"
+Repository = "https://github.com/PepijnWissing/algomancy"
 
 [tool.pytest.ini_options]
 pythonpath = ["."]

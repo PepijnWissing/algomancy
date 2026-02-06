@@ -18,6 +18,7 @@ from ..componentids import (
     DM_DERIVE_OPEN_BTN,
     ACTIVE_SESSION,
 )
+from algomancy_gui.managergetters import get_scenario_manager
 
 """
 Modal component for deriving new datasets from existing ones.
@@ -156,9 +157,7 @@ def derive_data_callback(n_clicks, selected_data_key, derived_name, session_id: 
     """
     if not selected_data_key or not derived_name:
         return no_update, "", False, "Choose a dataset and enter a name!", True, False
-    sm: ScenarioManager = get_app().server.session_manager.get_scenario_manager(
-        session_id
-    )
+    sm: ScenarioManager = get_scenario_manager(get_app().server, session_id)
     try:
         sanitized_name = _sanitize(derived_name)
         sm.derive_data(selected_data_key, sanitized_name)

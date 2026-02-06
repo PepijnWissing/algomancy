@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from io import StringIO
-from typing import Dict
+from typing import Dict, List
 
 import pandas as pd
 import json
@@ -482,3 +482,41 @@ class XLSXMultiExtractor(MultiExtractor):
         for name, extractor in self._single_sheet_extractors.items():
             dfs[self.get_extraction_key(name)] = list(extractor.extract().values())[0]
         return dfs
+
+
+class ExtractionSequence:
+    def __init__(
+        self, extractors: List[Extractor] = None, logger: Logger = None
+    ) -> None:
+        self._extractors = extractors or []
+        self._completed: bool = False
+        self.logger = logger
+        self._data = None
+
+    def run_extraction(self) -> Dict[str, pd.DataFrame]:
+        data: Dict[str, pd.DataFrame] = {}
+
+        for extractor in self._extractors:
+            dfs: Dict[str, pd.DataFrame] = extractor.extract()
+            data.update(dfs)
+
+        self._completed = True
+        self._data = data
+        return data
+
+    @property
+    def completed(self) -> bool:
+        return self._completed
+
+    @property
+    def data(self) -> Dict[str, pd.DataFrame]:
+        if not self.completed:
+            self.run_extraction()
+        return self._data
+
+    def add_extractor(self, extractor: Extractor) -> None:
+        self._extractors.append(extractor)
+
+    def add_extractors(self, extractors: List[Extractor]) -> None:
+        for extractor in extractors:
+            self.add_extractor(extractor)

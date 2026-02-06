@@ -3,7 +3,7 @@ from typing import TypeVar
 
 from algomancy_data import BASE_DATA_BOUND
 from .result import BASE_RESULT_BOUND
-from .basealgorithmparameters import BASE_PARAMS_BOUND
+from algomancy_utils.baseparameterset import BASE_PARAMS_BOUND
 
 
 class BaseAlgorithm(ABC):

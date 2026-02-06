@@ -1,10 +1,10 @@
 from time import sleep
 
 from algomancy_data import DataSource
-from algomancy_scenario import BaseAlgorithmParameters, ScenarioResult, BaseAlgorithm
+from algomancy_scenario import BaseParameterSet, ScenarioResult, BaseAlgorithm
 
 
-class PlaceholderParams(BaseAlgorithmParameters):
+class PlaceholderParams(BaseParameterSet):
     def __init__(self, name: str = "As is") -> None:
         super().__init__(name=name)
 

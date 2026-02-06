@@ -1,4 +1,12 @@
+"""ETL pipeline composition and abstract factory.
+
+This module defines ``ETLPipeline`` which orchestrates the Extract-Validate-
+Transform-Load steps, and ``ETLFactory`` that builds the pipeline components
+for a concrete dataset configuration.
+"""
+
 # --- Abstract Factory ---
+from algomancy_data.transformer import TransformationSequence
 from abc import ABC, abstractmethod
 from typing import Dict, List
 
@@ -6,10 +14,9 @@ from algomancy_utils import Logger
 
 from .schema import Schema
 from .datasource import BASE_DATA_BOUND, DataClassification
-from .extractor import Extractor
+from .extractor import ExtractionSequence
 from .file import File
 from .loader import Loader
-from .transformer import Transformer
 from .validator import ValidationError, ValidationSequence
 from .inputfileconfiguration import (
     InputFileConfiguration,
@@ -19,44 +26,46 @@ from .inputfileconfiguration import (
 
 
 class ETLPipeline:
+    """Coordinates a single end-to-end ETL job."""
+
     def __init__(
         self,
         destination_name: str,
-        extractors: Dict[str, Extractor],
+        extraction_sequence: ExtractionSequence,
         validation_sequence: ValidationSequence,
-        transformers: List[Transformer],  # todo refactor to transformationsequence
+        transformation_sequence: TransformationSequence,
         loader: Loader,
         logger: Logger,
     ) -> None:
         self.destination_name = destination_name
-        self.extractors = extractors
+        self.extraction_sequence = extraction_sequence
         self.validation_sequence = validation_sequence
-        self.transformers = transformers
+        self.transformation_sequence = transformation_sequence
         self.loader = loader
         self.logger = logger
 
     def run(self) -> BASE_DATA_BOUND:
-        """
-        Executes an ETL (Extract, Transform, Load) job by coordinating the extraction of data, validation,
-        transformation, and loading into a DataSource. It uses extractors to collect data, a validator
-        to ensure the integrity of the data, transformers to modify the data as necessary, and a loader
-        to complete the ETL pipeline by saving the processed data into a DataSource.
+        """Execute the ETL job and return the loaded destination object.
+
+        Orchestrates the following steps:
+        1) Extraction via the configured extractors
+        2) Validation of extracted data
+        3) Transformation of validated data
+        4) Loading into a destination via the configured loader
 
         Raises:
-            ValidationException: Raised when a critical validation error occurs during the validation
-            step, indicating that the data does not meet required criteria.
+            ValidationError: If validation fails with a critical error.
 
         Returns:
-            BASE_DATA_BOUND: The resultant DataSource object containing the processed and loaded data.
+            BASE_DATA_BOUND: The created destination object (e.g. DataSource).
         """
         # Extraction
-        data = {}
-        for extractor in self.extractors.values():
-            dfs = extractor.extract()
-            data.update(dfs)
+        raw_data = self.extraction_sequence.data
 
         # Validation
-        is_valid, validation_messages = self.validation_sequence.run_validation(data)
+        is_valid, validation_messages = self.validation_sequence.run_validation(
+            raw_data
+        )
 
         if not is_valid:
             raise ValidationError(
@@ -64,13 +73,12 @@ class ETLPipeline:
             )
 
         # Transformation
-        for transformer in self.transformers:
-            transformer.transform(data)
+        transformed_data = self.transformation_sequence.run_transformation(raw_data)
 
         # Load into DataSource
         datasource = self.loader.load(
             name=self.destination_name,
-            data=data,
+            data=transformed_data,
             validation_messages=validation_messages,
             ds_type=DataClassification.MASTER_DATA,
         )
@@ -81,11 +89,15 @@ class ETLPipeline:
 
 
 class ETLConstructionError(Exception):
+    """Raised when the ETL pipeline cannot be constructed."""
+
     def __init__(self, message):
         super().__init__(message)
 
 
 class ETLFactory(ABC):
+    """Abstract factory that constructs ETL sequences and loader."""
+
     def __init__(self, input_configurations: List[InputFileConfiguration], logger):
         self.input_configurations = input_configurations
         # self.schemas = {cfg.file_name: cfg.file_schema for cfg in input_configurations} # todo is this used?
@@ -93,9 +105,22 @@ class ETLFactory(ABC):
 
     @property
     def configs_dct(self) -> Dict[str, InputFileConfiguration]:
+        """Return a mapping from file name to its input configuration."""
         return {cfg.file_name: cfg for cfg in self.input_configurations}
 
     def get_schemas(self, file_name: str) -> Dict[str, Schema] | Schema:
+        """Return schema(s) for the given file name based on configuration.
+
+        Args:
+            file_name: Logical file name as defined in input configuration.
+
+        Returns:
+            Schema or mapping of sub-name to Schema depending on the
+            configuration type (single or multi).
+
+        Raises:
+            ETLConstructionError: If no configuration exists or it is invalid.
+        """
         try:
             cfg = self.configs_dct[file_name]
         except KeyError:
@@ -113,7 +138,7 @@ class ETLFactory(ABC):
             )
 
     @abstractmethod
-    def create_extractors(self, files: Dict[str, File]) -> Dict[str, Extractor]:
+    def create_extraction_sequence(self, files: Dict[str, File]) -> ExtractionSequence:
         pass
 
     @abstractmethod
@@ -121,7 +146,7 @@ class ETLFactory(ABC):
         pass
 
     @abstractmethod
-    def create_transformers(self) -> List[Transformer]:
+    def create_transformation_sequence(self) -> TransformationSequence:
         pass
 
     @abstractmethod
@@ -131,10 +156,18 @@ class ETLFactory(ABC):
     def build_pipeline(
         self, dataset_name: str, files: Dict[str, File], logger: Logger
     ) -> ETLPipeline:
-        extractors = self.create_extractors(files)
-        validations = self.create_validation_sequence()
-        transformers = self.create_transformers()
+        """Assemble and return an ``ETLPipeline`` instance.
+
+        Args:
+            dataset_name: Destination dataset name.
+            files: Mapping of logical file names to ``File`` objects.
+            logger: Logger for the pipeline.
+
+        Returns:
+            ETLPipeline ready to run.
+        """
+        e_seq = self.create_extraction_sequence(files)
+        v_seq = self.create_validation_sequence()
+        t_seq = self.create_transformation_sequence()
         loader = self.create_loader()
-        return ETLPipeline(
-            dataset_name, extractors, validations, transformers, loader, logger
-        )
+        return ETLPipeline(dataset_name, e_seq, v_seq, t_seq, loader, logger)

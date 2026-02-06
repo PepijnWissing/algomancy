@@ -1,11 +1,10 @@
-from __future__ import annotations
-
 from typing import Dict, Any, Union
 
 from algomancy_scenario.scenariomanager import ScenarioManager
-from algomancy_cli.cli_shell import CliShell
-from algomancy_cli.cli_configuration import CliConfiguration
 from algomancy_scenario.core_configuration import CoreConfiguration
+
+from .cli_shell import CliShell
+from .cli_configuration import CliConfiguration
 
 
 class CliLauncher:

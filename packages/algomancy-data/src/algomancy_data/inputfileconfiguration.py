@@ -1,3 +1,10 @@
+"""Input file configuration types used by ETL factories.
+
+Defines lightweight dataclasses that declare the expected files for a dataset
+and their schemas. These configurations guide extractors and schema lookup in
+``ETLFactory`` implementations.
+"""
+
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import List, Dict
@@ -7,6 +14,8 @@ from .schema import Schema
 
 
 class FileExtension(StrEnum):
+    """Supported file extensions for input files."""
+
     CSV = "csv"
     XLSX = "xlsx"
     JSON = "json"
@@ -14,6 +23,13 @@ class FileExtension(StrEnum):
 
 @dataclass(frozen=True)
 class InputFileConfiguration(ABC):
+    """Base configuration for a logical input file.
+
+    Attributes:
+        extension: Expected file extension.
+        file_name: Logical file name without extension.
+    """
+
     extension: FileExtension
     file_name: str
 
@@ -24,11 +40,19 @@ class InputFileConfiguration(ABC):
 
 @dataclass(frozen=True)
 class SingleInputFileConfiguration(InputFileConfiguration):
+    """Configuration for a single-sheet/single-entity file with one schema."""
+
     file_schema: Schema
 
 
 @dataclass(frozen=True)
 class MultiInputFileConfiguration(InputFileConfiguration):
+    """Configuration for a multi-entity file with multiple schemas.
+
+    Typical use is an Excel workbook with several sheets, each having its own
+    schema.
+    """
+
     file_schemas: Dict[str, Schema]
 
     @property

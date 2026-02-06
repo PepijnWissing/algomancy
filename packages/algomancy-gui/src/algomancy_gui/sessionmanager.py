@@ -8,7 +8,7 @@ from algomancy_scenario import (
     ScenarioManager,
     BaseKPI,
     BaseAlgorithm,
-    BaseAlgorithmParameters,
+    BaseParameterSet,
 )
 
 
@@ -59,6 +59,7 @@ class SessionManager:
         default_param_values: Dict[str, any] = None,
         autorun: bool = False,
     ) -> None:
+        # Store general information
         self.logger = logger if logger else Logger()
         self._etl_factory = etl_factory
         self._kpi_templates = kpi_templates
@@ -72,27 +73,29 @@ class SessionManager:
         self._auto_create_scenario = auto_create
         self._default_algo_name = default_algo_name
         self._default_param_values = default_param_values
+        self._algo_templates = algo_templates
 
         assert save_type in ["json"], "Save type must be parquet or json."
         self._save_type = save_type
 
-        # Components
+        # Create sessions
         self._sessions = {}
-        if self._has_persistent_state:
-            assert (
-                data_folder
-            ), "Data folder must be specified if a persistent state is used."
+        self._create_default_scenario_managers()
+        self._start_session_name = list(self._sessions.keys())[0]
 
-            sessions = self._determine_sessions_from_folder(data_folder)
+        self.log("SessionManager initialized.")
+
+    def _create_default_scenario_managers(self) -> None:
+        if self._has_persistent_state:
+            assert self._data_folder, (
+                "Data folder must be specified if a persistent state is used."
+            )
+
+            sessions = self._determine_sessions_from_folder(self._data_folder)
             for session_name, session_path in sessions.items():
                 self._create_default_scenario_manager(session_name, session_path)
         if len(self._sessions) == 0:
             self._create_default_scenario_manager("main")
-
-        self._start_session_name = list(self._sessions.keys())[0]
-        self._algo_templates = algo_templates
-
-        self.log("SessionManager initialized.")
 
     def log(self, message: str, status: MessageStatus = MessageStatus.INFO) -> None:
         if self.logger:
@@ -119,10 +122,10 @@ class SessionManager:
     def _create_default_scenario_manager(
         self, name: str, session_path: str = None
     ) -> None:
-        if self._has_persistent_state and session_path is None:
-            session_path = self._create_folder(name)
-        elif not self._has_persistent_state:
+        if not self._has_persistent_state:
             session_path = None
+        elif self._has_persistent_state and session_path is None:
+            session_path = self._create_folder(name)
 
         self._sessions[name] = ScenarioManager(
             etl_factory=self._etl_factory,
@@ -148,7 +151,7 @@ class SessionManager:
     def start_session_name(self) -> str:
         return self._start_session_name
 
-    def get_algorithm_parameters(self, key) -> BaseAlgorithmParameters:
+    def get_algorithm_parameters(self, key) -> BaseParameterSet:
         template: Type[BaseAlgorithm] = self._algo_templates.get(key)
         if template is None:
             raise KeyError(f"Unable to find template {key} in the available templates.")

@@ -22,7 +22,7 @@ from ..componentids import (
 
 def hidden_card():
     dummy_scenario = Scenario("dummy", None, None, None)
-    return scenario_card(dummy_scenario)
+    return scenario_card(dummy_scenario, is_hidden=True)
 
 
 def scenario_card(s: Scenario, is_hidden: bool = False):

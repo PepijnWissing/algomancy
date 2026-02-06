@@ -1,5 +1,5 @@
-from .basealgorithmparameters import (
-    BaseAlgorithmParameters,
+from algomancy_utils.baseparameterset import (
+    BaseParameterSet,
     IntegerParameter,
     StringParameter,
     EnumParameter,
@@ -13,9 +13,8 @@ from .scenario import Scenario, ScenarioStatus
 from .scenariomanager import ScenarioManager
 from .basealgorithm import ALGORITHM, BaseAlgorithm
 
-
 __all__ = [
-    "BaseAlgorithmParameters",
+    "BaseParameterSet",
     "IntegerParameter",
     "StringParameter",
     "EnumParameter",

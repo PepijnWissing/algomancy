@@ -1,169 +1,98 @@
 # Algomancy
 
-A lightweight framework for building interactive dashboards to visualize the performance of algorithms and/or simulations across scenarios. It provides data ingestion (ETL), scenario orchestration, KPI computation, and a Dash-based UI with modular pages.
+Algomancy is a lightweight framework for building interactive dashboards that visualize the performance of algorithms and/or simulations across scenarios. It brings together ETL, scenario orchestration, KPI computation, and a Dash-based UI with modular pages.
 
-### Overview
-- Language/stack: Python 3.14+, Dash (frontend/server), Waitress (production WSGI), PyTest (tests), Ruff (lint). Optional: uv as package manager (uv.lock present).
-- Package layout: Installable Python package (setuptools/pyproject). Library entry points are in algomancy/, with an example executable script main-example.py.
-- Use cases: Rapid prototyping of algorithm scenario experiments and visual inspection of results.
-
-### Requirements
-- Python: 3.14+
-- OS: Windows, macOS, or Linux
-- Dependencies (core): dash, dash-bootstrap-components, dash-auth (optional), dash-extensions, dash-iconify, pandas, fastparquet, openpyxl, diskcache, strenum, tabulate, waitress, python-dotenv
-- Dev/test tools: pytest, ruff, wheel
-- Optional tools: uv (if you prefer uv over pip)
+## Highlights
+- Python 3.14+
+- Dash UI with modular pages and a production-ready server
+- Batteries-included packages: content, data, scenario, GUI, CLI
 
 ## Installation
-You can install the published package from the private Azure Artifacts feed (keep this section) or install locally in editable/development mode.
-
-### From Azure Artifacts (requires artifacts-keyring):
-- Ensure artifacts-keyring is installed and your credentials are configured for the feed.
-- Install Algomancy:
-  `pip install --index-url=https://pkgs.dev.azure.com/cqmbv/WARP/_packaging/WarpPython/pypi/simple/ algomancy`
-
-### Local development (from this repository):
+- Using uv (recommended):
+  ```
+  uv add algomancy
+  ```
 - Using pip:
-```
-  python -m venv .venv
-  .venv\Scripts\activate  # Windows
-   source .venv/bin/activate  # macOS/Linux
-  pip install -U pip setuptools wheel
-  pip install -e .
-```
-- Using uv (optional):
-```
-  uv venv
-  # On Windows PowerShell: . .venv\Scripts\Activate.ps1
-  # On macOS/Linux: source .venv/bin/activate
-  uv pip install -e .
-```
-### Running the Example App
-This repo includes an example application that exercises the framework components.
-- CLI
-  python main-example.py --host 127.0.0.1 --port 8050 --threads 8 --connections 100 --debug False
-- Defaults
-  If flags are omitted, sensible defaults are applied inside main() (e.g., host differs by OS, port=8050).
-- After starting, open http://127.0.0.1:8050 (or the host/port you chose) in your browser.
+  ```
+  pip install algomancy
+  ```
 
-### Programmatic Usage (library)
-You can embed Algomancy into your own app using the DashLauncher helper.
-- Minimal sketch:
+## Minimal example
+The following example launches a small placeholder dashboard using the default building blocks from the Algomancy ecosystem. Copy this into a file called `main.py` and run it.
+
+## Set up folder structure
+1. Create the following directory structure:
+```text
+root/
+|── assets/ (*)
+├── data/   (*)
+├── src/
+│   ├── data_handling/
+│   ├── pages/
+│   └── templates/
+│       ├── kpi/
+│       └── algorithm/
+├── main.py  (*)
+├── README.md
+└── pyproject.toml
+```
+> Only the items marked (*) are required.
+
+2. create `main.py`
 
 ```python
-from src.algomancy import BaseDataSource
-from src.algomancy.gui_launcher import GuiLauncher
+from algomancy_gui.gui_launcher import GuiLauncher
 from algomancy_gui.appconfiguration import AppConfiguration
+from algomancy_content import (
+    PlaceholderETLFactory,
+    PlaceholderAlgorithm,
+    PlaceholderKPI,
+    placeholder_input_config,
+)
+from algomancy_data import DataSource
 
-configuration = {
-  "assets_path": "assets",
-  "data_path": "tests/data",
-  "has_persistent_state": True,
-  "save_type": "json",
-  "data_object_type": BaseDataSource,
-  "etl_factory": YourETLFactory,
-  "kpi_templates": your_kpi_templates,
-  "algo_templates": your_algorithm_templates,
-  "input_configs": your_input_configs,
-  "autorun": False,
-  "home_content": "placeholder",
-  "data_content": "placeholder",
-  "scenario_content": "placeholder",
-  "compare_content": "placeholder",
-  "compare_compare": "placeholder",
-  "compare_details": "placeholder",
-  "overview_content": "placeholder",
-  "home_callbacks": None,
-  "data_callbacks": None,
-  "scenario_callbacks": None,
-  "compare_callbacks": None,
-  "overview_callbacks": None,
-  "styling_config": None,  # see StylingConfigurator for options
-  "title": "My Algomancy Dashboard",
-  "use_authentication": False,
-}
-app_cfg = AppConfiguration.from_dict(configuration)  # or AppConfiguration(asset_path=...)
 
-app = GuiLauncher.build(app_cfg)
-GuiLauncher.run(app, host=app_cfg.host, port=app_cfg.port)
+def main() -> None:
+    host = "127.0.0.1"
+    port = 8050
+
+    app_cfg = AppConfiguration(
+        etl_factory     = PlaceholderETLFactory,
+        kpi_templates   = {"placeholder": PlaceholderKPI},
+        algo_templates  = {"placeholder": PlaceholderAlgorithm},
+        input_configs   = [placeholder_input_config],
+        host            = host,
+        port            = port,
+        title           = "My Algomancy Dashboard",
+    )
+
+    app = GuiLauncher.build(app_cfg)
+    GuiLauncher.run(app=app, host=app_cfg.host, port=app_cfg.port)
+
+
+if __name__ == "__main__":
+    main()
 ```
-### Environment Variables
-- Authentication (optional): If configuration["use_authentication"] is True, set these before launching:
-  APP_USERNAME=<username>
-  APP_PASSWORD=<password>
-  If either is missing, DashLauncher.build will raise a ValueError.
-- Other env vars: Not required by default. You may use a .env file with python-dotenv if you extend the app. TODO: Document any project-specific environment variables if/when they are introduced.
 
-### Scripts and Common Commands
-- Run example app:
-  python main-example.py
-- Run tests:
-  pytest -q
-- Run tests with verbose output:
-  pytest -vv
-- Lint with Ruff:
-  ruff check .
-- Format with Ruff (if you choose to enable it):
-  ruff format .
+## Run
+- Save the file as `main.py` and start the app:
+  ```
+  uv run main.py
+  ```
+- Open your browser at http://127.0.0.1:8050
 
-### Testing
-- Framework uses pytest; tests are under tests/.
-- Example dataset is in tests/data and tests/data/example_data.
-- Some tests are marked xfail intentionally (e.g., missing setters) to capture current behavior. You can run them as-is to verify baseline expectations.
+Examples
+- A more complete example (including assets and templates) is available in the algomancy repository under `example/`. The entry point is `example/main.py`.
 
-### Project Structure
-High-level layout (non-exhaustive):
-- algomancy/                Core package
-  - launcher.py             Build and run Dash app (DashLauncher)
-  - dataengine/             Data loading, ETL, schema, validation
-  - scenarioengine/         Scenario orchestration, algorithms, KPIs
-  - components/             Dash UI components and pages
-  - contentcreatorlibrary/  Ready-made content creators (examples/standard/placeholder)
-  - dashboardlogger/        Logging utilities
-  - settingsmanager.py      Shared runtime settings access
-  - stylingconfigurator.py  Theme, colors, layout selection
-- example_implementation/   Example ETL, pages, and templates
-- assets/                   Static assets (images/styles)
-- tests/                    PyTest suites and data files
-- main-example.py           Example app entry point
-- pyproject.toml            Build configuration (setuptools)
-- uv.lock                   Lock file for uv (optional)
+Requirements
+- Python 3.14+
+- Windows, macOS, or Linux
 
-### Entry Points
-- Example executable: main-example.py (CLI and default run)
-- Library: DashLauncher in algomancy/launcher.py
-- There are no console_scripts defined in pyproject.toml.
+CLI
+- This package also exposes a CLI entry point `algomancy-cli`. Run `algomancy-cli --help` for usage.
 
-### Configuration Notes
-- Styling: See algomancy/stylingconfigurator.py for layout and color options.
-- Content registration: algomancy/contentcreatorlibrary and algomancy/contentregistry.py provide standard/example/placeholder content.
-- Server: DashLauncher.run uses Waitress in non-debug mode; Dash’s built-in server is used for debug.
+License
+- See the `LICENSE` file included with this distribution.
 
-### Package Management
-- The project is defined via pyproject.toml with setuptools. Use pip for installs by default.
-- A uv.lock file is present; you may use uv if preferred. This repository does not mandate uv.
-
-### CI/CD
-- Pipelines configuration files are present under Pipelines/ (Azure DevOps YAML). TODO: Document pipeline triggers, variables, and publishing steps if relevant.
-
-### License
-- License: Restricted (as declared in pyproject.toml). Distribution and usage may be limited. Consult the project owners for permissions.
-
-### Changelog
-- See changelog.md for notable changes.
-
-### Contributing
-- Open issues and pull requests as needed. Run ruff and pytest locally before pushing.
-- TODO: Add contributor guidelines and code style policy if required.
-
-### Support
-- Maintainers: See pyproject.toml authors/maintainers fields.
-- For private package feed access or deployment, contact project maintainers.
-
-# Update version
-Option A: Update Pipfile to point to the existing wheel (preferred)
-In Pipfile, replace the algomancy source pointing to 0.2.5 with the local 0.2.6 wheel path:
-Example: algomancy = {path = "dist/algomancy-0.2.6-py3-none-any.whl"}
-Then regenerate lockfile and install:
-pipenv lock --clear
-pipenv install
+Changelog
+- See `changelog.md` for notable changes.

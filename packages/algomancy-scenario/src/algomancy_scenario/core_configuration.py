@@ -17,6 +17,8 @@ class CoreConfiguration:
 
     def __init__(
         self,
+        # === session manager configuration ===
+        use_sessions: bool = False,
         # === path specifications ===
         data_path: str = "data",
         # === data manager configuration ===
@@ -37,6 +39,9 @@ class CoreConfiguration:
         title: str = "Algomancy",
         **_: Any,
     ) -> None:
+        # session management
+        self.use_sessions = use_sessions
+
         # paths
         self.data_path = data_path
 
@@ -61,6 +66,7 @@ class CoreConfiguration:
     # ----- public API -----
     def as_dict(self) -> Dict[str, Any]:
         return {
+            "use_sessions": self.use_sessions,
             "data_path": self.data_path,
             "has_persistent_state": self.has_persistent_state,
             "save_type": self.save_type,

@@ -2,18 +2,17 @@ import platform
 from typing import Any, Dict, List, Type
 import os
 
-from algomancy_data import InputFileConfiguration, BASE_DATA_BOUND
-from algomancy_gui.page import (
+from algomancy_content import LibraryManager as library
+from algomancy_data import InputFileConfiguration, BASE_DATA_BOUND, DataSource
+from algomancy_content.pages.page import (
     HomePage,
     ScenarioPage,
     ComparePage,
     OverviewPage,
     DataPage,
 )
-from algomancy_scenario import ALGORITHM, BASE_KPI
-from algomancy_content import LibraryManager as library
-
 from algomancy_gui.stylingconfigurator import StylingConfigurator
+from algomancy_scenario import ALGORITHM, BASE_KPI
 from algomancy_scenario.core_configuration import CoreConfiguration
 
 
@@ -28,23 +27,25 @@ class AppConfiguration(CoreConfiguration):
 
     def __init__(
         self,
+        # === session manager configuration ===
+        use_sessions: bool = False,
         # === path specifications ===
         assets_path: str = "assets",  # gui
         data_path: str = "data",
         # === data manager configuration ===
         has_persistent_state: bool = False,
         save_type: str | None = "json",
-        data_object_type: type[BASE_DATA_BOUND] | None = None,
+        data_object_type: type[BASE_DATA_BOUND] | None = DataSource,
         # === scenario manager configuration ===
         etl_factory: Any | None = None,
         kpi_templates: Dict[str, Type[BASE_KPI]] | None = None,
         algo_templates: Dict[str, Type[ALGORITHM]] | None = None,
         input_configs: List[InputFileConfiguration] | None = None,
         # === auto start/create features ===
-        autocreate: bool | None = None,
+        autocreate: bool | None = False,
         default_algo: str | None = None,
         default_algo_params_values: Dict[str, Any] | None = None,
-        autorun: bool | None = None,
+        autorun: bool | None = False,
         # === content functions ===
         home_page: HomePage | str = "standard",  # gui
         data_page: DataPage | str = "placeholder",  # gui
@@ -70,6 +71,7 @@ class AppConfiguration(CoreConfiguration):
     ):
         # initialize core part
         super().__init__(
+            use_sessions=use_sessions,
             data_path=data_path,
             has_persistent_state=has_persistent_state,
             save_type=save_type,
@@ -118,6 +120,8 @@ class AppConfiguration(CoreConfiguration):
     # public API
     def as_dict(self) -> Dict[str, Any]:
         return {
+            # === session manager configuration ===
+            "use_sessions": self.use_sessions,
             # === path specifications ===
             "assets_path": self.assets_path,
             "data_path": self.data_path,
@@ -171,47 +175,47 @@ class AppConfiguration(CoreConfiguration):
 
         # check home page attributes
         assert hasattr(home, "create_content")
-        assert hasattr(
-            home, "register_callbacks"
-        ), "home_page.register_callbacks must be a function"
+        assert hasattr(home, "register_callbacks"), (
+            "home_page.register_callbacks must be a function"
+        )
 
         # check data page attributes
-        assert hasattr(
-            data, "create_content"
-        ), "data_page.create_content must be a function"
-        assert hasattr(
-            data, "register_callbacks"
-        ), "data_page.register_callbacks must be a function"
+        assert hasattr(data, "create_content"), (
+            "data_page.create_content must be a function"
+        )
+        assert hasattr(data, "register_callbacks"), (
+            "data_page.register_callbacks must be a function"
+        )
 
         # check scenario page attributes
-        assert hasattr(
-            scenario, "create_content"
-        ), "scenario_page.create_content must be a function"
-        assert hasattr(
-            scenario, "register_callbacks"
-        ), "scenario_page.register_callbacks must be a function"
+        assert hasattr(scenario, "create_content"), (
+            "scenario_page.create_content must be a function"
+        )
+        assert hasattr(scenario, "register_callbacks"), (
+            "scenario_page.register_callbacks must be a function"
+        )
 
         # check compare page attributes
         assert hasattr(compare, "create_side_by_side_content"), (
-            "compare_page.create_side_by_side_content " "must be a function"
+            "compare_page.create_side_by_side_content must be a function"
         )
-        assert hasattr(
-            compare, "create_compare_section"
-        ), "compare_page.create_compare_section must be a function"
-        assert hasattr(
-            compare, "create_details_section"
-        ), "compare_page.create_details_section must be a function"
-        assert hasattr(
-            compare, "register_callbacks"
-        ), "compare_page.register_callbacks must be a function"
+        assert hasattr(compare, "create_compare_section"), (
+            "compare_page.create_compare_section must be a function"
+        )
+        assert hasattr(compare, "create_details_section"), (
+            "compare_page.create_details_section must be a function"
+        )
+        assert hasattr(compare, "register_callbacks"), (
+            "compare_page.register_callbacks must be a function"
+        )
 
         # check overview page attributes
-        assert hasattr(
-            overview, "create_content"
-        ), "overview_page.create_content must be a function"
-        assert hasattr(
-            overview, "register_callbacks"
-        ), "scenario_page.register_callbacks must be a function"
+        assert hasattr(overview, "create_content"), (
+            "overview_page.create_content must be a function"
+        )
+        assert hasattr(overview, "register_callbacks"), (
+            "scenario_page.register_callbacks must be a function"
+        )
 
     def _validate_page_configurations(self) -> None:
         # basic type checks for collections
@@ -285,15 +289,3 @@ class AppConfiguration(CoreConfiguration):
     @classmethod
     def from_dict(cls, config: Dict[str, Any]) -> "AppConfiguration":
         return cls(**config)
-
-
-# stub_configuration = AppConfiguration(
-#     etl_factory=PlaceholderETLFactory,
-#     kpi_templates={
-#         str(PlaceholderKPI.name): PlaceholderKPI,
-#     },
-#     algo_templates={
-#         str(PlaceholderAlgorithm.name): PlaceholderAlgorithm,
-#     },
-#     input_configs=[placeholder_input_config],
-# )

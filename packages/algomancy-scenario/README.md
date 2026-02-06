@@ -21,13 +21,13 @@ Define a simple algorithm and KPI, then run a `Scenario`:
 ```python
 from algomancy_scenario import (
     Scenario, ScenarioStatus,
-    BaseAlgorithm, BaseAlgorithmParameters, BaseKPI,
+    BaseAlgorithm, BaseParameterSet, BaseKPI,
 )
 from algomancy_data import DataSource, DataClassification
 
 
 # Minimal parameters type
-class ExampleParams(BaseAlgorithmParameters):
+class ExampleParams(BaseParameterSet):
     def serialize(self) -> dict:
         return {"hello": "world"}
 

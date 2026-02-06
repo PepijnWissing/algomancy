@@ -4,11 +4,11 @@ from algomancy_data import DataSource
 from algomancy_scenario import (
     ScenarioResult,
     BaseAlgorithm,
-    BaseAlgorithmParameters,
+    BaseParameterSet,
 )
 
 
-class AsIsAlgorithmParams(BaseAlgorithmParameters):
+class AsIsAlgorithmParams(BaseParameterSet):
     def __init__(self, name: str = "As is") -> None:
         super().__init__(name=name)
 
