@@ -12,19 +12,6 @@ def load_toml(path: Path) -> dict:
         return tomli.load(f)
 
 
-def get_workspace_members(root_pyproject: Path) -> list[Path]:
-    data = load_toml(root_pyproject)
-
-    try:
-        members = data["tool"]["uv"]["workspace"]["members"]
-    except KeyError:
-        raise RuntimeError(
-            "No [tool.uv.workspace].members found in root pyproject.toml"
-        )
-
-    return [Path(member) for member in members]
-
-
 def read_name_and_version(pyproject_path: Path) -> tuple[str, str]:
     data = load_toml(pyproject_path)
 
@@ -37,12 +24,22 @@ def read_name_and_version(pyproject_path: Path) -> tuple[str, str]:
         )
 
 
+def get_workspace_member_pyprojects(root_pyproject: Path) -> list[Path]:
+    data = load_toml(root_pyproject)
+
+    try:
+        members = data["tool"]["uv"]["workspace"]["members"]
+    except KeyError:
+        return []
+
+    return [Path(member) / "pyproject.toml" for member in members]
+
+
 def pypi_versions(dist_name: str) -> set[str]:
     url = f"https://pypi.org/pypi/{dist_name}/json"
     r = requests.get(url)
 
     if r.status_code == 404:
-        # Package not published yet
         return set()
 
     r.raise_for_status()
@@ -54,23 +51,27 @@ def main():
         print("❌ Root pyproject.toml not found")
         sys.exit(1)
 
-    members = get_workspace_members(ROOT_PYPROJECT)
     failed = False
 
-    print(f"🔍 Found {len(members)} workspace members\n")
+    # 1. Root package (algomancy)
+    packages = [ROOT_PYPROJECT]
 
-    for member in members:
-        pyproject = member / "pyproject.toml"
+    # 2. Workspace members
+    packages.extend(get_workspace_member_pyprojects(ROOT_PYPROJECT))
 
+    print(f"🔍 Checking {len(packages)} packages\n")
+
+    for pyproject in packages:
         if not pyproject.exists():
-            print(f"❌ {member}: pyproject.toml not found")
+            print(f"❌ {pyproject}: not found")
             failed = True
             continue
 
         name, version = read_name_and_version(pyproject)
         existing_versions = pypi_versions(name)
 
-        print(f"🔍 {name}: local version = {version}")
+        location = "root" if pyproject == ROOT_PYPROJECT else pyproject.parent
+        print(f"🔍 {name} ({location}): local version = {version}")
 
         if version in existing_versions:
             print(f"❌ {name}: version {version} already exists on PyPI\n")
@@ -82,7 +83,7 @@ def main():
         print("One or more package versions already exist on PyPI.")
         sys.exit(1)
 
-    print("🎉 All package versions are safe to publish.")
+    print("🎉 All package versions (including root) are safe to publish.")
 
 
 if __name__ == "__main__":

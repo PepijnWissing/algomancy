@@ -1,4 +1,7 @@
 # Change log
+## 0.3.20
+- `StandardDataPage` now work again when sessions are enabled
+
 ## 0.3.17
 - `StandardHomePage` and `StandardDataPage` now work again when sessions are disabled
 ## 0.3.16

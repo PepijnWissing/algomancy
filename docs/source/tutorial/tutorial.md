@@ -22,7 +22,7 @@ The outline section of this tutorial is incomplete. A basic description of the t
 Follow the instructions in {ref}`quickstart-ref` to get set up with a basic project layout.
 
 ### Data
-The tutorial data, as well as the final code, are available at [this link](http://www.google.com). 
+The tutorial data, as well as the final code, are available at [this link](https://github.com/PepijnWissing/Algomancy). 
 Download the data files from the project and place them in your `data/` directory. It should look like:
 ```text
 root/
@@ -34,8 +34,8 @@ root/
 ...
 ```
 
-```{warning}
-The link is currently broken; a github project should be set up to share the data. 
+```{tip}
+The tutorial data is now available at [this link](https://github.com/PepijnWissing/Algomancy), under tutorial/data
 ```
 
 ## Next step
