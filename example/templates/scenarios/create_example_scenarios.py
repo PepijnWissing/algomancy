@@ -1,9 +1,7 @@
-from algomancy_gui.sessionmanager import SessionManager
+from algomancy_scenario import ScenarioManager
 
 
-def debug_create_example_scenarios(session_manager: SessionManager):
-    first_session = session_manager.start_session_name
-    scenario_manager = session_manager.get_scenario_manager(first_session)
+def debug_create_example_scenarios(scenario_manager: ScenarioManager):
     scenario_manager.toggle_autorun(True)
     data_key = scenario_manager.get_data_keys()[0]
     names = [

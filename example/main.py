@@ -51,7 +51,7 @@ def main(
     and starts the web server.
     """
     # framework configuration via AppConfiguration
-    use_sessions = True
+    use_sessions = False
     if use_sessions:
         data_path = "example/data"
     else:
@@ -96,7 +96,7 @@ def main(
     # Build the app with AppConfiguration object directly
     app = GuiLauncher.build(app_cfg)
 
-    debug_create_example_scenarios(app.server.session_manager)
+    debug_create_example_scenarios(app.server.scenario_manager)
 
     # Run the app
     GuiLauncher.run(
