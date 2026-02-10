@@ -1,4 +1,4 @@
-(tutorial-etl-ref)=
+from tutorial.src.data_handling.input_configs import StoresSchemafrom tutorial.src.data_handling.input_configs import DCSchema(tutorial-etl-ref)=
 # Data intake
 An Algomancy app expects to read data by way of an {ref}`ETL<etl-ref>` process.
 The steps of this process always follow the same pattern, but we need to configure the app such that the needs of our
@@ -28,18 +28,20 @@ This Schema class defines the table structure:
 from typing import Dict
 from algomancy_data import (Schema,
                             DataType,
-                            SingleInputFileConfiguration,
                             FileExtension,
-                            MultiInputFileConfiguration)
+                            SchemaType)
 
 
 class DCSchema(Schema):
+   _FILENAME = "dc"
+   _EXTENSION = FileExtension.XLSX
+   _SCHEMA_TYPE = SchemaType.SINGLE
+   
     ID = "ID"
     X = "x"
     Y = "y"
 
-    @property
-    def datatypes(self) -> Dict[str, DataType]:
+    def _defined_datatypes(self) -> Dict[str, DataType]:
         return {
             DCSchema.ID: DataType.STRING,
             DCSchema.X: DataType.INTEGER,
@@ -47,41 +49,41 @@ class DCSchema(Schema):
         }
 
 
-class CustomerSchema(Schema):
+class LocationSchema(Schema):
+   _FILENAME = "otherlocations"
+   _EXTENSION = FileExtension.XLSX
+   _SCHEMA_TYPE = SchemaType.MULTI
+   
     ID = "ID"
     X = "x"
     Y = "y"
 
-    @property
-    def datatypes(self) -> Dict[str, DataType]:
+    def _defined_datatypes(self) -> Dict[str, Dict[str, DataType]]:
         return {
-            CustomerSchema.ID: DataType.STRING,
-            CustomerSchema.X: DataType.INTEGER,
-            CustomerSchema.Y: DataType.INTEGER,
+           "customer": {
+               LocationSchema.ID: DataType.STRING,
+               LocationSchema.X: DataType.INTEGER,
+               LocationSchema.Y: DataType.INTEGER,
+            },
+           "xdock": {
+               LocationSchema.ID: DataType.STRING,
+               LocationSchema.X: DataType.INTEGER,
+               LocationSchema.Y: DataType.INTEGER,
+            },
         }
 
-
-class XDockSchema(Schema):
-    ID = "ID"
-    X = "x"
-    Y = "y"
-
-    @property
-    def datatypes(self) -> Dict[str, DataType]:
-        return {
-            XDockSchema.ID: DataType.STRING,
-            XDockSchema.X: DataType.INTEGER,
-            XDockSchema.Y: DataType.INTEGER,
-        }
 
 
 class StoresSchema(Schema):
+   _FILENAME = "stores"
+   _EXTENSION = FileExtension.CSV
+   _SCHEMA_TYPE = SchemaType.SINGLE
+   
     ID = "ID"
     X = "x"
     Y = "y"
 
-    @property
-    def datatypes(self) -> Dict[str, DataType]:
+    def _defined_datatypes(self) -> Dict[str, DataType]:
         return {
             StoresSchema.ID: DataType.STRING,
             StoresSchema.X: DataType.INTEGER,
@@ -95,25 +97,10 @@ Add each file configuration the array of input_configs:
 :color: info
 
 ```python
-input_configs = [
-    SingleInputFileConfiguration(
-        extension=FileExtension.XLSX,
-        file_name="dc",
-        file_schema=DCSchema(),
-    ),
-    MultiInputFileConfiguration(
-        extension=FileExtension.XLSX,
-        file_name="otherlocations",
-        file_schemas={
-            "customer": CustomerSchema(),
-            "xdock": XDockSchema(),
-        },
-    ),
-    SingleInputFileConfiguration(
-        extension=FileExtension.CSV,
-        file_name="stores",
-        file_schema=StoresSchema(),
-    ),
+schemas = [
+    DCSchema(),
+    LocationSchema(),
+    StoresSchema(),
 ]
 ```
 :::

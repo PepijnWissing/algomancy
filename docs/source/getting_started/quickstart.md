@@ -52,7 +52,7 @@ from algomancy_content import (
     PlaceholderETLFactory,
     PlaceholderAlgorithm,
     PlaceholderKPI,
-    placeholder_input_config,
+    placeholder_schema,
 )
 from algomancy_data import DataSource
 
@@ -62,13 +62,13 @@ def main() -> None:
     port = 8050
 
     app_cfg = AppConfiguration(
-        etl_factory     = PlaceholderETLFactory,
-        kpi_templates   = {"placeholder": PlaceholderKPI},
-        algo_templates  = {"placeholder": PlaceholderAlgorithm},
-        input_configs   = [placeholder_input_config],
-        host            = host,
-        port            = port,
-        title           = "My Algomancy Dashboard",
+        etl_factory=PlaceholderETLFactory,
+        kpi_templates={"placeholder": PlaceholderKPI},
+        algo_templates={"placeholder": PlaceholderAlgorithm},
+        schemas=[placeholder_schema],
+        host=host,
+        port=port,
+        title="My Algomancy Dashboard",
     )
 
     app = GuiLauncher.build(app_cfg)
