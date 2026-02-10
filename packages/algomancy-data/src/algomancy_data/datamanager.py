@@ -8,7 +8,7 @@ from algomancy_utils import Logger
 
 from .datasource import DataClassification, BASE_DATA_BOUND
 from .etl import ETLFactory, ETLConstructionError
-from .inputfileconfiguration import InputFileConfiguration, FileExtension
+from .schema import Schema, FileExtension
 from .validator import ValidationSequence
 from .file import File, CSVFile, JSONFile, XLSXFile
 
@@ -23,14 +23,14 @@ class DataManager(ABC):
     def __init__(
         self,
         etl_factory: type[E],
-        input_configs: List[InputFileConfiguration],
+        schemas: List[Schema],
         save_type: str,
         data_object_type: type[BASE_DATA_BOUND],
         logger: Logger | None = None,
     ) -> None:
         self.logger = logger
-        self._etl_factory = etl_factory(input_configs, self.logger)
-        self._input_configs = input_configs
+        self._etl_factory = etl_factory(schemas, self.logger)
+        self._schemas = schemas
         self._data: Dict[str, BASE_DATA_BOUND] = {}
         self._save_type = save_type
         self._data_object_type: type[BASE_DATA_BOUND] = data_object_type
@@ -61,9 +61,9 @@ class DataManager(ABC):
     # Derive/Delete
     def derive_data(self, existing_key: str, derived_key: str) -> None:
         assert existing_key in self.get_data_keys(), f"Data '{existing_key}' not found."
-        assert (
-            derived_key not in self.get_data_keys()
-        ), f"Data '{derived_key}' already exists."
+        assert derived_key not in self.get_data_keys(), (
+            f"Data '{derived_key}' already exists."
+        )
 
         self._data[derived_key] = self.get_data(existing_key).derive(derived_key)
 
@@ -156,14 +156,12 @@ class StatelessDataManager(DataManager):
     def __init__(
         self,
         etl_factory: type[ETLFactory],
-        input_configs: List[InputFileConfiguration],
+        schemas: List[Schema],
         save_type: str,
         data_object_type: type[BASE_DATA_BOUND],
         logger: Logger | None = None,
     ):
-        super().__init__(
-            etl_factory, input_configs, save_type, data_object_type, logger
-        )
+        super().__init__(etl_factory, schemas, save_type, data_object_type, logger)
         self._data: Dict[str, BASE_DATA_BOUND] = {}
 
     def startup(self):
@@ -184,15 +182,13 @@ class StatefulDataManager(DataManager):
     def __init__(
         self,
         etl_factory: type[ETLFactory],
-        input_configs: List[InputFileConfiguration],
+        schemas: List[Schema],
         data_folder: str,
         save_type: str,
         data_object_type: type[BASE_DATA_BOUND],
         logger: Logger | None = None,
     ):
-        super().__init__(
-            etl_factory, input_configs, save_type, data_object_type, logger
-        )
+        super().__init__(etl_factory, schemas, save_type, data_object_type, logger)
         self._data_folder = data_folder
         self._data: Dict[str, BASE_DATA_BOUND] = {}  # Loading
 

@@ -1,7 +1,7 @@
 from typing import List, Dict
 from itertools import zip_longest
 
-from algomancy_data import InputFileConfiguration
+from algomancy_data import Schema
 
 
 def hamming_distance(s1, s2):
@@ -24,9 +24,7 @@ def hamming_distance(s1, s2):
     return sum(c1 != c2 for c1, c2 in zip_longest(s1, s2))
 
 
-def find_closest_match(
-    file_names: List[str], file_configuration: InputFileConfiguration
-) -> str:
+def find_closest_match(file_names: List[str], file_configuration: Schema) -> str:
     """
     Finds the closest match to a file configuration's reference name.
 
@@ -74,7 +72,7 @@ def is_bijective_mapping(mapping: Dict[str, str]) -> bool:
 
 
 def match_file_names(
-    file_configurations: List[InputFileConfiguration], file_names: List[str]
+    file_configurations: List[Schema], file_names: List[str]
 ) -> Dict[str, str]:
     """
     Matches file configurations to file names and attempts to create a bijective mapping.

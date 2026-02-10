@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Type
 import os
 
 from algomancy_content import LibraryManager as library
-from algomancy_data import InputFileConfiguration, BASE_DATA_BOUND, DataSource
+from algomancy_data import Schema, BASE_DATA_BOUND, DataSource
 from algomancy_content.pages.page import (
     HomePage,
     ScenarioPage,
@@ -40,7 +40,7 @@ class AppConfiguration(CoreConfiguration):
         etl_factory: Any | None = None,
         kpi_templates: Dict[str, Type[BASE_KPI]] | None = None,
         algo_templates: Dict[str, Type[ALGORITHM]] | None = None,
-        input_configs: List[InputFileConfiguration] | None = None,
+        schemas: List[Schema] | None = None,
         # === auto start/create features ===
         autocreate: bool | None = False,
         default_algo: str | None = None,
@@ -79,7 +79,7 @@ class AppConfiguration(CoreConfiguration):
             etl_factory=etl_factory,
             kpi_templates=kpi_templates,
             algo_templates=algo_templates,
-            input_configs=input_configs,
+            schemas=schemas,
             autocreate=autocreate,
             default_algo=default_algo,
             default_algo_params_values=default_algo_params_values,
@@ -133,7 +133,7 @@ class AppConfiguration(CoreConfiguration):
             "etl_factory": self.etl_factory,
             "kpi_templates": self.kpi_templates,
             "algo_templates": self.algo_templates,
-            "input_configs": self.input_configs,
+            "schemas": self.schemas,
             "autocreate": self.autocreate,
             "default_algo": self.default_algo,
             "default_algo_params_values": self.default_algo_params_values,
