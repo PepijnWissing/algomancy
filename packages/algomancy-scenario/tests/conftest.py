@@ -285,7 +285,7 @@ class ExampleETLFactory(ETLFactory):
 
         vs.add_validator(
             SchemaValidator(
-                schemas=self.input_configurations,
+                schemas=self.schemas,
                 severity=ValidationSeverity.CRITICAL,
             )
         )

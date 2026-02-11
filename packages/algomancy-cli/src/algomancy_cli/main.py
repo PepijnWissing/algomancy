@@ -70,7 +70,7 @@ def _build_example_config() -> CliConfiguration:
         etl_factory=ExampleETLFactory,
         kpi_templates=kpi_templates,
         algo_templates=algorithm_templates,
-        input_configs=example_schemas,
+        schemas=example_schemas,
         data_object_type=DataSource,
         autocreate=True,
         default_algo="Slow",

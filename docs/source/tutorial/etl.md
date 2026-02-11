@@ -1,4 +1,3 @@
-from tutorial.src.data_handling.input_configs import StoresSchemafrom tutorial.src.data_handling.input_configs import DCSchema(tutorial-etl-ref)=
 # Data intake
 An Algomancy app expects to read data by way of an {ref}`ETL<etl-ref>` process.
 The steps of this process always follow the same pattern, but we need to configure the app such that the needs of our
@@ -135,7 +134,7 @@ we need to create an ETLFactory that can extract the input files.
 
 Create a case specific ETLFactory in the directory src/data_handling, i.e., a subclass of ETLFactory.
 An ETLFactory is a container class with four different types of main functions
-   1. An extract function: extracts the files as configured in input_configs.py.
+   1. An extract function: extracts the files as configured in `schemas.py`
    2. A validation function: validates the extracted files against user-defined validations.
    3. A transformation function: transforms the extracted files (represented in pandas DataFrames). To 
    other pandas Dataframes that can be used for loading.
@@ -198,7 +197,7 @@ class TSPETLFactory(ETLFactory):
 
       vs.add_validator(
          SchemaValidator(
-            schemas=self.input_configurations,
+            schemas=self.schemas,
             severity=ValidationSeverity.CRITICAL,
          )
       )
@@ -216,7 +215,7 @@ class TSPETLFactory(ETLFactory):
 :::
 
 ## Extract
-1. Add an extractor in the function `create_extraction_sequence` for each file in `input_configs.py.` 
+1. Add an extractor in the function `create_extraction_sequence` for each file in `schemas.py.` 
 Simply fill the `sequence.add_extractor` function with the appropriate extractor and its arguments:
 :::{dropdown} {octicon}`code` Code
 :color: info
@@ -266,22 +265,22 @@ def create_extraction_sequence(
 ```
 :::
 
-2. Update main.py such that it uses the `input_configs.py` and the newly created TSPETLFactory:
-   1. Import the `input_configs.py` file:
+2. Update main.py such that it uses the `schemas.py` and the newly created TSPETLFactory:
+   1. Import the `schemas.py` file:
    ```python
-   from data_handling.input_configs import input_configs
+   from data_handling.schemas import schemas
     ```
    2. Import the TSPETLFactory class:
    ```python
    from data_handling.TSPETLFactory import TSPETLFactory
    ```
-   3. Modify the arguments of AppConfiguration to use TSPETLFactory and input_configs
+   3. Modify the arguments of AppConfiguration to use TSPETLFactory and schemas
    ```python
    app_cfg = AppConfiguration(
         etl_factory=TSPETLFactory,
         kpi_templates={'placeholder': PlaceholderKPI},
         algo_templates={'placeholder': PlaceholderAlgorithm},
-        input_configs=input_configs,
+        schemas=schemas,
         data_object_type=DataSource,
         autocreate=False, #this will be the default in next release
         autorun=False, #this will be the default in next release

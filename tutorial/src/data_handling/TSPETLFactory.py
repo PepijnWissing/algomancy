@@ -79,7 +79,7 @@ class TSPETLFactory(ETLFactory):
         sequence.add_extractor(
             XLSXMultiExtractor(
                 file=cast(XLSXFile, files["otherlocations"]),
-                schemas=self.get_schema("otherlocations"),
+                schema=self.get_schema("otherlocations"),
                 logger=self.logger,
             )
         )
@@ -93,7 +93,7 @@ class TSPETLFactory(ETLFactory):
 
         vs.add_validator(
             SchemaValidator(
-                schemas=self.input_configurations,
+                schemas=self.schemas,
                 severity=ValidationSeverity.CRITICAL,
             )
         )

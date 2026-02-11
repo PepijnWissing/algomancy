@@ -216,6 +216,7 @@ The `InputFileConfiguration` class is used to configure the extractors. It is a 
 
 Consider the following code fragment:
 
+
 ```python
 
 from src import algomancy as de

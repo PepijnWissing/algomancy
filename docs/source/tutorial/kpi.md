@@ -43,13 +43,13 @@ kpi_templates = {
 }
 ```
 3. Add the kpi_templates dict to the main.py script in the AppConfiguration so that Algomancy knows about the KPIs.
-Make sure to also import input_configs (PyCharm has built-in autocompletion for this)
+Make sure to also import schemas (PyCharm has built-in autocompletion for this)
 ```python
 app_cfg = AppConfiguration(
         etl_factory=TSPETLFactory,
         kpi_templates=kpi_templates,
         algo_templates={'placeholder': PlaceholderAlgorithm},
-        input_configs=input_configs,
+        schemas=schemas,
         data_object_type=DataSource,
         autocreate=False, #this will be the default in next release
         autorun=False, #this will be the default in next release
