@@ -15,16 +15,21 @@ We need to write the following steps
 
 
 ## Define the input files
-We start by defining the structure of the input files. This description consists of two parts, 
-the first part defines the table structure in each input file and the second part defines 
-the file (in terms of file type, file name etc.)
-1. Create a file `input_configs.py `in the directory `src/data_handling/`
-2. For each table in an input file (could be multiple in an Excel), create a `Schema` subclass in `input_configs.py`. 
-This Schema class defines the table structure:
+We start by defining the structure of the input files. 
+The [Schema](backend-schema-ref) class contains information regarding the location and extension of the corresponding source file,
+as well as the table structure of said data file. 
+```{note}
+The fields `_FILENAME`, `_EXTENSION` and `_SCHEMA_TYPE` must be provided. If not, an exception will be raised on construction. 
+```
+1. Create a file `schemas.py `in the directory `src/data_handling/`
+2. For each table in an input file (could be multiple in an Excel), create a `Schema` subclass in `schemas.py`. 
+This field `_defined_datatypes` defines the table structure, and must be implemented by the subclass:
 :::{dropdown} {octicon}`code` Code
 :color: info
 
-```python
+```{code-block} python
+:caption: `schemas.py`
+:linenos:
 from typing import Dict
 from algomancy_data import (Schema,
                             DataType,
@@ -91,12 +96,25 @@ class StoresSchema(Schema):
         }
 ```
 :::
-3. At the end of input_configs.py, we describe the input file properties (the type of file, file name etc.). 
-Add each file configuration the array of input_configs:
+
+```{important}
+A single `Schema` is associated with a single file. 
+In case a single file contains more than one data table (e.g., multiple Excel tabs), we should take care that:
+- the `_SCHEMA_TYPE` is set to `MULTI`,
+- `_defined_datatypes` returns a nested dictionary, such as on lines 34-46 of the code block above, and
+- the keys of the outer dictionary corresponds to the identifyers of the input tables (e.g., each sheet name of an xlsx)
+```
+
+3. At the end of `schemas.py`, we collect a list of schemas, for later use. 
+Make sure to collect an _instance_ of each schema by invoking the constructor. 
+
 :::{dropdown} {octicon}`code` Code
 :color: info
 
-```python
+```{code-block} python
+:caption: `schemas.py` (continued)
+:linenos:
+:lineno-start: 66
 schemas = [
     DCSchema(),
     LocationSchema(),
@@ -104,6 +122,12 @@ schemas = [
 ]
 ```
 :::
+
+```{tip}
+Defining the column names in class variables, such as on lines 13-15 of `schemas.py` is not strictly necessary.
+Nevertheless, we recommend this way of working as makes the code more readable and maintainable, especially when your column names are long or complex. 
+Moreover, **this allows your IDE to help you** and prevents typos. 
+```
 
 ## ETL Factory
 Before we can use the input file configuration that we have just created, 

@@ -1,5 +1,5 @@
 from .placeholderetlfactory import PlaceholderETLFactory
-from .placeholderinputconfig import PlaceholderSchema
+from .placeholderschema import PlaceholderSchema
 from .placeholderalgorithmtemplate import PlaceholderAlgorithm, PlaceholderParams
 from .placeholderkpitemplate import PlaceholderKPI
 

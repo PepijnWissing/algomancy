@@ -8,7 +8,7 @@
 
 content/backend/algorithm
 content/backend/etlfactory
-content/backend/inputconfig
+content/backend/schema
 content/backend/kpi
 ```
 
