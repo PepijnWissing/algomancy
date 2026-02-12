@@ -95,7 +95,6 @@ def data_management_import_modal(sm: ScenarioManager, themed_styling):
                                 dbc.FormFeedback(
                                     id=DM_IMPORT_MODAL_FEEDBACK,
                                     type="invalid",
-                                    class_name="mt-2",
                                 ),
                             ],
                             id=DM_IMPORT_MODAL_FILEVIEWER_COLLAPSE,
