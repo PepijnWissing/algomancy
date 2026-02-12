@@ -1,9 +1,10 @@
 from dash import html
 
+from .page import BaseDataPage
 from algomancy_data import DataSource
 
 
-class PlaceholderDataPage:
+class PlaceholderDataPage(BaseDataPage):
     @staticmethod
     def register_callbacks():
         pass
