@@ -4,11 +4,11 @@ from dash import html
 
 from algomancy_data import BASE_DATA_BOUND
 from algomancy_content.pages.page import (
-    HomePage,
-    DataPage,
-    ScenarioPage,
-    ComparePage,
-    OverviewPage,
+    BaseHomePage,
+    BaseDataPage,
+    BaseScenarioPage,
+    BaseComparePage,
+    BaseOverviewPage,
 )
 from algomancy_scenario import Scenario
 
@@ -25,11 +25,11 @@ class ContentRegistry:
 
     def register_pages(
         self,
-        home_page: HomePage,
-        data_page: DataPage,
-        scenario_page: ScenarioPage,
-        compare_page: ComparePage,
-        overview_page: OverviewPage,
+        home_page: BaseHomePage,
+        data_page: BaseDataPage,
+        scenario_page: BaseScenarioPage,
+        compare_page: BaseComparePage,
+        overview_page: BaseOverviewPage,
     ) -> None:
         self._register_home_page(home_page)
         self._register_data_page(data_page)
@@ -37,25 +37,25 @@ class ContentRegistry:
         self._register_compare_page(compare_page)
         self._register_overview_page(overview_page)
 
-    def _register_home_page(self, page: HomePage) -> None:
+    def _register_home_page(self, page: BaseHomePage) -> None:
         self._home_content = page.create_content
         page.register_callbacks()
 
-    def _register_data_page(self, page: DataPage) -> None:
+    def _register_data_page(self, page: BaseDataPage) -> None:
         self._data_content = page.create_content
         page.register_callbacks()
 
-    def _register_scenario_page(self, page: ScenarioPage) -> None:
+    def _register_scenario_page(self, page: BaseScenarioPage) -> None:
         self._scenario_content = page.create_content
         page.register_callbacks()
 
-    def _register_compare_page(self, page: ComparePage) -> None:
+    def _register_compare_page(self, page: BaseComparePage) -> None:
         self._compare_side_by_side = page.create_side_by_side_content
         self._compare_compare = page.create_compare_section
         self._compare_details = page.create_details_section
         page.register_callbacks()
 
-    def _register_overview_page(self, page: OverviewPage) -> None:
+    def _register_overview_page(self, page: BaseOverviewPage) -> None:
         self._overview_content = page.create_content
         page.register_callbacks()
 

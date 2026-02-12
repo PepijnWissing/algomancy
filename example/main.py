@@ -21,6 +21,7 @@ from algomancy_gui.stylingconfigurator import (
 
 from example.data_handling.schemas import example_schemas
 from example.data_handling.factories import ExampleETLFactory
+from example.pages.exampledatapage import ExampleDataPage
 from example.templates import kpi_templates, algorithm_templates
 
 
@@ -69,7 +70,7 @@ def main(
         default_algo_params_values={"duration": 1},
         autorun=True,
         home_page="showcase",
-        data_page="standard",  # ExampleDataPage,
+        data_page=ExampleDataPage(),
         styling_config=configure_styling(),
         use_cqm_loader=False,
         title="Example implementation of an Algomancy Dashboard",

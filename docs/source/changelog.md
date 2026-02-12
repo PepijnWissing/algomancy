@@ -1,4 +1,5 @@
 # Change log
+
 ## 0.4.0
 _Released on _11-02-2026_
 ### Changed
@@ -9,7 +10,8 @@ _Released on _11-02-2026_
 ### Migration from InputFileConfiguration to Schema-only pattern
 Prior to this release, file configurations were specified separately using `SingleInputFileConfiguration` and `MultiInputFileConfiguration`.
 These have been removed, and the `Schema` class now contains all necessary file metadata.
-
+:::{dropdown} {octicon}`flowchart` Migration example
+:color: secondary
 #### For single-file schemas (CSV, JSON, XLSX with one sheet):
 
 **Old version**
@@ -154,18 +156,35 @@ location_schema = LocationSchema()
 - Rename `datatypes` property to `_defined_datatypes()` method
 - Return `Dict[str, Dict[str, DataType]]` (sheet name → column datatypes) instead of `Dict[str, DataType]`
 - Remove the separate `MultiInputFileConfiguration` wrapper and individual sheet schemas
+:::
+
+## 0.3.21
+_12-02-2026_
+### Added 
+- Added charactersafe & existing dataset name checks, resulting in a disabled import button
+
+### Changed
+- Custom pages should now subclass the appropriate base classes (moved from `Protocol` to `AbstractBaseClass`). Functional implementation should remain unchanged.
+
+### Fixed
+- Fixed a bug where the overview page failed to use the `OverviewPage` content from the registry appropriately.
+- Fixed risk of App breaking down when user tries to import a new dataset with weird names (e.g. with .) or an already existing dataset name.
 
 
 ## 0.3.20
+### Fixed
 - `StandardDataPage` now work again when sessions are enabled
 
 ## 0.3.17
+### Fixed
 - `StandardHomePage` and `StandardDataPage` now work again when sessions are disabled
 ## 0.3.16
+### Changed
 - `GuiLauncher` was moved to `algomancy-gui`
 - Updated `numpy` dependency to `2.4.1` due to yanked version `2.4.0`
 
 ## 0.3.13
+### Added
 - Added `use_sessions` atribute to `AppConfiguration` to allow disabling sessions. 
 
 ## 0.3.5 - 0.3.12
