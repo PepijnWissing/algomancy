@@ -20,9 +20,99 @@ class AppConfiguration(CoreConfiguration):
     """
     Central configuration object for the Algomancy dashboard.
 
-    Construct with your choices, validation runs on creation. Use `as_dict()`
-    to obtain the dictionary expected by `DashLauncher.build()` and
-    `SettingsManager`.
+    This class extends `CoreConfiguration` with GUI-specific settings such as
+    page definitions, styling, and server parameters. It is the primary
+    configuration object used when launching the Dash-based dashboard.
+
+    Construct with your configuration choices; validation runs automatically
+    on creation. Use the `as_dict()` method to obtain the dictionary format
+    expected by `DashLauncher.build()` and `SettingsManager`.
+
+    Args:
+        use_sessions (bool): Enable multi-session support. Defaults to False.
+        assets_path (str): Path to static assets directory (CSS, JS, images).
+            Defaults to "assets".
+        data_path (str): Path to data storage directory. Defaults to "data".
+        has_persistent_state (bool): Enable disk persistence for data and scenarios.
+            Defaults to False.
+        save_type (str | None): Persistence format ("json" or None). Defaults to "json".
+        data_object_type (type[BASE_DATA_BOUND] | None): Data container class type.
+            Defaults to DataSource.
+        etl_factory (Any | None): ETL factory instance for data transformations.
+            Defaults to None.
+        kpi_templates (Dict[str, Type[BASE_KPI]] | None): Mapping of KPI template names
+            to classes. Defaults to None.
+        algo_templates (Dict[str, Type[ALGORITHM]] | None): Mapping of algorithm template
+            names to classes. Defaults to None.
+        input_configs (List[InputFileConfiguration] | None): Input file configurations.
+            Defaults to None.
+        autocreate (bool | None): Create default scenario on startup. Defaults to False.
+        default_algo (str | None): Default algorithm name to use. Defaults to None.
+        default_algo_params_values (Dict[str, Any] | None): Default algorithm parameters.
+            Defaults to None.
+        autorun (bool | None): Run algorithm automatically on startup. Defaults to False.
+        home_page (BaseHomePage | str): Home page implementation or "standard".
+            Defaults to "standard".
+        data_page (BaseDataPage | str): Data page implementation or "placeholder".
+            Defaults to "placeholder".
+        scenario_page (BaseScenarioPage | str): Scenario page implementation or "placeholder".
+            Defaults to "placeholder".
+        compare_page (BaseComparePage | str): Compare page implementation or "placeholder".
+            Defaults to "placeholder".
+        overview_page (BaseOverviewPage | str): Overview page implementation or "standard".
+            Defaults to "standard".
+        styling_config (Any | None): Custom styling configuration dictionary.
+            Defaults to StylingConfigurator.get_cqm_config().
+        use_cqm_loader (bool): Enable specialized CQM data loader. Defaults to False.
+        title (str): Dashboard title displayed in browser. Defaults to "Algomancy Dashboard".
+        host (str | None): Server host address. Defaults to "127.0.0.1" (Windows)
+            or "0.0.0.1" (Linux).
+        port (int | None): Server port number (1-65535). Defaults to 8050.
+        compare_default_open (List[str] | None): Compare page sections to expand by default
+            (e.g., ["side-by-side", "kpis"]). Defaults to [].
+        compare_ordered_list_components (List[str] | None): Order of compare page sections.
+            Defaults to [].
+        use_data_page_spinner (bool): Show loading spinner on Data page. Defaults to True.
+        use_scenario_page_spinner (bool): Show loading spinner on Scenario page.
+            Defaults to True.
+        use_compare_page_spinner (bool): Show loading spinner on Compare page.
+            Defaults to True.
+        allow_parameter_upload_from_file (bool): Allow parameter file uploads.
+            Defaults to False.
+        use_authentication (bool): Enable dashboard authentication. Defaults to False.
+
+    Attributes:
+        assets_path (str): Path to the dashboard's assets directory.
+        home_page (BaseHomePage | str): Home page configuration.
+        data_page (BaseDataPage | str): Data Management page configuration.
+        scenario_page (BaseScenarioPage | str): Scenario configuration page.
+        compare_page (BaseComparePage | str): Result Comparison page configuration.
+        overview_page (BaseOverviewPage | str): Overview/Analytics page configuration.
+        styling_config (Any): Dictionary containing styling and layout preferences.
+        use_cqm_loader (bool): Whether to use the specialized CQM data loader.
+        host (str): Network host address for the Dash server.
+        port (int): Port number for the Dash server.
+        compare_default_open (List[str]): List of compare page sections open by default.
+        compare_ordered_list_components (List[str]): Ordering of compare page components.
+        show_loading_on_datapage (bool): Whether to show loading spinner on Data page.
+        show_loading_on_scenariopage (bool): Whether to show loading spinner on Scenario page.
+        show_loading_on_comparepage (bool): Whether to show loading spinner on Compare page.
+        allow_parameter_upload_from_file (bool): Allow algorithm parameter file uploads.
+        use_authentication (bool): Whether dashboard authentication is enabled.
+
+    Example:
+        Create a basic dashboard configuration:
+
+        >>> from algomancy_gui import AppConfiguration
+        >>> config = AppConfiguration(
+        ...     title="My Custom Dashboard",
+        ...     port=9000,
+        ...     use_sessions=True,
+        ...     assets_path="custom_assets",
+        ... )
+        >>> config.port
+        9000
+        >>> config_dict = config.as_dict()
     """
 
     def __init__(
@@ -69,6 +159,42 @@ class AppConfiguration(CoreConfiguration):
         # === authentication ===
         use_authentication: bool = False,  # gui
     ):
+        """
+        Initializes the AppConfiguration.
+
+        Args:
+            use_sessions: Enable multi-session support. Inherited from CoreConfiguration.
+            assets_path: Path to static assets. Defaults to "assets".
+            data_path: Path to data storage. Inherited from CoreConfiguration.
+            has_persistent_state: Enable disk persistence. Inherited from CoreConfiguration.
+            save_type: Persistence format. Inherited from CoreConfiguration.
+            data_object_type: Data container class. Inherited from CoreConfiguration.
+            etl_factory: ETL factory instance. Inherited from CoreConfiguration.
+            kpi_templates: Mapping of KPI templates. Inherited from CoreConfiguration.
+            algo_templates: Mapping of algorithm templates. Inherited from CoreConfiguration.
+            input_configs: Input file configurations. Inherited from CoreConfiguration.
+            autocreate: Create default scenario on start. Inherited from CoreConfiguration.
+            default_algo: Default algorithm name. Inherited from CoreConfiguration.
+            default_algo_params_values: Default algorithm parameters. Inherited from CoreConfiguration.
+            autorun: Run algorithm on startup. Inherited from CoreConfiguration.
+            home_page: Home page implementation or "standard". Defaults to "standard".
+            data_page: Data page implementation or "placeholder". Defaults to "placeholder".
+            scenario_page: Scenario page implementation or "placeholder". Defaults to "placeholder".
+            compare_page: Compare page implementation or "placeholder". Defaults to "placeholder".
+            overview_page: Overview page implementation or "standard". Defaults to "standard".
+            styling_config: Custom styling configuration. Defaults to CQM styling.
+            use_cqm_loader: Enable CQM data loader. Defaults to False.
+            title: Dashboard title. Defaults to "Algomancy Dashboard".
+            host: Server host address. Defaults to 127.0.0.1 (Win) or 0.0.0.1 (Linux).
+            port: Server port. Defaults to 8050.
+            compare_default_open: Sections to expand on compare page. Defaults to [].
+            compare_ordered_list_components: Order of compare page sections. Defaults to [].
+            use_data_page_spinner: Show spinner on Data page. Defaults to True.
+            use_scenario_page_spinner: Show spinner on Scenario page. Defaults to True.
+            use_compare_page_spinner: Show spinner on Compare page. Defaults to True.
+            allow_parameter_upload_from_file: Allow parameter file uploads. Defaults to False.
+            use_authentication: Enable dashboard authentication. Defaults to False.
+        """
         # initialize core part
         super().__init__(
             use_sessions=use_sessions,
@@ -119,6 +245,33 @@ class AppConfiguration(CoreConfiguration):
 
     # public API
     def as_dict(self) -> Dict[str, Any]:
+        """
+        Serializes the configuration to a dictionary.
+
+        Converts all configuration attributes into a dictionary representation
+        suitable for JSON serialization, storage, or passing to other
+        components like `DashLauncher.build()` or `SettingsManager`. This
+        method is the inverse of `from_dict()`.
+
+        Returns:
+            A dictionary containing all configuration parameters as key-value
+            pairs. Keys match the parameter names from `__init__`, with the
+            exception of `allow_parameter_upload_from_file` which is mapped
+            to `allow_param_upload_by_file` for backward compatibility.
+
+        Example:
+            >>> config = AppConfiguration(
+            ...     title="My Dashboard",
+            ...     port=9000,
+            ...     use_sessions=True,
+            ... )
+            >>> config_dict = config.as_dict()
+            >>> config_dict["port"]
+            9000
+            >>> config_dict["title"]
+            'My Dashboard'
+        """
+
         return {
             # === session manager configuration ===
             "use_sessions": self.use_sessions,
@@ -288,4 +441,31 @@ class AppConfiguration(CoreConfiguration):
 
     @classmethod
     def from_dict(cls, config: Dict[str, Any]) -> "AppConfiguration":
+        """
+        Creates an AppConfiguration instance from a dictionary.
+
+        This factory method reconstructs an AppConfiguration object from a
+        dictionary representation, typically one created by `as_dict()`. It
+        is useful for deserializing configurations from JSON files or other
+        storage formats.
+
+        Args:
+            config: Dictionary containing configuration parameters. Keys should
+                match the parameter names of the `__init__` method. Any missing
+                keys will use their default values from `__init__`.
+
+        Returns:
+            A new AppConfiguration instance initialized with the provided
+            configuration values.
+
+        Example:
+            >>> config_dict = {
+            ...     "title": "My Dashboard",
+            ...     "port": 9000,
+            ...     "use_sessions": True,
+            ... }
+            >>> app_config = AppConfiguration.from_dict(config_dict)
+            >>> app_config.port
+            9000
+        """
         return cls(**config)
