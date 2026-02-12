@@ -4,14 +4,13 @@ import dash
 import dash_bootstrap_components as dbc
 from dash import html, dcc, get_app, callback, Output, Input, no_update, State
 
-import re
-
 from algomancy_data import ValidationError, DataManager
 from algomancy_scenario import ScenarioManager
 from .filenamematcher import match_file_names
 
 from ..cqmloader import cqm_loader
 from ..defaultloader import default_loader
+from ..inputchecker import InputChecker
 from algomancy_gui.managergetters import get_scenario_manager
 from ..settingsmanager import SettingsManager
 from ..componentids import (
@@ -174,21 +173,12 @@ def toggle_modal_load(open_clicks, close_clicks, is_open):
         return not is_open
     return is_open
 
-def is_character_safe(value: str) -> bool:
-    return bool(re.fullmatch(r"[A-Za-z0-9_-]+", value))
-
-def name_exists(value: str, session_id: str) -> bool:
-    sm: ScenarioManager = get_scenario_manager(get_app().server, session_id)
-    dataset_names = sm.get_data_keys()
-    is_invalid = value in dataset_names
-    return is_invalid
-
 @callback(
     [
         Output(DM_IMPORT_MODAL_NAME_INPUT, "invalid"),
         Output(DM_IMPORT_MODAL_FEEDBACK, "children"),
         Output(DM_IMPORT_SUBMIT_BUTTON, "disabled"),
-        Output(DM_IMPORT_SUBMIT_BUTTON, "color"),
+        Output(DM_IMPORT_SUBMIT_BUTTON, "color"), #todo: css styling
     ],
     Input(DM_IMPORT_MODAL_NAME_INPUT, "value"),
     State(ACTIVE_SESSION, "data")
@@ -220,18 +210,14 @@ def dataset_name_invalid(value, session_id: str):
         return False, "", True, "secondary"
 
     # Dataset_name not character safe
-    is_invalid = not is_character_safe(value)
-
-    if is_invalid:
+    if not InputChecker.is_character_safe(value):
         feedback_msg = "This is not a valid dataset name. Please only use alphanumeric characters, hyphens and underscores."
-        return is_invalid, feedback_msg, True, "secondary"
+        return True, feedback_msg, True, "secondary"
 
     # Dataset_name already exists
-    is_invalid = name_exists(value, session_id)
-
-    if is_invalid:
+    if InputChecker.name_exists(value, session_id):
         feedback_msg = "This is not a valid dataset name. A dataset with this name already exists."
-        return is_invalid, feedback_msg, True, "secondary"
+        return True, feedback_msg, True, "secondary"
 
     # Valid Dataset_name
     return False, "", False, "primary"
