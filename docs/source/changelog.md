@@ -3,6 +3,7 @@
 ## Prerelease by vdH
 - fixed risk of App breaking down when user tries to import a new dataset with weird names (e.g. with .) or an already existing dataset name.
 - added charactersafe & existing dataset name checks, resulting in a disabled import button
+- added InputChecker Class
 
 ## 0.3.20
 - `StandardDataPage` now work again when sessions are enabled
