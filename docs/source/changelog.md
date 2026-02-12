@@ -1,8 +1,8 @@
 # Change log
 
 ## Prerelease by vdH
-- fixed risk of App breaking down when user tries to import a new dataset with weird names (e.g. with .) or an already existing dataset name.
-- added charactersafe & existing dataset name checks, resulting in a disabled import button
+- fixed risk of App breaking down when user tries to import or derive a new dataset with 1) weird names (e.g. with .) or 2) an already existing dataset name.
+- added charactersafe & existing dataset name checks, resulting in a disabled import/derive button
 - added InputChecker Class
 
 ## 0.3.20

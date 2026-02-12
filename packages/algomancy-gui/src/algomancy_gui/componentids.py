@@ -31,6 +31,7 @@ DM_DERIVE_MODAL_CLOSE_BTN = "dm-derive-modal-close-btn"
 DM_DERIVE_MODAL_SUBMIT_BTN = "dm-derive-modal-submit-btn"
 DM_DERIVE_SET_SELECTOR = "dm-derive-set-selector"
 DM_DERIVE_SET_NAME_INPUT = "dm-derive-set-name-input"
+DM_DERIVE_MODAL_FEEDBACK = "dm-derive-modal-feedback"
 
 DM_DELETE_OPEN_BUTTON = "dm-delete-open-btn"
 DM_DELETE_SUBMIT_BUTTON = "DATA_MAN_DELETE_BTN"

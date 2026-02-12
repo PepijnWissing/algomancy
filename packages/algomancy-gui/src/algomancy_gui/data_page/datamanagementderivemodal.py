@@ -6,10 +6,12 @@ import dash_bootstrap_components as dbc
 from dash import html, dcc, callback, Output, Input, State, no_update, get_app
 
 from algomancy_scenario import ScenarioManager
+from ..inputchecker import InputChecker
 from ..componentids import (
     DM_DERIVE_SET_SELECTOR,
     DM_DERIVE_MODAL_SUBMIT_BTN,
     DM_DERIVE_SET_NAME_INPUT,
+    DM_DERIVE_MODAL_FEEDBACK,
     DM_DERIVE_MODAL_CLOSE_BTN,
     DM_DERIVE_MODAL,
     DM_LIST_UPDATER_STORE,
@@ -80,10 +82,16 @@ def data_management_derive_modal(sm: ScenarioManager, themed_styling):
                             [
                                 dbc.Col(html.Div(html.P("Name: ")), width=3),
                                 dbc.Col(
-                                    dbc.Input(
-                                        id=DM_DERIVE_SET_NAME_INPUT,
-                                        placeholder="Name of new dataset",
-                                    ),
+                                    [
+                                        dbc.Input(
+                                            id=DM_DERIVE_SET_NAME_INPUT,
+                                            placeholder="Name of new dataset",
+                                        ),
+                                        dbc.FormFeedback(
+                                            id=DM_DERIVE_MODAL_FEEDBACK,
+                                            type="invalid",
+                                        ),
+                                    ],
                                     width=9,
                                 ),
                             ]
@@ -139,9 +147,9 @@ def _sanitize(name: str) -> str:
     ],
     prevent_initial_call=True,
 )
-def derive_data_callback(n_clicks, selected_data_key, derived_name, session_id: str):
+def derive_data_callback(n_clicks, selected_data_key, derived_name, invalid_derived_name, session_id: str):
     """
-    Creates a derived dataset from an existing one when the derive button is clicked.
+    Creates a derived dataset from an existing one when the derive button is clicked, except when dataset_name is invalid.
 
     Updates dropdown options across the application with the new dataset list,
     displays success or error messages, and closes the modal upon completion.
@@ -150,12 +158,13 @@ def derive_data_callback(n_clicks, selected_data_key, derived_name, session_id: 
         n_clicks: Number of times the submit button has been clicked
         selected_data_key: Key of the dataset to derive from
         derived_name: Name for the new derived dataset
+        invalid_derived_name: Boolean indicating if feedback should be shown
         session_id: ID of the active session
 
     Returns:
         Tuple containing updated dropdown options, alert messages, and modal state
     """
-    if not selected_data_key or not derived_name:
+    if not selected_data_key or not derived_name or invalid_derived_name is True:
         return no_update, "", False, "Choose a dataset and enter a name!", True, False
     sm: ScenarioManager = get_scenario_manager(get_app().server, session_id)
     try:
@@ -171,7 +180,55 @@ def derive_data_callback(n_clicks, selected_data_key, derived_name, session_id: 
         )
     except Exception as e:
         return no_update, "", False, f"Problem with deriving: {str(e)}", True, False
+""" 
+@callback(
+    [
+        Output(DM_IMPORT_MODAL_NAME_INPUT, "invalid"),
+        Output(DM_IMPORT_MODAL_FEEDBACK, "children"),
+    ],
+    Input(DM_IMPORT_MODAL_NAME_INPUT, "value"),
+    State(ACTIVE_SESSION, "data")
+)
+def dataset_name_invalid(value, session_id: str):
+    
+        Input field for dataset name gets a red border, and a red error message appears below the field.
 
+        Checks the input and displays feedback if one of the scenarios below holds:
+        1) input contains characters that are not alphanumeric, hyphens or underscores
+        2) input is already in use for another saved dataset
+
+        Args:
+            value: String containing user input for dataset name
+            session_id: ID of the active session
+
+        Returns:
+            tuple: (invalid, feedback_children) where:
+            - invalid: Boolean indicating if feedback should be shown
+            - feedback_children: String containing feedback message
+    
+    # No dataset_name defined yet
+    if not value:
+        return False, ""
+
+    # Dataset_name not character safe
+    is_invalid = not bool(re.fullmatch(r"[A-Za-z0-9_-]+", value))
+
+    if is_invalid:
+        feedback_msg = "This is not a valid dataset name. Please only use alphanumeric characters, hyphens and underscores."
+        return is_invalid, feedback_msg
+
+    # Dataset_name already exists
+    sm: ScenarioManager = get_scenario_manager(get_app().server, session_id)
+    dataset_names = sm.get_data_keys()
+    is_invalid = value in dataset_names
+
+    if is_invalid:
+        feedback_msg = "This is not a valid dataset name. A dataset with this name already exists."
+        return is_invalid, feedback_msg
+
+    # Valid Dataset_name
+    return False, ""
+"""
 
 @callback(
     Output(DM_DERIVE_MODAL, "is_open"),
@@ -199,3 +256,52 @@ def toggle_modal_derive(open_clicks, close_clicks, is_open):
     if open_clicks or close_clicks:
         return not is_open
     return is_open
+
+@callback(
+    [
+        Output(DM_DERIVE_SET_NAME_INPUT, "invalid"),
+        Output(DM_DERIVE_MODAL_FEEDBACK, "children"),
+        Output(DM_DERIVE_MODAL_SUBMIT_BTN, "disabled"),
+        Output(DM_DERIVE_MODAL_SUBMIT_BTN, "color"), #todo: css styling
+    ],
+    Input(DM_DERIVE_SET_NAME_INPUT, "value"),
+    State(ACTIVE_SESSION, "data")
+)
+def dataset_name_invalid(value, session_id: str):
+    """
+        In case of an invalid dataset name, the input field for dataset name gets a red border, and a red error message appears below the field
+        This also disables the use of the Import button.
+
+        Checks dataset_name validity via the below three scenarios:
+        1) user input is empty
+        2) user input contains characters that are not alphanumeric, hyphens or underscores
+        3) user input is already in use for another saved dataset
+        Feedback is displayed and the import button is made inactive, until none of the scenarios hold.
+
+        Args:
+            value: String containing user input for dataset name
+            session_id: ID of the active session
+
+        Returns:
+            tuple: (invalid, feedback_children) where:
+            - invalid: Boolean indicating whether feedback will be shown
+            - feedback_children: String containing feedback message
+            - disabled: Boolean indicating whether the import button will be disabled
+            - color: String describing the color of the import button (green if enabled, gray if disabled)
+    """
+    # No dataset_name defined yet
+    if not value:
+        return False, "", True, "secondary"
+
+    # Dataset_name not character safe
+    if not InputChecker.is_character_safe(value):
+        feedback_msg = "This is not a valid dataset name. Please only use alphanumeric characters, hyphens and underscores."
+        return True, feedback_msg, True, "secondary"
+
+    # Dataset_name already exists
+    if InputChecker.name_exists(value, session_id):
+        feedback_msg = "This is not a valid dataset name. A dataset with this name already exists."
+        return True, feedback_msg, True, "secondary"
+
+    # Valid Dataset_name
+    return False, "", False, "primary"
