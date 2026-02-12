@@ -203,7 +203,7 @@ def dataset_name_invalid(value, session_id: str):
             - invalid: Boolean indicating whether feedback will be shown
             - feedback_children: String containing feedback message
             - disabled: Boolean indicating whether the import button will be disabled
-            - color: String describing the color of the import button (green if enabled, grey if disabled)
+            - color: String describing the color of the import button (green if enabled, gray if disabled)
     """
     # No dataset_name defined yet
     if not value:
