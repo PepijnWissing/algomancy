@@ -5,15 +5,17 @@ from dash import dcc
 from algomancy_gui.managergetters import get_scenario_manager
 from algomancy_gui.componentids import ACTIVE_SESSION
 
-from algomancy_scenario import ScenarioManager
+from algomancy_scenario import ScenarioManager, Scenario
+
+from .page import BaseOverviewPage
 
 OVERVIEW_TABLE = "overview-table"
 OVERVIEW_UPDATE_INTERVAL = "overview-update-interval"
 
 
-class StandardOverviewPage:
+class StandardOverviewPage(BaseOverviewPage):
     @staticmethod
-    def create_content():
+    def create_content(scenarios: list[Scenario]):
         """
         Creates the overview page layout with a table of completed scenarios and their KPIs.
 

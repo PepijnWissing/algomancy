@@ -5,11 +5,11 @@ import os
 from algomancy_content import LibraryManager as library
 from algomancy_data import InputFileConfiguration, BASE_DATA_BOUND, DataSource
 from algomancy_content.pages.page import (
-    HomePage,
-    ScenarioPage,
-    ComparePage,
-    OverviewPage,
-    DataPage,
+    BaseHomePage,
+    BaseScenarioPage,
+    BaseComparePage,
+    BaseOverviewPage,
+    BaseDataPage,
 )
 from algomancy_gui.stylingconfigurator import StylingConfigurator
 from algomancy_scenario import ALGORITHM, BASE_KPI
@@ -47,11 +47,11 @@ class AppConfiguration(CoreConfiguration):
         default_algo_params_values: Dict[str, Any] | None = None,
         autorun: bool | None = False,
         # === content functions ===
-        home_page: HomePage | str = "standard",  # gui
-        data_page: DataPage | str = "placeholder",  # gui
-        scenario_page: ScenarioPage | str = "placeholder",  # gui
-        compare_page: ComparePage | str = "placeholder",  # gui
-        overview_page: OverviewPage | str = "standard",  # gui
+        home_page: BaseHomePage | str = "standard",  # gui
+        data_page: BaseDataPage | str = "placeholder",  # gui
+        scenario_page: BaseScenarioPage | str = "placeholder",  # gui
+        compare_page: BaseComparePage | str = "placeholder",  # gui
+        overview_page: BaseOverviewPage | str = "standard",  # gui
         # === styling configuration ===
         styling_config: Any | None = StylingConfigurator.get_cqm_config(),  # gui
         use_cqm_loader: bool = False,  # gui
