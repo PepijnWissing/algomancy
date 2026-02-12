@@ -24,7 +24,7 @@ def hamming_distance(s1, s2):
     return sum(c1 != c2 for c1, c2 in zip_longest(s1, s2))
 
 
-def find_closest_match(file_names: List[str], file_configuration: Schema) -> str:
+def find_closest_match(file_names: List[str], schema: Schema) -> str:
     """
     Finds the closest match to a file configuration's reference name.
 
@@ -33,7 +33,7 @@ def find_closest_match(file_names: List[str], file_configuration: Schema) -> str
 
     Args:
         file_names (List[str]): A list of file names to evaluate.
-        file_configuration (InputFileConfiguration): Configuration object containing
+        schema (Schema): Configuration object containing
             the reference file name for comparison.
 
     Returns:
@@ -43,7 +43,7 @@ def find_closest_match(file_names: List[str], file_configuration: Schema) -> str
     return min(
         file_names,
         key=lambda x: hamming_distance(
-            x.lower(), file_configuration.file_name_with_extension.lower()
+            x.lower(), schema.file_name_with_extension.lower()
         ),
     )
 
@@ -71,9 +71,7 @@ def is_bijective_mapping(mapping: Dict[str, str]) -> bool:
     )
 
 
-def match_file_names(
-    file_configurations: List[Schema], file_names: List[str]
-) -> Dict[str, str]:
+def match_file_names(schemas: List[Schema], file_names: List[str]) -> Dict[str, str]:
     """
     Matches file configurations to file names and attempts to create a bijective mapping.
 
@@ -83,7 +81,7 @@ def match_file_names(
     An exception is raised if such a bijective mapping cannot be established.
 
     Args:
-        file_configurations: List of InputFileConfiguration objects to match.
+        schemas: List of Schema objects to match.
         file_names: List of available file names.
 
     Raises:
@@ -95,11 +93,11 @@ def match_file_names(
     Returns:
         A dictionary mapping file configuration names to file names.
     """
-    assert len(file_names) >= len(file_configurations), "Missing input files"
-    assert len(file_names) <= len(file_configurations), "Too many input files"
+    assert len(file_names) >= len(schemas), "Missing input files"
+    assert len(file_names) <= len(schemas), "Too many input files"
 
     initial_guess = {
-        fc.file_name: find_closest_match(file_names, fc) for fc in file_configurations
+        schema.file_name: find_closest_match(file_names, schema) for schema in schemas
     }
     if is_bijective_mapping(initial_guess):
         return initial_guess

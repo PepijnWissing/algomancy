@@ -131,7 +131,7 @@ class SchemaValidator(Validator):
     reported as messages, which include information about errors or successful validations.
 
     Attributes:
-        _configs (Dict[str, Schema], optional): dictionary of Schema objects
+        _schemas (Dict[str, Schema], optional): dictionary of Schema objects
         _severity (ValidationSeverity, optional): configurable severity level for validation messages
                     yielded by this validator. Defaults to ValidationSeverity.ERROR.
 
@@ -144,19 +144,19 @@ class SchemaValidator(Validator):
     ) -> None:
         super().__init__()
 
-        self._configs: Dict[str, Schema] | None = (
+        self._schemas: Dict[str, Schema] | None = (
             {cfg.file_name: cfg for cfg in schemas} if schemas else None
         )
 
         self._severity = severity
 
     def validate(self, data: Dict[str, pd.DataFrame]) -> List[ValidationMessage]:
-        if not self._configs:
+        if not self._schemas:
             self.add_message(self._severity, "No configurations provided.")
             return self.messages
 
         dtype_groups = {}
-        for cfg in self._configs.values():
+        for cfg in self._schemas.values():
             if cfg.is_single():
                 dtype_groups[cfg.file_name] = cfg.datatypes
             elif cfg.is_multi():
