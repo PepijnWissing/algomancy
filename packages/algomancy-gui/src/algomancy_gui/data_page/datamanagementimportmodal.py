@@ -195,11 +195,14 @@ def name_exists(value: str, session_id: str) -> bool:
 )
 def dataset_name_invalid(value, session_id: str):
     """
-        Input field for dataset name gets a red border, and a red error message appears below the field.
+        In case of an invalid dataset name, the input field for dataset name gets a red border, and a red error message appears below the field
+        This also disables the use of the Import button.
 
-        Checks the input and displays feedback if one of the scenarios below holds:
-        1) input contains characters that are not alphanumeric, hyphens or underscores
-        2) input is already in use for another saved dataset
+        Checks dataset_name validity via the below three scenarios:
+        1) user input is empty
+        2) user input contains characters that are not alphanumeric, hyphens or underscores
+        3) user input is already in use for another saved dataset
+        Feedback is displayed and the import button is made inactive, until none of the scenarios hold.
 
         Args:
             value: String containing user input for dataset name
@@ -207,8 +210,10 @@ def dataset_name_invalid(value, session_id: str):
 
         Returns:
             tuple: (invalid, feedback_children) where:
-            - invalid: Boolean indicating if feedback should be shown
+            - invalid: Boolean indicating whether feedback will be shown
             - feedback_children: String containing feedback message
+            - disabled: Boolean indicating whether the import button will be disabled
+            - color: String describing the color of the import button (green if enabled, grey if disabled)
     """
     # No dataset_name defined yet
     if not value:
