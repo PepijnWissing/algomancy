@@ -342,7 +342,7 @@ def process_imports(n_clicks, contents, filenames, dataset_name, invalid_dataset
         contents: Base64-encoded contents of the uploaded files
         filenames: Names of the uploaded files
         dataset_name: Name for the new dataset
-        invalid: Boolean indicating if feedback should be shown
+        invalid_dataset_name: Boolean indicating if feedback should be shown
         session_id: ID of the active session
 
     Returns:
