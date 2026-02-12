@@ -2,8 +2,10 @@ from dash import html
 
 from algomancy_scenario import Scenario
 
+from .page import BaseScenarioPage
 
-class PlaceholderScenarioPage:
+
+class PlaceholderScenarioPage(BaseScenarioPage):
     @staticmethod
     def register_callbacks():
         pass
