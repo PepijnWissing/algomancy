@@ -84,8 +84,9 @@ def data_management_import_modal(sm: ScenarioManager, themed_styling):
                             children=[
                                 dbc.Card(
                                     dbc.CardBody(
-                                        id=DM_IMPORT_MODAL_FILEVIEWER_CARD),
-                                        className="uploaded-files-card",
+                                        id=DM_IMPORT_MODAL_FILEVIEWER_CARD
+                                    ),
+                                    className="uploaded-files-card",
                                 ),
                                 dbc.Input(
                                     id=DM_IMPORT_MODAL_NAME_INPUT,
@@ -173,6 +174,62 @@ def toggle_modal_load(open_clicks, close_clicks, is_open):
         return not is_open
     return is_open
 
+def is_character_safe(value: str) -> bool:
+    return bool(re.fullmatch(r"[A-Za-z0-9_-]+", value))
+
+def name_exists(value: str, session_id: str) -> bool:
+    sm: ScenarioManager = get_scenario_manager(get_app().server, session_id)
+    dataset_names = sm.get_data_keys()
+    is_invalid = value in dataset_names
+    return is_invalid
+
+@callback(
+    [
+        Output(DM_IMPORT_MODAL_NAME_INPUT, "invalid"),
+        Output(DM_IMPORT_MODAL_FEEDBACK, "children"),
+        Output(DM_IMPORT_SUBMIT_BUTTON, "disabled"),
+        Output(DM_IMPORT_SUBMIT_BUTTON, "color"),
+    ],
+    Input(DM_IMPORT_MODAL_NAME_INPUT, "value"),
+    State(ACTIVE_SESSION, "data")
+)
+def dataset_name_invalid(value, session_id: str):
+    """
+        Input field for dataset name gets a red border, and a red error message appears below the field.
+
+        Checks the input and displays feedback if one of the scenarios below holds:
+        1) input contains characters that are not alphanumeric, hyphens or underscores
+        2) input is already in use for another saved dataset
+
+        Args:
+            value: String containing user input for dataset name
+            session_id: ID of the active session
+
+        Returns:
+            tuple: (invalid, feedback_children) where:
+            - invalid: Boolean indicating if feedback should be shown
+            - feedback_children: String containing feedback message
+    """
+    # No dataset_name defined yet
+    if not value:
+        return False, "", True, "secondary"
+
+    # Dataset_name not character safe
+    is_invalid = not is_character_safe(value)
+
+    if is_invalid:
+        feedback_msg = "This is not a valid dataset name. Please only use alphanumeric characters, hyphens and underscores."
+        return is_invalid, feedback_msg, True, "secondary"
+
+    # Dataset_name already exists
+    is_invalid = name_exists(value, session_id)
+
+    if is_invalid:
+        feedback_msg = "This is not a valid dataset name. A dataset with this name already exists."
+        return is_invalid, feedback_msg, True, "secondary"
+
+    # Valid Dataset_name
+    return False, "", False, "primary"
 
 def render_file_mapping_table(mapping):
     """
@@ -205,54 +262,6 @@ def render_file_mapping_table(mapping):
         },
     )
     return html.Div([html.Strong("File Mapping:"), table])
-
-@callback(
-    [
-        Output(DM_IMPORT_MODAL_NAME_INPUT, "invalid"),
-        Output(DM_IMPORT_MODAL_FEEDBACK, "children"),
-    ],
-    Input(DM_IMPORT_MODAL_NAME_INPUT, "value"),
-    State(ACTIVE_SESSION, "data")
-)
-def dataset_name_invalid(value, session_id: str):
-    """
-        Input field for dataset name gets a red border, and a red error message appears below the field.
-
-        Checks the input and displays feedback if one of the scenarios below holds:
-        1) input contains characters that are not alphanumeric, hyphens or underscores
-        2) input is already in use for another saved dataset
-
-        Args:
-            value: String containing user input for dataset name
-            session_id: ID of the active session
-
-        Returns:
-            tuple: (invalid, feedback_children) where:
-            - invalid: Boolean indicating if feedback should be shown
-            - feedback_children: String containing feedback message
-    """
-    # No dataset_name defined yet
-    if not value:
-        return False, ""
-
-    # Dataset_name not character safe
-    is_invalid = not bool(re.fullmatch(r"[A-Za-z0-9_-]+", value))
-
-    if is_invalid:
-        feedback_msg = "This is not a valid dataset name. Please only use alphanumeric characters, hyphens and underscores."
-        return is_invalid, feedback_msg
-
-    # Dataset_name already exists
-    sm: ScenarioManager = get_scenario_manager(get_app().server, session_id)
-    dataset_names = sm.get_data_keys()
-    is_invalid = value in dataset_names
-
-    if is_invalid:
-        feedback_msg = "This is not a valid dataset name. A dataset with this name already exists."
-        return is_invalid, feedback_msg
-
-    # Valid Dataset_name
-    return False, ""
 
 @callback(
     [
