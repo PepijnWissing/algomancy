@@ -1,4 +1,3 @@
-(tutorial-etl-ref)=
 # Data intake
 An Algomancy app expects to read data by way of an {ref}`ETL<etl-ref>` process.
 The steps of this process always follow the same pattern, but we need to configure the app such that the needs of our
@@ -15,31 +14,38 @@ We need to write the following steps
 
 
 ## Define the input files
-We start by defining the structure of the input files. This description consists of two parts, 
-the first part defines the table structure in each input file and the second part defines 
-the file (in terms of file type, file name etc.)
-1. Create a file `input_configs.py `in the directory `src/data_handling/`
-2. For each table in an input file (could be multiple in an Excel), create a `Schema` subclass in `input_configs.py`. 
-This Schema class defines the table structure:
+We start by defining the structure of the input files. 
+The [Schema](backend-schema-ref) class contains information regarding the location and extension of the corresponding source file,
+as well as the table structure of said data file. 
+```{note}
+The fields `_FILENAME`, `_EXTENSION` and `_SCHEMA_TYPE` must be provided. If not, an exception will be raised on construction. 
+```
+1. Create a file `schemas.py `in the directory `src/data_handling/`
+2. For each table in an input file (could be multiple in an Excel), create a `Schema` subclass in `schemas.py`. 
+This field `_defined_datatypes` defines the table structure, and must be implemented by the subclass:
 :::{dropdown} {octicon}`code` Code
 :color: info
 
-```python
+```{code-block} python
+:caption: `schemas.py`
+:linenos:
 from typing import Dict
 from algomancy_data import (Schema,
                             DataType,
-                            SingleInputFileConfiguration,
                             FileExtension,
-                            MultiInputFileConfiguration)
+                            SchemaType)
 
 
 class DCSchema(Schema):
+   _FILENAME = "dc"
+   _EXTENSION = FileExtension.XLSX
+   _SCHEMA_TYPE = SchemaType.SINGLE
+   
     ID = "ID"
     X = "x"
     Y = "y"
 
-    @property
-    def datatypes(self) -> Dict[str, DataType]:
+    def _defined_datatypes(self) -> Dict[str, DataType]:
         return {
             DCSchema.ID: DataType.STRING,
             DCSchema.X: DataType.INTEGER,
@@ -47,41 +53,41 @@ class DCSchema(Schema):
         }
 
 
-class CustomerSchema(Schema):
+class LocationSchema(Schema):
+   _FILENAME = "otherlocations"
+   _EXTENSION = FileExtension.XLSX
+   _SCHEMA_TYPE = SchemaType.MULTI
+   
     ID = "ID"
     X = "x"
     Y = "y"
 
-    @property
-    def datatypes(self) -> Dict[str, DataType]:
+    def _defined_datatypes(self) -> Dict[str, Dict[str, DataType]]:
         return {
-            CustomerSchema.ID: DataType.STRING,
-            CustomerSchema.X: DataType.INTEGER,
-            CustomerSchema.Y: DataType.INTEGER,
+           "customer": {
+               LocationSchema.ID: DataType.STRING,
+               LocationSchema.X: DataType.INTEGER,
+               LocationSchema.Y: DataType.INTEGER,
+            },
+           "xdock": {
+               LocationSchema.ID: DataType.STRING,
+               LocationSchema.X: DataType.INTEGER,
+               LocationSchema.Y: DataType.INTEGER,
+            },
         }
 
-
-class XDockSchema(Schema):
-    ID = "ID"
-    X = "x"
-    Y = "y"
-
-    @property
-    def datatypes(self) -> Dict[str, DataType]:
-        return {
-            XDockSchema.ID: DataType.STRING,
-            XDockSchema.X: DataType.INTEGER,
-            XDockSchema.Y: DataType.INTEGER,
-        }
 
 
 class StoresSchema(Schema):
+   _FILENAME = "stores"
+   _EXTENSION = FileExtension.CSV
+   _SCHEMA_TYPE = SchemaType.SINGLE
+   
     ID = "ID"
     X = "x"
     Y = "y"
 
-    @property
-    def datatypes(self) -> Dict[str, DataType]:
+    def _defined_datatypes(self) -> Dict[str, DataType]:
         return {
             StoresSchema.ID: DataType.STRING,
             StoresSchema.X: DataType.INTEGER,
@@ -89,34 +95,38 @@ class StoresSchema(Schema):
         }
 ```
 :::
-3. At the end of input_configs.py, we describe the input file properties (the type of file, file name etc.). 
-Add each file configuration the array of input_configs:
+
+```{important}
+A single `Schema` is associated with a single file. 
+In case a single file contains more than one data table (e.g., multiple Excel tabs), we should take care that:
+- the `_SCHEMA_TYPE` is set to `MULTI`,
+- `_defined_datatypes` returns a nested dictionary, such as on lines 34-46 of the code block above, and
+- the keys of the outer dictionary corresponds to the identifyers of the input tables (e.g., each sheet name of an xlsx)
+```
+
+3. At the end of `schemas.py`, we collect a list of schemas, for later use. 
+Make sure to collect an _instance_ of each schema by invoking the constructor. 
+
 :::{dropdown} {octicon}`code` Code
 :color: info
 
-```python
-input_configs = [
-    SingleInputFileConfiguration(
-        extension=FileExtension.XLSX,
-        file_name="dc",
-        file_schema=DCSchema(),
-    ),
-    MultiInputFileConfiguration(
-        extension=FileExtension.XLSX,
-        file_name="otherlocations",
-        file_schemas={
-            "customer": CustomerSchema(),
-            "xdock": XDockSchema(),
-        },
-    ),
-    SingleInputFileConfiguration(
-        extension=FileExtension.CSV,
-        file_name="stores",
-        file_schema=StoresSchema(),
-    ),
+```{code-block} python
+:caption: `schemas.py` (continued)
+:linenos:
+:lineno-start: 66
+schemas = [
+    DCSchema(),
+    LocationSchema(),
+    StoresSchema(),
 ]
 ```
 :::
+
+```{tip}
+Defining the column names in class variables, such as on lines 13-15 of `schemas.py` is not strictly necessary.
+Nevertheless, we recommend this way of working as makes the code more readable and maintainable, especially when your column names are long or complex. 
+Moreover, **this allows your IDE to help you** and prevents typos. 
+```
 
 ## ETL Factory
 Before we can use the input file configuration that we have just created, 
@@ -124,7 +134,7 @@ we need to create an ETLFactory that can extract the input files.
 
 Create a case specific ETLFactory in the directory src/data_handling, i.e., a subclass of ETLFactory.
 An ETLFactory is a container class with four different types of main functions
-   1. An extract function: extracts the files as configured in input_configs.py.
+   1. An extract function: extracts the files as configured in `schemas.py`
    2. A validation function: validates the extracted files against user-defined validations.
    3. A transformation function: transforms the extracted files (represented in pandas DataFrames). To 
    other pandas Dataframes that can be used for loading.
@@ -137,22 +147,22 @@ An example implementation of the TSPETLFactory is given below:
 from typing import Dict, TypeVar, cast
 
 from algomancy_data import (
-    File,
-    CSVFile,
-    XLSXFile,
-    ETLFactory,
-    ValidationSequence,
-    ExtractionSuccessVerification,
-    InputConfigurationValidator,
-    ValidationSeverity,
-    Loader,
-    DataSourceLoader,
+   File,
+   CSVFile,
+   XLSXFile,
+   ETLFactory,
+   ValidationSequence,
+   ExtractionSuccessVerification,
+   SchemaValidator,
+   ValidationSeverity,
+   Loader,
+   DataSourceLoader,
 )
 from algomancy_data.extractor import (
-    ExtractionSequence,
-    CSVSingleExtractor,
-    XLSXSingleExtractor,
-    XLSXMultiExtractor,
+   ExtractionSequence,
+   CSVSingleExtractor,
+   XLSXSingleExtractor,
+   XLSXMultiExtractor,
 )
 from algomancy_data.transformer import TransformationSequence, CleanTransformer
 
@@ -160,60 +170,60 @@ F = TypeVar("F", bound=File)
 
 
 class TSPETLFactory(ETLFactory):
-    def __init__(self, configs, logger=None):
-        super().__init__(configs, logger)
+   def __init__(self, configs, logger=None):
+      super().__init__(configs, logger)
 
-    def create_extraction_sequence(
-        self,
-        files: Dict[str, F],  # name to path format
-    ) -> ExtractionSequence:
-        """
-        Input:
-            files: A dictionary mapping file names to file paths.
+   def create_extraction_sequence(
+           self,
+           files: Dict[str, F],  # name to path format
+   ) -> ExtractionSequence:
+      """
+      Input:
+          files: A dictionary mapping file names to file paths.
 
-        Output:
-            An extraction sequence object
+      Output:
+          An extraction sequence object
 
-        raises:
-            ETLConstructionError: If any of the expected files or configurations are missing.
-        """
-        sequence = ExtractionSequence()
-        return sequence
+      raises:
+          ETLConstructionError: If any of the expected files or configurations are missing.
+      """
+      sequence = ExtractionSequence()
+      return sequence
 
-    def create_validation_sequence(self) -> ValidationSequence:
-        vs = ValidationSequence(logger=self.logger)
+   def create_validation_sequence(self) -> ValidationSequence:
+      vs = ValidationSequence(logger=self.logger)
 
-        vs.add_validator(ExtractionSuccessVerification())
+      vs.add_validator(ExtractionSuccessVerification())
 
-        vs.add_validator(
-            InputConfigurationValidator(
-                configs=self.input_configurations,
-                severity=ValidationSeverity.CRITICAL,
-            )
-        )
+      vs.add_validator(
+         SchemaValidator(
+            schemas=self.schemas,
+            severity=ValidationSeverity.CRITICAL,
+         )
+      )
 
-        return vs
+      return vs
 
-    def create_transformation_sequence(self) -> TransformationSequence:
-        sequence = TransformationSequence()
-        sequence.add_transformer(CleanTransformer(self.logger))
-        return sequence
+   def create_transformation_sequence(self) -> TransformationSequence:
+      sequence = TransformationSequence()
+      sequence.add_transformer(CleanTransformer(self.logger))
+      return sequence
 
-    def create_loader(self) -> Loader:
-        return DataSourceLoader(self.logger)
+   def create_loader(self) -> Loader:
+      return DataSourceLoader(self.logger)
 ```
 :::
 
 ## Extract
-1. Add an extractor in the function `create_extraction_sequence` for each file in `input_configs.py.` 
+1. Add an extractor in the function `create_extraction_sequence` for each file in `schemas.py.` 
 Simply fill the `sequence.add_extractor` function with the appropriate extractor and its arguments:
 :::{dropdown} {octicon}`code` Code
 :color: info
 
 ```python
 def create_extraction_sequence(
-    self,
-    files: Dict[str, F],  # name to path format
+        self,
+        files: Dict[str, F],  # name to path format
 ) -> ExtractionSequence:
     """
     Input:
@@ -230,7 +240,7 @@ def create_extraction_sequence(
     sequence.add_extractor(
         CSVSingleExtractor(
             file=cast(CSVFile, files["stores"]),
-            schema=self.get_schemas("stores"),
+            schema=self.get_schema("stores"),
             logger=self.logger,
             separator=",",
         )
@@ -238,7 +248,7 @@ def create_extraction_sequence(
     sequence.add_extractor(
         XLSXSingleExtractor(
             file=cast(XLSXFile, files["dc"]),
-            schema=self.get_schemas("dc"),
+            schema=self.get_schema("dc"),
             sheet_name=0,
             logger=self.logger,
         )
@@ -246,31 +256,31 @@ def create_extraction_sequence(
     sequence.add_extractor(
         XLSXMultiExtractor(
             file=cast(XLSXFile, files["otherlocations"]),
-            schemas=self.get_schemas("otherlocations"),
+            schemas=self.get_schema("otherlocations"),
             logger=self.logger,
         )
     )
-    
+
     return sequence
 ```
 :::
 
-2. Update main.py such that it uses the `input_configs.py` and the newly created TSPETLFactory:
-   1. Import the `input_configs.py` file:
+2. Update main.py such that it uses the `schemas.py` and the newly created TSPETLFactory:
+   1. Import the `schemas.py` file:
    ```python
-   from data_handling.input_configs import input_configs
+   from data_handling.schemas import schemas
     ```
    2. Import the TSPETLFactory class:
    ```python
    from data_handling.TSPETLFactory import TSPETLFactory
    ```
-   3. Modify the arguments of AppConfiguration to use TSPETLFactory and input_configs
+   3. Modify the arguments of AppConfiguration to use TSPETLFactory and schemas
    ```python
    app_cfg = AppConfiguration(
         etl_factory=TSPETLFactory,
         kpi_templates={'placeholder': PlaceholderKPI},
         algo_templates={'placeholder': PlaceholderAlgorithm},
-        input_configs=input_configs,
+        schemas=schemas,
         data_object_type=DataSource,
         autocreate=False, #this will be the default in next release
         autorun=False, #this will be the default in next release

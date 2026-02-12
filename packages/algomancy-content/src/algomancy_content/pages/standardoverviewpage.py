@@ -3,7 +3,6 @@ from typing import Any
 from dash import html, dash_table
 
 from algomancy_scenario import Scenario
-
 from .page import BaseOverviewPage
 
 OVERVIEW_TABLE = "overview-table"

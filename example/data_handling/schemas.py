@@ -1,22 +1,22 @@
 from typing import Dict
 
 from algomancy_data import Schema, FileExtension, DataType
-from algomancy_data import (
-    SingleInputFileConfiguration,
-    MultiInputFileConfiguration,
-)
+from algomancy_data.schema import SchemaType
 
 
 class WarehouseLayoutSchema(Schema):
     """Schema class that holds column names for warehouse layout data"""
+
+    _FILENAME = "warehouse_layout"
+    _EXTENSION = FileExtension.CSV
+    _SCHEMA_TYPE = SchemaType.SINGLE
 
     ID = "slotid"
     X = "x"
     Y = "y"
     ZONE = "zone"
 
-    @property
-    def datatypes(self) -> Dict[str, DataType]:
+    def _defined_datatypes(self) -> Dict[str, DataType]:
         return {
             WarehouseLayoutSchema.ID: DataType.STRING,
             WarehouseLayoutSchema.ZONE: DataType.STRING,
@@ -28,6 +28,10 @@ class WarehouseLayoutSchema(Schema):
 class ItemDataSchema(Schema):
     """Schema class that holds column names for item data"""
 
+    _FILENAME = "sku_data"
+    _EXTENSION = FileExtension.CSV
+    _SCHEMA_TYPE = SchemaType.SINGLE
+
     ID = "itemid"
     SKU = "sku"
     DESCRIPTION = "description"
@@ -38,8 +42,7 @@ class ItemDataSchema(Schema):
     CURRENT_SLOT = "currentslot"
     OPTIMAL_SLOT = "optimalslot"
 
-    @property
-    def datatypes(self) -> Dict[str, DataType]:
+    def _defined_datatypes(self) -> Dict[str, DataType]:
         return {
             ItemDataSchema.ID: DataType.STRING,
             ItemDataSchema.SKU: DataType.STRING,
@@ -56,6 +59,10 @@ class ItemDataSchema(Schema):
 class EmployeeDataSchema(Schema):
     """Schema class that holds column names for employee data"""
 
+    _FILENAME = "employees"
+    _EXTENSION = FileExtension.JSON
+    _SCHEMA_TYPE = SchemaType.SINGLE
+
     ID = "id"
     name = "name"
     email = "email"
@@ -68,8 +75,7 @@ class EmployeeDataSchema(Schema):
     position = "attributes.position"
     skills = "attributes.skills"
 
-    @property
-    def datatypes(self) -> Dict[str, DataType]:
+    def _defined_datatypes(self) -> Dict[str, DataType]:
         return {
             EmployeeDataSchema.ID: DataType.STRING,
             EmployeeDataSchema.name: DataType.STRING,
@@ -87,6 +93,10 @@ class EmployeeDataSchema(Schema):
 
 class InventorySchema(Schema):
     """Schema class that holds column names for inventory data from inventory.xlsx"""
+
+    _FILENAME = "inventory"
+    _EXTENSION = FileExtension.XLSX
+    _SCHEMA_TYPE = SchemaType.SINGLE
 
     BRANCH = "Branch"
     LOCATION_TYPE = "Location \nType P/S"
@@ -109,8 +119,7 @@ class InventorySchema(Schema):
     SAFETY_STOCK = "Safety\nStock"
     VALUE_BASED_ON_SAFETY_STOCK = "Value \nBased on \nSafety Stock"
 
-    @property
-    def datatypes(self) -> Dict[str, DataType]:
+    def _defined_datatypes(self) -> Dict[str, DataType]:
         return {
             InventorySchema.BRANCH: DataType.STRING,
             InventorySchema.LOCATION_TYPE: DataType.STRING,
@@ -135,57 +144,36 @@ class InventorySchema(Schema):
         }
 
 
-class StedenSchema(Schema):
+class LocationSchema(Schema):
+    _FILENAME = "multisheet"
+    _EXTENSION = FileExtension.XLSX
+    _SCHEMA_TYPE = SchemaType.MULTI
+
+    # steden
     COUNTRY = "Country"
     CITY = "City"
 
-    @property
-    def datatypes(self) -> Dict[str, DataType]:
-        return {
-            StedenSchema.COUNTRY: DataType.STRING,
-            StedenSchema.CITY: DataType.STRING,
-        }
-
-
-class KlantenSchema(Schema):
+    # klanten
     ID = "ID"
     Name = "Naam"
 
-    @property
-    def datatypes(self) -> Dict[str, DataType]:
+    def _defined_datatypes(self) -> Dict[str, Dict[str, DataType]]:
         return {
-            KlantenSchema.ID: DataType.INTEGER,
-            KlantenSchema.Name: DataType.STRING,
+            "Steden": {
+                LocationSchema.COUNTRY: DataType.STRING,
+                LocationSchema.CITY: DataType.STRING,
+            },
+            "Klanten": {
+                LocationSchema.ID: DataType.INTEGER,
+                LocationSchema.Name: DataType.STRING,
+            },
         }
 
 
-example_input_configs = [
-    SingleInputFileConfiguration(
-        extension=FileExtension.CSV,
-        file_name="warehouse_layout",
-        file_schema=WarehouseLayoutSchema(),
-    ),
-    SingleInputFileConfiguration(
-        extension=FileExtension.CSV,
-        file_name="sku_data",
-        file_schema=ItemDataSchema(),
-    ),
-    SingleInputFileConfiguration(
-        extension=FileExtension.XLSX,
-        file_name="inventory",
-        file_schema=InventorySchema(),
-    ),
-    SingleInputFileConfiguration(
-        extension=FileExtension.JSON,
-        file_name="employees",
-        file_schema=EmployeeDataSchema(),
-    ),
-    MultiInputFileConfiguration(
-        extension=FileExtension.XLSX,
-        file_name="multisheet",
-        file_schemas={
-            "Steden": StedenSchema(),
-            "Klanten": KlantenSchema(),
-        },
-    ),
+example_schemas = [
+    WarehouseLayoutSchema(),
+    ItemDataSchema(),
+    InventorySchema(),
+    EmployeeDataSchema(),
+    LocationSchema(),
 ]

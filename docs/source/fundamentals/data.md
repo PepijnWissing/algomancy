@@ -205,6 +205,9 @@ We will now discuss the following five components of the ETL process in more det
 5. `Loader`
 
 ## InputFileConfiguration
+```{error}
+This is outdated as of v0.4.0; the responsibilities of `InputFileConfiguration` have been moved to `Schema`.
+```
 
 The `InputFileConfiguration` class is used to configure the extractors. It is a simple data structure that contains the following attributes:
 - `extension`: The file type of the associated raw data. For example, CSV, JSON, or XLSX.
@@ -212,6 +215,7 @@ The `InputFileConfiguration` class is used to configure the extractors. It is a 
 - `file_schema`: The expected data type configuration of the file.
 
 Consider the following code fragment:
+
 
 ```python
 

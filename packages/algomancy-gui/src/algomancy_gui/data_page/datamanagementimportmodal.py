@@ -311,7 +311,7 @@ def show_uploaded_filename(filename, session_id: str):
     from .filenamematcher import match_file_names
 
     try:
-        mapping = match_file_names(sm.input_configurations, filenames)
+        mapping = match_file_names(sm.schemas, filenames)
     except Exception as e:
         sm.logger.error(f"Problem with loading: {str(e)}")
         sm.logger.log_traceback(e)
@@ -404,7 +404,7 @@ def prepare_files_from_upload(sm, filenames, contents):
         Dictionary of file objects ready for processing
     """
     # Match uploaded filenames to expected file configurations
-    mapping = match_file_names(sm.input_configurations, filenames)
+    mapping = match_file_names(sm.schemas, filenames)
     reverse_mapping = {value: key for key, value in mapping.items()}
 
     # Extract file extensions and create content dictionary

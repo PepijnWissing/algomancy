@@ -1,7 +1,6 @@
 from .backend import (
     PlaceholderSchema,
     PlaceholderETLFactory,
-    placeholder_input_config,
     PlaceholderKPI,
     PlaceholderAlgorithm,
     PlaceholderParams,
@@ -38,7 +37,6 @@ __all__ = [
     "StandardOverviewPage",
     "PlaceholderETLFactory",
     "PlaceholderSchema",
-    "placeholder_input_config",
     "PlaceholderKPI",
     "PlaceholderAlgorithm",
     "PlaceholderParams",

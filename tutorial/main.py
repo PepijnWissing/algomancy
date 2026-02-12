@@ -16,10 +16,10 @@ from algomancy_gui.stylingconfigurator import (
     CardHighlightMode,
 )
 
-from data_handling.TSPETLFactory import TSPETLFactory
-from data_handling.input_configs import input_configs
-from templates.algorithm import algorithm_templates
-from templates.kpi import kpi_templates
+from src.data_handling.TSPETLFactory import TSPETLFactory  # noqa
+from src.data_handling.schemas import schemas
+from src.templates.algorithm import algorithm_templates
+from src.templates.kpi import kpi_templates
 
 
 def configure_styling() -> StylingConfigurator:
@@ -66,7 +66,7 @@ def main() -> None:
         etl_factory=TSPETLFactory,
         kpi_templates=kpi_templates,
         algo_templates=algorithm_templates,
-        input_configs=input_configs,
+        schemas=schemas,
         data_object_type=DataSource,
         host=host,
         port=port,

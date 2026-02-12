@@ -58,7 +58,7 @@ def _load_config_from_callback(spec: str) -> CliConfiguration:
 
 def _build_example_config() -> CliConfiguration:
     # These imports rely on this repo's example package being available in the workspace
-    from example.data_handling.input_configs import example_input_configs
+    from example.data_handling.schemas import example_schemas
     from example.data_handling.factories import ExampleETLFactory
     from example.templates import kpi_templates, algorithm_templates
 
@@ -70,7 +70,7 @@ def _build_example_config() -> CliConfiguration:
         etl_factory=ExampleETLFactory,
         kpi_templates=kpi_templates,
         algo_templates=algorithm_templates,
-        input_configs=example_input_configs,
+        schemas=example_schemas,
         data_object_type=DataSource,
         autocreate=True,
         default_algo="Slow",
