@@ -54,6 +54,7 @@ DM_IMPORT_MODAL_CLOSE_BTN = "dm-load-modal-close-btn"
 DM_IMPORT_MODAL_FILEVIEWER_COLLAPSE = "dm-load-modal-fileviewer-collapse"
 DM_IMPORT_MODAL_FILEVIEWER_CARD = "dm-load-modal-fileviewer-card"
 DM_IMPORT_MODAL_NAME_INPUT = "dm-load-modal-name-input"
+DM_IMPORT_MODAL_FEEDBACK = "dm-load-modal-feedback"
 DM_IMPORT_MODAL_FILEVIEWER_ALERT = "dm-load-modal-fileviewer-alert"
 
 DM_UPLOAD_OPEN_BUTTON = "dm-upload-open-btn"

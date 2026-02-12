@@ -22,6 +22,7 @@ from ..componentids import (
     DM_IMPORT_MODAL_FILEVIEWER_COLLAPSE,
     DM_IMPORT_MODAL_FILEVIEWER_CARD,
     DM_IMPORT_MODAL_NAME_INPUT,
+    DM_IMPORT_MODAL_FEEDBACK,
     DM_IMPORT_MODAL_FILEVIEWER_ALERT,
     DM_IMPORT_OPEN_BUTTON,
     DM_LIST_UPDATER_STORE,
@@ -37,14 +38,13 @@ This module provides a modal dialog that allows users to upload CSV files,
 view file mapping information, and create new datasets from the uploaded files.
 """
 
-
 def data_management_import_modal(sm: ScenarioManager, themed_styling):
     """
     Creates a modal dialog component for loading data files.
 
     The modal contains a file upload area, a collapsible section for displaying
-    file mapping information, an input field for naming the new dataset, and #vdH
-    an alert area for displaying messages. #vdH
+    file mapping information, an input field for naming the new dataset, and
+    an alert area for displaying messages.
 
     Returns:
         dbc.Modal: A Dash Bootstrap Components modal dialog
@@ -87,15 +87,15 @@ def data_management_import_modal(sm: ScenarioManager, themed_styling):
                                         id=DM_IMPORT_MODAL_FILEVIEWER_CARD),
                                         className="uploaded-files-card",
                                 ),
-                                dbc.Input( #vdH
+                                dbc.Input(
                                     id=DM_IMPORT_MODAL_NAME_INPUT,
                                     placeholder="Name of new dataset",
-                                    #invalid=False,
                                     class_name="mt-2",
                                 ),
                                 dbc.FormFeedback(
-                            "This is not a valid dataset name. Please only use alphanumeric characters, hyphens and underscores.",
-                                    type="invalid"
+                                    id=DM_IMPORT_MODAL_FEEDBACK,
+                                    type="invalid",
+                                    class_name="mt-2",
                                 ),
                             ],
                             id=DM_IMPORT_MODAL_FILEVIEWER_COLLAPSE,
@@ -109,7 +109,7 @@ def data_management_import_modal(sm: ScenarioManager, themed_styling):
                             dismissable=True,
                             duration=4000,
                             class_name="mt-2",
-                        ), #vdH
+                        ),
                         dcc.Store(id="dm-import-modal-dummy-store", data=""),
                     ],
                     overlay_style={
@@ -208,32 +208,52 @@ def render_file_mapping_table(mapping):
     return html.Div([html.Strong("File Mapping:"), table])
 
 @callback(
-    Output(DM_IMPORT_MODAL_NAME_INPUT, "invalid"),
-    Input(DM_IMPORT_MODAL_NAME_INPUT, "value")
+    [
+        Output(DM_IMPORT_MODAL_NAME_INPUT, "invalid"),
+        Output(DM_IMPORT_MODAL_FEEDBACK, "children"),
+    ],
+    Input(DM_IMPORT_MODAL_NAME_INPUT, "value"),
+    State(ACTIVE_SESSION, "data")
 )
-def dataset_name_invalid(value):
+def dataset_name_invalid(value, session_id: str):
     """
-        Input field for dataset name gets a red border, and a red message appears below the field:
-        "This is not a valid dataset name. Please only use alphanumeric characters, hyphens and underscores."
+        Input field for dataset name gets a red border, and a red error message appears below the field.
 
-        Checks the input and displays the feedback if one of the scenarios below holds:
+        Checks the input and displays feedback if one of the scenarios below holds:
         1) input contains characters that are not alphanumeric, hyphens or underscores
         2) input is already in use for another saved dataset
 
         Args:
             value: String containing user input for dataset name
+            session_id: ID of the active session
 
         Returns:
-            is_invalid: Boolean indicating if feedback should be shown
+            tuple: (invalid, feedback_children) where:
+            - invalid: Boolean indicating if feedback should be shown
+            - feedback_children: String containing feedback message
     """
+    # No dataset_name defined yet
     if not value:
-        return False
+        return False, ""
 
-    #dictionary of strings, containing dataset names
+    # Dataset_name not character safe
+    is_invalid = not bool(re.fullmatch(r"[A-Za-z0-9_-]+", value))
 
-    is_invalid = value in DataManager._data or not bool(re.fullmatch(r"[A-Za-z0-9_-]+", value))
+    if is_invalid:
+        feedback_msg = "This is not a valid dataset name. Please only use alphanumeric characters, hyphens and underscores."
+        return is_invalid, feedback_msg
 
-    return is_invalid
+    # Dataset_name already exists
+    sm: ScenarioManager = get_scenario_manager(get_app().server, session_id)
+    dataset_names = sm.get_data_keys()
+    is_invalid = value in dataset_names
+
+    if is_invalid:
+        feedback_msg = "This is not a valid dataset name. A dataset with this name already exists."
+        return is_invalid, feedback_msg
+
+    # Valid Dataset_name
+    return False, ""
 
 @callback(
     [
@@ -316,13 +336,14 @@ def show_uploaded_filename(filename, session_id: str):
 )
 def process_imports(n_clicks, contents, filenames, dataset_name, invalid_dataset_name, session_id: str):
     """
-    Processes uploaded files when the import submit button is clicked.
+    Processes uploaded files when the import submit button is clicked, except when dataset_name is invalid.
 
     Args:
         n_clicks: Number of times the submit button has been clicked
         contents: Base64-encoded contents of the uploaded files
         filenames: Names of the uploaded files
         dataset_name: Name for the new dataset
+        invalid: Boolean indicating if feedback should be shown
         session_id: ID of the active session
 
     Returns:
