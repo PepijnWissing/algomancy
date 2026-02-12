@@ -1,7 +1,7 @@
 # Change log
 
 ## 0.4.0
-_Released on _11-02-2026_
+_Released on _12-02-2026_
 ### Changed
 - **[Breaking]** Removed `InputFileConfigs`, moved responsibility to `Schema` class
 - Updated documentation
@@ -10,7 +10,7 @@ _Released on _11-02-2026_
 ### Migration from InputFileConfiguration to Schema-only pattern
 Prior to this release, file configurations were specified separately using `SingleInputFileConfiguration` and `MultiInputFileConfiguration`.
 These have been removed, and the `Schema` class now contains all necessary file metadata.
-:::{dropdown} {octicon}`flowchart` Migration example
+:::{dropdown} {octicon}`move-to-end` Migration example
 :color: secondary
 #### For single-file schemas (CSV, JSON, XLSX with one sheet):
 
