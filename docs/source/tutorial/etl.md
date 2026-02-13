@@ -132,7 +132,11 @@ Moreover, **this allows your IDE to help you** and prevents typos.
 Before we can use the input file configuration that we have just created, 
 we need to create an ETLFactory that can extract the input files.
 
-Create a case specific ETLFactory in the directory src/data_handling, i.e., a subclass of ETLFactory.
+We are going to create a case specific ETLFactory in the directory src/data_handling, i.e., a subclass of ETLFactory.
+To do so,
+- create a file `TSPETLFactory.py` in the directory `src/data_handling`
+- Create a class called TSPETLFactory that inherits from ETLFactory
+
 An ETLFactory is a container class with four different types of main functions
    1. An extract function: extracts the files as configured in `schemas.py`
    2. A validation function: validates the extracted files against user-defined validations.
@@ -215,7 +219,7 @@ class TSPETLFactory(ETLFactory):
 :::
 
 ## Extract
-1. Add an extractor in the function `create_extraction_sequence` for each file in `schemas.py.` 
+1. Modify the function `create_extraction_sequence` such that we create an extractor for each file in `schemas.py.` 
 Simply fill the `sequence.add_extractor` function with the appropriate extractor and its arguments:
 :::{dropdown} {octicon}`code` Code
 :color: info
@@ -290,10 +294,11 @@ def create_extraction_sequence(
     )
    ```
 3. Run main.py in IDE
-4. Open dashboard in browser 127.0.0.1
+4. Open dashboard in a browser via https://127.0.0.1:8050
 5. Go to Data page and click Import
 6. Import all necessary input files from the data dir
-7. Verify that all the information is read.
+7. Give a name to the dataset [myname]
+8. After extraction, select the dataset from the dropdown menu and verify that all the information is read.
 
 ## Transform
 We transform all input data into a single pandas dataframe that describes the locations.
@@ -550,7 +555,7 @@ class TransformLocationToRoutes(Transformer):
         data[self._routes_df_name] = routes
 ```
 :::
-8. Call the transformers in the ETL Factory (TSPETLFactory.py):
+8. Call the transformers in the ETL Factory (TSPETLFactory.py) by modifying the `create_transformation_sequence` function as below:
 :::{dropdown} {octicon}`code` Code
 :color: info
 
@@ -572,12 +577,27 @@ class TransformLocationToRoutes(Transformer):
         return sequence
 ```
 :::
-9. Run main.py in IDE
-10. Open dashboard in browser 127.0.0.1
-11. Go to Data page and click Import
-12. Import all necessary input files from the data dir
-13. Verify that all the information is read and that the data is transformed by inspecting transform_locations
+9. Import the corresponding transformer files in the TSPETLFactory.py file
+:::{dropdown} {octicon}`code` Code
+:color: info
 
+```python
+from data_handling.transformers.transform_create_locations import TransformCreateLocations
+from data_handling.transformers.transform_customer_to_location import TransformCustomerToLocation
+from data_handling.transformers.transform_dc_to_location import TransformDCToLocation
+from data_handling.transformers.transform_location_to_routes import TransformLocationToRoutes
+from data_handling.transformers.transform_stores_to_location import TransformStoresToLocation
+from data_handling.transformers.transform_xdock_to_location import TransformXDockToLocation
+```
+:::
+10. Run main.py in IDE
+11. Open dashboard in browser https://127.0.0.1:8050
+12. Go to Data page and click Import
+13. Import all necessary input files from the data dir
+14. Give a name to the dataset [myname]
+15. Verify that all the information is read and that the data is transformed by inspecting transform_locations 
+(click on this table on the data page)
+ 
 ## Load
 Create a directory data_model under src/data_handling/ such that you get:
 ```text
