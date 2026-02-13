@@ -19,10 +19,11 @@ The outline section of this tutorial is incomplete. A basic description of the t
 
 ## Setting up
 ### Set up basic project
-Follow the instructions in {ref}`quickstart-ref` to get set up with a basic project layout.
+Follow the instructions in {ref}`quickstart-ref` to get set up with a basic project layout. 
+Make sure to include all optional parts from the {ref}`quickstart-ref` as well
 
 ### Data
-The tutorial data, as well as the final code, are available at [this link](https://github.com/PepijnWissing/Algomancy). 
+The tutorial data, as well as the final code, are available at [this link](https://github.com/PepijnWissing/algomancy/tree/main/tutorial). 
 Download the data files from the project and place them in your `data/` directory. It should look like:
 ```text
 root/
