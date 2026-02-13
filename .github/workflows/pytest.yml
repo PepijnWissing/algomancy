@@ -2,9 +2,9 @@ name: pytest
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [ development ]
   push:
-    branches: [ main ]
+    branches: [  ]
 
 env:
   PYTHON_VERSION: "3.14"
