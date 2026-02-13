@@ -18,6 +18,7 @@ from ..componentids import (
     SCENARIO_PROCESS_BUTTON,
     SCENARIO_CREATOR_MODAL,
     SCENARIO_TAG_INPUT,
+    SCENARIO_TAG_FEEDBACK,
     SCENARIO_DATA_INPUT,
     SCENARIO_ALGO_INPUT,
     ALGO_PARAMS_WINDOW_ID,
@@ -49,6 +50,7 @@ from .new_scenario_parameters_window import (
 from .scenario_cards import scenario_cards
 from ..contentregistry import ContentRegistry
 from algomancy_gui.managergetters import get_scenario_manager, get_manager
+from algomancy_gui.inputchecker import InputChecker
 
 from ..layouthelpers import create_wrapped_content_div
 from .delete_confirmation import (
@@ -362,6 +364,7 @@ def open_algo_params_window(algo_name, session_id):
             return False, ""
     return False, ""
 
+InputChecker.register_name_callback(SCENARIO_TAG_INPUT, SCENARIO_TAG_FEEDBACK, SCENARIO_NEW_BUTTON, ACTIVE_SESSION)
 
 # --- Scenario Creation Callback ---
 @callback(

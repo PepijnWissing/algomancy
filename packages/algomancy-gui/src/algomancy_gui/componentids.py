@@ -99,6 +99,7 @@ SCENARIO_STATUS_BADGE = "scenario-status-badge"
 
 SCENARIO_CARD = "scenario-card"
 SCENARIO_TAG_INPUT = "scenario-tag-input"
+SCENARIO_TAG_FEEDBACK = "create-scenario-feedback"
 SCENARIO_DATA_INPUT = "scenario-data-input"
 SCENARIO_ALGO_INPUT = "scenario-algo-input"
 SCENARIO_PARAMS_INPUT = "scenario-params-input"

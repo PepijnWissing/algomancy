@@ -3,6 +3,7 @@ import dash_bootstrap_components as dbc
 
 from algomancy_gui.componentids import (
     SCENARIO_TAG_INPUT,
+    SCENARIO_TAG_FEEDBACK,
     SCENARIO_DATA_INPUT,
     SCENARIO_ALGO_INPUT,
     SCENARIO_NEW_BUTTON,
@@ -30,9 +31,14 @@ def new_scenario_creator(session_id: str):
                     dbc.Row(
                         [
                             dbc.Col(
-                                dbc.Input(
-                                    id=SCENARIO_TAG_INPUT, placeholder="Scenario tag"
-                                ),
+                                [
+                                    dbc.Input(
+                                        id=SCENARIO_TAG_INPUT, placeholder="Scenario tag"
+                                    ),
+                                    dbc.FormFeedback(
+                                        id=SCENARIO_TAG_FEEDBACK, type="invalid"
+                                    ),
+                                ],
                                 width=12,
                             ),
                         ],
