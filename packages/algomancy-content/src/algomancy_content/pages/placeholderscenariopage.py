@@ -2,7 +2,7 @@ from dash import html
 
 from algomancy_scenario import Scenario
 
-from .page import BaseScenarioPage
+from algomancy_gui.page import BaseScenarioPage
 
 
 class PlaceholderScenarioPage(BaseScenarioPage):

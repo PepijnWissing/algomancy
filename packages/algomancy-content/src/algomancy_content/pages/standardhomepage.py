@@ -2,7 +2,7 @@ from dash import html, get_app
 import dash
 import dash_bootstrap_components as dbc
 
-from .page import BaseHomePage
+from algomancy_gui.page import BaseHomePage
 from algomancy_scenario import ScenarioStatus
 from algomancy_gui.managergetters import get_scenario_manager
 

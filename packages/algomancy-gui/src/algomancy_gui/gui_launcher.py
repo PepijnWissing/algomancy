@@ -13,7 +13,7 @@ from .settingsmanager import SettingsManager
 from .sessionmanager import SessionManager
 from .componentids import ACTIVE_SESSION
 from .appconfiguration import AppConfiguration
-from algomancy_content.librarymanager import LibraryManager as lm
+from .librarymanager import LibraryManager as lm
 from algomancy_scenario import ScenarioManager
 from algomancy_utils.logger import MessageStatus
 

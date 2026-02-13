@@ -4,7 +4,7 @@ import os
 
 from algomancy_content import LibraryManager as library
 from algomancy_data import Schema, BASE_DATA_BOUND, DataSource
-from algomancy_content.pages.page import (
+from algomancy_gui.page import (
     BaseHomePage,
     BaseScenarioPage,
     BaseComparePage,
