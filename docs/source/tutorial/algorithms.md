@@ -95,7 +95,7 @@ algorithm_templates = {
 ```
 The dict key is the algorithm name, and the value is the algorithm class.
 
-4. Add the algorithm template(s) to the ETL Factory (TSPETLFactory.py).
+4. Add the algorithm template(s) to the main file (main.py).
 ```python
 # framework configuration via AppConfiguration
     app_cfg = AppConfiguration(
@@ -114,6 +114,8 @@ The dict key is the algorithm name, and the value is the algorithm class.
 5. Start the application.
 6. Load the data
 7. Create a new scenario and run the NearestNeighbor algorithm.
+8. Click create and select the newly created scenario
+9. Click process
 8. Verify that no errors occur
 
 
