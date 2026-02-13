@@ -4,7 +4,7 @@
 
 [//]: # (## AppConfiguration)
 ```{eval-rst}
-.. automodule:: algomancy_gui.appconfiguration
+.. automodule:: algomancy_gui.configuration.appconfiguration
    :members:
    :undoc-members:
    :show-inheritance:

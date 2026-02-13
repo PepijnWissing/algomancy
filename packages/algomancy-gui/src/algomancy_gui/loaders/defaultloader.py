@@ -13,9 +13,9 @@ def default_loader(text: str = "Loading... ", scale: float | None = None) -> htm
     Returns:
         html.Div: A div containing the animated loader
     """
-    assert (
-        not scale or 0.5 <= scale <= 5
-    ), f"Invalid scale for loader: {scale}. (min: 0.5, max: 5)"
+    assert not scale or 0.5 <= scale <= 5, (
+        f"Invalid scale for loader: {scale}. (min: 0.5, max: 5)"
+    )
 
     default_font_size = 1.5
     default_spinner_w = 1.5

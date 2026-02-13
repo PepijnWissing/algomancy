@@ -1,6 +1,6 @@
-from algomancy_gui.managergetters import get_manager
-from algomancy_gui.sessionmanager import SessionManager
-from algomancy_gui.settingsmanager import SettingsManager
+from algomancy_gui.managers.managergetters import get_manager
+from algomancy_gui.managers.sessionmanager import SessionManager
+from algomancy_gui.managers.settingsmanager import SettingsManager
 import dash_bootstrap_components as dbc
 from dash import html, get_app, dcc
 from typing import Dict

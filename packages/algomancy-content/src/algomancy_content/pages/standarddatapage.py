@@ -2,7 +2,7 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 from dash import html, dash_table
 
-from .page import BaseDataPage
+from algomancy_gui.page import BaseDataPage
 
 
 class StandardDataPage(BaseDataPage):

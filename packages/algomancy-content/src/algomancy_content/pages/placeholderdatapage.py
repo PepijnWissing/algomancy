@@ -1,6 +1,6 @@
 from dash import html
 
-from .page import BaseDataPage
+from algomancy_gui.page import BaseDataPage
 from algomancy_data import DataSource
 
 

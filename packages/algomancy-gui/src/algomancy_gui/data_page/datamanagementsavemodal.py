@@ -14,7 +14,7 @@ from ..componentids import (
     DATA_MAN_ERROR_ALERT,
     ACTIVE_SESSION,
 )
-from algomancy_gui.managergetters import get_scenario_manager
+from algomancy_gui.managers.managergetters import get_scenario_manager
 
 """
 Modal component for saving derived datasets as master data.

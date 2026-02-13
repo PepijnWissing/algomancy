@@ -4,14 +4,14 @@ import os
 
 from algomancy_content import LibraryManager as library
 from algomancy_data import Schema, BASE_DATA_BOUND, DataSource
-from algomancy_content.pages.page import (
+from algomancy_gui.page import (
     BaseHomePage,
     BaseScenarioPage,
     BaseComparePage,
     BaseOverviewPage,
     BaseDataPage,
 )
-from algomancy_gui.stylingconfigurator import StylingConfigurator
+from algomancy_gui.configuration.stylingconfigurator import StylingConfigurator
 from algomancy_scenario import ALGORITHM, BASE_KPI
 from algomancy_scenario.core_configuration import CoreConfiguration
 

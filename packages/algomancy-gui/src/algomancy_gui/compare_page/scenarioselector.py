@@ -10,7 +10,7 @@ from dash import html, dcc, get_app
 
 from algomancy_scenario import ScenarioManager
 
-from ..layouthelpers import create_wrapped_content_div
+from algomancy_gui.loaders.contentwrapper import create_wrapped_content_div
 from ..componentids import (
     LEFT_SCENARIO_DROPDOWN,
     RIGHT_SCENARIO_DROPDOWN,
@@ -19,7 +19,7 @@ from ..componentids import (
     PERF_SBS_LEFT_COLLAPSE,
     PERF_SBS_RIGHT_COLLAPSE,
 )
-from ..settingsmanager import SettingsManager
+from algomancy_gui.managers.settingsmanager import SettingsManager
 
 
 # === Helper ===

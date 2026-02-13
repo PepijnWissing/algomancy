@@ -42,36 +42,36 @@ root/
 
 ```python
 from algomancy_gui.gui_launcher import GuiLauncher
-from algomancy_gui.appconfiguration import AppConfiguration
+from algomancy_gui.configuration.appconfiguration import AppConfiguration
 from algomancy_content import (
-    PlaceholderETLFactory,
-    PlaceholderAlgorithm,
-    PlaceholderKPI,
-    PlaceholderSchema,
+  PlaceholderETLFactory,
+  PlaceholderAlgorithm,
+  PlaceholderKPI,
+  PlaceholderSchema,
 )
 from algomancy_data import DataSource
 
 
 def main() -> None:
-    host = "127.0.0.1"
-    port = 8050
+  host = "127.0.0.1"
+  port = 8050
 
-    app_cfg = AppConfiguration(
-        etl_factory     = PlaceholderETLFactory,
-        kpi_templates   = {"placeholder": PlaceholderKPI},
-        algo_templates  = {"placeholder": PlaceholderAlgorithm},
-        schemas         = [PlaceholderSchema()],
-        host            = host,
-        port            = port,
-        title           = "My Algomancy Dashboard",
-    )
+  app_cfg = AppConfiguration(
+    etl_factory=PlaceholderETLFactory,
+    kpi_templates={"placeholder": PlaceholderKPI},
+    algo_templates={"placeholder": PlaceholderAlgorithm},
+    schemas=[PlaceholderSchema()],
+    host=host,
+    port=port,
+    title="My Algomancy Dashboard",
+  )
 
-    app = GuiLauncher.build(app_cfg)
-    GuiLauncher.run(app=app, host=app_cfg.host, port=app_cfg.port)
+  app = GuiLauncher.build(app_cfg)
+  GuiLauncher.run(app=app, host=app_cfg.host, port=app_cfg.port)
 
 
 if __name__ == "__main__":
-    main()
+  main()
 ```
 
 ## Run

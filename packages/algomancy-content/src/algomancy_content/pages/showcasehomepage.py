@@ -4,7 +4,7 @@ from dash import html, dcc
 import dash_bootstrap_components as dbc
 import dash_daq as daq
 
-from .page import BaseHomePage
+from algomancy_gui.page import BaseHomePage
 
 
 class ShowcaseHomePage(BaseHomePage):
