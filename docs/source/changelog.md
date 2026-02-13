@@ -1,4 +1,15 @@
 # Change log
+## Prerelease
+Mostly internal classes were moved to semantically more appropriate locations. 
+
+### Added
+
+### Changed
+- **[Breaking]** Moved `BasePage` and subclasses to `algomancy_gui`; imports have to be updated appropriately
+- Moved `LibraryManager` to `algomancy-gui` from `algomancy-content`
+
+### Fixed
+
 
 ## 0.4.0
 _Released on _12-02-2026_
