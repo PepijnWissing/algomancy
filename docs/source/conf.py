@@ -40,11 +40,17 @@ myst_enable_extensions = [
 
 myst_heading_anchors = 3
 
-autodoc_default_options = {
-    "members": True,
-    "undoc-members": False,
-    "show-inheritance": True,
-}
+# autodoc_default_options = {
+#     "members": True,
+#     "undoc-members": False,
+#     "show-inheritance": True,
+# }
+autodoc_class_signature = "mixed"
+autodoc_typehints = "description"
+autodoc_member_order = "bysource"
+autodoc_typehints_description_target = "documented"
+
+toc_object_entries_show_parents = "hide"
 
 templates_path = ["_templates"]
 exclude_patterns = []
@@ -55,10 +61,6 @@ napoleon_numpy_docstring = False
 napoleon_use_param = True
 napoleon_use_rtype = True
 napoleon_preprocess_types = True
-
-autodoc_class_signature = "mixed"
-autodoc_typehints = "description"
-autodoc_member_order = "bysource"
 
 
 # -- Options for HTML output -------------------------------------------------

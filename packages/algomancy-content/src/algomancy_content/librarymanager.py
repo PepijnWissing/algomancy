@@ -1,11 +1,11 @@
 from typing import Tuple, Dict
 
 from algomancy_content.pages.page import (
-    HomePage,
-    DataPage,
-    ScenarioPage,
-    ComparePage,
-    OverviewPage,
+    BaseHomePage,
+    BaseDataPage,
+    BaseScenarioPage,
+    BaseComparePage,
+    BaseOverviewPage,
 )
 
 from algomancy_content.pages.standarddatapage import StandardDataPage
@@ -24,7 +24,9 @@ class LibraryManager:
     @staticmethod
     def get_pages(
         cfg: Dict,
-    ) -> Tuple[HomePage, DataPage, ScenarioPage, ComparePage, OverviewPage]:
+    ) -> Tuple[
+        BaseHomePage, BaseDataPage, BaseScenarioPage, BaseComparePage, BaseOverviewPage
+    ]:
         home_choices = {
             "standard": StandardHomePage,
             "showcase": ShowcaseHomePage,

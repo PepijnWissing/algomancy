@@ -1,4 +1,20 @@
 (configuration-ref)=
 # Configuration
 
-todo 
+
+[//]: # (## AppConfiguration)
+```{eval-rst}
+.. automodule:: algomancy_gui.appconfiguration
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :member-order: bysource
+```
+
+```{eval-rst}
+.. automodule:: algomancy_scenario.core_configuration
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :member-order: bysource
+```

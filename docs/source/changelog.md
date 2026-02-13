@@ -1,20 +1,31 @@
 # Change log
 
-## Prerelease by vdH
-- fixed risk of App breaking down when user tries to import or derive a new dataset with 1) weird names (e.g. with .) or 2) an already existing dataset name.
-- added charactersafe & existing dataset name checks, resulting in a disabled import/derive button
-- added InputChecker Class
+## 0.3.21
+_12-02-2026_
+### Added 
+- Added charactersafe & existing dataset name checks, resulting in a disabled import button
+
+### Changed
+- Custom pages should now subclass the appropriate base classes (moved from `Protocol` to `AbstractBaseClass`). Functional implementation should remain unchanged.
+
+### Fixed
+- Fixed a bug where the overview page failed to use the `OverviewPage` content from the registry appropriately.
+- Fixed risk of App breaking down when user tries to import a new dataset with weird names (e.g. with .) or an already existing dataset name.
 
 ## 0.3.20
+### Fixed
 - `StandardDataPage` now work again when sessions are enabled
 
 ## 0.3.17
+### Fixed
 - `StandardHomePage` and `StandardDataPage` now work again when sessions are disabled
 ## 0.3.16
+### Changed
 - `GuiLauncher` was moved to `algomancy-gui`
 - Updated `numpy` dependency to `2.4.1` due to yanked version `2.4.0`
 
 ## 0.3.13
+### Added
 - Added `use_sessions` atribute to `AppConfiguration` to allow disabling sessions. 
 
 ## 0.3.5 - 0.3.12

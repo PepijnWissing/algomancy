@@ -7,10 +7,11 @@ It creates a collapsible section that displays additional results for the select
 
 from dash import html
 
+from .page import BaseComparePage
 from algomancy_scenario import Scenario
 
 
-class PlaceholderComparePage:
+class PlaceholderComparePage(BaseComparePage):
     @staticmethod
     def create_side_by_side_content(s: Scenario, side: str) -> html.Div:
         return html.Div(

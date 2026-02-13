@@ -2,18 +2,20 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 from dash import html, dash_table
 
+from .page import BaseDataPage
 
-class StandardDataPage:
+
+class StandardDataPage(BaseDataPage):
     PAGE_SIZE = 10
 
     @staticmethod
     def create_content(data):
-        assert hasattr(
-            data, "tables"
-        ), "Standard data page works on the data.tables dictionary"
-        assert isinstance(
-            data.tables, dict
-        ), "Standard data page works on the data.tables dictionary"
+        assert hasattr(data, "tables"), (
+            "Standard data page works on the data.tables dictionary"
+        )
+        assert isinstance(data.tables, dict), (
+            "Standard data page works on the data.tables dictionary"
+        )
 
         acc_items = []
         for key, table in data.tables.items():
