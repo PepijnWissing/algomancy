@@ -102,7 +102,7 @@ The dict key is the algorithm name, and the value is the algorithm class.
         etl_factory=TSPETLFactory,
         kpi_templates=kpi_templates,
         algo_templates=algorithm_templates,
-        input_configs=input_configs,
+        schemas=schemas,
         data_object_type=DataSource,
         autocreate=False, #this will be the default in next release
         autorun=False, #this will be the default in next release

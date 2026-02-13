@@ -17,7 +17,7 @@ can import most types via ``from algomancy_data import ...``.
 
 from .datamanager import DataManager, StatelessDataManager, StatefulDataManager
 from .datasource import BaseDataSource, DataSource, DataClassification, BASE_DATA_BOUND
-from .schema import Schema, DataType
+from .schema import Schema, DataType, FileExtension, SchemaType
 from .etl import ETLFactory, ETLConstructionError, ETLPipeline
 from .extractor import (
     Extractor,
@@ -33,19 +33,13 @@ from .validator import (
     Validator,
     DefaultValidator,
     ExtractionSuccessVerification,
-    InputConfigurationValidator,
+    SchemaValidator,
     ValidationMessage,
     ValidationError,
     ValidationSeverity,
     ValidationSequence,
 )
 from .loader import Loader, DataSourceLoader
-from .inputfileconfiguration import (
-    SingleInputFileConfiguration,
-    MultiInputFileConfiguration,
-    FileExtension,
-    InputFileConfiguration,
-)
 from .file import File, CSVFile, JSONFile, XLSXFile
 
 __all__ = [
@@ -58,6 +52,7 @@ __all__ = [
     "BASE_DATA_BOUND",
     "Schema",
     "DataType",
+    "SchemaType",
     "ETLFactory",
     "ETLPipeline",
     "ETLConstructionError",
@@ -75,16 +70,13 @@ __all__ = [
     "Validator",
     "DefaultValidator",
     "ExtractionSuccessVerification",
-    "InputConfigurationValidator",
+    "SchemaValidator",
     "ValidationMessage",
     "ValidationError",
     "ValidationSeverity",
     "ValidationSequence",
     "Loader",
     "DataSourceLoader",
-    "InputFileConfiguration",
-    "SingleInputFileConfiguration",
-    "MultiInputFileConfiguration",
     "FileExtension",
     "File",
     "JSONFile",

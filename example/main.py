@@ -19,8 +19,9 @@ from algomancy_gui.stylingconfigurator import (
     ButtonColorMode,
 )
 
-from example.data_handling.input_configs import example_input_configs
+from example.data_handling.schemas import example_schemas
 from example.data_handling.factories import ExampleETLFactory
+from example.pages.exampledatapage import ExampleDataPage
 from example.templates import kpi_templates, algorithm_templates
 
 
@@ -62,14 +63,14 @@ def main(
         etl_factory=ExampleETLFactory,
         kpi_templates=kpi_templates,
         algo_templates=algorithm_templates,
-        input_configs=example_input_configs,
+        schemas=example_schemas,
         data_object_type=DataSource,
         autocreate=True,
         default_algo="Slow",
         default_algo_params_values={"duration": 1},
         autorun=True,
         home_page="showcase",
-        data_page="standard",  # ExampleDataPage,
+        data_page=ExampleDataPage(),
         styling_config=configure_styling(),
         use_cqm_loader=False,
         title="Example implementation of an Algomancy Dashboard",

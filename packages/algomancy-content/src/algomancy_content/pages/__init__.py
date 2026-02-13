@@ -1,9 +1,9 @@
 from .page import (
-    HomePage,
-    DataPage,
-    ScenarioPage,
-    ComparePage,
-    OverviewPage,
+    BaseHomePage,
+    BaseDataPage,
+    BaseScenarioPage,
+    BaseComparePage,
+    BaseOverviewPage,
 )
 
 from .standarddatapage import StandardDataPage
@@ -15,11 +15,11 @@ from .placeholderscenariopage import PlaceholderScenarioPage
 from .standardoverviewpage import StandardOverviewPage
 
 __all__ = [
-    "HomePage",
-    "DataPage",
-    "ScenarioPage",
-    "ComparePage",
-    "OverviewPage",
+    "BaseHomePage",
+    "BaseDataPage",
+    "BaseScenarioPage",
+    "BaseComparePage",
+    "BaseOverviewPage",
     "PlaceholderDataPage",
     "ShowcaseHomePage",
     "StandardHomePage",

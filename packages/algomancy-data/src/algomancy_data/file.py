@@ -12,7 +12,7 @@ import pandas as pd
 import json
 import base64
 
-from .inputfileconfiguration import FileExtension
+from .schema import FileExtension
 
 
 class File(ABC):

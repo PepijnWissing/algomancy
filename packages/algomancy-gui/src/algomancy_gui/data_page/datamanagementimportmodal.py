@@ -4,6 +4,8 @@ import dash
 import dash_bootstrap_components as dbc
 from dash import html, dcc, get_app, callback, Output, Input, no_update, State
 
+import re
+
 from algomancy_data import ValidationError, DataManager
 from algomancy_scenario import ScenarioManager
 from .filenamematcher import match_file_names
@@ -20,6 +22,7 @@ from ..componentids import (
     DM_IMPORT_MODAL_FILEVIEWER_COLLAPSE,
     DM_IMPORT_MODAL_FILEVIEWER_CARD,
     DM_IMPORT_MODAL_NAME_INPUT,
+    DM_IMPORT_MODAL_FEEDBACK,
     DM_IMPORT_MODAL_FILEVIEWER_ALERT,
     DM_IMPORT_OPEN_BUTTON,
     DM_LIST_UPDATER_STORE,
@@ -34,7 +37,6 @@ Modal component for loading data files into the application.
 This module provides a modal dialog that allows users to upload CSV files,
 view file mapping information, and create new datasets from the uploaded files.
 """
-
 
 def data_management_import_modal(sm: ScenarioManager, themed_styling):
     """
@@ -81,13 +83,19 @@ def data_management_import_modal(sm: ScenarioManager, themed_styling):
                         dbc.Collapse(
                             children=[
                                 dbc.Card(
-                                    dbc.CardBody(id=DM_IMPORT_MODAL_FILEVIEWER_CARD),
+                                    dbc.CardBody(
+                                        id=DM_IMPORT_MODAL_FILEVIEWER_CARD
+                                    ),
                                     className="uploaded-files-card",
                                 ),
                                 dbc.Input(
                                     id=DM_IMPORT_MODAL_NAME_INPUT,
                                     placeholder="Name of new dataset",
                                     class_name="mt-2",
+                                ),
+                                dbc.FormFeedback(
+                                    id=DM_IMPORT_MODAL_FEEDBACK,
+                                    type="invalid",
                                 ),
                             ],
                             id=DM_IMPORT_MODAL_FILEVIEWER_COLLAPSE,
@@ -166,6 +174,67 @@ def toggle_modal_load(open_clicks, close_clicks, is_open):
         return not is_open
     return is_open
 
+def is_character_safe(value: str) -> bool:
+    return bool(re.fullmatch(r"[A-Za-z0-9_-]+", value))
+
+def name_exists(value: str, session_id: str) -> bool:
+    sm: ScenarioManager = get_scenario_manager(get_app().server, session_id)
+    dataset_names = sm.get_data_keys()
+    is_invalid = value in dataset_names
+    return is_invalid
+
+@callback(
+    [
+        Output(DM_IMPORT_MODAL_NAME_INPUT, "invalid"),
+        Output(DM_IMPORT_MODAL_FEEDBACK, "children"),
+        Output(DM_IMPORT_SUBMIT_BUTTON, "disabled"),
+        Output(DM_IMPORT_SUBMIT_BUTTON, "color"),
+    ],
+    Input(DM_IMPORT_MODAL_NAME_INPUT, "value"),
+    State(ACTIVE_SESSION, "data")
+)
+def dataset_name_invalid(value, session_id: str):
+    """
+        In case of an invalid dataset name, the input field for dataset name gets a red border, and a red error message appears below the field
+        This also disables the use of the Import button.
+
+        Checks dataset_name validity via the below three scenarios:
+        1) user input is empty
+        2) user input contains characters that are not alphanumeric, hyphens or underscores
+        3) user input is already in use for another saved dataset
+        Feedback is displayed and the import button is made inactive, until none of the scenarios hold.
+
+        Args:
+            value: String containing user input for dataset name
+            session_id: ID of the active session
+
+        Returns:
+            tuple: (invalid, feedback_children) where:
+            - invalid: Boolean indicating whether feedback will be shown
+            - feedback_children: String containing feedback message
+            - disabled: Boolean indicating whether the import button will be disabled
+            - color: String describing the color of the import button (green if enabled, grey if disabled)
+    """
+    # No dataset_name defined yet
+    if not value:
+        return False, "", True, "secondary"
+
+    # Dataset_name not character safe
+    is_invalid = not is_character_safe(value)
+
+    if is_invalid:
+        feedback_msg = "This is not a valid dataset name. Please only use alphanumeric characters, hyphens and underscores."
+        return is_invalid, feedback_msg, True, "secondary"
+
+    # Dataset_name already exists
+    is_invalid = name_exists(value, session_id)
+
+    if is_invalid:
+        feedback_msg = "This is not a valid dataset name. A dataset with this name already exists."
+        return is_invalid, feedback_msg, True, "secondary"
+
+    # Valid Dataset_name
+    return False, "", False, "primary"
 
 def render_file_mapping_table(mapping):
     """
@@ -198,7 +267,6 @@ def render_file_mapping_table(mapping):
         },
     )
     return html.Div([html.Strong("File Mapping:"), table])
-
 
 @callback(
     [
@@ -243,7 +311,7 @@ def show_uploaded_filename(filename, session_id: str):
     from .filenamematcher import match_file_names
 
     try:
-        mapping = match_file_names(sm.input_configurations, filenames)
+        mapping = match_file_names(sm.schemas, filenames)
     except Exception as e:
         sm.logger.error(f"Problem with loading: {str(e)}")
         sm.logger.log_traceback(e)
@@ -274,26 +342,28 @@ def show_uploaded_filename(filename, session_id: str):
         State(DM_IMPORT_UPLOADER, "contents"),
         State(DM_IMPORT_UPLOADER, "filename"),
         State(DM_IMPORT_MODAL_NAME_INPUT, "value"),
+        State(DM_IMPORT_MODAL_NAME_INPUT, "invalid"),
         State(ACTIVE_SESSION, "data"),
     ],
     prevent_initial_call=True,
 )
-def process_imports(n_clicks, contents, filenames, dataset_name, session_id: str):
+def process_imports(n_clicks, contents, filenames, dataset_name, invalid_dataset_name, session_id: str):
     """
-    Processes uploaded files when the import submit button is clicked.
+    Processes uploaded files when the import submit button is clicked, except when dataset_name is invalid.
 
     Args:
         n_clicks: Number of times the submit button has been clicked
         contents: Base64-encoded contents of the uploaded files
         filenames: Names of the uploaded files
         dataset_name: Name for the new dataset
+        invalid_dataset_name: Boolean indicating if feedback should be shown
         session_id: ID of the active session
 
     Returns:
         Tuple containing updated dropdown options, modal state, and alert messages
     """
     # Guard clause for empty inputs
-    if not n_clicks or not contents or not filenames or not dataset_name:
+    if not n_clicks or not contents or not filenames or not dataset_name or invalid_dataset_name is True:
         return no_update, no_update, "", False, "", False, ""
 
     # Get scenario manager from app context
@@ -334,7 +404,7 @@ def prepare_files_from_upload(sm, filenames, contents):
         Dictionary of file objects ready for processing
     """
     # Match uploaded filenames to expected file configurations
-    mapping = match_file_names(sm.input_configurations, filenames)
+    mapping = match_file_names(sm.schemas, filenames)
     reverse_mapping = {value: key for key, value in mapping.items()}
 
     # Extract file extensions and create content dictionary

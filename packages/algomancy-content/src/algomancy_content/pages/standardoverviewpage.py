@@ -1,19 +1,16 @@
-from dash import html, dash_table, callback, Output, Input, get_app, State
+from typing import Any
 
-from dash import dcc
+from dash import html, dash_table
 
-from algomancy_gui.managergetters import get_scenario_manager
-from algomancy_gui.componentids import ACTIVE_SESSION
-
-from algomancy_scenario import ScenarioManager
+from algomancy_scenario import Scenario
+from .page import BaseOverviewPage
 
 OVERVIEW_TABLE = "overview-table"
-OVERVIEW_UPDATE_INTERVAL = "overview-update-interval"
 
 
-class StandardOverviewPage:
+class StandardOverviewPage(BaseOverviewPage):
     @staticmethod
-    def create_content():
+    def create_content(scenarios: list[Scenario]):
         """
         Creates the overview page layout with a table of completed scenarios and their KPIs.
 
@@ -22,6 +19,8 @@ class StandardOverviewPage:
         Returns:
             html.Div: A Dash HTML component representing the overview page
         """
+        data, columns = StandardOverviewPage._get_table_data(scenarios)
+
         page = html.Div(
             [
                 html.H2("Scenarios Overview"),
@@ -54,15 +53,11 @@ class StandardOverviewPage:
                                     "backgroundColor": "rgb(248, 248, 248)",
                                 }
                             ],
+                            data=data,
+                            columns=columns,
                         ),
                     ],
                     style={"marginTop": "20px"},
-                ),
-                # Interval for periodic updates
-                dcc.Interval(
-                    id=OVERVIEW_UPDATE_INTERVAL,
-                    interval=5000,  # in milliseconds
-                    n_intervals=0,
                 ),
             ]
         )
@@ -70,68 +65,41 @@ class StandardOverviewPage:
         return page
 
     @staticmethod
-    def register_callbacks():
-        @callback(
-            Output(OVERVIEW_TABLE, "data"),
-            Output(OVERVIEW_TABLE, "columns"),
-            Input(OVERVIEW_UPDATE_INTERVAL, "n_intervals"),
-            Input("url", "pathname"),
-            State(ACTIVE_SESSION, "data"),
-        )
-        def update_overview_table(n_intervals, pathname, session_id: str):
-            """
-            Updates the overview table with completed scenarios and their KPIs.
+    def _get_table_data(
+        scenarios: list[Scenario],
+    ) -> tuple[list[Any], list[dict[str, str]]]:
+        # Get completed scenarios
+        completed_scenarios = [s for s in scenarios if s.is_completed()]
 
-            Args:
-                n_intervals (int): Number of intervals elapsed (from dcc.Interval)
-                pathname (str): Current URL pathname
-                session_id (str): ID of the active session
+        if not completed_scenarios:
+            return [], [{"name": "No completed scenarios", "id": "no_data"}]
 
-            Returns:
-                tuple: (
-                    list: Table data (rows),
-                    list: Table columns
+        # Get the first scenario to determine KPI columns
+        first_scenario = completed_scenarios[0]
+
+        # Create columns for the table
+        columns = [{"name": "Scenario", "id": "scenario_tag"}]
+
+        # Add columns for each KPI
+        for kpi_id, kpi in first_scenario.kpis.items():
+            column_name = f"{kpi.name}"
+            columns.append({"name": column_name, "id": kpi_id})
+
+        # Create data for the table
+        data = []
+        for scenario in completed_scenarios:
+            row = {"scenario_tag": scenario.tag}
+
+            # Add KPI values
+            for kpi_id, kpi in scenario.kpis.items():
+                row[kpi_id] = kpi.pretty() + (
+                    f" ({kpi.details()})" if kpi.details() else ""
                 )
-            """
-            # Only update when on the overview page
-            if pathname != "/overview":
-                return [], []
 
-            # Get the scenario manager
-            scenario_manager: ScenarioManager = get_scenario_manager(
-                get_app().server, session_id
-            )
+            data.append(row)
 
-            # Get completed scenarios
-            completed_scenarios = [
-                s for s in scenario_manager.list_scenarios() if s.is_completed()
-            ]
+        return data, columns
 
-            if not completed_scenarios:
-                return [], [{"name": "No completed scenarios", "id": "no_data"}]
-
-            # Get the first scenario to determine KPI columns
-            first_scenario = completed_scenarios[0]
-
-            # Create columns for the table
-            columns = [{"name": "Scenario", "id": "scenario_tag"}]
-
-            # Add columns for each KPI
-            for kpi_id, kpi in first_scenario.kpis.items():
-                column_name = f"{kpi.name}"
-                columns.append({"name": column_name, "id": kpi_id})
-
-            # Create data for the table
-            data = []
-            for scenario in completed_scenarios:
-                row = {"scenario_tag": scenario.tag}
-
-                # Add KPI values
-                for kpi_id, kpi in scenario.kpis.items():
-                    row[kpi_id] = kpi.pretty() + (
-                        f" ({kpi.details()})" if kpi.details() else ""
-                    )
-
-                data.append(row)
-
-            return data, columns
+    @staticmethod
+    def register_callbacks():
+        pass

@@ -3,25 +3,153 @@ from typing import Dict
 
 
 class LayoutSelection(StrEnum):
-    SIDEBAR = "default"
-    TABBED = "tabbed"
-    FULLSCREEN = "fullscreen"
-    CUSTOM = "custom"
+    """
+    Enum for different layout selection options.
+
+    Determines which core layout structure is applied to the application
+    interface.
+    """
+
+    #: Default layout with sidebar navigation
+    SIDEBAR = "sidebar"
+    # TABBED = "tabbed"
+    # FULLSCREEN = "fullscreen"
+    # CUSTOM = "custom"
 
 
 class CardHighlightMode(StrEnum):
+    """
+    Enum for different card highlight modes.
+
+    Determines how Dash.Card objects are styled relative to the background
+    color.
+    """
+
+    #: Background color + 20% white
     LIGHT = "light"
-    DARK = "dark"
+
+    #: Background color + 10% white
     SUBTLE_LIGHT = "subtle-light"
+
+    #: Background color + 10% black
     SUBTLE_DARK = "subtle-dark"
+
+    #: Background color + 20% black
+    DARK = "dark"
 
 
 class ButtonColorMode(StrEnum):
+    """
+    Enum for different button color application modes.
+
+    Determines how button colors are applied in the GUI.
+    """
+
+    #: All buttons share the same base color
     UNIFIED = "unified"
+
+    #: Each button has its own distinct color
     SEPARATE = "separate"
 
 
 class ColorConfiguration:
+    """
+    Configuration for color settings in the GUI.
+
+    This class manages all color-related configurations for the application interface,
+    including background colors, theme colors, text colors, status indicators, and
+    button styling. It provides methods for color manipulation and supports both
+    unified and separate button color modes.
+
+    Args:
+        background_color: Hexadecimal color code for the main background.
+            Defaults to "#000000" (black).
+        theme_color_primary: Primary theme color used for main UI elements.
+            Defaults to "#343a40" (dark gray).
+        theme_color_secondary: Secondary theme color used for accents and highlights.
+            Defaults to "#009688" (teal).
+        theme_color_tertiary: Tertiary theme color for additional UI elements.
+            Defaults to "#000000" (black).
+        text_color: Default text color. Defaults to "#FFFFFF" (white).
+        text_color_highlight: Color for highlighted text elements.
+            Defaults to "#000000" (black).
+        text_color_selected: Color for selected text elements.
+            Defaults to "#FFFFFF" (white).
+        menu_hover: Optional custom color for menu hover states. If None, a default
+            hover color is calculated based on the primary theme color.
+        status_colors: Optional dictionary mapping status names to color codes.
+            Supported keys include:
+            - "processing": Color for items being processed
+            - "queued": Color for queued items
+            - "completed": Color for completed items
+            - "failed": Color for failed items
+            - "created": Color for newly created items
+            If not provided or keys are missing, defaults are calculated using
+            linear combinations of theme colors.
+        button_color_mode: Determines how button colors are applied. Options:
+            - ButtonColorMode.UNIFIED: All buttons share the same base color
+            - ButtonColorMode.SEPARATE: Each button type has its own distinct color
+            Defaults to ButtonColorMode.SEPARATE.
+        button_text: Color for text on buttons. Defaults to "#FFFFFF" (white).
+        button_colors: Optional dictionary for customizing button colors. The available
+            keys depend on the button_color_mode:
+
+            **For SEPARATE mode**, individual button types can be customized:
+            - "derive", "derive_hover": Derive button and its hover state
+            - "delete", "delete_hover": Delete button and its hover state
+            - "save", "save_hover": Save button and its hover state
+            - "import", "import_hover": Import button and its hover state
+            - "upload", "upload_hover": Upload button and its hover state
+            - "download", "download_hover": Download button and its hover state
+            - Modal buttons: "derive_cancel", "delete_cancel", etc. with "_hover" variants
+            - "new_scenario", "new_scenario_hover": New scenario button
+            - "compare": Compare toggle button
+            - "standard": Standard toggle button
+
+            **For UNIFIED mode**, use these keys:
+            - "unified_color": Base color for all buttons
+            - "unified_hover": Hover color for all buttons
+
+            If not provided or keys are missing, defaults are calculated based on
+            theme colors with different ratios for visual distinction in SEPARATE mode.
+
+    Note:
+        Button color modes affect how colors are retrieved and applied:
+
+        - **SEPARATE mode**: Each button type gets a unique color by default, calculated
+          as a linear combination between secondary and primary theme colors at different
+          ratios (0.0 for derive, 0.2 for delete, 0.4 for save, etc.). This creates
+          visual distinction between different actions.
+
+        - **UNIFIED mode**: All buttons use the secondary theme color by default,
+          providing a consistent look across all button types.
+
+        Custom colors in the button_colors dictionary always take precedence over
+        calculated defaults.
+
+    Example:
+        >>> # Create configuration with separate button colors
+        >>> config = ColorConfiguration(
+        ...     background_color="#FFFFFF",
+        ...     theme_color_primary="#3366CA",
+        ...     theme_color_secondary="#009688",
+        ...     button_color_mode=ButtonColorMode.SEPARATE,
+        ...     button_colors={
+        ...         "derive": "#FF5733",
+        ...         "delete": "#C70039"
+        ...     }
+        ... )
+
+        >>> # Create configuration with unified button colors
+        >>> config_unified = ColorConfiguration(
+        ...     button_color_mode=ButtonColorMode.UNIFIED,
+        ...     button_colors={
+        ...         "unified_color": "#4CAF50",
+        ...         "unified_hover": "#45A049"
+        ...     }
+        ... )
+    """
+
     def __init__(
         self,
         background_color: str = "#000000",
@@ -71,22 +199,19 @@ class ColorConfiguration:
         """
         Reduces the opacity of a color by setting its alpha channel.
 
-        Parameters:
-        color: str
-            The hexadecimal color value (e.g., "#RRGGBB" or "#RRGGBBAA").
-        opacity: float
-            The desired opacity level, must be between 0 and 1 inclusive, where
-            0 is fully transparent and 1 is fully opaque.
-
-        Returns:
-        str
-            Hexadecimal representation with alpha channel (e.g., "#RRGGBBAA").
-
+        Args:
+            color: The hexadecimal color value (e.g., "#RRGGBB" or "#RRGGBBAA").
+            opacity: The desired opacity level, must be between 0 and 1 inclusive, where
+                0 is fully transparent and 1 is fully opaque.
         Raises:
-        AssertionError
-            If the opacity parameter is not within the range [0, 1].
-        ValueError
-            If the color format is invalid.
+            AssertionError
+                If the opacity parameter is not within the range [0, 1].
+            ValueError
+                If the color format is invalid.
+        Returns:
+             Hexadecimal representation with alpha channel (e.g., "#RRGGBBAA").
+
+
         """
         assert 0 <= opacity <= 1, "opacity must be between 0 and 1"
         r, g, b, _ = ColorConfiguration._hex_to_rgba(color)
@@ -103,21 +228,22 @@ class ColorConfiguration:
         interpolating the red, green, and blue components separately.
 
         Parameters:
-        a_hex: str
-            First hexadecimal color value in string format (e.g., "#RRGGBB").
-        b_hex: str
-            Second hexadecimal color value in string format (e.g., "#RRGGBB").
-        t: float
-            Blend ratio must be a value between 0 and 1 inclusive, where 0 corresponds
-            to the first color, and 1 corresponds to the second color.
-
-        Returns:
-        str
-            Hexadecimal representation of the blended color (e.g., "#RRGGBB").
+            a_hex: str
+                First hexadecimal color value in string format (e.g., "#RRGGBB").
+            b_hex: str
+                Second hexadecimal color value in string format (e.g., "#RRGGBB").
+            t: float
+                Blend ratio must be a value between 0 and 1 inclusive, where 0 corresponds
+                to the first color, and 1 corresponds to the second color.
 
         Raises:
-        AssertionError
-            If the `t` parameter is not within the range [0, 1].
+            AssertionError
+                If the `t` parameter is not within the range [0, 1].
+
+        Returns:
+            Hexadecimal representation of the blended color (e.g., "#RRGGBB").
+
+
         """
         assert 0 <= t <= 1, "t must be between 0 and 1"
         ar, ag, ab, ao = ColorConfiguration._hex_to_rgba(a_hex)
@@ -128,9 +254,18 @@ class ColorConfiguration:
         ro = int(ao + (bo - ao) * t)
         return ColorConfiguration._rgba_to_hex((rr, rg, rb, ro))
 
-    def get_card_surface_shading(
+    def _get_card_surface_shading(
         self, card_highlight_mode: str = CardHighlightMode.SUBTLE_DARK
     ):
+        """Get the surface shading color for cards based on the specified highlight mode.
+
+        Args:
+            card_highlight_mode: The highlight mode for card shading.
+                Defaults to CardHighlightMode.SUBTLE_DARK.
+
+        Returns:
+            Hexadecimal representation of the shading color for card surfaces.
+        """
         match card_highlight_mode:
             case CardHighlightMode.SUBTLE_LIGHT:
                 return self.linear_combination_hex(
@@ -151,7 +286,7 @@ class ColorConfiguration:
 
         raise ValueError(f"Invalid card highlight mode: {card_highlight_mode}")
 
-    def is_light_color(self, color: str) -> bool:
+    def _is_light_color(self, color: str) -> bool:
         """
         Determines if a given hex color is light based on its RGB values.
 
@@ -173,7 +308,7 @@ class ColorConfiguration:
             > 384
         )
 
-    def default_hover_highlight(self, color: str) -> str:
+    def _default_hover_highlight(self, color: str) -> str:
         """
         Generates a hover highlight color based on the input color's luminance.
 
@@ -186,14 +321,14 @@ class ColorConfiguration:
         Returns:
             str: A hexadecimal color string representing the hover highlight color.
         """
-        if self.is_light_color(color):
+        if self._is_light_color(color):
             return self.linear_combination_hex(color, "#FFFFFF", 0.2)
         else:
             return self.linear_combination_hex(color, "#000000", 0.2)
 
     @property
     def menu_hover_color(self):
-        default = self.default_hover_highlight(self._theme_color_primary)
+        default = self._default_hover_highlight(self._theme_color_primary)
         return self.menu_hover or default
 
     @property
@@ -288,7 +423,7 @@ class ColorConfiguration:
         else:
             raise ValueError(f"Invalid button color mode: {self.button_color_mode}")
 
-        default = self.default_hover_highlight(color)
+        default = self._default_hover_highlight(color)
         return self.dm_colors.get(tag_st_mode, default)
 
     @property
@@ -512,7 +647,7 @@ class ColorConfiguration:
 
     @property
     def toggle_background_color(self):
-        return self.get_card_surface_shading()
+        return self._get_card_surface_shading()
 
     @property
     def toggle_shadow_color(self):
@@ -554,7 +689,7 @@ class ColorConfiguration:
             "--text-color": self.text_color,
             "--text-selected": self.text_color_selected,
             "--text-highlight": self.text_color_highlight,
-            "--card-surface": self.get_card_surface_shading(card_highlight_mode),
+            "--card-surface": self._get_card_surface_shading(card_highlight_mode),
             "--button-text": self._button_text,
         }
 
@@ -651,16 +786,15 @@ class StylingConfigurator:
     for the definition of consistent styling themes and reusable configurations
     for an application.
 
-    Note: construction arguments "logo_path" and "button_path" should be provided
-    as a path string, as if the current root is the assets folder.
-
-    Attributes:
+    Args:
         layout_selection (LayoutSelection): Defines the layout selection for the
             application interface (e.g., sidebar layout).
         color_configuration (ColorConfiguration): Manages the colors for different
             UI components such as background, text, and highlights.
         logo_url (str): Path or URL to the logo image file to be used in the UI.
+            important: should be provided as a path relative to the assets folder.
         button_url (str): Path or URL to the button image file to be used in the UI.
+            important: should be provided as a path relative to the assets folder.
         card_highlight_mode (str): Specifies the mode for highlighting cards in
             the UI, affecting the appearance of card components.
     """
@@ -681,15 +815,32 @@ class StylingConfigurator:
 
     @property
     def card_surface_shading(self):
-        return self.color_configuration.get_card_surface_shading(
+        """Get the surface shading color for cards based on the specified highlight mode.
+
+        Returns:
+            Hexadecimal representation of the shading color for card surfaces.
+        """
+        return self.color_configuration._get_card_surface_shading(
             self.card_highlight_mode
         )
 
-    def initiate_theme_colors(self):
+    def initiate_theme_colors(self) -> dict[str, str]:
+        """Retrieves theme colors from the ColorConfiguration and formats them for
+        CSS styling.
+
+        Returns:
+            Dictionary mapping CSS color variables to their corresponding color values.
+        """
         return self.color_configuration.get_theme_colors(self.card_highlight_mode)
 
     @staticmethod
     def get_cqm_config() -> "StylingConfigurator":
+        """
+        Retrieves the default configuration for the CQM application.
+
+        Returns:
+            StylingConfigurator: Configuration for the CQM application.
+        """
         return StylingConfigurator(
             layout_selection=LayoutSelection.SIDEBAR,
             color_configuration=ColorConfiguration(
@@ -707,6 +858,12 @@ class StylingConfigurator:
 
     @staticmethod
     def get_blue_config() -> "StylingConfigurator":
+        """
+        Retrieves the default configuration for a blue themed application.
+
+        Returns:
+            StylingConfigurator: Configuration for the blue themed application.
+        """
         return StylingConfigurator(
             layout_selection=LayoutSelection.SIDEBAR,
             color_configuration=ColorConfiguration(
@@ -724,6 +881,12 @@ class StylingConfigurator:
 
     @staticmethod
     def get_red_config() -> "StylingConfigurator":
+        """
+        Retrieves the default configuration for a red themed application.
+
+        Returns:
+            StylingConfigurator: Configuration for the red themed application.
+        """
         return StylingConfigurator(
             layout_selection=LayoutSelection.SIDEBAR,
             color_configuration=ColorConfiguration(

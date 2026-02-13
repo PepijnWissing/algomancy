@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from typing import Any, Dict, List, Type
 
-from algomancy_data import InputFileConfiguration, BASE_DATA_BOUND
+from algomancy_data import Schema, BASE_DATA_BOUND
 from algomancy_scenario import AlgorithmFactory, ALGORITHM, BASE_KPI
 
 
@@ -11,8 +11,33 @@ class CoreConfiguration:
     """
     Core configuration shared by GUI and CLI.
 
-    Contains only fields that are not GUI- or CLI-specific.
-    Validation is executed on construction.
+    This class serves as the base for all Algomancy configuration objects. It
+    encapsulates the essential settings required for session management, data
+    handling, scenario execution, and algorithmic processing.
+
+    Validation is performed automatically upon instantiation to ensure all
+    required fields are present and correctly typed.
+
+    Attributes:
+        use_sessions: Whether to enable multi-session support.
+        data_path: Path to the directory where session and persistent data is stored.
+        has_persistent_state: If True, data is persisted to disk using `save_type`.
+        save_type: Format for persistent data storage ('json' or 'parquet').
+        data_object_type: The class used to represent the data source (must inherit
+            from BASE_DATA_BOUND).
+        etl_factory: An instance responsible for creating ETL processes.
+        kpi_templates: A mapping of KPI names to their corresponding class
+            implementations.
+        algo_templates: A mapping of algorithm names to their corresponding class
+            implementations.
+        input_configs: A list of configurations defining the input files and their
+            schemas.
+        autocreate: If True, a default scenario/algorithm instance is created on
+            startup.
+        default_algo: The name of the algorithm to use for autocreation.
+        default_algo_params_values: Initial parameter values for the default algorithm.
+        autorun: If True, the default algorithm is executed immediately after creation.
+        title: The display title for the application.
     """
 
     def __init__(
@@ -29,7 +54,7 @@ class CoreConfiguration:
         etl_factory: Any | None = None,
         kpi_templates: Dict[str, Type[BASE_KPI]] | None = None,
         algo_templates: Dict[str, Type[ALGORITHM]] | None = None,
-        input_configs: List[InputFileConfiguration] | None = None,
+        schemas: List[Schema] | None = None,
         # === auto start/create features ===
         autocreate: bool | None = None,
         default_algo: str | None = None,
@@ -39,6 +64,29 @@ class CoreConfiguration:
         title: str = "Algomancy",
         **_: Any,
     ) -> None:
+        """
+        Initializes the CoreConfiguration.
+
+        Args:
+            use_sessions: Enable or disable multi-session handling. Defaults to False.
+            data_path: File system path for data storage. Defaults to "data".
+            has_persistent_state: Enable or disable disk persistence. Defaults to False.
+            save_type: File format for persistence ('json' or 'parquet'). Defaults to "json".
+            data_object_type: Type of the data container. Defaults to None.
+            etl_factory: Factory object for ETL operations. Defaults to None.
+            kpi_templates: Dictionary of KPI identifiers and classes. Defaults to None.
+            algo_templates: Dictionary of algorithm identifiers and classes. Defaults to None.
+            input_configs: List of input file specifications. Defaults to None.
+            autocreate: Whether to create a default scenario on startup. Defaults to None.
+            default_algo: Name of the default algorithm. Defaults to None.
+            default_algo_params_values: Default algorithm parameters. Defaults to None.
+            autorun: Whether to run the default algorithm on startup. Defaults to None.
+            title: Application title. Defaults to "Algomancy".
+            **_: Additional keyword arguments (ignored).
+
+        Raises:
+            ValueError: If required fields are missing or if provided paths are invalid.
+        """
         # session management
         self.use_sessions = use_sessions
 
@@ -52,7 +100,7 @@ class CoreConfiguration:
         self.etl_factory = etl_factory
         self.kpi_templates = kpi_templates
         self.algo_templates = algo_templates
-        self.input_configs = input_configs
+        self.schemas = schemas
         self.autocreate = autocreate
         self.default_algo = default_algo
         self.default_algo_params_values = default_algo_params_values
@@ -74,7 +122,7 @@ class CoreConfiguration:
             "etl_factory": self.etl_factory,
             "kpi_templates": self.kpi_templates,
             "algo_templates": self.algo_templates,
-            "input_configs": self.input_configs,
+            "schemas": self.schemas,
             "autocreate": self.autocreate,
             "default_algo": self.default_algo,
             "default_algo_params_values": self.default_algo_params_values,
@@ -103,7 +151,7 @@ class CoreConfiguration:
             "etl_factory": self.etl_factory,
             "kpi_templates": self.kpi_templates,
             "algo_templates": self.algo_templates,
-            "input_configs": self.input_configs,
+            "schemas": self.schemas,
             "data_object_type": self.data_object_type,
         }
         missing = [k for k, v in required_fields.items() if v is None]

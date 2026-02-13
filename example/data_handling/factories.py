@@ -8,7 +8,7 @@ from algomancy_data import (
     ETLFactory,
     ValidationSequence,
     ExtractionSuccessVerification,
-    InputConfigurationValidator,
+    SchemaValidator,
     ValidationSeverity,
     Loader,
     DataSourceLoader,
@@ -48,7 +48,7 @@ class ExampleETLFactory(ETLFactory):
         sequence.add_extractor(
             CSVSingleExtractor(
                 file=cast(CSVFile, files["sku_data"]),
-                schema=self.get_schemas("sku_data"),
+                schema=self.get_schema("sku_data"),
                 logger=self.logger,
                 separator=";",
             )
@@ -56,7 +56,7 @@ class ExampleETLFactory(ETLFactory):
         sequence.add_extractor(
             CSVSingleExtractor(
                 file=cast(CSVFile, files["warehouse_layout"]),
-                schema=self.get_schemas("warehouse_layout"),
+                schema=self.get_schema("warehouse_layout"),
                 logger=self.logger,
                 separator=";",
             )
@@ -64,14 +64,14 @@ class ExampleETLFactory(ETLFactory):
         sequence.add_extractor(
             JSONSingleExtractor(
                 file=cast(JSONFile, files["employees"]),
-                schema=self.get_schemas("employees"),
+                schema=self.get_schema("employees"),
                 logger=self.logger,
             )
         )
         sequence.add_extractor(
             XLSXSingleExtractor(
                 file=cast(XLSXFile, files["inventory"]),
-                schema=self.get_schemas("inventory"),
+                schema=self.get_schema("inventory"),
                 sheet_name=1,
                 logger=self.logger,
             )
@@ -79,7 +79,7 @@ class ExampleETLFactory(ETLFactory):
         sequence.add_extractor(
             XLSXMultiExtractor(
                 file=cast(XLSXFile, files["multisheet"]),
-                schemas=self.get_schemas("multisheet"),
+                schema=self.get_schema("multisheet"),
                 logger=self.logger,
             )
         )
@@ -92,8 +92,8 @@ class ExampleETLFactory(ETLFactory):
         vs.add_validator(ExtractionSuccessVerification())
 
         vs.add_validator(
-            InputConfigurationValidator(
-                configs=self.input_configurations,
+            SchemaValidator(
+                schemas=self.schemas,
                 severity=ValidationSeverity.CRITICAL,
             )
         )
