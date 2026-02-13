@@ -1,7 +1,7 @@
 import os
 from typing import Dict, List, TypeVar, Type
 
-from algomancy_gui.appconfiguration import AppConfiguration
+from algomancy_gui.configuration.appconfiguration import AppConfiguration
 from algomancy_utils.logger import Logger, MessageStatus
 from algomancy_data import ETLFactory, Schema, BASE_DATA_BOUND
 from algomancy_scenario import (
@@ -23,7 +23,7 @@ class SessionManager:
     @classmethod
     def from_config(cls, configuration: "AppConfiguration") -> "SessionManager":
         # Local import to avoid heavy top-level coupling
-        from algomancy_gui.appconfiguration import AppConfiguration  # type: ignore
+        from algomancy_gui.configuration.appconfiguration import AppConfiguration  # type: ignore
 
         if not isinstance(configuration, AppConfiguration):
             raise TypeError("from_config expects an AppConfiguration instance")

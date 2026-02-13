@@ -20,10 +20,10 @@ from ..componentids import (
     DM_UPLOAD_SUCCESS_ALERT,
     DM_LIST_UPDATER_STORE,
 )
-from ..cqmloader import cqm_loader
-from ..defaultloader import default_loader
-from algomancy_gui.managergetters import get_scenario_manager
-from ..settingsmanager import SettingsManager
+from algomancy_gui.loaders.cqmloader import cqm_loader
+from algomancy_gui.loaders.defaultloader import default_loader
+from algomancy_gui.managers.managergetters import get_scenario_manager
+from algomancy_gui.managers.settingsmanager import SettingsManager
 
 
 """

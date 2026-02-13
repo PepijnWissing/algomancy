@@ -4,7 +4,7 @@ import dash_bootstrap_components as dbc
 
 from algomancy_gui.page import BaseHomePage
 from algomancy_scenario import ScenarioStatus
-from algomancy_gui.managergetters import get_scenario_manager
+from algomancy_gui.managers.managergetters import get_scenario_manager
 
 
 class StandardHomePage(BaseHomePage):

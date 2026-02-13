@@ -11,7 +11,7 @@ import os
 import sys
 
 from algomancy_data import DataSource
-from algomancy_gui.stylingconfigurator import (
+from algomancy_gui.configuration.stylingconfigurator import (
     StylingConfigurator,
     LayoutSelection,
     ColorConfiguration,
@@ -32,7 +32,7 @@ if PROJECT_ROOT not in sys.path:
 
 # Suppress ruff linter for these two imports
 from algomancy_gui.gui_launcher import GuiLauncher  # noqa: E402
-from algomancy_gui.appconfiguration import AppConfiguration  # noqa: E402
+from algomancy_gui.configuration.appconfiguration import AppConfiguration  # noqa: E402
 
 
 def main(

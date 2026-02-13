@@ -5,7 +5,10 @@ import dash_bootstrap_components as dbc
 from dash import html, Output, callback, Input, State, dcc
 from dash.html import Div
 
-from algomancy_gui.stylingconfigurator import StylingConfigurator, LayoutSelection
+from algomancy_gui.configuration.stylingconfigurator import (
+    StylingConfigurator,
+    LayoutSelection,
+)
 from algomancy_gui.componentids import (
     SIDEBAR_TOGGLE,
     SIDEBAR,

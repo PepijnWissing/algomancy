@@ -27,8 +27,8 @@ from ..componentids import (
     HOW_TO_CREATE_NEW_SESSION,
 )
 from algomancy_utils.logger import Logger, MessageStatus
-from algomancy_gui.managergetters import get_manager
-from ..sessionmanager import SessionManager
+from algomancy_gui.managers.managergetters import get_manager
+from algomancy_gui.managers.sessionmanager import SessionManager
 
 
 def admin_page():

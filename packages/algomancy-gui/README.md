@@ -15,8 +15,9 @@ pip install -e packages/algomancy-gui
 Requires Python >= 3.14. Dependencies: `dash`, `dash_bootstrap_components`.
 
 #### Quick start: configure styling
+
 ```python
-from algomancy_gui.stylingconfigurator import (
+from algomancy_gui.configuration.stylingconfigurator import (
     StylingConfigurator,
     LayoutSelection,
     ColorConfiguration,

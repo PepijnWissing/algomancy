@@ -11,7 +11,7 @@ from algomancy_gui.page import (
     BaseOverviewPage,
     BaseDataPage,
 )
-from algomancy_gui.stylingconfigurator import StylingConfigurator
+from algomancy_gui.configuration.stylingconfigurator import StylingConfigurator
 from algomancy_scenario import ALGORITHM, BASE_KPI
 from algomancy_scenario.core_configuration import CoreConfiguration
 

@@ -19,7 +19,7 @@ from .pages import (
     PlaceholderScenarioPage,
     StandardOverviewPage,
 )
-from algomancy_gui.librarymanager import LibraryManager
+from algomancy_gui.managers.librarymanager import LibraryManager
 
 __all__ = [
     "LibraryManager",
