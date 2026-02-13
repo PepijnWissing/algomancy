@@ -20,22 +20,12 @@ from algomancy_data.extractor import (
 from algomancy_data.transformer import TransformationSequence
 
 from data_handling.loaders.loader import DataModelLoader
-from data_handling.transformers.transform_create_locations import (
-    TransformCreateLocations,
-)
-from data_handling.transformers.transform_customer_to_location import (
-    TransformCustomerToLocation,
-)
+from data_handling.transformers.transform_create_locations import TransformCreateLocations
+from data_handling.transformers.transform_customer_to_location import TransformCustomerToLocation
 from data_handling.transformers.transform_dc_to_location import TransformDCToLocation
-from data_handling.transformers.transform_location_to_routes import (
-    TransformLocationToRoutes,
-)
-from data_handling.transformers.transform_stores_to_location import (
-    TransformStoresToLocation,
-)
-from data_handling.transformers.transform_xdock_to_location import (
-    TransformXDockToLocation,
-)
+from data_handling.transformers.transform_location_to_routes import TransformLocationToRoutes
+from data_handling.transformers.transform_stores_to_location import TransformStoresToLocation
+from data_handling.transformers.transform_xdock_to_location import TransformXDockToLocation
 
 F = TypeVar("F", bound=File)
 
