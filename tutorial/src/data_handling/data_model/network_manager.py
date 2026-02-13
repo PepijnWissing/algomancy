@@ -1,6 +1,6 @@
 from typing import List
-from data_handling.data_model.location import Location
-from data_handling.data_model.route import Route
+from src.data_handling.data_model.location import Location
+from src.data_handling.data_model.route import Route
 
 
 class NetworkManager:
