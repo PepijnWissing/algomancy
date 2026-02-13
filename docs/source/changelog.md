@@ -7,6 +7,7 @@ Mostly internal classes were moved to semantically more appropriate locations.
 ### Changed
 - **[Breaking]** Moved `BasePage` and subclasses to `algomancy_gui`; imports have to be updated appropriately
 - Moved `LibraryManager` to `algomancy-gui` from `algomancy-content`
+- Reorganized `algomancy-gui` internals 
 
 ### Fixed
 
