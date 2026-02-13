@@ -208,4 +208,4 @@ def toggle_modal_derive(open_clicks, close_clicks, is_open):
         return not is_open
     return is_open
 
-InputChecker.register_name_validator_static(DM_DERIVE_SET_NAME_INPUT, DM_DERIVE_MODAL_FEEDBACK, DM_DERIVE_MODAL_SUBMIT_BTN, ACTIVE_SESSION)
+InputChecker.dataset_name_validator(DM_DERIVE_SET_NAME_INPUT, DM_DERIVE_MODAL_FEEDBACK, DM_DERIVE_MODAL_SUBMIT_BTN, ACTIVE_SESSION)

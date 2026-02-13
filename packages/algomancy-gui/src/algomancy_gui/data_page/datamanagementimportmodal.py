@@ -173,7 +173,7 @@ def toggle_modal_load(open_clicks, close_clicks, is_open):
         return not is_open
     return is_open
 
-InputChecker.register_name_validator_static(DM_IMPORT_MODAL_NAME_INPUT, DM_IMPORT_MODAL_FEEDBACK, DM_IMPORT_SUBMIT_BUTTON, ACTIVE_SESSION)
+InputChecker.dataset_name_validator(DM_IMPORT_MODAL_NAME_INPUT, DM_IMPORT_MODAL_FEEDBACK, DM_IMPORT_SUBMIT_BUTTON, ACTIVE_SESSION)
 
 def render_file_mapping_table(mapping):
     """

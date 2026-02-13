@@ -12,16 +12,20 @@ class InputChecker:
 
     @staticmethod
     def is_character_safe(value: str) -> bool:
+        """Checks a string value to consist of solely alphanumeric, hyphen or underscore characters"""
         return bool(re.fullmatch(r"[A-Za-z0-9_-]+", value))
 
     @staticmethod
     def name_exists(value: str, session_id: str) -> bool:
+        """Checks if a string value already exists in the set of dataset names for a specific session"""
         sm: ScenarioManager = get_scenario_manager(get_app().server, session_id)
         dataset_names = sm.get_data_keys()
         is_invalid = value in dataset_names
         return is_invalid
 
-    def register_name_validator_static(dataset_name_input_id: str, feedback_id: str, button_id: str, session_id: str):
+    @staticmethod
+    def dataset_name_validator(dataset_name_input_id: str, feedback_id: str, button_id: str, session_component_id: str):
+        """Executes a callback with dataset name validation and button disablement for specific Dash components"""
         @callback(
             [
                 Output(dataset_name_input_id, "invalid"),
@@ -30,7 +34,7 @@ class InputChecker:
                 Output(button_id, "color"),  # todo: css styling
             ],
             Input(dataset_name_input_id, "value"),
-            State(session_id, "data")
+            State(session_component_id, "data")
         )
         def dataset_name_invalid(value, session_id: str):
             """
