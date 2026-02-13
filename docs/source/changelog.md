@@ -1,16 +1,20 @@
 # Change log
+## PreRelease
+### Added 
+### Changed
+- Moved callback for dataset_name_invalid to inputchecker.py to avoid duplicate code in datamanagerderive/importmodal
+### Fixed
 
 ## 0.3.21
 _12-02-2026_
 ### Added 
-- Added charactersafe & existing dataset name checks, resulting in a disabled import button
-
+- Added charactersafe & existing dataset name checks (in InputChecker Class), resulting in a disabled import button
 ### Changed
 - Custom pages should now subclass the appropriate base classes (moved from `Protocol` to `AbstractBaseClass`). Functional implementation should remain unchanged.
 
 ### Fixed
 - Fixed a bug where the overview page failed to use the `OverviewPage` content from the registry appropriately.
-- Fixed risk of App breaking down when user tries to import a new dataset with weird names (e.g. with .) or an already existing dataset name.
+- Fixed risk of App breaking down when user tries to import/derive a new dataset with weird names (e.g. with .) or an already existing dataset name.
 
 ## 0.3.20
 ### Fixed

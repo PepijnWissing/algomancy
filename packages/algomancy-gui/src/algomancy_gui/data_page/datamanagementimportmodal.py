@@ -10,7 +10,7 @@ from .filenamematcher import match_file_names
 
 from ..cqmloader import cqm_loader
 from ..defaultloader import default_loader
-from ..inputchecker import InputChecker
+from ..inputchecker import  InputChecker
 from algomancy_gui.managergetters import get_scenario_manager
 from ..settingsmanager import SettingsManager
 from ..componentids import (
@@ -173,54 +173,7 @@ def toggle_modal_load(open_clicks, close_clicks, is_open):
         return not is_open
     return is_open
 
-@callback(
-    [
-        Output(DM_IMPORT_MODAL_NAME_INPUT, "invalid"),
-        Output(DM_IMPORT_MODAL_FEEDBACK, "children"),
-        Output(DM_IMPORT_SUBMIT_BUTTON, "disabled"),
-        Output(DM_IMPORT_SUBMIT_BUTTON, "color"), #todo: css styling
-    ],
-    Input(DM_IMPORT_MODAL_NAME_INPUT, "value"),
-    State(ACTIVE_SESSION, "data")
-)
-def dataset_name_invalid(value, session_id: str):
-    """
-        In case of an invalid dataset name, the input field for dataset name gets a red border, and a red error message appears below the field
-        This also disables the use of the Import button.
-
-        Checks dataset_name validity via the below three scenarios:
-        1) user input is empty
-        2) user input contains characters that are not alphanumeric, hyphens or underscores
-        3) user input is already in use for another saved dataset
-        Feedback is displayed and the import button is made inactive, until none of the scenarios hold.
-
-        Args:
-            value: String containing user input for dataset name
-            session_id: ID of the active session
-
-        Returns:
-            tuple: (invalid, feedback_children) where:
-            - invalid: Boolean indicating whether feedback will be shown
-            - feedback_children: String containing feedback message
-            - disabled: Boolean indicating whether the import button will be disabled
-            - color: String describing the color of the import button (green if enabled, gray if disabled)
-    """
-    # No dataset_name defined yet
-    if not value:
-        return False, "", True, "secondary"
-
-    # Dataset_name not character safe
-    if not InputChecker.is_character_safe(value):
-        feedback_msg = "This is not a valid dataset name. Please only use alphanumeric characters, hyphens and underscores."
-        return True, feedback_msg, True, "secondary"
-
-    # Dataset_name already exists
-    if InputChecker.name_exists(value, session_id):
-        feedback_msg = "This is not a valid dataset name. A dataset with this name already exists."
-        return True, feedback_msg, True, "secondary"
-
-    # Valid Dataset_name
-    return False, "", False, "primary"
+InputChecker.register_name_validator_static(DM_IMPORT_MODAL_NAME_INPUT, DM_IMPORT_MODAL_FEEDBACK, DM_IMPORT_SUBMIT_BUTTON, ACTIVE_SESSION)
 
 def render_file_mapping_table(mapping):
     """
