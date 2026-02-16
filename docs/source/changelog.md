@@ -1,4 +1,4 @@
-# Change log
+# Change log 
 ## PreRelease
 ### Added 
 - Added charactersafe & existing scenario name checks (in InputChecker Class), resulting in a disabled create button
