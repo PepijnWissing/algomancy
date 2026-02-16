@@ -133,7 +133,7 @@ def create_algo_parameters_window() -> dbc.Collapse:
 
     param_entry_card = dbc.Card(id=ALGO_PARAMS_ENTRY_CARD, class_name="mt-3")
     tabs.append(
-        dbc.Tab(param_entry_card, label="Fill in", tab_id=ALGO_PARAMS_ENTRY_TAB)
+        dbc.Tab(param_entry_card, label="Fill in algorithm parameters", tab_id=ALGO_PARAMS_ENTRY_TAB)
     )
 
     settings: SettingsManager = get_app().server.settings
