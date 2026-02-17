@@ -47,6 +47,12 @@ class TestDataSourceDerive:
 
         assert derived.id != sample_datasource.id
 
+    def test_derived_has_appropriate_classification(self, sample_datasource):
+        """Test that derived DataSource has appropriate classification."""
+        derived = sample_datasource.derive("Derived Data")
+
+        assert derived._ds_type == DataClassification.DERIVED_DATA
+
     def test_derive_data_identical_in_value(self, sample_datasource):
         """Test that derived DataSource contains identical data values."""
         derived = sample_datasource.derive("Derived Data")
