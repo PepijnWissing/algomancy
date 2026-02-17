@@ -1,5 +1,5 @@
 # Change log
-## 0.4.1
+## 0.4.2
 _ Released on 17-2-2026_
 
 ### Added
