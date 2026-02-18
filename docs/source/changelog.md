@@ -1,6 +1,13 @@
 # Change log
+## 0.4.3
+_Released on 18-2-2026_
+
+### Added
+- Added `BaseDataSource._post_derive()` method as a hook to allow subclasses to perform post-derivation processing.
+- Added `_post_derive()` PyTest to pre-merge testing protocol.
+
 ## 0.4.2
-_ Released on 17-2-2026_
+_Released on 17-2-2026_
 
 ### Added
 - Added `test_datasource.py` to the PyTest pre-merge protocol. 
