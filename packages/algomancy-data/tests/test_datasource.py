@@ -189,3 +189,29 @@ class TestDataSourceDerive:
         # Original should not have the new table
         assert "new_table" in derived.list_tables()
         assert "new_table" not in sample_datasource.list_tables()
+
+    def test_post_derive_hook_is_called(self, sample_datasource):
+        """Test that _post_derive() hook method is called during derivation."""
+
+        # Create a custom DataSource subclass to track hook calls
+        class TestDataSource(DataSource):
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+                self.post_derive_called = False
+
+            def _post_derive(self):
+                """Override the hook to track if it's called."""
+                super()._post_derive()
+                self.post_derive_called = True
+
+        # Create an instance with the custom subclass
+        ds = TestDataSource(ds_type=DataClassification.MASTER_DATA, name="Test Data")
+        df = pd.DataFrame({"col": [1, 2, 3]})
+        ds.add_table("test", df)
+
+        # Derive and check that the hook was called
+        derived = ds.derive("Derived Test")
+
+        assert isinstance(derived, TestDataSource)
+        assert derived.post_derive_called is True
+        assert ds.post_derive_called is False  # Original should not have flag set
