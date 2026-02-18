@@ -110,6 +110,9 @@ class BaseDataSource(ABC):
         new_data._reset_id()
         new_data._ds_type = DataClassification.DERIVED_DATA
 
+        # Activate hook method
+        new_data._post_derive()
+
         return new_data
 
     @abstractmethod
@@ -120,6 +123,12 @@ class BaseDataSource(ABC):
     @abstractmethod
     def from_json(cls, json_string: str) -> "BaseDataSource":
         raise NotImplementedError("Abstract method")
+
+    def _post_derive(self):
+        """
+        Hook method for post-derivation processing. Can be overridden by subclasses.
+        """
+        pass
 
 
 BASE_DATA_BOUND = TypeVar("BASE_DATA_BOUND", bound=BaseDataSource)
