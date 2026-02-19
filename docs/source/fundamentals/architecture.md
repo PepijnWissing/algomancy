@@ -4,19 +4,23 @@
 The backend of the framework is structured around a clear conceptual model, ensuring both extensibility and maintainability. At its core, the model consists of three primary components: `DataSource`, `Algorithm`, and `Scenario`. Each plays a distinct role in representing, processing, and analyzing data within the system.
 The following diagram illustrates the overall architecture:
 
-```mermaid
-graph LR
-    A([Raw Data]) --> B{ETL} ;
-    B --> C[Data Source];
-    C --> E[Scenario];
-    D[Algorithm] --> E;
-    X([Parameters]) --> D;
-    Y([Template]) --> D;
-    E --> R{Run};
-    R --> F[Scenario Result];
-    F --> G{Visualization};
-    G --> H((Dashboard));
+```{eval-rst}
+.. mermaid::
+
+    flowchart LR
+        A([Raw Data]) --> B{ETL} 
+        B --> C[Data Source]
+        C --> E[Scenario]
+        D[Algorithm] --> E
+        X([Parameters]) --> D
+        Y([Template]) --> D
+        E --> R{Run}
+        R --> F[Scenario Result]
+        F --> G{Visualization}
+        G --> H((Dashboard))
 ```
+
+
 
 
 ### DataSource: Managing Raw Data
