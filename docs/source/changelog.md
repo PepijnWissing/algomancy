@@ -11,9 +11,25 @@ Mostly internal classes were moved to semantically more appropriate locations.
 
 ### Fixed
 
+## 0.4.3
+_Released on 18-2-2026_
+
+### Added
+- Added `BaseDataSource._post_derive()` method as a hook to allow subclasses to perform post-derivation processing.
+- Added `_post_derive()` PyTest to pre-merge testing protocol.
+
+## 0.4.2
+_Released on 17-2-2026_
+
+### Added
+- Added `test_datasource.py` to the PyTest pre-merge protocol. 
+
+### Fixed
+- Fixed bug where `BaseDataSource.derive()` would not update `ds_type` and `id` appropriately.
+- Fixed bug where `DataSource.from_json()` would not preserve datatypes. 
 
 ## 0.4.0
-_Released on _12-02-2026_
+_Released on 12-02-2026_
 ### Changed
 - **[Breaking]** Removed `InputFileConfigs`, moved responsibility to `Schema` class
 - Updated documentation

@@ -10,6 +10,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from enum import StrEnum, auto
 from typing import List, TypeVar
+from contextlib import suppress
 
 import pandas as pd
 
@@ -44,7 +45,7 @@ class BaseDataSource(ABC):
         creation_datetime: datetime | None = None,
     ) -> None:
         self._ds_type = ds_type
-        self._id: str = ds_id if ds_id else str(uuid.uuid4())
+        self._id: str = ds_id if ds_id else self._new_id()
         self._creation_datetime = (
             creation_datetime if creation_datetime else datetime.now()
         )
@@ -65,6 +66,12 @@ class BaseDataSource(ABC):
 
     def _set_name(self, new_name):
         self._name = new_name
+
+    def _new_id(self) -> str:
+        return str(uuid.uuid4())
+
+    def _reset_id(self):
+        self._id = self._new_id()
 
     @property
     def id(self):
@@ -95,8 +102,17 @@ class BaseDataSource(ABC):
             Type of the calling class: A new instance of the same class with the
             derived data and updated key.
         """
+        # Create a deepcopy via json roundtrip
         new_data = type(self).from_json(self.to_json())
+
+        # Update registration fields
         new_data._set_name(new_data_key)
+        new_data._reset_id()
+        new_data._ds_type = DataClassification.DERIVED_DATA
+
+        # Activate hook method
+        new_data._post_derive()
+
         return new_data
 
     @abstractmethod
@@ -107,6 +123,12 @@ class BaseDataSource(ABC):
     @abstractmethod
     def from_json(cls, json_string: str) -> "BaseDataSource":
         raise NotImplementedError("Abstract method")
+
+    def _post_derive(self):
+        """
+        Hook method for post-derivation processing. Can be overridden by subclasses.
+        """
+        pass
 
 
 BASE_DATA_BOUND = TypeVar("BASE_DATA_BOUND", bound=BaseDataSource)
@@ -232,26 +254,35 @@ class DataSource(BaseDataSource):
             df = pd.DataFrame(records, columns=columns, index=index)
 
             # Convert columns back to their original types
-            for col, dtype in dtypes.items():
-                if col in df.columns:
-                    try:
+            with suppress(ValueError, TypeError):
+                for col, dtype in dtypes.items():
+                    if col in df.columns:
                         if "datetime" in dtype:
                             df[col] = pd.to_datetime(df[col], errors="coerce")
                         elif dtype == "category":
                             df[col] = df[col].astype("category")
-                        elif "int" in dtype:
-                            # Handle int columns that might have None values
-                            df[col] = pd.to_numeric(df[col], errors="coerce")
-                            if "int" in dtype and "float" not in dtype:
-                                # Only convert to int if it was originally an int
-                                df[col] = (
-                                    df[col].fillna(pd.NA).astype("Int64")
-                                )  # Pandas nullable integer type
+                        elif "int" in dtype.lower():
+                            # Check if column has any None/NaN values
+                            has_nulls = df[col].isna().any()
+                            if has_nulls:
+                                # Use nullable integer type for columns with nulls
+                                df[col] = pd.to_numeric(df[col], errors="coerce")
+                                # Map to appropriate nullable integer type
+                                if "int64" in dtype.lower():
+                                    df[col] = df[col].astype("Int64")
+                                elif "int32" in dtype.lower():
+                                    df[col] = df[col].astype("Int32")
+                                elif "int16" in dtype.lower():
+                                    df[col] = df[col].astype("Int16")
+                                elif "int8" in dtype.lower():
+                                    df[col] = df[col].astype("Int8")
+                                else:
+                                    df[col] = df[col].astype("Int64")
+                            else:
+                                # No nulls - use standard integer type to preserve original dtype
+                                df[col] = df[col].astype(dtype)
                         else:
                             df[col] = df[col].astype(dtype)
-                    except (ValueError, TypeError):
-                        # If conversion fails, keep as is
-                        pass
 
             # Add the table to the DataSource
             ds.add_table(table_name, df)
