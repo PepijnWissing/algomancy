@@ -39,6 +39,22 @@ class SchemaType(StrEnum):
     MULTI = "multi"
 
 
+class classproperty(property):
+    """
+    A decorator that creates a property accessible from both class and instances.
+
+    When accessed from the class, passes the class to the decorated method.
+    When accessed from an instance, passes the instance to the decorated method.
+    """
+
+    def __get__(self, instance, owner):
+        # If accessed from an instance, pass the instance
+        if instance is not None:
+            return self.fget(instance)
+        # If accessed from the class, pass the class
+        return self.fget(owner)
+
+
 class Schema(ABC):
     """Abstract base class for table schemas.
 
@@ -60,62 +76,65 @@ class Schema(ABC):
     def __init__(self, subschema_key: str | None = None) -> None:
         self._subschema_key = subschema_key
 
-    @property
-    def file_name(self) -> str:
+    @classproperty
+    def file_name(cls) -> str:
         """Return the file name of the schema."""
-        if self._FILENAME == "default_filename":
+        if cls._FILENAME == "default_filename":
             raise NotImplementedError("_FILENAME must be overridden by subclasses")
 
-        return self._FILENAME
+        return cls._FILENAME
 
-    @property
-    def extension(self) -> FileExtension:
+    @classproperty
+    def extension(cls) -> FileExtension:
         """Return the file extension of the schema."""
-        if self._EXTENSION == "default_extension":
+        if cls._EXTENSION == "default_extension":
             raise NotImplementedError("_EXTENSION must be overridden by subclasses")
 
-        if isinstance(self._EXTENSION, FileExtension):
-            return self._EXTENSION
-        elif isinstance(self._EXTENSION, str):
-            return FileExtension(self._EXTENSION)
+        if isinstance(cls._EXTENSION, FileExtension):
+            return cls._EXTENSION
+        elif isinstance(cls._EXTENSION, str):
+            return FileExtension(cls._EXTENSION)
         else:
-            raise TypeError(f"Invalid extension type: {type(self._EXTENSION)}")
+            raise TypeError(f"Invalid extension type: {type(cls._EXTENSION)}")
 
-    @property
-    def schema_type(self) -> SchemaType:
+    @classproperty
+    def schema_type(cls) -> SchemaType:
         """Return the schema type of the schema."""
-        if self._SCHEMA_TYPE == "default_schema_type":
+        if cls._SCHEMA_TYPE == "default_schema_type":
             raise NotImplementedError("_SCHEMA_TYPE must be overridden by subclasses")
 
-        if isinstance(self._SCHEMA_TYPE, SchemaType):
-            return self._SCHEMA_TYPE
-        elif isinstance(self._SCHEMA_TYPE, str):
-            return SchemaType(self._SCHEMA_TYPE)
+        if isinstance(cls._SCHEMA_TYPE, SchemaType):
+            return cls._SCHEMA_TYPE
+        elif isinstance(cls._SCHEMA_TYPE, str):
+            return SchemaType(cls._SCHEMA_TYPE)
         else:
-            raise TypeError(f"Invalid schema type: {type(self._SCHEMA_TYPE)}")
+            raise TypeError(f"Invalid schema type: {type(cls._SCHEMA_TYPE)}")
 
-    @property
-    def file_name_with_extension(self) -> str:
-        return self._FILENAME + "." + self._EXTENSION
+    @classproperty
+    def file_name_with_extension(cls) -> str:
+        return cls._FILENAME + "." + cls._EXTENSION
 
-    @property
-    def datatypes(self) -> Dict[str, DataType]:
+    @classproperty
+    def datatypes(cls_or_self) -> Dict[str, DataType]:
         # Check implementation
-        if self._DATATYPES == "default_datatypes":
+        if cls_or_self._DATATYPES == "default_datatypes":
             raise NotImplementedError("_DATATYPES must be overridden by subclasses")
 
-        if self.is_multi() and self._subschema_key is not None:
-            dtypes = self._DATATYPES[self._subschema_key]  # noqa
-        elif self.is_single():
-            dtypes = self._DATATYPES
+        if cls_or_self.has_subschema_specified:
+            dtypes = cls_or_self._DATATYPES[cls_or_self._subschema_key]  # noqa
+        elif cls_or_self.is_single():
+            dtypes = cls_or_self._DATATYPES
         else:
-            raise ValueError("Method is only available for single schemas")
+            raise ValueError(
+                "Method is only available for schemas that are single or specified"
+            )
 
-        self._validate_datatypes(dtypes)
+        cls_or_self._validate_datatypes(dtypes)
 
         return dtypes
 
-    def _validate_datatypes(self, dtypes: dict[str, DataType]) -> None:
+    @classmethod
+    def _validate_datatypes(cls, dtypes: dict[str, DataType]) -> None:
         # for single schema type: the return value must be Dict[str,DataType]
         dtypes: Dict[str, DataType]
         for field, dtype in dtypes.items():
@@ -126,16 +145,16 @@ class Schema(ABC):
                 f"Datatype for field '{field}' must be a DataType, got {type(dtype)}"
             )
 
-    @property
-    def datatype_groups(self) -> Dict[str, Dict[str, DataType]]:
-        if not self.is_multi():
+    @classproperty
+    def datatype_groups(cls) -> Dict[str, Dict[str, DataType]]:
+        if not cls.is_multi():
             raise ValueError("Method is only available for multi schemas")
 
         # grab from implementation
-        if self._DATATYPES == "default_datatypes":
+        if cls._DATATYPES == "default_datatypes":
             raise NotImplementedError("_DATATYPES must be overridden by subclasses")
 
-        dtypes = self._DATATYPES
+        dtypes = cls._DATATYPES
 
         # for multi-schema type: the return value must be Dict[str,Dict[str,DataType]]
         dtypes: Dict[str, Dict[str, DataType]]
@@ -143,25 +162,18 @@ class Schema(ABC):
             assert isinstance(schema_name, str), (
                 f"Schema name must be a string, got {type(schema_name)}"
             )
-            for field, dtype in schema_datatypes.items():
-                assert isinstance(field, str), (
-                    f"Field name must be a string, got {type(field)}"
-                )
-                assert isinstance(dtype, DataType), (
-                    f"Datatype for field '{field}' must be a DataType, "
-                    f"got {type(dtype)}"
-                )
+            cls._validate_datatypes(schema_datatypes)
 
         # return
         return dtypes
 
-    @property
-    def sub_names(self) -> List[str]:
+    @classproperty
+    def sub_names(cls) -> List[str]:
         """Return the names of sub-schemas for multi-schema types."""
-        if self.schema_type == SchemaType.SINGLE:
+        if cls.schema_type == SchemaType.SINGLE:
             raise ValueError("Single-schema types do not have sub-schemas")
-        elif self.schema_type == SchemaType.MULTI:
-            return list(self.datatype_groups.keys())
+        elif cls.schema_type == SchemaType.MULTI:
+            return list(cls.datatype_groups.keys())
 
         raise ValueError("Invalid schema type")
 
@@ -196,19 +208,58 @@ class Schema(ABC):
             and not inspect.isdatadescriptor(attr)
         ]
 
-    def is_multi(self) -> bool:
+    @classmethod
+    def is_multi(cls) -> bool:
         """Check if the schema is a multi-schema type."""
-        return self.schema_type == SchemaType.MULTI
+        return cls.schema_type == SchemaType.MULTI
 
-    def is_single(self) -> bool:
+    @classproperty
+    def has_subschema_specified(cls_or_self) -> bool:
+        """
+        Check if this schema class/instance has a specific subschema selected.
+
+        For classes: Always returns False (no subschema can be specified at class level).
+        For instances of MULTI schemas: Returns True if a subschema key is set.
+        For instances of SINGLE schemas: Always returns False.
+
+        Returns:
+            bool: True if this is a MULTI schema instance with subschema key set.
+
+        """
+        # Check if it's an instance (has _subschema_key attribute from __init__)
+        if isinstance(cls_or_self, Schema):
+            return cls_or_self.is_multi() and cls_or_self._subschema_key is not None
+        # It's a class - subschema can't be specified at class level
+        return False
+
+    @classmethod
+    def is_single(cls) -> bool:
         """Check if the schema is a single-schema type."""
-        return self.schema_type == SchemaType.SINGLE
+        return cls.schema_type == SchemaType.SINGLE
 
-    def generate_subschema(self, key):
-        """Retrieve the subschema for the current schema type."""
-        if not self.is_multi():
-            raise ValueError("Cannot retrieve subschema for non-multi schema")
+    @classmethod
+    def get_subschema(cls, key: str) -> "Schema":
+        """
+        Create an instance representing a subset of a multi-schema.
 
-        assert key in self.sub_names, f"Key {key} does not define a subschema"
+        For MULTI schemas, this returns an instance that behaves as a SINGLE
+        schema containing only the columns for the specified sheet/sub-name.
 
-        return type(self)(subschema_key=key)
+        Args:
+            key: The name of the sub-schema (e.g., sheet name in XLSX)
+
+        Returns:
+            A Schema instance with datatypes filtered to the specified subset.
+
+        Raises:
+            ValueError: If called on a SINGLE schema or if key is invalid.
+        """
+        if not cls.is_multi():
+            raise ValueError("get_subschema() is only available for MULTI schemas")
+
+        if key not in cls.sub_names:
+            raise ValueError(
+                f"Key '{key}' does not define a subschema. Available: {cls.sub_names}"
+            )
+
+        return cls(subschema_key=key)
