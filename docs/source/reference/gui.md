@@ -7,10 +7,5 @@ Below you will find API reference pages for each module in the `algomancy_gui` p
   
 gui/configuration
 gui/styling
-gui/home
-gui/data
-gui/scenario
-gui/compare
-gui/overview
-gui/admin
+gui/pages
 ```
