@@ -164,8 +164,8 @@ class LocationSchema(Schema):
 
 
 example_schemas = [
-    WarehouseLayoutSchema,
-    ItemDataSchema,
+    WarehouseLayoutSchema(),
+    ItemDataSchema(),
     InventorySchema,
     EmployeeDataSchema,
     LocationSchema,
