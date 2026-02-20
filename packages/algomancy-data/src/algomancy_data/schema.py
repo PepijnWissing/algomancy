@@ -7,7 +7,7 @@ that all declared fields have a specified ``DataType``.
 """
 
 import inspect
-from abc import ABC, abstractmethod
+from abc import ABC
 from enum import StrEnum
 from typing import Dict, List
 
@@ -53,6 +53,9 @@ class Schema(ABC):
     _SCHEMA_TYPE: SchemaType | str = (
         "default_schema_type"  # expected to be overridden by subclasses
     )
+    _DATATYPES: Dict[str, DataType] | Dict[str, Dict[str, DataType]] | str = (
+        "default_datatypes"
+    )
 
     def __init__(self, subschema_key: str | None = None) -> None:
         self._subschema_key = subschema_key
@@ -95,21 +98,24 @@ class Schema(ABC):
     def file_name_with_extension(self) -> str:
         return self._FILENAME + "." + self._EXTENSION
 
-    @abstractmethod
-    def _defined_datatypes(
-        self,
-    ) -> Dict[str, DataType] | Dict[str, Dict[str, DataType]]:
-        raise NotImplementedError("Abstract method")
-
     @property
     def datatypes(self) -> Dict[str, DataType]:
+        # Check implementation
+        if self._DATATYPES == "default_datatypes":
+            raise NotImplementedError("_DATATYPES must be overridden by subclasses")
+
         if self.is_multi() and self._subschema_key is not None:
-            dtypes = self._defined_datatypes()[self._subschema_key]  # noqa
+            dtypes = self._DATATYPES[self._subschema_key]  # noqa
         elif self.is_single():
-            dtypes = self._defined_datatypes()
+            dtypes = self._DATATYPES
         else:
             raise ValueError("Method is only available for single schemas")
 
+        self._validate_datatypes(dtypes)
+
+        return dtypes
+
+    def _validate_datatypes(self, dtypes: dict[str, DataType]) -> None:
         # for single schema type: the return value must be Dict[str,DataType]
         dtypes: Dict[str, DataType]
         for field, dtype in dtypes.items():
@@ -120,16 +126,16 @@ class Schema(ABC):
                 f"Datatype for field '{field}' must be a DataType, got {type(dtype)}"
             )
 
-        # return
-        return dtypes
-
     @property
     def datatype_groups(self) -> Dict[str, Dict[str, DataType]]:
         if not self.is_multi():
             raise ValueError("Method is only available for multi schemas")
 
         # grab from implementation
-        dtypes = self._defined_datatypes()
+        if self._DATATYPES == "default_datatypes":
+            raise NotImplementedError("_DATATYPES must be overridden by subclasses")
+
+        dtypes = self._DATATYPES
 
         # for multi-schema type: the return value must be Dict[str,Dict[str,DataType]]
         dtypes: Dict[str, Dict[str, DataType]]
