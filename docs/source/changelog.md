@@ -1,7 +1,7 @@
 # Change log
 ## Prerelease
 
-## Added 
+### Added 
 - Documentation updates
 
 ## 0.4.3
