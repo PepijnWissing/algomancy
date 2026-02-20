@@ -12,6 +12,17 @@ from algomancy_scenario import Scenario
 
 
 class PlaceholderComparePage(BaseComparePage):
+    """
+    Placeholder content for the Compare page - Secondary Results Component
+
+    USAGE:
+        >>> config = AppConfiguration(
+        ...             ...
+        ...             compare_page="placeholder",
+        ...             ...
+        ...          )
+    """
+
     @staticmethod
     def create_side_by_side_content(s: Scenario, side: str) -> html.Div:
         return html.Div(
@@ -24,7 +35,21 @@ class PlaceholderComparePage(BaseComparePage):
 
     @staticmethod
     def register_callbacks():
+        """
+        PlaceholderComparePage does not have any callbacks.
+        """
         pass
+
+    @staticmethod
+    def create_compare_section(s1: Scenario, s2: Scenario) -> html.Div:
+        page = html.Div(
+            [
+                html.H5("This section compares selected scenarios"),
+                html.P(f"Scenario 1: {s1.tag}"),
+                html.P(f"Scenario 2: {s2.tag}"),
+            ]
+        )
+        return page
 
     @staticmethod
     def create_details_section(s1: Scenario, s2: Scenario) -> html.Div:
@@ -36,15 +61,4 @@ class PlaceholderComparePage(BaseComparePage):
             ]
         )
 
-        return page
-
-    @staticmethod
-    def create_compare_section(s1: Scenario, s2: Scenario) -> html.Div:
-        page = html.Div(
-            [
-                html.H5("This section compares selected scenarios"),
-                html.P(f"Scenario 1: {s1.tag}"),
-                html.P(f"Scenario 2: {s2.tag}"),
-            ]
-        )
         return page

@@ -134,20 +134,23 @@ system for analysis or further processing. In this case, the target format is a 
 4. **Load**: The loading phase involves writing the transformed data into a target system, such as a data warehouse, data lake, or analytics platform. The data should be organized in a way that supports efficient querying and analysis.
 
 A schematic representation of the ETL process is as follows:
-```mermaid
-graph LR
-    cfg{{Input<br>Configurations}} --> A[Extract];
-    file{{Files}} --> A;
-    A[Extract] --- df[(Data<br>Frames)];
-    df --> B[Validate];
-    B --- M{{Messages}};
-    M --> cr{Critical?};
-    cr-->|No|C[Transform];
-    cr --->|Yes|S[Stop];
-    df --> C;
-    C --- df2[(Updated<br>Data<br>Frames)];
-    df2 --> D[Load];
-    D --> E([DataSource]);
+
+```{eval-rst}
+.. mermaid::
+
+   flowchart LR
+       cfg{{Input<br>Configurations}} --> A[Extract]
+       file{{Files}} --> A
+       A[Extract] --- df[(Data<br>Frames)]
+       df --> B[Validate]
+       B --- M{{Messages}}
+       M --> cr{Critical?}
+       cr-->|No|C[Transform]
+       cr --->|Yes|S[Stop]
+       df --> C
+       C --- df2[(Updated<br>Data<br>Frames)]
+       df2 --> D[Load]
+       D --> E([DataSource])
 
 ```
 

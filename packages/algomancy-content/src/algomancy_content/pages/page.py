@@ -55,8 +55,12 @@ class BasePage(ABC):
         manage page state.
 
         Raises:
-            NotImplementedError: This is an abstract method and must be implemented
-                by subclasses.
+            NotImplementedError: Abstract method must be implemented
+
+        Note:
+            If your page does not require any additional callbacks, you can implement
+            the `register_callbacks` method as a pass statement. Not offering any
+            implementation will cause the app to fail during callback registration.
 
         Example:
             >>> @staticmethod
@@ -112,8 +116,7 @@ class BaseHomePage(BasePage, ABC):
             html.Div: A Dash Div component containing the home page layout and content.
 
         Raises:
-            NotImplementedError: This is an abstract method and must be implemented
-                by subclasses.
+            NotImplementedError: Abstract method must be implemented
 
         Example:
             >>> @staticmethod
@@ -181,8 +184,7 @@ class BaseDataPage(BasePage, ABC):
             html.Div: A Dash Div component containing the data page layout and content.
 
         Raises:
-            NotImplementedError: This is an abstract method and must be implemented
-                by subclasses.
+            NotImplementedError: Abstract method must be implemented
 
         Example:
             >>> @staticmethod
@@ -248,8 +250,7 @@ class BaseScenarioPage(BasePage, ABC):
             html.Div: A Dash Div component containing the scenario page layout and content.
 
         Raises:
-            NotImplementedError: This is an abstract method and must be implemented
-                by subclasses.
+            NotImplementedError: Abstract method must be implemented
 
         Example:
             >>> @staticmethod
@@ -337,8 +338,7 @@ class BaseComparePage(BasePage, ABC):
                 side of the comparison.
 
         Raises:
-            NotImplementedError: This is an abstract method and must be implemented
-                by subclasses.
+            NotImplementedError: Abstract method must be implemented
 
         Example:
             >>> @staticmethod
@@ -372,8 +372,7 @@ class BaseComparePage(BasePage, ABC):
             html.Div: A Dash Div component containing the comparison content.
 
         Raises:
-            NotImplementedError: This is an abstract method and must be implemented
-                by subclasses.
+            NotImplementedError: Abstract method must be implemented
 
         Example:
             >>> @staticmethod
@@ -415,8 +414,7 @@ class BaseComparePage(BasePage, ABC):
             html.Div: A Dash Div component containing the detailed comparison content.
 
         Raises:
-            NotImplementedError: This is an abstract method and must be implemented
-                by subclasses.
+            NotImplementedError: Abstract method must be implemented
 
         Example:
             >>> @staticmethod
@@ -498,8 +496,7 @@ class BaseOverviewPage(BasePage, ABC):
             html.Div: A Dash Div component containing the overview page layout and content.
 
         Raises:
-            NotImplementedError: This is an abstract method and must be implemented
-                by subclasses.
+            NotImplementedError: Abstract method must be implemented
 
         Example:
             >>> @staticmethod

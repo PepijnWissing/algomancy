@@ -9,7 +9,7 @@ from algomancy_data.schema import SchemaType
 
 
 class PlaceholderSchema(Schema):
-    """Schema class that holds column names for placeholder data"""
+    """Schema class to be used as a placeholder"""
 
     _FILENAME = "placeholder_data"
     _EXTENSION = FileExtension.CSV
