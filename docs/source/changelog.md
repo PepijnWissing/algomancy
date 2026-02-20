@@ -1,4 +1,9 @@
 # Change log
+## Prerelease
+
+## Added 
+- Documentation updates
+
 ## 0.4.3
 _Released on 18-2-2026_
 
