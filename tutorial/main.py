@@ -6,9 +6,9 @@ creates the Dash application, and starts the web server.
 """
 
 from algomancy_data import DataSource
-from algomancy_gui.appconfiguration import AppConfiguration
+from algomancy_gui.configuration.appconfiguration import AppConfiguration
 from algomancy_gui.gui_launcher import GuiLauncher
-from algomancy_gui.stylingconfigurator import (
+from algomancy_gui.configuration.stylingconfigurator import (
     StylingConfigurator,
     LayoutSelection,
     ColorConfiguration,

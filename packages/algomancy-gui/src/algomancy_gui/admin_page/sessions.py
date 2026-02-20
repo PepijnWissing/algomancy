@@ -6,7 +6,7 @@ from ..componentids import (
     SESSION_CREATOR_MODAL,
     NEW_SESSION_NAME,
 )
-from ..stylingconfigurator import StylingConfigurator
+from algomancy_gui.configuration.stylingconfigurator import StylingConfigurator
 
 
 def create_new_session_window() -> dbc.Modal:

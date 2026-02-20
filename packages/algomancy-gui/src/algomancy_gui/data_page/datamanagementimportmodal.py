@@ -10,10 +10,10 @@ from algomancy_data import ValidationError, DataManager
 from algomancy_scenario import ScenarioManager
 from .filenamematcher import match_file_names
 
-from ..cqmloader import cqm_loader
-from ..defaultloader import default_loader
-from algomancy_gui.managergetters import get_scenario_manager
-from ..settingsmanager import SettingsManager
+from algomancy_gui.loaders.cqmloader import cqm_loader
+from algomancy_gui.loaders.defaultloader import default_loader
+from algomancy_gui.managers.managergetters import get_scenario_manager
+from algomancy_gui.managers.settingsmanager import SettingsManager
 from ..componentids import (
     DM_IMPORT_MODAL_CLOSE_BTN,
     DM_IMPORT_MODAL,
@@ -37,6 +37,7 @@ Modal component for loading data files into the application.
 This module provides a modal dialog that allows users to upload CSV files,
 view file mapping information, and create new datasets from the uploaded files.
 """
+
 
 def data_management_import_modal(sm: ScenarioManager, themed_styling):
     """
@@ -83,9 +84,7 @@ def data_management_import_modal(sm: ScenarioManager, themed_styling):
                         dbc.Collapse(
                             children=[
                                 dbc.Card(
-                                    dbc.CardBody(
-                                        id=DM_IMPORT_MODAL_FILEVIEWER_CARD
-                                    ),
+                                    dbc.CardBody(id=DM_IMPORT_MODAL_FILEVIEWER_CARD),
                                     className="uploaded-files-card",
                                 ),
                                 dbc.Input(
@@ -174,14 +173,17 @@ def toggle_modal_load(open_clicks, close_clicks, is_open):
         return not is_open
     return is_open
 
+
 def is_character_safe(value: str) -> bool:
     return bool(re.fullmatch(r"[A-Za-z0-9_-]+", value))
+
 
 def name_exists(value: str, session_id: str) -> bool:
     sm: ScenarioManager = get_scenario_manager(get_app().server, session_id)
     dataset_names = sm.get_data_keys()
     is_invalid = value in dataset_names
     return is_invalid
+
 
 @callback(
     [
@@ -191,29 +193,29 @@ def name_exists(value: str, session_id: str) -> bool:
         Output(DM_IMPORT_SUBMIT_BUTTON, "color"),
     ],
     Input(DM_IMPORT_MODAL_NAME_INPUT, "value"),
-    State(ACTIVE_SESSION, "data")
+    State(ACTIVE_SESSION, "data"),
 )
 def dataset_name_invalid(value, session_id: str):
     """
-        In case of an invalid dataset name, the input field for dataset name gets a red border, and a red error message appears below the field
-        This also disables the use of the Import button.
+    In case of an invalid dataset name, the input field for dataset name gets a red border, and a red error message appears below the field
+    This also disables the use of the Import button.
 
-        Checks dataset_name validity via the below three scenarios:
-        1) user input is empty
-        2) user input contains characters that are not alphanumeric, hyphens or underscores
-        3) user input is already in use for another saved dataset
-        Feedback is displayed and the import button is made inactive, until none of the scenarios hold.
+    Checks dataset_name validity via the below three scenarios:
+    1) user input is empty
+    2) user input contains characters that are not alphanumeric, hyphens or underscores
+    3) user input is already in use for another saved dataset
+    Feedback is displayed and the import button is made inactive, until none of the scenarios hold.
 
-        Args:
-            value: String containing user input for dataset name
-            session_id: ID of the active session
+    Args:
+        value: String containing user input for dataset name
+        session_id: ID of the active session
 
-        Returns:
-            tuple: (invalid, feedback_children) where:
-            - invalid: Boolean indicating whether feedback will be shown
-            - feedback_children: String containing feedback message
-            - disabled: Boolean indicating whether the import button will be disabled
-            - color: String describing the color of the import button (green if enabled, grey if disabled)
+    Returns:
+        tuple: (invalid, feedback_children) where:
+        - invalid: Boolean indicating whether feedback will be shown
+        - feedback_children: String containing feedback message
+        - disabled: Boolean indicating whether the import button will be disabled
+        - color: String describing the color of the import button (green if enabled, grey if disabled)
     """
     # No dataset_name defined yet
     if not value:
@@ -230,11 +232,14 @@ def dataset_name_invalid(value, session_id: str):
     is_invalid = name_exists(value, session_id)
 
     if is_invalid:
-        feedback_msg = "This is not a valid dataset name. A dataset with this name already exists."
+        feedback_msg = (
+            "This is not a valid dataset name. A dataset with this name already exists."
+        )
         return is_invalid, feedback_msg, True, "secondary"
 
     # Valid Dataset_name
     return False, "", False, "primary"
+
 
 def render_file_mapping_table(mapping):
     """
@@ -267,6 +272,7 @@ def render_file_mapping_table(mapping):
         },
     )
     return html.Div([html.Strong("File Mapping:"), table])
+
 
 @callback(
     [
@@ -347,7 +353,9 @@ def show_uploaded_filename(filename, session_id: str):
     ],
     prevent_initial_call=True,
 )
-def process_imports(n_clicks, contents, filenames, dataset_name, invalid_dataset_name, session_id: str):
+def process_imports(
+    n_clicks, contents, filenames, dataset_name, invalid_dataset_name, session_id: str
+):
     """
     Processes uploaded files when the import submit button is clicked, except when dataset_name is invalid.
 
@@ -363,7 +371,13 @@ def process_imports(n_clicks, contents, filenames, dataset_name, invalid_dataset
         Tuple containing updated dropdown options, modal state, and alert messages
     """
     # Guard clause for empty inputs
-    if not n_clicks or not contents or not filenames or not dataset_name or invalid_dataset_name is True:
+    if (
+        not n_clicks
+        or not contents
+        or not filenames
+        or not dataset_name
+        or invalid_dataset_name is True
+    ):
         return no_update, no_update, "", False, "", False, ""
 
     # Get scenario manager from app context

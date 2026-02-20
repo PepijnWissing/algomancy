@@ -3,20 +3,20 @@
   
  
 ```{eval-rst}
-.. autoclass:: algomancy_gui.stylingconfigurator.StylingConfigurator
+.. autoclass:: algomancy_gui.configuration.stylingconfigurator.StylingConfigurator
    :members:
    :undoc-members:
    :member-order: bysource
 ```
 
 ```{eval-rst}
-.. autoclass:: algomancy_gui.stylingconfigurator.ColorConfiguration
+.. autoclass:: algomancy_gui.configuration.stylingconfigurator.ColorConfiguration
    :members: reduce_color_opacity, linear_combination_hex
    :member-order: bysource
 ```
 
 ```{eval-rst}
-.. autoclass:: algomancy_gui.stylingconfigurator.LayoutSelection
+.. autoclass:: algomancy_gui.configuration.stylingconfigurator.LayoutSelection
    :members:
    :undoc-members:
    :show-inheritance:
@@ -24,7 +24,7 @@
 ```
 
 ```{eval-rst}
-.. autoclass:: algomancy_gui.stylingconfigurator.CardHighlightMode
+.. autoclass:: algomancy_gui.configuration.stylingconfigurator.CardHighlightMode
    :members:
    :undoc-members:
    :show-inheritance:
@@ -32,7 +32,7 @@
 ```
 
 ```{eval-rst}
-.. autoclass:: algomancy_gui.stylingconfigurator.ButtonColorMode
+.. autoclass:: algomancy_gui.configuration.stylingconfigurator.ButtonColorMode
    :members:
    :undoc-members:
    :show-inheritance:

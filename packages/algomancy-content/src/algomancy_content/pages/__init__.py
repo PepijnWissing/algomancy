@@ -1,4 +1,4 @@
-from .page import (
+from algomancy_gui.page import (
     BaseHomePage,
     BaseDataPage,
     BaseScenarioPage,
