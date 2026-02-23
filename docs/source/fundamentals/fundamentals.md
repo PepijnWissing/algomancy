@@ -13,8 +13,8 @@ Key features and design goals include:
 - **Flexible Frontend**: Built on Plotly Dash, the frontend provides a robust scaffolding for navigation and state management while remaining highly customizable for domain-specific visualizations.
 
 For a deeper dive into the principles and components that make up Algomancy, explore the following sections:
-- [Architecture](scenario-architecture-ref): A detailed look at the `DataSource`, `Algorithm`, `Scenario`, and `KPI` components.
-- [Frontend](fundamentals-frontend-ref): An overview of the web interface and its functional areas.
+- [Scenario architecture](scenario-architecture-ref): A detailed look at the `DataSource`, `Algorithm`, `Scenario`, and `KPI` components.
+- [Graphical interface](fundamentals-frontend-ref): An overview of the web interface and its functional areas.
 
 ```{toctree}
 :maxdepth: 1

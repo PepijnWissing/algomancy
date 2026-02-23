@@ -3,32 +3,32 @@
 This document describes the data engine and data sources used in the Algomancy framework. We start with an overview of the 
 underlying data container, the `BaseDataSource` class, and then discuss schemas and the ETL process.
 
-## Overview
-
-The `BaseDataSource` class (and its concrete implementation `DataSource`) provides a standardized interface for managing data in Python projects. While `DataSource` is optimized for tabular data using pandas DataFrames, `BaseDataSource` serves as a generic foundation for any domain-specific data model.
-
-A `DataSource` instance contains all necessary information to be processed by an `Algorithm` to produce a `ScenarioResult`. It supports serialization to and from JSON and Parquet formats, enabling easy persistence and transfer of experimental states.
-
 ## Description
 
-The framework distinguishes between the abstract `BaseDataSource` and the table-oriented `DataSource`:
+The abstract `BaseDataSource` class serves as a generic foundation for any domain-specific data model. It contains the
+core identity of a data object, including its unique ID, name, and classification (Master vs. Derived), as well as 
+internal behavior for data management.
 
-- **`BaseDataSource`**: An abstract base class that defines the core identity of a data object, including its unique ID, name, and classification (Master vs. Derived).
-- **`DataSource`**: A concrete subclass that stores data in a collection of pandas DataFrames (the `tables` attribute).
+The `DataSource` class is a reasonably generic, table-oriented implementation of `BaseDataSource` for tabular 
+data using pandas DataFrames. A `DataSource` instance contains all necessary information to be processed by an `Algorithm`
+to produce a `ScenarioResult`. It supports serialization to and from JSON and Parquet formats, enabling easy persistence 
+and transfer of experimental states.
 
-### Data Classification
-The `ds_type` attribute of a `DataSource` indicates its role in the experimentation lifecycle. Values are members of the `DataClassification` enum:
+In an Algomancy app, data can exist in either one of two states:
+- Master data: Immutable data tied directly to source files. 
+- Derived data: Data derived from master data that may be modified. 
 
-| Enum Value        | Description                                                                              |
-|-------------------|------------------------------------------------------------------------------------------|
-| `MASTER_DATA`     | Immutable data tied directly to source files.                                            |
-| `DERIVED_DATA`    | Data derived from master data that may be modified during an experiment.                 |
-| `DUMMY_DATA`      | Temporary data typically used for testing or demonstration.                              |
+Data is assigned the `MASTER_DATA` classification if it is constructed by an ETL process or saved by the `save` usecase.
+The `derive` usecase creates a copy of an existing dataset and assigns it the classification `DERIVED_DATA`. Data that 
+was serialized (`download`-ed) and deserialized (`upload`-ed) maintains its classification. 
 
-### Usage
+:::{dropdown} {octicon}`eye` Example usage
+:color: success
 A standard `DataSource` stores data in its `tables` attribute. The following example demonstrates basic usage:
 
-```python
+```{code-block} python
+:caption: Example usage of DataSource
+:linenos:
 from algomancy_data import DataSource, DataClassification
 import pandas as pd
 
@@ -42,6 +42,7 @@ ds.add_table('my_table', df)
 # Retrieve a table
 retrieved_df = ds.get_table('my_table') 
 ```
+:::
 
 ```{note}
 While you can create `DataSource` instances directly, they are typically produced by an {ref}`ETL process<etl-ref>`.
@@ -54,10 +55,10 @@ For most projects, you should create a custom subclass of `BaseDataSource` (or `
 To implement a custom data source:
 1. **Subclass `BaseDataSource`:** Inherit from the base class.
 2. **Implement Serialization:** Override `to_json` and `from_json` to handle your custom attributes.
-3. **Handle Derivation:** Optionally override `_post_derive()` to perform logic when data is branched from Master to Derived.
+3. (_Optional_) Handle Derivation: override `_post_derive()` to perform logic when data is branched from Master to Derived.
 
-Example of a custom data source:
-
+:::{dropdown} {octicon}`eye` Example of a custom data source
+:color: success
 ```python 
 from algomancy_data import BaseDataSource, DataClassification
 from dataclasses import dataclass
@@ -88,6 +89,6 @@ class MyCustomSource(BaseDataSource):
         locations = {k: Location(**v) for k, v in data["locations"].items()}
         return cls(data["ds_type"], data["name"], locations)
 ```
-
+:::
 
 For more details on specific classes, see the {ref}`API reference<datasource-ref>`.

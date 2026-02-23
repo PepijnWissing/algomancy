@@ -113,19 +113,13 @@ The `ExtractionSequence` orchestrates one or more `Extractor`s. When the ETL pip
 `ExtractionSequence.data`, which triggers the extraction process for all registered extractors and aggregates the 
 results into a single dictionary of `DataFrame`s.
 
-### Anatomy of the related classes
+The `Extractor` is an abstract base class and can be subclassed to extract custom data formats, if necessary. 
+It comes in two flavours:
+- `SingleExtractor`: assumes that the data file contains a single table or sheet. 
+- `MultiExtractor`: is used when the data source contains multiple tables or sheets, and the schema defines how to 
+    map these to individual `DataFrame`s.
 
-The `ExtractionSequence` has the following exposed attributes and methods:
-
-| Attribute / Method   | Type / Signature                           | Description                                                                 |
-|----------------------|--------------------------------------------|-----------------------------------------------------------------------------|
-| `completed`          | `bool`                                     | `True` if the extraction has been run, `False` otherwise                    |
-| `data`               | `Dict[str, pd.DataFrame]`                  | Returns the extracted data, running the extraction if it hasn't been yet.   |
-| `add_extractor()`    | `extractor: de.Extractor -> None`          | Adds an `Extractor` to the sequence.                                        |
-| `add_extractors()`   | `extractors: List[de.Extractor] -> None`   | Adds a list of `Extractor`s to the sequence.                                |
-| `run_extraction()`   | `None -> Dict[str, pd.DataFrame]`          | Executes all extractors and returns the aggregated data.                    |
-
-The `Extractor` is an abstract base class. The framework provides several concrete implementations for common file types:
+The framework provides several concrete implementations for common file types, which should suffice for most use cases.
 
 | Extractor             | Description                                                                 |
 |-----------------------|-----------------------------------------------------------------------------|
@@ -141,7 +135,7 @@ You receive a dictionary of `File` objects (keyed by their logical name) and use
 
 Consider the following example:
 
-:::{dropdown} {octicon}`eye` Example: Schema
+:::{dropdown} {octicon}`eye` Example: creating an extraction sequence
 :color: success
 TODO Explain example 
 ```python
@@ -178,42 +172,16 @@ aspect of the data. The `Validator` class has a single exposed method, `validate
 `DataFrame`s as input. The `validate()` method should return a list of `ValidationMessage`s, which are used to document 
 any errors that occur during validation.
 
-`ValidationSequence`, in turn, is simply a wrapper that executes a list of `Validator`s and compiles the results. 
-Afterwards,the `ValidationSequence` can be used to check whether any of the `ValidationMessage`s are of `CRITICAL` 
-severity, in which case the ETL process is stopped. 
+`Validators` work with a message-based system that allows the entire validation process to be run before reporting. 
+This system is based on the `ValidationMessage` class, which has two main attributes: `severity` and `message`. 
+`CRITICAL` messages will stop the ETL process; other messages (`INFO`, `WARNING`, and `ERROR`) mostly serve as 
+informational messages, and are styled differently in the logging section of the dashboard. 
 
-### Anatomy of the related classes. 
-We treat the related classes from top to bottom.
+```{important} 
+If any message whose `severity` is `CRITICAL` is raised during validation, the ETL process is terminated after validation.
+```
 
-The `ValidationSequence` has the following exposed attributes and methods:
-
-| Attribute / Method   | Type / Signature                                                      | Description                                                                                                          |
-|----------------------|-----------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------|
-| `completed`          | `bool`                                                                | `True` if the validation has been run, `False` otherwise                                                             |
-| `messages`           | `List[de.ValidationMesssage]`                                         | List of messages that has been created by the `Validator`s in the sequence                                           |
-| `is_valid`           | `bool`                                                                | `True` if the sequence has been run and no messages have severity `CRITICAL`, `False` otherwise                      |
-| `add_validator()`    | `validator: de.Validator -> None`                                     | Adds a `Validator` to the sequence.                                                                                  |
-| `add_validators()`   | `validators: List[de.Validator] -> None`                              | Adds a list of `Validator`s to the sequence                                                                          | 
-| `run_validation()`   | `data: Dict[str, pd.DataFrame] -> (bool, List[de.ValidationMessage])` | Validates the data. Returns a list of `ValidationMessage`s and a `bool` that is `True` if no messages are `CRITICAL` |
-
-
-The `Validator` has the following exposed attributes and methods:
-
-| Attribute / Method | Type / Signature                                              | Description                                                                                                                                                 |
-|--------------------|---------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `messages`         | `List[de.ValidationMessage]`                                  | List of messages that have been created by the `Validator`. Flushes buffer before returning the list.                                                       |
-| `add_message()`    | `message: de.ValidationMessage -> None`                       | Adds a `ValidationMessage` to the list of messages.                                                                                                         |
-| `buffer_message()` | `message: de.ValidationMessage -> None`                       | Adds a `ValidationMessage` to an internal buffered list of messages.                                                                                        |
-| `flush_buffer()`   | `sucess_message: de.ValidationMessage -> None`                | Adds all of the messages in the buffered list to the persistent list. If the buffered list was empty, add `success_message` to the persistent list instead. |
-| `validate()`       | `data: Dict[str, pd.DataFrame] -> List[de.ValidationMessage]` | Validates the data. Returns a list of `ValidationMessage`s.  *Must be implemented by the user*                                                              |
-
-
-The `ValidationMessage` has the following exposed attributes and methods:
-
-| Attribute / Method | Type / Signature           | Description                                                                    |
-|--------------------|----------------------------|--------------------------------------------------------------------------------|
-| `severity`         | `de.ValidationSeverity`    | The severity of the message. Can be `INFO`, `WARNING`, `ERROR`, or `CRITICAL`  |
-| `message`          | `str`                      | The message text.                                                              |
+`ValidationSequence` is simply a wrapper that executes a list of `Validator`s and compiles the results. 
 
 ### Using validators
 The user will typically need to implement their own validators, as most data validation requires a decent bit of context. 
@@ -249,36 +217,42 @@ implement the `validate()` method, which is used to validate the data. Consider 
 
 :::{dropdown} {octicon}`eye` Example: validator
 :color: success
-TODO Explain example 
+The below example is a basic validator, which simply checks that each dataframe is not empty; the actual implementation 
+depends mostly on the extracted data, in context.
 ```python
 import pandas as pd
 
-import algomancy_data as de
+from algomancy_data import (Validator, 
+                            ValidationSeverity, 
+                            ValidationMessage)
 from typing import Dict, List
 
-class ExtractionSuccessVerification(de.Validator):
+class ExtractionSuccessVerification(Validator):
     """ Checks that the extraction of each single dataframe was successful. """
     def __init__(self) -> None:
         super().__init__()
     
-    def validate(self, data: Dict[str, pd.DataFrame]) -> List[de.ValidationMessage]:
+    def validate(self, data: Dict[str, pd.DataFrame]) -> List[ValidationMessage]:
         """ The necessary validation logic. """
         
         # check that each dataframe is not empty
         for name, df in data.items():
             if df.empty:
-                self.buffer_message(de.ValidationSeverity.CRITICAL, f"Extraction of {name} returned empty DataFrame.")
+                self.buffer_message(
+                  ValidationSeverity.CRITICAL, 
+                  f"Extraction of {name} returned empty DataFrame."
+                )
                 
         # flush the buffer and return the messages
         self.flush_buffer(success_message="All dataframes were extracted successfully.")
         return self.messages
 ```
+An important point to note: the user can either use the `add_message()` or `buffer_message()` methods to add messages 
+to the list of messages. The `flush_buffer()` method is used to add all of the messages in the buffered list to the 
+persistent list. If the buffered list was empty, add `success_message` to the persistent list instead. This is a 
+practical way to ensure that the `ValidationSequence` always returns a list of messages upon completion, for progress 
+tracking. 
 :::
-
-The above example is a basic validator, which simply checks that each dataframe is not empty; the actual implementation 
-depends mostly on the extracted data, in context. Two points to note:
-- The `validate()` method should return a list of `ValidationMessage`s, which are used to document any errors that occur during validation. `CRITICAL` messages will stop the ETL process; other messages mostly serve as informational messages, and are styled differently in the logging section of the dashboard. 
-- The user can either use the `add_message()` or `buffer_message()` methods to add messages to the list of messages. The `flush_buffer()` method is used to add all of the messages in the buffered list to the persistent list. If the buffered list was empty, add `success_message` to the persistent list instead. This is a practical way to ensure that the `ValidationSequence` always returns a list of messages upon completion, for progress tracking. 
 
 
 ## Transformers
@@ -302,14 +276,16 @@ Several ready-to-use, prebuilt transformers are provided:
 - **CleanTransformer**: Drops rows with missing values and lowercases/strips all column names.
 - **JoinTransformer**: Merges/join two tables on a given column and adds the result under a new table name.
 
-Example usage of creating a transformer in the factory:
-:::{dropdown} {octicon}`eye` Example: transformer usage
+Example: creating a transformation sequence in the factory:
+:::{dropdown} {octicon}`eye` Example: transformation sequence usage
 :color: success
-TODO Explain
+
+The `ETLFactory` requires the implementation of `create_transformation_sequence()`, which returns a `TransformationSequence` containing all the transformers to be applied.
+
 ```{code-block} python
-:caption: Implementation of create_transformers
+:caption: Implementation of create_transformation_sequence
 :linenos:
-from algomancy_data import ETLFactory, Transformer, CleanTransformer
+from algomancy_data import ETLFactory, TransformationSequence, CleanTransformer
 from typing import Dict, List
 
 
@@ -317,13 +293,13 @@ from typing import Dict, List
 class MyETLFactory(ETLFactory):
     ...
 
-    def create_transformers(self) -> list[Transformer]:
-        """ Create and return a list of transformers to be applied in sequence. """
-        transformers = []
+    def create_transformation_sequence(self) -> TransformationSequence:
+        """ Create and return a TransformationSequence. """
+        ts = TransformationSequence(logger=self.logger)
 
-        transformers.append(CleanTransformer(logger=self.logger))
+        ts.add_transformer(CleanTransformer(logger=self.logger))
 
-        return transformers
+        return ts
 ```
 :::
 
@@ -334,12 +310,13 @@ implement the `transform()` method, which is used to transform the data. Conside
 :::{dropdown} {octicon}`eye` Example: transformer
 :color: success
 TODO Explain example 
-```python
+```{code-block} python
+:caption: The CleanTransformer
+:linenos: 
 import pandas as pd
-from src import algomancy as de
+from algomancy_data import Transformer
 
-
-class CleanTransformer(de.Transformer):
+class CleanTransformer(Transformer):
     def __init__(self, logger=None) -> None:
         super().__init__(name="CleanTransformer", logger=logger)
 
@@ -355,14 +332,9 @@ class CleanTransformer(de.Transformer):
 
 ## Loader
 
-The Loader is responsible for the final step of the ETL process: persisting or handing off the transformed data to its destination format, which is a `DataSource` or a class derived from `DataSource`.
-This means combining the (possibly multiple) DataFrames to create some number of persistent object, to be stored in the `DataSource` model.
-
-The `Loader` base class defines the required method:
-
-| Attribute / Method     | Type / Signature                                                                                   | Description                                                              |
-|------------------------|----------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------|
-| `load()`               | `(name: str, data: Dict[str, pd.DataFrame], messages: List[ValidationMessage], ...) -> DataSource` | Combines the transformed data and completes loading into a `DataSource`. |
+The Loader is responsible for the final step of the ETL process: persisting or handing off the transformed data to its 
+destination format, which is a `DataSource` or a class derived from `BaseDataSource`. This means combining the (possibly 
+multiple) DataFrames to create some number of persistent object, to be stored in the `DataSource` model.
 
 The `Loader` is called at the very end of the ETL pipeline, after validation and transformation are complete.
 

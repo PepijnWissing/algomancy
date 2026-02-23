@@ -49,7 +49,7 @@ type-safe way that the framework can automatically render in the GUI with an app
 instance creates its own parameter set instance, which is passed to the algorithm during initialization. 
 
 ### Defining Parameters
-You define a parameter set by subclassing `BaseParameterSet`. 
+You define a parameter set by subclassing `BaseParameterSet` and adding the parameters in the `__init__` method. 
 
 ```{important}
 After construction, the parameter set is _locked_ and no more parameters can be added. In other words: the
@@ -99,16 +99,25 @@ class MyParams(BaseParameterSet):
 | `IntervalParameter`   | A time range (start and end).                    | `IntervalParameter(name="window")`           |
 
 
-## KPIs: Measuring Performance
+## KPIs
 
-**Key Performance Indicators (KPIs)** are used to evaluate the output of an algorithm. Like algorithms, they follow a class-based pattern by subclassing `BaseKPI`.
+**Key Performance Indicators (KPIs)** are used to evaluate the output of an algorithm. 
+Like algorithms, they follow a class-based pattern by subclassing `BaseKPI`. 
 
 ### Implementing a KPI
-Each KPI must implement the `compute(result)` method, which extracts a numeric value from the `ScenarioResult`.
+Each KPI must implement the `compute(result)` method, which extracts a numeric value from the `ScenarioResult`. 
 
-```python
+:::{dropdown} {octicon}`eye` Example
+:color: success
+Two things to note:
+- The `__init__` method is used to define how the KPI is displayed and compared  
+- The `compute` method must be implemented, and is used to extract the metric from the result
+
+```{code-block} python
+:caption: Example KPI implementation
+:linenos:
 from algomancy_scenario import BaseKPI, ImprovementDirection
-from algomancy_utils.unit import QUANTITIES, BaseMeasurement
+from algomancy_utils import QUANTITIES, BaseMeasurement
 
 class TotalCostKPI(BaseKPI):
     def __init__(self):
@@ -120,11 +129,11 @@ class TotalCostKPI(BaseKPI):
         )
 
     def compute(self, result: ScenarioResult) -> float:
-        # Extract the metric from the raw algorithm result
-        return result.data.get("cost", 0.0)
+        # Extract the metric from the result
+        return sum([trip.cost for trip in result.trips])
 ```
-
+:::
 ### Threshold KPIs
 KPIs can also include a `threshold`. If the computed value meets the threshold (based on `better_when`), the KPI is marked as a "success" (e.g., with a checkmark in the GUI).
 
-For more details, see the {ref}`API reference<parameters-ref>`.
+For more details, see the [API reference](kpi-ref).

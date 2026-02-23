@@ -1,5 +1,5 @@
 (fundamentals-frontend-ref)=
-# Web application
+# Graphical interface
 
 ## Pages
 The frontend is built using **Plotly Dash** and is organized into several functional areas:
