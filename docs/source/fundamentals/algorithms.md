@@ -1,160 +1,130 @@
-# Templates
+(fundamentals-algorithm-ref)=
+# Algorithms and Parameters
 
-Parts of the framework are reliant on user-defined templates. 
-Conceptually, the user defines a mold, which may be used internally to create an object of a certain type.
-For example, an algorithm template may define a set of parameters, which are then used to create
+Algorithms are the core logic of the framework, transforming a `DataSource` into a `ScenarioResult`. To ensure flexibility and ease of use, the framework uses a class-based approach for algorithms and a type-safe system for their parameters.
 
+## BaseAlgorithm
 
-## Algorithm Templates
+Every algorithm in the framework must subclass `BaseAlgorithm`. This class provides the structure for execution, parameter management, and progress tracking.
 
-Oftentimes, an Algorithm will be dependent on a few key parameters to define its exact behavior. 
-To accommodate this, the framework provides a template mechanism.
-Specifically, a set of parameters is defined, which may be set from the front-end when the end-user creates a new Scenario.
-These parameters are passed to a 'factory' method, which creates the actual Algorithm.
-This means that:
-> An `Algorithm` has a rigid set of parameters, though many `Algorithms` may share the same `AlgorithmTemplate`.
+### Key Components of an Algorithm:
+1.  **`run(data)`**: The main method where the logic resides. It takes a `DataSource` and returns a `ScenarioResult`.
+2.  **`initialize_parameters()`**: A static method that returns a default instance of the algorithm's parameter set. This is used by the GUI to generate the input form.
+3.  **`set_progress(value)`**: A method to report the execution status (0-100%) back to the framework.
 
-Creating an AlgorithmTemplate consists effectively of two components:
-1. A set of parameters
-2. A main method
+Example of a basic algorithm:
 
-Indeed, the actual creation of the AlgorithmTemplate is simply a matter of combining these two components. Consider the following example:
-```python
-slow_sample_algorithm_template = AlgorithmTemplate(
-    name="Slow",
-    param_type=SlowSampleAlgorithmParams,
-    main_method_template=slow_sample_algorithm,
-)
-```
+:::{dropdown} {octicon}`eye` Example
+:color: success
+```{code-block} python
+:caption: A basic algorithm
+:linenos: 
 
-### Algorithm Parameters
-The `AlgorithmParameters` class is, in practice, a set of expected parameter definitions.
-It contains the description of a collection of parameters that is (joinly) required to create an `Algorithm` from an `AlgorithmTemplate`
-Typically, the user will create a custom parameter definition for each `AlgorithmTemplate`. This is defined by subclassing `AlgorithmParameters`.
-Consider the following example:
-
-```python
-# Define the parameters for the algorithm
-class SampleAlgorithmParams(AlgorithmParameters):
-    def __init__(self, name: str = "Sample") -> None:
-        super().__init__(name=name)
-
-        self.add_parameters(
-            [FloatParameter(name="start_time", minvalue=9.0, maxvalue=17.0)],
-            [FloatParameter(name="end_time", minvalue=9.0, maxvalue=17.0)]
-        )
-
-    @property
-    def start_time(self) -> float:
-        return self._parameters["start_time"].value
-    
-    @property
-    def end_time(self) -> float:
-        return self._parameters["end_time"].value
-
-    def validate(self):
-        assert self.start_time < self.end_time, "Start time must be before end time"
-```
-
-At a bare minimum, the subclass must implement the `__init__` method, which defines the parameters. 
-
-The `.validate()` should be used to check parameter values which validity arises from their interaction with each other (e.g., `start_time < end_time`).
-Each parameter has individual validation methods, depending on the parameter type, to check e.g., max/min values.
-
-It is recommended to add property definitions for easy access to the parameter values, as the type wrappers make the parameter values a bit unfortunate to reach. 
-In the example below, we add a property definition for the `start_time` parameter. 
-This allows us to access the parameter value as `parameters.start_time`.
-If the property is not defined, the parameter value may be accessed (from outside the class) as `parameters.get_values()["duration"].start_time`.
-
-
-Currently, the framework supports only single-value parameters. 
-To make sure that each parameter may be input appropriately (e.g., a toggle switch for boolean parameters), the parameters are wrapped in specific classes, as outlined in the table below.    
-
-| Parameter Type   | Description                                                                 | Example                                                         |
-|------------------|-----------------------------------------------------------------------------|-----------------------------------------------------------------|
-| IntegerParameter | Numeric parameter with integer values. <br>Has a minimum and maximum value. | `IntegerParameter(name="duration", minvalue=1, maxvalue=60)`    |
-| FloatParameter   | Numeric parameter with float values. <br>Has a minimum and maximum value.   | `FloatParameter(name="threshold", minvalue=0.0, maxvalue=1.0)`  |
-| BooleanParameter | Boolean parameter.                                                          | `BooleanParameter(name="enable_feature")`                       |
-| StringParameter  | String parameter.                                                           | `StringParameter(name="username")`                              |
-| EnumParameter    | String parameter with a set of predefined values.                           | `EnumParameter(name="color", options=["red", "green", "blue"])` |
-
-Note that the class wrappers also allow for some natural validation of the parameter values. For example, the `IntegerParameter` class will ensure that the value is within the specified range.
-
-
-
-
-### Main method
-```python
-# Define the main method of the algorithm
-def slow_sample_algorithm(
-        data: DataSource, parameters: SlowSampleAlgorithmParams, set_progress: Callable[[float], None],
-) -> ScenarioResult:
-    # fetch parameter
-    duration = parameters.duration
-    
-    # do something and track progress
-    for i in range(parameters.duration):
-        set_progress(100 * i / parameters.duration)
-        sleep(1)
-    
-    # return result
-    set_progress(1)
-    return ScenarioResult(master_data_id=data.id)  #-- placeholder
-```
-
-### Complete example
-
-```python
 from time import sleep
-from typing import Callable
-
+from algomancy_scenario import BaseAlgorithm, ScenarioResult
 from algomancy_data import BaseDataSource
-from scenario import ScenarioResult, AlgorithmTemplate
-from scenario import *
 
+class MyAlgorithm(BaseAlgorithm):
+    def __init__(self, params: "MyParams"):
+        super().__init__("My Custom Algorithm", params)
 
-# Define the parameters for the algorithm
-class SlowSampleAlgorithmParams(BaseAlgorithmParameters):
-    def __init__(self, name: str = "Slow") -> None:
-        super().__init__(name=name)
+    @staticmethod
+    def initialize_parameters():
+        return MyParams()
 
-        self.add_parameters(
-            [IntegerParameter(name="duration", minvalue=1, maxvalue=60)]
-        )
+    def run(self, data: BaseDataSource) -> ScenarioResult:
+        duration = self.params.duration
+        for i in range(duration):
+            # Report progress to the GUI
+            self.set_progress(100 * (i + 1) / duration)
+            sleep(1)
+        
+        return ScenarioResult(data_id=data.id)
+```
+:::
+## Parameters: `BaseParameterSet`
+
+Algorithms are often driven by user-defined inputs. The `BaseParameterSet` class allows you to define these inputs in a 
+type-safe way that the framework can automatically render in the GUI with an appropriate input component. Each `Algorithm` 
+instance creates its own parameter set instance, which is passed to the algorithm during initialization. 
+
+### Defining Parameters
+You define a parameter set by subclassing `BaseParameterSet`. 
+
+```{important}
+After construction, the parameter set is _locked_ and no more parameters can be added. In other words: the
+`self.add_parameters` method must be be called in the `__init__` method. Note that the values of parameters 
+can still be accessed and modified. 
+```
+
+:::{dropdown} {octicon}`eye` Example
+:color: success
+```{code-block} python
+:caption: A custom ParameterSet
+:linenos: 
+from algomancy_utils import (BaseParameterSet, 
+                             IntegerParameter, 
+                             FloatParameter)
+
+class MyParams(BaseParameterSet):
+    def __init__(self):
+        super().__init__(name="My Algorithm Parameters")
+        
+        self.add_parameters([
+            IntegerParameter(name="duration", default=10, minvalue=1, maxvalue=60),
+            FloatParameter(name="threshold", default=0.5, minvalue=0.0, maxvalue=1.0)
+        ])
 
     @property
     def duration(self) -> int:
-        param_dct = self._parameters
-        duration_parameter = param_dct["duration"]
-
-        return duration_parameter.value
+        return self["duration"]
 
     def validate(self):
+        # Add cross-parameter validation here
         pass
+```
+:::
+
+### Supported Parameter Types
+
+| Parameter Type        | Description                                      | Example                                      |
+| --------------------- | ------------------------------------------------ | -------------------------------------------- |
+| `IntegerParameter`    | Whole numbers with bounds.                       | `IntegerParameter(name="count", default=1)`  |
+| `FloatParameter`      | Decimal numbers with bounds.                     | `FloatParameter(name="rate", default=0.5)`  |
+| `BooleanParameter`    | True/False toggle.                               | `BooleanParameter(name="verbose")`           |
+| `StringParameter`     | Plain text input.                                | `StringParameter(name="label")`              |
+| `EnumParameter`       | Single selection from a list.                    | `EnumParameter(name="mode", choices=["A"])` |
+| `MultiEnumParameter`  | Multiple selections from a list.                 | `MultiEnumParameter(name="tags", ...)`       |
+| `TimeParameter`       | A specific point in time.                        | `TimeParameter(name="start_time")`           |
+| `IntervalParameter`   | A time range (start and end).                    | `IntervalParameter(name="window")`           |
 
 
-# Define the main method of the algorithm
-def slow_sample_algorithm(
-        data: BaseDataSource,
-        parameters: SlowSampleAlgorithmParams,
-        set_progress: Callable[[float], None],
-) -> ScenarioResult:
-    for i in range(int(parameters.duration)):
-        set_progress(100 * i / parameters.duration)
-        sleep(1)
-    set_progress(1)
-    return ScenarioResult(master_data_id=data.id)  # placeholder
+## KPIs: Measuring Performance
 
+**Key Performance Indicators (KPIs)** are used to evaluate the output of an algorithm. Like algorithms, they follow a class-based pattern by subclassing `BaseKPI`.
 
-# Combine the elements into an algorithm template
-slow_sample_algorithm_template = AlgorithmTemplate(
-    name="Slow",
-    param_type=SlowSampleAlgorithmParams,
-    main_method_template=slow_sample_algorithm,
-)
+### Implementing a KPI
+Each KPI must implement the `compute(result)` method, which extracts a numeric value from the `ScenarioResult`.
 
+```python
+from algomancy_scenario import BaseKPI, ImprovementDirection
+from algomancy_utils.unit import QUANTITIES, BaseMeasurement
+
+class TotalCostKPI(BaseKPI):
+    def __init__(self):
+        # Define how the KPI should be displayed and compared
+        super().__init__(
+            name="Total Cost",
+            better_when=ImprovementDirection.LOWER,
+            base_measurement=BaseMeasurement(QUANTITIES["money"]["$"])
+        )
+
+    def compute(self, result: ScenarioResult) -> float:
+        # Extract the metric from the raw algorithm result
+        return result.data.get("cost", 0.0)
 ```
 
-## KPI Templates
+### Threshold KPIs
+KPIs can also include a `threshold`. If the computed value meets the threshold (based on `better_when`), the KPI is marked as a "success" (e.g., with a checkmark in the GUI).
 
-todo
+For more details, see the {ref}`API reference<parameters-ref>`.
