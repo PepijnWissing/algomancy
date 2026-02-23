@@ -1,3 +1,4 @@
+(pages-ref)=
 # Pages
  
 ```{eval-rst}

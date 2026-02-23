@@ -21,7 +21,42 @@ pip install algomancy
 
 ::::
 
-## Set up folder structure
+Use the syntax below if a specific version is desired
+::::{tab-set}
+
+:::{tab-item} uv
+```python 
+uv add algomancy==0.4.0
+```
+:::
+
+:::{tab-item} pip
+```python 
+pip install algomancy==0.4.0
+```
+:::
+
+::::
+
+To update to the latest version, use
+::::{tab-set}
+
+:::{tab-item} uv
+```python 
+uv sync --upgrade-package algomancy
+```
+:::
+
+:::{tab-item} pip
+```python 
+pip install --upgrade algomancy
+```
+:::
+
+::::
+
+
+## Set up a basic app
 1. Create the following directory structure:
 ```text
 root/
@@ -46,8 +81,7 @@ Only the folders marked with (*) are required; the rest is considered good pract
 
 ```{code-block} python
 :linenos:
-from algomancy_gui.gui_launcher import GuiLauncher
-from algomancy_gui.appconfiguration import AppConfiguration
+from algomancy_gui import GuiLauncher, AppConfiguration
 from algomancy_content import (
     PlaceholderETLFactory,
     PlaceholderAlgorithm,
@@ -79,18 +113,22 @@ if __name__ == "__main__":
     main()
 ```
 
-## Fix styling
-Currently, the dashboard is missing the `style.css` styling instructions and several other assets. 
-To get going, copy the directory 'assets' from I:\Algomancy to the **root** directory.
+## Include CSS
+At this point, the dashboard is missing the `style.css` styling instructions and several other assets. 
+To get going, copy the directory 'assets' from [the github page](https://github.com/PepijnWissing/algomancy/tree/main/example) to the **root** directory.
 
-Note that we do **not** want the folder structure to look like:
-```text
+```{warning} 
+
+We do **not** want the folder structure to look like:
+
+```{code-block} text
 root/
 |── assets/
 │   └── assets/
 ├── main.py 
 ... 
 ```
+    
 
 ## Run
 - Save the file as `main.py` and start the app:
