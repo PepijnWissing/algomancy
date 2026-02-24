@@ -57,7 +57,7 @@ algomancy-cli = {workspace = true}
 algomancy-content = {workspace = true}
 algomancy-data = {workspace = true}
 algomancy-gui = {workspace = true}
-algomancy-quicktart = {workspace = true}
+algomancy-quickstart = {workspace = true}
 algomancy-scenario = {workspace = true}
 algomancy-utils = {workspace = true}
 

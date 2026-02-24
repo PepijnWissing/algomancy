@@ -37,58 +37,58 @@ class {{ class_name }}ETLFactory(de.ETLFactory):
     def __init__(self, schemas, logger: Logger = None):
         super().__init__(schemas, logger)
 
-        def create_extraction_sequence(self, files: Dict[str, File]) -> ExtractionSequence:
-            """
-            Create extraction sequence for detected data files.
+    def create_extraction_sequence(self, files: Dict[str, File]) -> ExtractionSequence:
+        """
+        Create extraction sequence for detected data files.
 
-            Args:
-                files: Dictionary mapping file identifiers to File objects.
+        Args:
+            files: Dictionary mapping file identifiers to File objects.
 
-            Returns:
-                ExtractionSequence with extractors for all detected files.
-            """
-            sequence = ExtractionSequence(logger=self.logger)
+        Returns:
+            ExtractionSequence with extractors for all detected files.
+        """
+        sequence = ExtractionSequence(logger=self.logger)
 
-            {% for file_info in files %}
-            # Extract {{ file_info.file_name }}
-            {% if file_info.is_multi_sheet %}
-            sequence.add_extractor(
-                XLSXMultiExtractor(
-                    file=files["{{ file_info.file_name }}"],
-                    schema={{ file_info.snake_name }}_schema,
-                    logger=self.logger,
-                )
+        {% for file_info in files %}
+        # Extract {{ file_info.file_name }}
+        {% if file_info.is_multi_sheet %}
+        sequence.add_extractor(
+            XLSXMultiExtractor(
+                file=files["{{ file_info.file_name }}"],
+                schema={{ file_info.snake_name }}_schema,
+                logger=self.logger,
             )
-            {% elif file_info.extension.name == 'CSV' %}
-            sequence.add_extractor(
-                CSVSingleExtractor(
-                    file=files["{{ file_info.file_name }}"],
-                    schema={{ file_info.snake_name }}_schema,
-                    logger=self.logger,
-                    separator="{{ file_info.csv_separator }}",
-                )
+        )
+        {% elif file_info.extension.name == 'CSV' %}
+        sequence.add_extractor(
+            CSVSingleExtractor(
+                file=files["{{ file_info.file_name }}"],
+                schema={{ file_info.snake_name }}_schema,
+                logger=self.logger,
+                separator="{{ file_info.csv_separator }}",
             )
-            {% elif file_info.extension.name == 'XLSX' %}
-            sequence.add_extractor(
-                XLSXSingleExtractor(
-                    file=files["{{ file_info.file_name }}"],
-                    schema={{ file_info.snake_name }}_schema,
-                    sheet_name="{{ file_info.sheets_to_extract[0] }}",
-                    logger=self.logger,
-                )
+        )
+        {% elif file_info.extension.name == 'XLSX' %}
+        sequence.add_extractor(
+            XLSXSingleExtractor(
+                file=files["{{ file_info.file_name }}"],
+                schema={{ file_info.snake_name }}_schema,
+                sheet_name="{{ file_info.sheets_to_extract[0] }}",
+                logger=self.logger,
             )
-            {% elif file_info.extension.name == 'JSON' %}
-            sequence.add_extractor(
-                JSONExtractor(
-                    file=files["{{ file_info.file_name }}"],
-                    schema={{ file_info.snake_name }}_schema,
-                    logger=self.logger,
-                )
+        )
+        {% elif file_info.extension.name == 'JSON' %}
+        sequence.add_extractor(
+            JSONSingleExtractor(
+                file=files["{{ file_info.file_name }}"],
+                schema={{ file_info.snake_name }}_schema,
+                logger=self.logger,
             )
-            {% endif %}
+        )
+        {% endif %}
 
-            {% endfor %}
-            return sequence
+        {% endfor %}
+        return sequence
 
     def create_transformation_sequence(self) -> TransformationSequence:
         """

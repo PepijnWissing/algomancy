@@ -5,6 +5,7 @@ from algomancy_data import FileExtension
 
 from .data_inference import SchemaInferenceEngine, DataFileInfo
 from .asset_manager import AssetManager
+from .styling_wizard import StylingWizard
 
 
 class QuickstartWizard:
@@ -26,6 +27,15 @@ class QuickstartWizard:
 
         # Asset manager for step 4
         self.asset_manager = AssetManager(self.current_dir)
+
+        # Styling wizard for step 5
+        self.styling_wizard = StylingWizard()
+
+        # Track what was generated
+        self.has_custom_implementations = False
+        self.has_generated_etl = False
+        self.host = "127.0.0.1"
+        self.port = 8050
 
         # Set up Jinja2 environment
         self.jinja_env = Environment(
@@ -50,6 +60,7 @@ class QuickstartWizard:
             "Do you want to generate custom implementation templates?", default=True
         ):
             self.step_2_generate_implementations()
+            self.has_custom_implementations = True
 
         click.echo()
 
@@ -59,6 +70,8 @@ class QuickstartWizard:
             default=True,
         ):
             self.step_3_generate_etl_from_data()
+            if self.detected_files:  # Only set if files were actually processed
+                self.has_generated_etl = True
 
         click.echo()
 
@@ -69,6 +82,14 @@ class QuickstartWizard:
             self.step_4_install_assets()
 
         click.echo()
+
+        # Step 5: Configure styling (optional)
+        if click.confirm(
+            "Do you want to configure custom styling (colors, themes)?", default=True
+        ):
+            self.step_5_configure_styling()
+
+        click.echo()
         click.echo(click.style("✅ Setup complete!", fg="green", bold=True))
         click.echo(
             f"Your Algomancy application has been created in: {self.current_dir}"
@@ -77,7 +98,7 @@ class QuickstartWizard:
         click.echo("Next steps:")
         click.echo("  1. Review and customize the generated files")
         click.echo("  2. Run: python main.py")
-        click.echo("  3. Open your browser at http://127.0.0.1:8050")
+        click.echo(f"  3. Open your browser at http://{self.host}:{self.port}")
 
     def step_1_create_structure(self):
         """Step 1: Create folder structure and generate basic main.py"""
@@ -95,10 +116,10 @@ class QuickstartWizard:
             )
 
         # Get host and port
-        host = click.prompt("Host address", default="127.0.0.1", type=str)
-        port = click.prompt("Port number", default=8050, type=int)
+        self.host = click.prompt("Host address", default="127.0.0.1", type=str)
+        self.port = click.prompt("Port number", default=8050, type=int)
 
-        # Define folder structure - include data/setup
+        # Define folder structure - include data/setup and src/styling
         folders = [
             "assets",
             "data",
@@ -158,7 +179,7 @@ class QuickstartWizard:
         # Generate main.py from template
         click.echo()
         click.echo("Generating main.py...")
-        self._generate_main_py(self.title, host, port)
+        self._generate_main_py(self.title, self.host, self.port)
         click.echo("  ✓ main.py created")
 
         click.echo()
@@ -381,6 +402,77 @@ class QuickstartWizard:
         except Exception as e:
             click.echo()
             click.echo(click.style(f"❌ Error in Step 4: {e}", fg="red"))
+
+    def step_5_configure_styling(self):
+        """Step 5: Configure custom styling."""
+        try:
+            # Run the styling wizard
+            styling_config = self.styling_wizard.run()
+
+            click.echo()
+            click.echo("Generating styling configuration...")
+
+            # Generate styling_config.py
+            self._generate_styling_config(styling_config)
+            click.echo("  ✓ src/styling_config.py")
+
+            # Update main.py to use styling
+            click.echo()
+            click.echo("Updating main.py to use custom styling...")
+            self._update_main_py_with_styling()
+            click.echo("  ✓ main.py updated")
+
+            click.echo()
+            click.echo(click.style("✅ Step 5 complete!", fg="green"))
+            click.echo()
+            click.echo(
+                click.style(
+                    "📝 You can customize styling further in src/styling_config.py",
+                    fg="cyan",
+                )
+            )
+
+        except Exception as e:
+            click.echo()
+            click.echo(click.style(f"❌ Error in Step 5: {e}", fg="red"))
+
+    def _generate_styling_config(self, config: dict):
+        """Generate styling_config.py file."""
+        template = self.jinja_env.get_template("styling_config.py.jinja")
+
+        content = template.render(
+            project_name=self.project_name or "Project",
+            background=config["background"],
+            primary=config["primary"],
+            secondary=config["secondary"],
+            text=config["text"],
+            text_highlight=config["text_highlight"],
+            text_selected=config["text_selected"],
+            button_mode=config["button_mode"].name,
+            card_mode=config["card_mode"].name,
+            logo_path=config.get("logo_path"),
+            button_path=config.get("button_path"),
+        )
+
+        config_path = self.current_dir / "src" / "styling_config.py"
+        config_path.write_text(content, encoding="utf-8")
+
+    def _update_main_py_with_styling(self):
+        """Update main.py to import and use styling configuration."""
+        template = self.jinja_env.get_template("main_with_styling.py.jinja")
+
+        content = template.render(
+            title=self.title,
+            host=self.host,
+            port=self.port,
+            class_name=self.class_name or "Custom",
+            filename=self.filename or "custom",
+            has_custom_implementations=self.has_custom_implementations,
+            has_generated_etl=self.has_generated_etl,
+        )
+
+        main_py_path = self.current_dir / "main.py"
+        main_py_path.write_text(content, encoding="utf-8")
 
     def _display_inferred_schemas_summary(self):
         """Display a summary of all inferred schemas."""
