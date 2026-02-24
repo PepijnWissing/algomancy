@@ -1,0 +1,66 @@
+"""
+Schema definition for {{ project_name }} data.
+
+This module defines the data structure and types for your application's data.
+"""
+
+from typing import Dict
+
+from algomancy_data import (
+    Schema,
+    DataType,
+    FileExtension,
+)
+from algomancy_data.schema import SchemaType
+
+
+class {{ class_name }}Schema(Schema):
+    """
+    Schema for {{ project_name }} data.
+
+    This class defines the structure of your data files, including:
+    - File name pattern
+    - File extension
+    - Column names and their data types
+
+    TODO: Customize the schema according to your data structure.
+    """
+
+    # TODO: Set the base filename (without extension) for your data files
+    _FILENAME = "{{ filename }}"
+
+    # TODO: Set the file extension (CSV, EXCEL, JSON, PARQUET, PICKLE)
+    _EXTENSION = FileExtension.CSV
+
+    # TODO: Set schema type (SINGLE for one file, MULTI for multiple files)
+    _SCHEMA = SchemaType.SINGLE
+
+    @property
+    def _defined_datatypes(self) -> Dict[str, DataType]:
+        """
+        Define the columns and their data types.
+
+        Available DataTypes:
+        - DataType.INTEGER: Whole numbers
+        - DataType.FLOAT: Decimal numbers
+        - DataType.STRING: Text
+        - DataType.BOOLEAN: True/False
+        - DataType.DATETIME: Date and time
+        - DataType.DATE: Date only
+        - DataType.TIME: Time only
+
+        Returns:
+            Dictionary mapping column names to their data types.
+
+        TODO: Define your actual columns and types below.
+        """
+        return {
+            # Example columns - replace with your own:
+            "id": DataType.INTEGER,
+            "name": DataType.STRING,
+            # Add more columns here...
+        }
+
+
+# Create a singleton instance to use in your application
+{{ filename }}_schema = {{ class_name }}Schema()

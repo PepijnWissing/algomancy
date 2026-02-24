@@ -1,0 +1,30 @@
+from algomancy_gui import GuiLauncher, AppConfiguration
+from algomancy_content import (
+    PlaceholderETLFactory,
+    PlaceholderAlgorithm,
+    PlaceholderKPI,
+    placeholder_schema,
+)
+from algomancy_data import DataSource
+
+
+def main() -> None:
+    host = "{{ host }}"
+    port = {{ port }}
+
+    app_cfg = AppConfiguration(
+        etl_factory=PlaceholderETLFactory,
+        kpi_templates={"placeholder": PlaceholderKPI},
+        algo_templates={"placeholder": PlaceholderAlgorithm},
+        schemas=[placeholder_schema],
+        host=host,
+        port=port,
+        title="{{ title }}",
+    )
+
+    app = GuiLauncher.build(app_cfg)
+    GuiLauncher.run(app=app, host=app_cfg.host, port=app_cfg.port)
+
+
+if __name__ == "__main__":
+    main()
