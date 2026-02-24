@@ -1,6 +1,10 @@
 import click
 from pathlib import Path
 from jinja2 import Environment, PackageLoader, select_autoescape
+from algomancy_data import FileExtension
+
+from .data_inference import SchemaInferenceEngine, DataFileInfo
+from .asset_manager import AssetManager
 
 
 class QuickstartWizard:
@@ -15,6 +19,13 @@ class QuickstartWizard:
         self.project_name = None
         self.class_name = None
         self.filename = None
+
+        # Will be set in step 3
+        self.detected_files: list[DataFileInfo] = []
+        self.inference_engine = SchemaInferenceEngine(sample_rows=100)
+
+        # Asset manager for step 4
+        self.asset_manager = AssetManager(self.current_dir)
 
         # Set up Jinja2 environment
         self.jinja_env = Environment(
@@ -41,15 +52,32 @@ class QuickstartWizard:
             self.step_2_generate_implementations()
 
         click.echo()
+
+        # Step 3: Scan data folder and generate ETL pipeline (optional)
+        if click.confirm(
+            "Do you want to scan your data folder and generate an ETL pipeline?",
+            default=True,
+        ):
+            self.step_3_generate_etl_from_data()
+
+        click.echo()
+
+        # Step 4: Install assets (optional)
+        if click.confirm(
+            "Do you want to install default assets (CSS, images)?", default=True
+        ):
+            self.step_4_install_assets()
+
+        click.echo()
         click.echo(click.style("✅ Setup complete!", fg="green", bold=True))
         click.echo(
             f"Your Algomancy application has been created in: {self.current_dir}"
         )
         click.echo()
         click.echo("Next steps:")
-        click.echo("  1. Add your data files to the data/ folder")
-        click.echo("  2. Customize the generated templates in src/")
-        click.echo("  3. Run: python main.py")
+        click.echo("  1. Review and customize the generated files")
+        click.echo("  2. Run: python main.py")
+        click.echo("  3. Open your browser at http://127.0.0.1:8050")
 
     def step_1_create_structure(self):
         """Step 1: Create folder structure and generate basic main.py"""
@@ -70,10 +98,11 @@ class QuickstartWizard:
         host = click.prompt("Host address", default="127.0.0.1", type=str)
         port = click.prompt("Port number", default=8050, type=int)
 
-        # Define folder structure
+        # Define folder structure - include data/setup
         folders = [
             "assets",
             "data",
+            "data/setup",
             "src",
             "src/data_handling",
             "src/pages",
@@ -192,6 +221,285 @@ class QuickstartWizard:
             )
         )
 
+    def step_3_generate_etl_from_data(self):
+        """Step 3: Scan data folder and generate ETL pipeline."""
+        click.echo(
+            click.style(
+                "📊 Step 3: Scanning data folder and generating ETL pipeline",
+                fg="blue",
+                bold=True,
+            )
+        )
+        click.echo()
+
+        data_setup_dir = self.current_dir / "data" / "setup"
+
+        # Check if data/setup exists
+        if not data_setup_dir.exists():
+            click.echo(
+                click.style("⚠️  Directory data/setup/ does not exist!", fg="yellow")
+            )
+            return
+
+        # Scan for files with retry logic
+        while True:
+            detected_files = self.inference_engine.scan_directory(data_setup_dir)
+
+            if not detected_files:
+                click.echo(
+                    click.style("⚠️  No data files found in data/setup/", fg="yellow")
+                )
+                click.echo()
+                click.echo(
+                    "Supported file types: CSV, Excel (.xlsx, .xls), JSON, Parquet, Pickle"
+                )
+                click.echo()
+
+                choice = click.prompt(
+                    "What would you like to do?",
+                    type=click.Choice(["retry", "skip"], case_sensitive=False),
+                    default="retry",
+                )
+
+                if choice == "skip":
+                    click.echo("Skipping ETL generation.")
+                    return
+                else:
+                    click.echo()
+                    click.echo(
+                        "Please add your data files to data/setup/ and press Enter to retry..."
+                    )
+                    input()
+                    continue
+            else:
+                break
+
+        # Display detected files
+        click.echo(f"Found {len(detected_files)} data file(s):")
+        for file_info in detected_files:
+            sheets_info = (
+                f" ({len(file_info.sheet_names)} sheets)"
+                if file_info.sheet_names
+                else ""
+            )
+            click.echo(
+                f"  • {file_info.file_name}{file_info.file_path.suffix} - {file_info.extension.value}{sheets_info}"
+            )
+
+        # Interactive schema inference for each file
+        click.echo()
+        click.echo(click.style("Let's configure each file...", fg="cyan"))
+
+        for file_info in detected_files:
+            success = self.inference_engine.infer_schema_interactive(file_info)
+
+            if success and not file_info.skip_file:
+                # Add metadata for template rendering
+                file_info.class_name = self._to_pascal_case(file_info.file_name)
+                file_info.snake_name = self._to_snake_case(file_info.file_name)
+                file_info.total_columns = sum(
+                    len(cols) for cols in file_info.inferred_schemas.values()
+                )
+
+        # Filter out skipped files
+        self.detected_files = [f for f in detected_files if not f.skip_file]
+
+        if not self.detected_files:
+            click.echo()
+            click.echo(
+                click.style("⚠️  No files selected for ETL pipeline.", fg="yellow")
+            )
+            return
+
+        click.echo()
+        click.echo(click.style("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", fg="cyan"))
+        click.echo()
+
+        # Display summary of inferred schemas
+        self._display_inferred_schemas_summary()
+
+        # Ask for final confirmation
+        if not self.skip_confirmation:
+            click.echo()
+            if not click.confirm(
+                "Generate ETL pipeline with these configurations?", default=True
+            ):
+                click.echo("Skipping ETL generation.")
+                return
+
+        click.echo()
+        click.echo("Generating schema and ETL files...")
+
+        # Generate schemas file
+        self._generate_schemas_file()
+        click.echo("  ✓ src/data_handling/generated_schemas.py")
+
+        # Generate or update ETL factory
+        self._generate_etl_factory_file()
+        click.echo("  ✓ src/data_handling/etl_factory.py")
+
+        # Update main.py to use generated schemas
+        click.echo()
+        click.echo("Updating main.py to use generated schemas...")
+        self._update_main_py_with_generated_etl()
+        click.echo("  ✓ main.py updated")
+
+        click.echo()
+        click.echo(click.style("✅ Step 3 complete!", fg="green"))
+        click.echo()
+        click.echo(
+            click.style(
+                "📝 Generated files can be customized in src/data_handling/", fg="cyan"
+            )
+        )
+
+    def step_4_install_assets(self):
+        """Step 4: Install default assets from GitHub or bundled fallback."""
+        try:
+            success = self.asset_manager.install_assets(
+                skip_confirmation=self.skip_confirmation
+            )
+
+            if success:
+                click.echo()
+                click.echo(click.style("✅ Step 4 complete!", fg="green"))
+                click.echo()
+                click.echo(
+                    click.style(
+                        "📝 Assets installed. You can customize them in the assets/ folder.",
+                        fg="cyan",
+                    )
+                )
+            else:
+                click.echo()
+                click.echo(
+                    click.style(
+                        "⚠️  Step 4 incomplete - no assets installed", fg="yellow"
+                    )
+                )
+
+        except Exception as e:
+            click.echo()
+            click.echo(click.style(f"❌ Error in Step 4: {e}", fg="red"))
+
+    def _display_inferred_schemas_summary(self):
+        """Display a summary of all inferred schemas."""
+        click.echo(click.style("Summary of detected schemas:", fg="cyan", bold=True))
+        click.echo()
+
+        for file_info in self.detected_files:
+            click.echo(
+                click.style(
+                    f"📄 {file_info.file_name}{file_info.file_path.suffix}",
+                    fg="cyan",
+                    bold=True,
+                )
+            )
+
+            # Show configuration
+            if file_info.extension == FileExtension.CSV:
+                click.echo(f"  Config: CSV separator = '{file_info.csv_separator}'")
+            elif file_info.extension == FileExtension.XLSX:
+                click.echo(
+                    f"  Config: Extracting {len(file_info.sheets_to_extract)} sheet(s)"
+                )
+
+            # Show schemas
+            for schema_name, columns in file_info.inferred_schemas.items():
+                if file_info.is_multi_sheet:
+                    click.echo(f"  Sheet: {schema_name}")
+
+                # Show first few columns
+                col_items = list(columns.items())
+                show_count = min(5, len(col_items))
+
+                for col_name, data_type in col_items[:show_count]:
+                    type_color = self._get_type_color(data_type)
+                    click.echo(
+                        f"    • {col_name}: {click.style(data_type.value, fg=type_color)}"
+                    )
+
+                if len(col_items) > show_count:
+                    click.echo(
+                        f"    ... and {len(col_items) - show_count} more column(s)"
+                    )
+
+            click.echo()
+
+    def _get_type_color(self, data_type) -> str:
+        """Get color for a data type."""
+        from algomancy_data import DataType
+
+        color_map = {
+            DataType.INTEGER: "blue",
+            DataType.FLOAT: "blue",
+            DataType.STRING: "green",
+            DataType.BOOLEAN: "magenta",
+            DataType.DATETIME: "yellow",
+        }
+        return color_map.get(data_type, "white")
+
+    def _generate_schemas_file(self):
+        """Generate the schemas file from detected data."""
+        template = self.jinja_env.get_template("generated_schemas.py.jinja")
+
+        content = template.render(
+            project_name=self.project_name or "Project",
+            files=self.detected_files,
+        )
+
+        schemas_path = (
+            self.current_dir / "src" / "data_handling" / "generated_schemas.py"
+        )
+        schemas_path.write_text(content, encoding="utf-8")
+
+    def _generate_etl_factory_file(self):
+        """Generate the ETL factory file with extractors."""
+        template = self.jinja_env.get_template("etl_factory_generated.py.jinja")
+
+        # Determine which extractor types are needed
+        extractor_types = set()
+        for file_info in self.detected_files:
+            if file_info.is_multi_sheet:
+                extractor_types.add("XLSXMultiExtractor")
+            elif file_info.extension.name == "CSV":
+                extractor_types.add("CSVSingleExtractor")
+            elif file_info.extension.name == "XLSX":
+                extractor_types.add("XLSXSingleExtractor")
+            elif file_info.extension.name == "JSON":
+                extractor_types.add("JSONExtractor")
+
+        content = template.render(
+            project_name=self.project_name or "Project",
+            class_name=self.class_name or "Custom",
+            files=self.detected_files,
+            file_count=len(self.detected_files),
+            extractor_types=sorted(extractor_types),
+        )
+
+        etl_path = self.current_dir / "src" / "data_handling" / "etl_factory.py"
+
+        # Check if file exists
+        if etl_path.exists() and not self.skip_confirmation:
+            if not click.confirm(f"File {etl_path.name} exists. Overwrite?"):
+                return
+
+        etl_path.write_text(content, encoding="utf-8")
+
+    def _update_main_py_with_generated_etl(self):
+        """Update main.py to use generated ETL and schemas."""
+        template = self.jinja_env.get_template("main_generated_etl.py.jinja")
+
+        content = template.render(
+            title=self.title,
+            host="127.0.0.1",
+            port=8050,
+            class_name=self.class_name or "Custom",
+        )
+
+        main_py_path = self.current_dir / "main.py"
+        main_py_path.write_text(content, encoding="utf-8")
+
     def _generate_main_py(self, title: str, host: str, port: int):
         """Generate main.py from Jinja2 template."""
         template = self.jinja_env.get_template("main.py.jinja")
@@ -228,8 +536,8 @@ class QuickstartWizard:
 
         content = template.render(
             title=self.title,
-            host="127.0.0.1",  # Get from previous input if needed
-            port=8050,  # Get from previous input if needed
+            host="127.0.0.1",
+            port=8050,
             class_name=self.class_name,
             filename=self.filename,
         )

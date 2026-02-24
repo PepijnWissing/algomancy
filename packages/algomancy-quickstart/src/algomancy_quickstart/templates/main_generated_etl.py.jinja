@@ -1,0 +1,34 @@
+from algomancy_gui import GuiLauncher, AppConfiguration
+from algomancy_data import DataSource
+
+# Import generated ETL factory and schemas
+from src.data_handling.etl_factory import {{ class_name }}ETLFactory
+from src.data_handling.generated_schemas import all_schemas
+
+# Import your custom KPI and Algorithm templates
+# TODO: Update these imports when you create custom implementations
+from algomancy_content import PlaceholderKPI, PlaceholderAlgorithm
+
+
+def main() -> None:
+    """Main entry point for the {{ title }} application."""
+
+    host = "{{ host }}"
+    port = {{ port }}
+
+    app_cfg = AppConfiguration(
+        etl_factory={{ class_name }}ETLFactory,
+        kpi_templates={"placeholder": PlaceholderKPI},
+        algo_templates={"placeholder": PlaceholderAlgorithm},
+        schemas=all_schemas,
+        host=host,
+        port=port,
+        title="{{ title }}",
+    )
+
+    app = GuiLauncher.build(app_cfg)
+    GuiLauncher.run(app=app, host=app_cfg.host, port=app_cfg.port)
+
+
+if __name__ == "__main__":
+    main()
