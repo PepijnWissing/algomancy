@@ -90,7 +90,7 @@ class QuickstartWizard:
             self.step_5_configure_styling()
 
         click.echo()
-        click.echo(click.style("✅ Setup complete!", fg="green", bold=True))
+        click.echo(click.style(" Setup complete!", fg="green", bold=True))
         click.echo(
             f"Your Algomancy application has been created in: {self.current_dir}"
         )
@@ -103,7 +103,7 @@ class QuickstartWizard:
     def step_1_create_structure(self):
         """Step 1: Create folder structure and generate basic main.py"""
         click.echo(
-            click.style("📁 Step 1: Creating folder structure", fg="blue", bold=True)
+            click.style(" Step 1: Creating folder structure", fg="blue", bold=True)
         )
         click.echo()
 
@@ -138,7 +138,7 @@ class QuickstartWizard:
         if existing_folders and not self.skip_confirmation:
             click.echo(
                 click.style(
-                    "⚠️  Warning: The following folders already exist:", fg="yellow"
+                    "  Warning: The following folders already exist:", fg="yellow"
                 )
             )
             for folder in existing_folders:
@@ -169,7 +169,7 @@ class QuickstartWizard:
         main_py_path = self.current_dir / "main.py"
         if main_py_path.exists():
             click.echo()
-            click.echo(click.style("⚠️  Warning: main.py already exists!", fg="yellow"))
+            click.echo(click.style("  Warning: main.py already exists!", fg="yellow"))
 
             if not self.skip_confirmation:
                 if not click.confirm("Do you want to overwrite it?"):
@@ -183,13 +183,13 @@ class QuickstartWizard:
         click.echo("  ✓ main.py created")
 
         click.echo()
-        click.echo(click.style("✅ Step 1 complete!", fg="green"))
+        click.echo(click.style(" Step 1 complete!", fg="green"))
 
     def step_2_generate_implementations(self):
         """Step 2: Generate custom implementation shells."""
         click.echo(
             click.style(
-                "🔧 Step 2: Generating custom implementation templates",
+                " Step 2: Generating custom implementation templates",
                 fg="blue",
                 bold=True,
             )
@@ -234,11 +234,11 @@ class QuickstartWizard:
         click.echo("  ✓ main.py updated")
 
         click.echo()
-        click.echo(click.style("✅ Step 2 complete!", fg="green"))
+        click.echo(click.style(" Step 2 complete!", fg="green"))
         click.echo()
         click.echo(
             click.style(
-                "📝 Next: Customize the TODO items in the generated files.", fg="cyan"
+                " Next: Customize the TODO items in the generated files.", fg="cyan"
             )
         )
 
@@ -246,7 +246,7 @@ class QuickstartWizard:
         """Step 3: Scan data folder and generate ETL pipeline."""
         click.echo(
             click.style(
-                "📊 Step 3: Scanning data folder and generating ETL pipeline",
+                " Step 3: Scanning data folder and generating ETL pipeline",
                 fg="blue",
                 bold=True,
             )
@@ -258,7 +258,7 @@ class QuickstartWizard:
         # Check if data/setup exists
         if not data_setup_dir.exists():
             click.echo(
-                click.style("⚠️  Directory data/setup/ does not exist!", fg="yellow")
+                click.style("  Directory data/setup/ does not exist!", fg="yellow")
             )
             return
 
@@ -268,7 +268,7 @@ class QuickstartWizard:
 
             if not detected_files:
                 click.echo(
-                    click.style("⚠️  No data files found in data/setup/", fg="yellow")
+                    click.style("  No data files found in data/setup/", fg="yellow")
                 )
                 click.echo()
                 click.echo(
@@ -328,7 +328,7 @@ class QuickstartWizard:
         if not self.detected_files:
             click.echo()
             click.echo(
-                click.style("⚠️  No files selected for ETL pipeline.", fg="yellow")
+                click.style("  No files selected for ETL pipeline.", fg="yellow")
             )
             return
 
@@ -366,11 +366,11 @@ class QuickstartWizard:
         click.echo("  ✓ main.py updated")
 
         click.echo()
-        click.echo(click.style("✅ Step 3 complete!", fg="green"))
+        click.echo(click.style(" Step 3 complete!", fg="green"))
         click.echo()
         click.echo(
             click.style(
-                "📝 Generated files can be customized in src/data_handling/", fg="cyan"
+                " Generated files can be customized in src/data_handling/", fg="cyan"
             )
         )
 
@@ -383,11 +383,11 @@ class QuickstartWizard:
 
             if success:
                 click.echo()
-                click.echo(click.style("✅ Step 4 complete!", fg="green"))
+                click.echo(click.style(" Step 4 complete!", fg="green"))
                 click.echo()
                 click.echo(
                     click.style(
-                        "📝 Assets installed. You can customize them in the assets/ folder.",
+                        " Assets installed. You can customize them in the assets/ folder.",
                         fg="cyan",
                     )
                 )
@@ -395,13 +395,13 @@ class QuickstartWizard:
                 click.echo()
                 click.echo(
                     click.style(
-                        "⚠️  Step 4 incomplete - no assets installed", fg="yellow"
+                        "  Step 4 incomplete - no assets installed", fg="yellow"
                     )
                 )
 
         except Exception as e:
             click.echo()
-            click.echo(click.style(f"❌ Error in Step 4: {e}", fg="red"))
+            click.echo(click.style(f" Error in Step 4: {e}", fg="red"))
 
     def step_5_configure_styling(self):
         """Step 5: Configure custom styling."""
@@ -423,18 +423,18 @@ class QuickstartWizard:
             click.echo("  ✓ main.py updated")
 
             click.echo()
-            click.echo(click.style("✅ Step 5 complete!", fg="green"))
+            click.echo(click.style(" Step 5 complete!", fg="green"))
             click.echo()
             click.echo(
                 click.style(
-                    "📝 You can customize styling further in src/styling_config.py",
+                    " You can customize styling further in src/styling_config.py",
                     fg="cyan",
                 )
             )
 
         except Exception as e:
             click.echo()
-            click.echo(click.style(f"❌ Error in Step 5: {e}", fg="red"))
+            click.echo(click.style(f" Error in Step 5: {e}", fg="red"))
 
     def _generate_styling_config(self, config: dict):
         """Generate styling_config.py file."""
@@ -503,7 +503,7 @@ class QuickstartWizard:
 
                 # Show first few columns
                 col_items = list(columns.items())
-                show_count = min(5, len(col_items))
+                show_count = min(10, len(col_items))
 
                 for col_name, data_type in col_items[:show_count]:
                     type_color = self._get_type_color(data_type)
