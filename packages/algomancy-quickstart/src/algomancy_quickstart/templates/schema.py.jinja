@@ -33,7 +33,7 @@ class {{ class_name }}Schema(Schema):
     _EXTENSION = FileExtension.CSV
 
     # TODO: Set schema type (SINGLE for one file, MULTI for multiple files)
-    _SCHEMA = SchemaType.SINGLE
+    _SCHEMA_TYPE = SchemaType.SINGLE
 
     @property
     def _defined_datatypes(self) -> Dict[str, DataType]:

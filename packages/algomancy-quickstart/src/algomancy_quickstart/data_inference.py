@@ -337,11 +337,21 @@ class SchemaInferenceEngine:
                     click.echo(f"  ✓ Sheet '{sheet_name}': {len(df.columns)} columns")
 
             elif file_info.extension == FileExtension.JSON:
-                df = pd.read_json(file_info.file_path)
+                # Use json_normalize to flatten nested structures
+                import json
+
+                with open(file_info.file_path, "r") as f:
+                    json_data = json.load(f)
+
+                # Normalize JSON to flatten nested objects
+                df = pd.json_normalize(json_data)
+
                 if len(df) > self.sample_rows:
                     df = df.head(self.sample_rows)
+
                 file_info.inferred_schemas["default"] = self._infer_from_dataframe(df)
                 click.echo(f"  ✓ Inferred schema with {len(df.columns)} columns")
+
             return True
 
         except Exception as e:
@@ -375,8 +385,13 @@ class SchemaInferenceEngine:
             elif pd.api.types.is_string_dtype(dtype) or pd.api.types.is_object_dtype(
                 dtype
             ):
+                # Check if column contains nested structures (lists or dicts)
+                if self._contains_nested_structures(df[column]):
+                    # For nested structures, treat as STRING
+                    # (will be converted to JSON string during extraction)
+                    schema[column] = DataType.STRING
                 # Try to detect if it's actually a date
-                if self._looks_like_datetime(df[column]):
+                elif self._looks_like_datetime(df[column]):
                     schema[column] = DataType.DATETIME
                 else:
                     schema[column] = DataType.STRING
@@ -385,6 +400,31 @@ class SchemaInferenceEngine:
                 schema[column] = DataType.STRING
 
         return schema
+
+    def _contains_nested_structures(self, series: pd.Series) -> bool:
+        """
+        Check if a series contains nested structures (lists or dicts).
+
+        Args:
+            series: Pandas series to check.
+
+        Returns:
+            True if the series contains lists or dictionaries.
+        """
+        if len(series) == 0:
+            return False
+
+        # Sample a few non-null values
+        sample = series.dropna().head(5)
+        if len(sample) == 0:
+            return False
+
+        # Check if any sampled value is a list or dict
+        for value in sample:
+            if isinstance(value, (list, dict)):
+                return True
+
+        return False
 
     def _looks_like_datetime(self, series: pd.Series) -> bool:
         """

@@ -8,7 +8,6 @@ from time import sleep
 
 from algomancy_data import DataSource
 from algomancy_scenario import BaseParameterSet, ScenarioResult, BaseAlgorithm
-from algomancy_utils import get_logger, Logger
 
 
 class {{ class_name }}Params(BaseParameterSet):
@@ -56,7 +55,6 @@ class {{ class_name }}Algorithm(BaseAlgorithm):
 
     def __init__(self, params: {{ class_name }}Params):
         super().__init__("{{ class_name }}", params)
-        self.logger: Logger = get_logger()
 
     @staticmethod
     def initialize_parameters() -> {{ class_name }}Params:

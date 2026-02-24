@@ -24,16 +24,15 @@ class {{ file_info.class_name }}Schema(Schema):
 
     _FILENAME = "{{ file_info.file_name }}"
     _EXTENSION = FileExtension.{{ file_info.extension.name }}
-    _SCHEMA = SchemaType.{{ 'MULTI' if file_info.is_multi_sheet else 'SINGLE' }}
+    _SCHEMA_TYPE = SchemaType.{{ 'MULTI' if file_info.is_multi_sheet else 'SINGLE' }}
 
     # Column name constants
     {% for schema_name, columns in file_info.inferred_schemas.items() %}
     {% for column_name in columns.keys() %}
-    {{ column_name|upper|replace(' ', '_')|replace('-', '_') }} = "{{ column_name }}"
+    {{ column_name|upper|replace(' ', '_')|replace('-', '_')|replace('.', '_') }} = "{{ column_name }}"
 {% endfor %}
 {% endfor %}
 
-    @property
     def _defined_datatypes(self) -> {% if file_info.is_multi_sheet %}Dict[str, Dict[str, DataType]]{% else %}Dict[str, DataType]{% endif %}:
         """Define column data types."""
         {% if file_info.is_multi_sheet %}

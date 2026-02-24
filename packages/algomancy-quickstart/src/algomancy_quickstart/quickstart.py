@@ -271,9 +271,7 @@ class QuickstartWizard:
                     click.style("  No data files found in data/setup/", fg="yellow")
                 )
                 click.echo()
-                click.echo(
-                    "Supported file types: CSV, Excel (.xlsx, .xls), JSON, Parquet, Pickle"
-                )
+                click.echo("Supported file types: CSV, XLSX, JSON")
                 click.echo()
 
                 choice = click.prompt(
@@ -559,7 +557,7 @@ class QuickstartWizard:
             elif file_info.extension.name == "XLSX":
                 extractor_types.add("XLSXSingleExtractor")
             elif file_info.extension.name == "JSON":
-                extractor_types.add("JSONExtractor")
+                extractor_types.add("JSONSingleExtractor")
 
         content = template.render(
             project_name=self.project_name or "Project",
