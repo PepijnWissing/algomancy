@@ -5,6 +5,9 @@ Interactive styling configuration wizard.
 import re
 from typing import Dict
 import click
+from rich.console import Console
+from rich.table import Table
+from rich.text import Text
 
 from algomancy_gui.stylingconfigurator import ButtonColorMode, CardHighlightMode
 
@@ -68,6 +71,7 @@ class StylingWizard:
 
     def __init__(self):
         self.config = {}
+        self.console = Console()
 
     def run(self) -> Dict:
         """
@@ -116,7 +120,6 @@ class StylingWizard:
         preset_keys = list(self.PRESETS.keys())
 
         for i, (key, preset) in enumerate(self.PRESETS.items(), 1):
-            # Show preset with color preview
             click.echo(f"  {i}. {preset['name']}")
             self._show_color_preview(preset)
             click.echo()
@@ -135,38 +138,52 @@ class StylingWizard:
 
     def _show_color_preview(self, preset: Dict):
         """
-        Show a preview of colors using ANSI escape codes.
+        Show a preview of colors using Rich.
 
         Args:
             preset: Preset configuration dictionary.
         """
-        bg = preset["background"]
-        primary = preset["primary"]
-        secondary = preset["secondary"]
-        text = preset["text"]
+        # Create a table with color swatches
+        table = Table.grid(padding=(0, 2))
+        table.add_column(style="dim")
+        table.add_column()
+        table.add_column()
 
-        # Show color swatches
-        click.echo(f"     Background: {self._color_swatch(bg)} {bg}")
-        click.echo(f"     Primary:    {self._color_swatch(primary)} {primary}")
-        click.echo(f"     Secondary:  {self._color_swatch(secondary)} {secondary}")
-        click.echo(f"     Text:       {self._color_swatch(text)} {text}")
+        # Add rows for each color
+        table.add_row(
+            "Background:",
+            self._color_swatch(preset["background"]),
+            preset["background"],
+        )
+        table.add_row(
+            "Primary:", self._color_swatch(preset["primary"]), preset["primary"]
+        )
+        table.add_row(
+            "Secondary:", self._color_swatch(preset["secondary"]), preset["secondary"]
+        )
+        table.add_row(
+            "Text:", self._color_swatch(preset["text"], use_fg=True), preset["text"]
+        )
 
-    def _color_swatch(self, hex_color: str) -> str:
+        # Print with proper indentation
+        self.console.print("     ", table)
+
+    def _color_swatch(self, hex_color: str, use_fg: bool = False) -> Text:
         """
-        Create a colored swatch using ANSI escape codes.
+        Create a colored swatch using Rich.
 
         Args:
             hex_color: Hex color code.
+            use_fg: If True, use as foreground color instead of background.
 
         Returns:
-            Colored block string.
+            Rich Text object with colored block.
         """
-        # Convert hex to RGB
-        hex_color = hex_color.lstrip("#")
-        r, g, b = tuple(int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
-
-        # Use ANSI 24-bit color
-        return f"\033[48;2;{r};{g};{b}m   \033[0m"
+        # Create colored text block
+        if use_fg:
+            return Text("███", style=f"{hex_color}")
+        else:
+            return Text("   ", style=f"on {hex_color}")
 
     def _configure_custom(self):
         """Configure colors from scratch."""
@@ -223,7 +240,7 @@ class StylingWizard:
 
     def _prompt_color(self, prompt: str, default: str) -> str:
         """
-        Prompt for a hex color with validation.
+        Prompt for a hex color with validation and preview.
 
         Args:
             prompt: Prompt message.
@@ -236,8 +253,10 @@ class StylingWizard:
             color = click.prompt(f"  {prompt}", default=default, type=str)
 
             if self._is_valid_hex_color(color):
-                # Show preview
-                click.echo(f"    Preview: {self._color_swatch(color)}")
+                # Show preview using Rich
+                preview = Text("  Preview: ", style="dim")
+                preview.append(self._color_swatch(color))
+                self.console.print("    ", preview)
                 return color
             else:
                 click.echo(
