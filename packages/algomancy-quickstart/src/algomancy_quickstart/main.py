@@ -43,18 +43,18 @@ def main(skip_confirmation: bool, title: str | None):
     - Asset imports
     - Styling configuration
     """
-    click.echo(click.style("🎯 Algomancy Quickstart Wizard", fg="cyan", bold=True))
+    click.echo(click.style("Algomancy Quickstart Wizard", fg="cyan", bold=True))
     click.echo()
 
     try:
         run_quickstart(skip_confirmation=skip_confirmation, title=title)
     except KeyboardInterrupt:
         click.echo()
-        click.echo(click.style("❌ Setup cancelled by user.", fg="red"))
+        click.echo(click.style("Setup cancelled by user.", fg="red"))
         sys.exit(1)
     except Exception as e:
         click.echo()
-        click.echo(click.style(f"❌ Error: {e}", fg="red"))
+        click.echo(click.style(f"Error: {e}", fg="red"))
         sys.exit(1)
 
 
