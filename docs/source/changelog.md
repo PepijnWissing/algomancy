@@ -1,4 +1,20 @@
 # Change log
+## Prerelease
+### Added
+- **Quickstart Module**: Introduced `algomancy-quickstart` package with an interactive setup wizard (`QuickstartWizard`)
+  that streamlines the creation of new Algomancy applications. The wizard guides users through five configurable steps: 
+  1. creating folder structure and generating a basic `main.py`, 
+  2. generating custom implementation templates for schemas, 
+    algorithms, KPIs, and ETL factories, 
+  3. automatically scanning data files and generating ETL pipelines with schema inference, 
+  4. installing default assets (CSS, images) from GitHub or bundled fallback, and 
+  5. configuring custom styling with colors and themes. 
+
+  The wizard features interactive prompts, intelligent file detection (CSV, XLSX, JSON), automatic datatype inference 
+  with column mapping, and generates code templates using Jinja2. This significantly reduces the initial
+  setup time and provides new users with a structured starting point following framework best practices.
+
+
 ## 0.4.4
 _Released on 23-2-2026_
 
