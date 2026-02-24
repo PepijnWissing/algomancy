@@ -11,12 +11,12 @@ classifiers = [
   "Programming Language :: Python"
 ]
 dependencies = [
-  "algomancy-cli >= 0.4.3",
-  "algomancy-content >= 0.4.3",
-  "algomancy-data >= 0.4.3",
-  "algomancy-gui >= 0.4.3",
-  "algomancy-scenario >= 0.4.3",
-  "algomancy-utils >= 0.4.3",
+  "algomancy-cli >= 0.4.4",
+  "algomancy-content >= 0.4.4",
+  "algomancy-data >= 0.4.4",
+  "algomancy-gui >= 0.4.4",
+  "algomancy-scenario >= 0.4.4",
+  "algomancy-utils >= 0.4.4",
   "furo>=2025.12.19",
   "myst-parser>=5.0.0",
   "pydata-sphinx-theme>=0.16.1",
@@ -25,7 +25,8 @@ dependencies = [
   "sphinx-autodoc2>=0.5.0",
   "sphinx-copybutton>=0.5.2",
   "sphinx-design>=0.7.0",
-  "sphinx-rtd-theme>=3.1.0"
+  "sphinx-rtd-theme>=3.1.0",
+  "sphinxcontrib-mermaid>=2.0.0"
 ]
 description = "A dashboarding framework for visualizing performances of algorithms or simulations in various scenarios."
 keywords = ["visualization", "algorithm", "simulation", "scenario"]
@@ -37,7 +38,7 @@ maintainers = [
 name = "Algomancy"
 readme = "README.md"
 requires-python = ">=3.14"
-version = "0.4.3"
+version = "0.4.4"
 
 [project.scripts]
 algomancy-cli = "algomancy_cli.main:main"

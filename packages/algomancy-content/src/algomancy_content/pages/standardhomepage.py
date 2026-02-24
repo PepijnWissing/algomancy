@@ -8,6 +8,19 @@ from algomancy_gui.managergetters import get_scenario_manager
 
 
 class StandardHomePage(BaseHomePage):
+    """
+    StandardHomePage is a subclass of BaseHomePage that provides a standard home page layout for an application.
+    It includes a logo, status indicators for scenario processing, and a summary of scenario counts.
+
+    USAGE:
+        >>> config = AppConfiguration(
+        ...             ...
+        ...             home_page="standard",
+        ...             ...
+        ...          )
+
+    """
+
     @staticmethod
     def create_content():
         """
@@ -271,4 +284,5 @@ class StandardHomePage(BaseHomePage):
 
     @staticmethod
     def register_callbacks():
+        """Has no additional callbacks - navlinks do not require a callback"""
         pass

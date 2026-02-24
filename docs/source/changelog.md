@@ -1,4 +1,10 @@
 # Change log
+## 0.4.4
+_Released on 23-2-2026_
+
+### Added 
+- Documentation updates: reference is now complete with some todos
+
 ## 0.4.3
 _Released on 18-2-2026_
 

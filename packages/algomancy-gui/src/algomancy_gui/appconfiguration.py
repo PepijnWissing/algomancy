@@ -51,7 +51,7 @@ class AppConfiguration(CoreConfiguration):
         default_algo_params_values (Dict[str, Any] | None): Default algorithm parameters.
             Defaults to None.
         autorun (bool | None): Run algorithm automatically on startup. Defaults to False.
-        home_page (BaseHomePage | str): Home page implementation or "standard".
+        home_page (BaseHomePage | str): Home page implementation, "standard" or "showcase".
             Defaults to "standard".
         data_page (BaseDataPage | str): Data page implementation or "placeholder".
             Defaults to "placeholder".
