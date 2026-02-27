@@ -1,11 +1,193 @@
 # Change log
-## PreRelease
+## Prerelease
 ### Added 
 - Added charactersafe & existing scenario name checks (in InputChecker Class), resulting in a disabled create button
 - Added list_tags function to the scenario registry, making accessable via the scenario manager
 ### Changed
 - Made dataset_name_invalid generic (name_invalid) for datasets and scenarios: 
 - Moved callback for name_invalid to inputchecker.py to avoid duplicate code in datamanagerderive/importmodal
+
+## 0.4.4
+_Released on 23-2-2026_
+
+### Added 
+- Documentation updates: reference is now complete with some todos
+
+## 0.4.3
+_Released on 18-2-2026_
+
+### Added
+- Added `BaseDataSource._post_derive()` method as a hook to allow subclasses to perform post-derivation processing.
+- Added `_post_derive()` PyTest to pre-merge testing protocol.
+
+## 0.4.2
+_Released on 17-2-2026_
+
+### Added
+- Added `test_datasource.py` to the PyTest pre-merge protocol. 
+
+### Fixed
+- Fixed bug where `BaseDataSource.derive()` would not update `ds_type` and `id` appropriately.
+- Fixed bug where `DataSource.from_json()` would not preserve datatypes. 
+
+## 0.4.0
+_Released on 12-02-2026_
+### Changed
+- **[Breaking]** Removed `InputFileConfigs`, moved responsibility to `Schema` class
+- Updated documentation
+- Updated tutorial code (data, root files, assets, data handling, algorithms, KPIs)
+
+### Migration from InputFileConfiguration to Schema-only pattern
+Prior to this release, file configurations were specified separately using `SingleInputFileConfiguration` and `MultiInputFileConfiguration`.
+These have been removed, and the `Schema` class now contains all necessary file metadata.
+:::{dropdown} {octicon}`move-to-end` Migration example
+:color: secondary
+#### For single-file schemas (CSV, JSON, XLSX with one sheet):
+
+**Old version**
+```python
+from algomancy_data import Schema, FileExtension, DataType, SingleInputFileConfiguration
+
+class WarehouseLayoutSchema(Schema):
+    ID = "slotid"
+    X = "x"
+    Y = "y"
+    ZONE = "zone"
+
+    @property
+    def datatypes(self) -> Dict[str, DataType]:
+        return {
+            WarehouseLayoutSchema.ID: DataType.STRING,
+            WarehouseLayoutSchema.ZONE: DataType.STRING,
+            WarehouseLayoutSchema.X: DataType.FLOAT,
+            WarehouseLayoutSchema.Y: DataType.FLOAT,
+        }
+
+# File configuration was separate
+warehouse_config = SingleInputFileConfiguration(
+    extension=FileExtension.CSV,
+    file_name="warehouse_layout",
+    file_schema=WarehouseLayoutSchema(),
+)
+```
+
+**New version**
+```python
+from algomancy_data import Schema, FileExtension, DataType
+from algomancy_data.schema import SchemaType
+
+class WarehouseLayoutSchema(Schema):
+    # File metadata now lives in the Schema class
+    _FILENAME = "warehouse_layout"
+    _EXTENSION = FileExtension.CSV
+    _SCHEMA_TYPE = SchemaType.SINGLE
+
+    ID = "slotid"
+    X = "x"
+    Y = "y"
+    ZONE = "zone"
+
+    def _defined_datatypes(self) -> Dict[str, DataType]:
+        return {
+            WarehouseLayoutSchema.ID: DataType.STRING,
+            WarehouseLayoutSchema.ZONE: DataType.STRING,
+            WarehouseLayoutSchema.X: DataType.FLOAT,
+            WarehouseLayoutSchema.Y: DataType.FLOAT,
+        }
+
+# No separate configuration needed - just instantiate the schema
+warehouse_schema = WarehouseLayoutSchema()
+```
+
+**Key changes for single-file schemas:**
+- Add `_FILENAME`, `_EXTENSION`, and `_SCHEMA_TYPE = SchemaType.SINGLE` as class attributes
+- Rename `datatypes` property to `_defined_datatypes()` method
+- Remove the separate `SingleInputFileConfiguration` wrapper
+
+#### For multi-sheet XLSX files:
+
+**Old version**
+```python
+from algomancy_data import Schema, FileExtension, DataType, MultiInputFileConfiguration
+
+class StedenSchema(Schema):
+    COUNTRY = "Country"
+    CITY = "City"
+
+    @property
+    def datatypes(self) -> Dict[str, DataType]:
+        return {
+            StedenSchema.COUNTRY: DataType.STRING,
+            StedenSchema.CITY: DataType.STRING,
+        }
+
+class KlantenSchema(Schema):
+    ID = "ID"
+    Name = "Naam"
+
+    @property
+    def datatypes(self) -> Dict[str, DataType]:
+        return {
+            KlantenSchema.ID: DataType.INTEGER,
+            KlantenSchema.Name: DataType.STRING,
+        }
+
+# Separate configuration with multiple schemas
+multisheet_config = MultiInputFileConfiguration(
+    extension=FileExtension.XLSX,
+    file_name="multisheet",
+    file_schemas={
+        "Steden": StedenSchema(),
+        "Klanten": KlantenSchema(),
+    },
+)
+```
+
+**New version**
+```python
+from algomancy_data import Schema, FileExtension, DataType
+from algomancy_data.schema import SchemaType
+
+class LocationSchema(Schema):
+    # File metadata in the schema
+    _FILENAME = "multisheet"
+    _EXTENSION = FileExtension.XLSX
+    _SCHEMA_TYPE = SchemaType.MULTI
+
+    # All column names from all sheets in one schema
+    # steden sheet
+    COUNTRY = "Country"
+    CITY = "City"
+
+    # klanten sheet
+    ID = "ID"
+    Name = "Naam"
+
+    def _defined_datatypes(self) -> Dict[str, Dict[str, DataType]]:
+        # Return a dict of sheet names to column datatypes
+        return {
+            "Steden": {
+                LocationSchema.COUNTRY: DataType.STRING,
+                LocationSchema.CITY: DataType.STRING,
+            },
+            "Klanten": {
+                LocationSchema.ID: DataType.INTEGER,
+                LocationSchema.Name: DataType.STRING,
+            },
+        }
+
+# No separate configuration needed
+location_schema = LocationSchema()
+```
+
+**Key changes for multi-sheet schemas:**
+- Combine all sheet schemas into a single `Schema` class
+- Add `_FILENAME`, `_EXTENSION`, and `_SCHEMA_TYPE = SchemaType.MULTI` as class attributes
+- Rename `datatypes` property to `_defined_datatypes()` method
+- Return `Dict[str, Dict[str, DataType]]` (sheet name → column datatypes) instead of `Dict[str, DataType]`
+- Remove the separate `MultiInputFileConfiguration` wrapper and individual sheet schemas
+:::
+
 
 ## 0.3.21
 _12-02-2026_
