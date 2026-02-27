@@ -43,19 +43,19 @@ class ScenarioRegistry:
 
     def list(self) -> List[Scenario]:
         """
-        returns a list of all available Scenario objects.
+        Returns a list of all available Scenario objects.
         """
         return list(self._scenarios.values())
 
     def list_ids(self) -> List[str]:
         """
-        returns a list of all available Scenario id strings.
+        Returns a list of all available Scenario id strings.
         """
         return list(self._scenarios.keys())
 
     def has_tag(self, tag: str) -> bool:
         """
-        returns a Boolean that indicates if a specified scenario tag exists in the scenario _tag_index dictionary.
+        Returns a Boolean that indicates if a specified scenario tag exists in the scenario _tag_index dictionary.
         """
         return tag in self._tag_index
 
@@ -64,6 +64,6 @@ class ScenarioRegistry:
 
     def list_tags(self) -> List[str]:
         """
-        returns a list of scenario tag strings by retrieving the keys from the scenario _tag_index dictionary.
+        Returns a list of scenario tag strings by retrieving the keys from the scenario _tag_index dictionary.
         """
         return list(self._tag_index.keys())
