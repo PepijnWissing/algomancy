@@ -3,7 +3,8 @@ import re
 from dash import get_app, callback, Output, Input, State
 
 from algomancy_gui.managergetters import get_scenario_manager
-from algomancy_scenario import ScenarioManager
+from algomancy_scenario import ScenarioManager, Scenario
+from typing import Dict
 
 class InputChecker:
     """
@@ -15,18 +16,17 @@ class InputChecker:
         """Checks a string value to consist of solely alphanumeric, hyphen or underscore characters"""
         return bool(re.fullmatch(r"[A-Za-z0-9_-]+", value))
 
-    @staticmethod
+    #@staticmethod
     def name_exists(value: str, session_id: str) -> bool:
-        """Checks if a string value already exists in the set of dataset names for a specific session"""
         sm: ScenarioManager = get_scenario_manager(get_app().server, session_id)
+
+        """Checks if a string value already exists in the set of dataset names for a specific session"""
         dataset_names = sm.get_data_keys()
         is_invalid = value in dataset_names
-        """Checks if a string value already exists in the set of scenario tags for a specific session
-        todo: dit werkt niet (volgensmij worden tags niet echt opgeslagen, enkel unieke id's. voor nu niet heel erg aangezien er al een duplicate name check op create_scenario() zit
-        self._registry.has_tag(tag):
-        scenario_tags = sm.list_scenarios()
-        is_invalid = value in scenario_tags        
-        """
+        """Checks if a string value already exists in the set of scenario tags for a specific session"""
+        scenario_names = sm.list_tags()
+        is_invalid = value in scenario_names
+
         return is_invalid
 
     @staticmethod

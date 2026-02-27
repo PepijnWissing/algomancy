@@ -52,3 +52,9 @@ class ScenarioRegistry:
 
     def used_datasets(self) -> List[str]:
         return [s.input_data_key for s in self._scenarios.values()]
+
+    def list_tags(self) -> List[str]:
+        """
+        docstring todo
+        """
+        return list(self._tag_index.keys())

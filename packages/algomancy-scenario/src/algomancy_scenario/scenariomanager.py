@@ -241,6 +241,9 @@ class ScenarioManager:
     def list_ids(self):
         return self._registry.list_ids()
 
+    def list_tags(self) -> List[str]:
+        return self._registry.list_tags()
+
     def toggle_autocreate(
         self, value: bool = None, default_algo_name: str = ""
     ) -> None:
