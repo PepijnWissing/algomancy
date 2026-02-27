@@ -364,7 +364,7 @@ def open_algo_params_window(algo_name, session_id):
             return False, ""
     return False, ""
 
-InputChecker.register_name_callback(SCENARIO_TAG_INPUT, SCENARIO_TAG_FEEDBACK, SCENARIO_NEW_BUTTON, ACTIVE_SESSION)
+InputChecker.register_name_callback(SCENARIO_TAG_INPUT, SCENARIO_TAG_FEEDBACK, SCENARIO_NEW_BUTTON, ACTIVE_SESSION, 'scenario')
 
 # --- Scenario Creation Callback ---
 @callback(
