@@ -2,8 +2,10 @@
 ## PreRelease
 ### Added 
 - Added charactersafe & existing scenario name checks (in InputChecker Class), resulting in a disabled create button
+- Added list_tags function to the scenario registry, making accessable via the scenario manager
 ### Changed
-- Moved callback for dataset_name_invalid to inputchecker.py to avoid duplicate code in datamanagerderive/importmodal
+- Made dataset_name_invalid generic (name_invalid) for datasets and scenarios: 
+- Moved callback for name_invalid to inputchecker.py to avoid duplicate code in datamanagerderive/importmodal
 
 ## 0.3.21
 _12-02-2026_

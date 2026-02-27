@@ -242,6 +242,9 @@ class ScenarioManager:
         return self._registry.list_ids()
 
     def list_tags(self) -> List[str]:
+        """
+        This method returns a list of all registered scenario tag strings for the current session, by delegating to the underlying ScenarioRegistry
+        """
         return self._registry.list_tags()
 
     def toggle_autocreate(
