@@ -1,12 +1,14 @@
 (tutorial-pages-ref)=
 # Pages
-
-We build our own implementation of the Scenarios page, the Compare page and the Overview page.
+Now that the backend is complete, we can create the GUI elements. We build our own implementation of the Scenarios page, the Compare page and the Overview page.
 
 ## Scenarios Page
 In the scenarios pages, we will show basic information about the scenario. Additionally, if the algorithm has run, we will show some result statistics and visualize the TSP route.  
 1. Create a file `page_scenarios.py `in the directory `src/pages/`
 2. Create the class TSPScenarioPage which inherits from the BaseScenarioPage, and implements the static methods `register_callbacks` and `create_content`, using the code below:
+
+:::{dropdown} {octicon}`code` Code
+:color: info
 ```{code-block} python
 :caption: `page_scenarios.py`
 :linenos:
@@ -14,6 +16,7 @@ In the scenarios pages, we will show basic information about the scenario. Addit
 from dash import html, dcc, callback, Input, Output, State
 import dash_bootstrap_components as dbc
 from algomancy_content.pages.page import BaseScenarioPage
+from algomancy_scenario import Scenario, ScenarioStatus
 
 class TSPScenarioPage(BaseScenarioPage):
     @staticmethod
@@ -25,9 +28,13 @@ class TSPScenarioPage(BaseScenarioPage):
     def create_content(scenario: Scenario) -> html.Div:
     pass
 ```
+:::
 
 3. We will create several visualization components which we want to use on different pages. For this, create a file `components.py` in the directory `src/pages/`.
 4. In this file, we create two components: a table with information about a scenario and a table with results:
+
+:::{dropdown} {octicon}`code` Code
+:color: info
 ```{code-block} python
 :caption: `components.py`
 :linenos:
@@ -35,37 +42,27 @@ class TSPScenarioPage(BaseScenarioPage):
 from dash import html
 import dash_bootstrap_components as dbc
 from algomancy_gui.scenario_page.scenario_badge import status_badge
+from typing import List, Dict
 
 
 def scenario_table(scenario) -> html.Div:
-
     """
-    Create a component that displays high-level metadata of a scenario. The scenario is rendered as a small, styled
-    table inside a Bootstrap card, showing identifying and descriptive information.
+    Render a summary table with high-level scenario metadata.
 
-    Expected attributes on `scenario`:
+    Inputs / assumptions:
+    - scenario has the following attributes:
         - id
         - tag
         - status
         - algorithm_description
         - input_data_key
+    - Missing attributes are rendered as an em dash ("—")
 
-    Missing attributes are rendered as an em dash ("—").
-
-    Parameters
-    ----------
-    scenario : object
-        Scenario-like object containing metadata to display.
-
-    Returns
-    -------
-    dash.html.Div
-        A Dash Div containing a Bootstrap Card with a summary table.
+    Output:
+    - html.Div containing a Bootstrap card with a metadata table
     """
-
-
     rows = [
-        html.Tr([html.Th("ID", className="w-25"), html.Td(str(getattr(scenario, "id", "—")))]),
+        html.Tr([html.Th("ID"), html.Td(str(getattr(scenario, "id", "—")))]),
         html.Tr([html.Th("Tag"), html.Td(getattr(scenario, "tag", "—") or "—")]),
         html.Tr([
             html.Th("Status"),
@@ -85,39 +82,37 @@ def scenario_table(scenario) -> html.Div:
             dbc.CardBody(
                 dbc.Table(
                     [html.Tbody(rows)],
-                    bordered=False,
-                    hover=False,
-                    striped=False,
-                    responsive=True,
-                    className="mb-0 align-middle"
                 )
             ),
-        ],
-        className="shadow-sm"
+        ]
     ))
 
 def result_table(scenario) -> html.Div:
     """
-    Render a cost/route KPI summary as a styled table inside a card.
+    Render a KPI summary table for a completed scenario.
 
-    Uses:
-      scenario.result.ordered_locations
-      scenario.result.tour
-      scenario.kpis["Total_costs"].value
+    Inputs / assumptions:
+    - scenario.result contains:
+        - ordered_locations (list)
+        - tour (list)
+    - scenario.kpis contains:
+        - "Total_costs" with attribute `.value`
+    - Missing data is rendered as zero or em dash
+
+    Output:
+    - html.Div containing a Bootstrap card with result KPIs
     """
-
     ordered_locations = getattr(getattr(scenario, "result", None), "ordered_locations", []) or []
     tour = getattr(getattr(scenario, "result", None), "tour", []) or []
 
     # KPI calculations (as provided)
     total_cost = round(getattr(scenario.kpis.get("Total_costs", None), "value", 0.0), 1) if getattr(scenario, "kpis", None) else 0.0
-    number_of_stops = len(ordered_locations)
     number_of_routes = len(tour)
     avg_cost = round(total_cost / number_of_routes, 1) if number_of_routes > 0 else 0.0
 
     rows = [
-        html.Tr([html.Th("Total cost", className="w-50"), html.Td(f"{total_cost}")]),
-        html.Tr([html.Th("Number of locations"), html.Td(f"{number_of_stops}")]),
+        html.Tr([html.Th("Total cost"), html.Td(f"{total_cost}")]),
+        html.Tr([html.Th("Number of locations"), html.Td(f"{len(ordered_locations)}")]),
         html.Tr([html.Th("Number of route segments"), html.Td(f"{number_of_routes}")]),
         html.Tr([html.Th("Average cost per segment"), html.Td(f"{avg_cost}")]),
     ]
@@ -128,27 +123,25 @@ def result_table(scenario) -> html.Div:
                 dbc.CardHeader("Result Summary"),
                 dbc.CardBody(
                     dbc.Table(
-                        [html.Tbody(rows)],
-                        bordered=False,
-                        hover=False,
-                        striped=False,
-                        responsive=True,
-                        className="mb-0 align-middle"
+                        [html.Tbody(rows)]
                     )
                 ),
-            ],
-            className="shadow-sm"
+            ]
         )
     )
 ```
+:::
+
 Note that we re-used Algomancy's `status_badge` component. 
-5. In `page_scenarios.py`, we use the just defined components the `create_content` as follows:
+5. In `page_scenarios.py`, import these components and use them in the `create_content` as follows:
+
+:::{dropdown} {octicon}`code` Code
+:color: info
 ```{code-block} python
-:caption: `components.py`
+:caption: `page_scenarios.py`
 :linenos:
 @staticmethod
 def create_content(scenario: Scenario) -> html.Div:
-
     # Case 1 – Scenario not ready
     if scenario.status != ScenarioStatus.COMPLETE:
         unavailable_page = dbc.Container([dbc.Row(
@@ -157,7 +150,7 @@ def create_content(scenario: Scenario) -> html.Div:
                 dbc.Col(html.Div([
                     dbc.Alert("Scenario results are not available yet. Please run the scenario or refresh "
                               "the page once the computation is complete.",
-                              color="info", className="mb-0")
+                              color="info")
                 ],
                     style={"paddingTop": "4px"})
                 )
@@ -200,20 +193,38 @@ def create_content(scenario: Scenario) -> html.Div:
     ])
     return html.Div(result_page)
 ```
+:::
+
 In the just created page, we check if the scenario has already run. If yes, we show the results. If not, we show a
 notification to the user.
 
 6. Next, we want to add a visualization of the resulting route to the page. In the file `components.py`, add the following import statement:
-```
+```{code-block} python
 import plotly.graph_objects as go
 ```
 and add the following function:
 
+:::{dropdown} {octicon}`code` Code
+:color: info
 ```{code-block} python
 :caption: `components.py`
 :linenos:
 
-def get_route_visualization(ordered_locations, tour):
+def route_visualization(ordered_locations: List[Dict], tour: List[Dict]):
+    """
+    Create a Plotly figure visualizing a TSP route.
+
+    Inputs / assumptions:
+    - ordered_locations: list of dicts with keys:
+        - "id", "x", "y"
+    - tour: list of dicts with keys:
+        - "from_id", "to_id", "route_id", "cost"
+    - Location IDs referenced in tour exist in ordered_locations
+      (missing IDs should be handled or skipped by the caller)
+
+    Output:
+    - plotly.graph_objects.Figure showing route segments and locations
+    """
     # Lookup table for coordinates
     loc_lookup = {loc['id']: (loc['x'], loc['y']) for loc in ordered_locations}
 
@@ -234,12 +245,15 @@ def get_route_visualization(ordered_locations, tour):
 
     # Create figure
     fig = go.Figure()
-    #LINE_COLOR = "#0074D9"
+    LINE_COLOR = "#0074D9"
     
     # Plot route segments one by one
     for route in tour:
-        x0, y0 = loc_lookup[route['from_id']]
-        x1, y1 = loc_lookup[route['to_id']]
+        try:
+            x0, y0 = loc_lookup[route["from_id"]]
+            x1, y1 = loc_lookup[route["to_id"]]
+        except KeyError:
+            continue
 
         # Draw segment
         fig.add_trace(
@@ -290,8 +304,7 @@ def get_route_visualization(ordered_locations, tour):
         yaxis_title="Y",
         hovermode="closest",
         paper_bgcolor="rgba(0,0,0,0)",  # transparent background
-        plot_bgcolor="rgba(0,0,0,0)",  # transparent plotting area
-        margin=dict(l=10, r=10, t=30, b=10),
+        plot_bgcolor="rgba(0,0,0,0)"  # transparent plotting area
     )
 
     # Tight axes with small padding
@@ -302,16 +315,34 @@ def get_route_visualization(ordered_locations, tour):
 
     return fig
 ```
-
-7. In `page_scenarios.py` we want to give the user the option to toggle the visualization on/off. Edit the `create_contents` 
+:::
+7. In `page_scenarios.py` we want to give the user the option to toggle the visualization on/off. Import the `route_visualization` function from `components.py` and edit the `create_content` 
 function such that it looks as follows:
 
+:::{dropdown} {octicon}`code` Code
+:color: info
 ```{code-block} python
 :caption: `page_scenarios.py`
 :linenos:
 
 def create_content(scenario: Scenario) -> html.Div:
+    """
+    Create the main content of the scenario page.
 
+    Renders basic scenario metadata and either a notification (if the scenario is not complete) or result statistics
+    and visualization controls.
+
+    Inputs / assumptions:
+    - scenario has attributes:
+        - status
+        - result.ordered_locations
+        - result.tour
+        - kpis (optional)
+    - ScenarioStatus.COMPLETE indicates a finished scenario
+
+    Output:
+    - html.Div containing the full page layout for the scenario
+    """
     # Case 1 – Scenario not ready
     if scenario.status != ScenarioStatus.COMPLETE:
         unavailable_page = dbc.Container([dbc.Row(
@@ -320,7 +351,7 @@ def create_content(scenario: Scenario) -> html.Div:
                 dbc.Col(html.Div([
                     dbc.Alert("Scenario results are not available yet. Please run the scenario or refresh "
                               "the page once the computation is complete.",
-                              color="info", className="mb-0")
+                              color="info")
                 ],
                     style={"paddingTop": "4px"})
                 )
@@ -363,14 +394,13 @@ def create_content(scenario: Scenario) -> html.Div:
                         value=["show"],  # default: visible
                         switch=True,
                         style={"marginTop": "8px", "marginBottom": "8px"},
-                        className="mb-2",
                     )
                 ]))
             ]),
         dbc.Row(
             [
                 html.Div([
-                    html.Hr(style={"marginTop": "6px", "marginBottom": "10px"}),
+                    html.Hr(),
                     dcc.Store(
                         id='locations_store', data=locations_payload
                     ),
@@ -378,22 +408,37 @@ def create_content(scenario: Scenario) -> html.Div:
                         id='tour_store', data=tour_payload
                     ),
                     html.Div(id="route-container")
-                ],
-                    style={"padding": "10px 12px 12px 12px"}
+                ]
                 )
             ]
         )
     ])
     return html.Div(result_page)
 ```
+:::
+
 8. We must now implement the `register_callbacks()` function to listen to the `route-container` toggle:
 
+:::{dropdown} {octicon}`code` Code
+:color: info
 ```{code-block} python
 :caption: `page_scenarios.py`
 :linenos:
 
 @staticmethod
 def register_callbacks():
+    """
+    Conditionally render the route visualization based on user input.
+
+    Inputs / assumptions:
+    - values: list of selected values from the 'show-route' checklist
+    - ordered_locations: data from dcc.Store, passed to route_visualization
+    - tour: data from dcc.Store, passed to route_visualization
+
+    Output:
+    - html.Div with a message if hidden, or
+    - dcc.Graph containing the route visualization
+    """
     @callback(
         Output("route-container", "children"),
         Input("show-route", "value"),
@@ -404,12 +449,16 @@ def register_callbacks():
         show = "show" in (values or [])
         if not show:
             return html.Div("Visualization is hidden.", style={"opacity": 0.7, "fontStyle": "italic"})
-        return dcc.Graph(id="route", figure=get_route_visualization(ordered_locations, tour),
+        return dcc.Graph(id="route", figure=route_visualization(ordered_locations, tour),
                          style={"height": "58vh"})
 ```
+:::
+
 9. Lastly, we must change the app configuration to use our newly created page. In `main.py` import the TSPScenarioPage 
 class using `from pages.page_scenarios import TSPScenarioPage`, and in the AppConfiguration instance initialization 
 use the argument `scenario_page=TSPScenarioPage()`.
+10. Start the application, load the data and create a new scenario on the Scenarios page. 
+Verify that you see the page that has just been created.
 
 ## Compare Page
 On the compare page, we can perform a more detailed comparison between two scenarios. 
@@ -418,6 +467,9 @@ On our TSPComparePage we will show the results of two scenarios side by side, an
 1. Create a file `page_compare.py `in the directory `src/pages/`
 2. Create the class TSPComparePage which inherits from the BaseComparePage, and implements the static methods
 `create_side_by_side_content`, `create_compare_section`, `create_details_section` and `register_callbacks` using the code below:
+
+:::{dropdown} {octicon}`code` Code
+:color: info
 ```{code-block} python
 :caption: `page_compare.py`
 :linenos:
@@ -425,11 +477,23 @@ On our TSPComparePage we will show the results of two scenarios side by side, an
 from algomancy_scenario import Scenario
 from algomancy_content.pages.page import BaseComparePage
 from dash import html
+import dash_bootstrap_components as dbc
 from pages.components import result_table
 
 class TSPComparePage(BaseComparePage):
     @staticmethod
     def create_side_by_side_content(scenario: Scenario, side: str) -> html.Div:
+        """
+        Create the per-scenario content for the compare page.
+
+        Inputs / assumptions:
+        - scenario is a Scenario instance
+        - side indicates whether this is the left or right comparison side
+          (not used directly in this implementation)
+
+        Output:
+        - html.Div containing a result summary table for the scenario
+        """
         results = result_table(scenario)
         return html.Div(dbc.Container([results]))
 
@@ -446,10 +510,89 @@ class TSPComparePage(BaseComparePage):
     def register_callbacks() -> None:
         return None
 ```
-Note that for the side-by-side content we have re-used the result table which was also on the scenarios page.
-By placing it in the `create_side_by_side_content` it is shown for both the `left` and the `right` scenario.
+:::
 
-3. In the `create_compare_section` and `create_details_section` TODO TODO TODO  
+Note that for the side-by-side content we have re-used the result table which was also on the scenarios page.
+By placing it in the `create_side_by_side_content` it is shown for both selected scenarios side by side.
+
+3. In the `create_compare_section` and `create_details_section` we have access to a `left` and `right` scenario. 
+With the following code block we implement a comparison in the compare section and show the scenario IDs in the details section:
+
+:::{dropdown} {octicon}`code` Code
+:color: info
+```{code-block} python
+:caption: `page_compare.py`
+:linenos:
+
+    @staticmethod
+    def create_compare_section(left: Scenario, right: Scenario) -> html.Div:
+        """
+        Create a comparison summary between two completed scenarios.
+    
+        Computes simple similarities and differences between scenario results,
+        including overlapping route segments and the most expensive route used.
+    
+        Inputs / assumptions:
+        - left and right are Scenario instances with existing tours
+        - Route IDs uniquely identify comparable route segments
+    
+        Output:
+        - html.Div containing textual comparison metrics
+        """
+        tour_left = getattr(getattr(left, "result", None), "tour", []) or []
+        tour_right = getattr(getattr(right, "result", None), "tour", []) or []
+
+        common_route_ids = {r.route_id for r in tour_left} & {r.route_id for r in tour_right}
+        number_of_common_routes = len(common_route_ids)
+
+        # Most expensive route segment used:
+        all_routes = tour_left + tour_right
+        if all_routes:
+            highest = max(all_routes, key=lambda r: r.cost)
+            highest_cost_id = highest.route_id
+            highest_cost = highest.cost
+        else:
+            highest_cost_id = ''
+            highest_cost = 0
+
+        # Determine where highest cost occurs
+        left_ids = {r.route_id for r in tour_left}
+        right_ids = {r.route_id for r in tour_right}
+
+        used_in = (
+            "both" if (highest_cost_id in left_ids and highest_cost_id in right_ids)
+            else "left only" if (highest_cost_id in left_ids)
+            else "right only"
+        )
+
+        return html.Div([
+            html.Div(f"Number of common route segments: {number_of_common_routes}"),
+            html.Div(f"Highest cost route is {highest_cost_id} at ${highest_cost:.1f}, used in {used_in}")
+        ],
+            style={"marginTop": "8px"},
+        )
+
+
+    @staticmethod
+    def create_details_section(left: Scenario, right: Scenario) -> html.Div:    
+        """
+        Create a simple details section displaying identifiers of both scenarios.
+    
+        Inputs / assumptions:
+        - left and right are Scenario instances
+        - Each scenario exposes an 'id' attribute
+    
+        Output:
+        - html.Div containing basic scenario identification details
+        """
+        return html.Div([
+            html.Div(f"Left scenario id: {left.id}"),
+            html.Div(f"Right scenario id: {right.id}"),
+        ],
+            style={"marginTop": "8px"},
+        )
+```
+:::
 
 4. If desired, you can also add interactivity by adding callbacks to the `register_callbacks` function, in the same way as this was done on the TSP scenarios page.
 5. Similar to the TSPScenarioPage, also import the TSPComparePage in `main.py` and provide it as input to the app configuration.
@@ -461,6 +604,9 @@ with all scenarios, and show basic info and the resulting total cost for each sc
 1. Create a file `page_overview.py `in the directory `src/pages/`
 2. Create the class TSPOverviewPage which inherits from the BaseOverviewPage, and implements the static methods
 `create_content` and `register_callbacks` using the code below:
+
+:::{dropdown} {octicon}`code` Code
+:color: info
 ```{code-block} python
 :caption: `page_overview.py`
 :linenos:
@@ -475,34 +621,36 @@ from dash import html
 
 class TSPOverviewPage(BaseOverviewPage):
     @staticmethod
-    def create_content(scenarios: List[Scenario]):
+    def create_content(scenarios: List[Scenario]) -> html.Div:
         """
-        Create a dbc-styled summary table for multiple scenarios (if there is at least one scenario).
+        Create an overview table summarizing multiple scenarios.
 
-        Columns:
-          - Scenario (tag)
-          - Status
-          - Dataset
-          - Algorithm
-          - Total cost
+        Inputs / assumptions:
+        - scenarios is a list of Scenario objects
+        - Each scenario defines:
+            - tag
+            - status
+            - input_data_key
+            - algorithm_description
+            - kpis["Total_costs"].value (only if COMPLETE)
 
-        Uses status_badge(scenario.status) like scenario_table().
-        """
-        
+        Output:
+        - html.Div containing a Bootstrap card with a summary table, or an alert message if no scenarios are provided
+        """  
         # Empty-state
-        if len(scenarios) == 0:
+        if not scenarios:
             return html.Div(
-                dbc.Alert("No scenarios to display.", color="info", className="mb-0")
+                dbc.Alert("No scenarios to display.", color="info")
             )
 
         header = html.Thead(
             html.Tr(
                 [
-                    html.Th("Scenario", className="w-20"),
-                    html.Th("Status", className="w-15"),
-                    html.Th("Dataset", className="w-20"),
-                    html.Th("Algorithm", className="w-35"),
-                    html.Th("Total cost", className="w-10 text-end"),
+                    html.Th("Scenario"),
+                    html.Th("Status"),
+                    html.Th("Dataset"),
+                    html.Th("Algorithm",
+                    html.Th("Total cost"),
                 ]
             )
         )
@@ -527,18 +675,13 @@ class TSPOverviewPage(BaseOverviewPage):
                         html.Td(status_badge(status)),
                         html.Td(dataset),
                         html.Td(algo),
-                        html.Td(cost_txt, className="text-end"),
+                        html.Td(cost_txt),
                     ]
                 )
             )
 
         table = dbc.Table(
             [header, html.Tbody(body_rows)],
-            striped=True,
-            hover=True,
-            bordered=False,
-            responsive=True,
-            className="mb-0 align-middle",
         )
 
         return html.Div(
@@ -555,6 +698,9 @@ class TSPOverviewPage(BaseOverviewPage):
     def register_callbacks():
         return None
 ```
+:::
 
 2. If desired, you can also add interactivity by adding callbacks to the `register_callbacks` function, in the same way as this was done on the TSP scenarios page.
 3. Similar to the previous pages, import the TSPOverviewPage in `main.py` and provide it as input to the app configuration.
+
+The created pages can be further customized to your preferences.
