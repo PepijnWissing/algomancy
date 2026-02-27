@@ -4,14 +4,13 @@ import dash
 import dash_bootstrap_components as dbc
 from dash import html, dcc, get_app, callback, Output, Input, no_update, State
 
-import re
-
 from algomancy_data import ValidationError, DataManager
 from algomancy_scenario import ScenarioManager
 from .filenamematcher import match_file_names
 
 from ..cqmloader import cqm_loader
 from ..defaultloader import default_loader
+from ..inputchecker import  InputChecker
 from algomancy_gui.managergetters import get_scenario_manager
 from ..settingsmanager import SettingsManager
 from ..componentids import (
@@ -174,67 +173,7 @@ def toggle_modal_load(open_clicks, close_clicks, is_open):
         return not is_open
     return is_open
 
-def is_character_safe(value: str) -> bool:
-    return bool(re.fullmatch(r"[A-Za-z0-9_-]+", value))
-
-def name_exists(value: str, session_id: str) -> bool:
-    sm: ScenarioManager = get_scenario_manager(get_app().server, session_id)
-    dataset_names = sm.get_data_keys()
-    is_invalid = value in dataset_names
-    return is_invalid
-
-@callback(
-    [
-        Output(DM_IMPORT_MODAL_NAME_INPUT, "invalid"),
-        Output(DM_IMPORT_MODAL_FEEDBACK, "children"),
-        Output(DM_IMPORT_SUBMIT_BUTTON, "disabled"),
-        Output(DM_IMPORT_SUBMIT_BUTTON, "color"),
-    ],
-    Input(DM_IMPORT_MODAL_NAME_INPUT, "value"),
-    State(ACTIVE_SESSION, "data")
-)
-def dataset_name_invalid(value, session_id: str):
-    """
-        In case of an invalid dataset name, the input field for dataset name gets a red border, and a red error message appears below the field
-        This also disables the use of the Import button.
-
-        Checks dataset_name validity via the below three scenarios:
-        1) user input is empty
-        2) user input contains characters that are not alphanumeric, hyphens or underscores
-        3) user input is already in use for another saved dataset
-        Feedback is displayed and the import button is made inactive, until none of the scenarios hold.
-
-        Args:
-            value: String containing user input for dataset name
-            session_id: ID of the active session
-
-        Returns:
-            tuple: (invalid, feedback_children) where:
-            - invalid: Boolean indicating whether feedback will be shown
-            - feedback_children: String containing feedback message
-            - disabled: Boolean indicating whether the import button will be disabled
-            - color: String describing the color of the import button (green if enabled, grey if disabled)
-    """
-    # No dataset_name defined yet
-    if not value:
-        return False, "", True, "secondary"
-
-    # Dataset_name not character safe
-    is_invalid = not is_character_safe(value)
-
-    if is_invalid:
-        feedback_msg = "This is not a valid dataset name. Please only use alphanumeric characters, hyphens and underscores."
-        return is_invalid, feedback_msg, True, "secondary"
-
-    # Dataset_name already exists
-    is_invalid = name_exists(value, session_id)
-
-    if is_invalid:
-        feedback_msg = "This is not a valid dataset name. A dataset with this name already exists."
-        return is_invalid, feedback_msg, True, "secondary"
-
-    # Valid Dataset_name
-    return False, "", False, "primary"
+InputChecker.register_name_callback(DM_IMPORT_MODAL_NAME_INPUT, DM_IMPORT_MODAL_FEEDBACK, DM_IMPORT_SUBMIT_BUTTON, ACTIVE_SESSION, 'dataset')
 
 def render_file_mapping_table(mapping):
     """
