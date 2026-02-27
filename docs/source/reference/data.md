@@ -10,7 +10,6 @@ data/datasource
 data/etl
 data/extractor
 data/schema
-data/inputfileconfiguration
 data/file
 data/validator
 data/transformer

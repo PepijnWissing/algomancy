@@ -1,4 +1,5 @@
 from .page import (
+    BasePage,
     BaseHomePage,
     BaseDataPage,
     BaseScenarioPage,
@@ -15,6 +16,7 @@ from .placeholderscenariopage import PlaceholderScenarioPage
 from .standardoverviewpage import StandardOverviewPage
 
 __all__ = [
+    "BasePage",
     "BaseHomePage",
     "BaseDataPage",
     "BaseScenarioPage",

@@ -18,11 +18,6 @@ from .extractor import ExtractionSequence
 from .file import File
 from .loader import Loader
 from .validator import ValidationError, ValidationSequence
-from .inputfileconfiguration import (
-    InputFileConfiguration,
-    SingleInputFileConfiguration,
-    MultiInputFileConfiguration,
-)
 
 
 class ETLPipeline:
@@ -98,21 +93,20 @@ class ETLConstructionError(Exception):
 class ETLFactory(ABC):
     """Abstract factory that constructs ETL sequences and loader."""
 
-    def __init__(self, input_configurations: List[InputFileConfiguration], logger):
-        self.input_configurations = input_configurations
-        # self.schemas = {cfg.file_name: cfg.file_schema for cfg in input_configurations} # todo is this used?
+    def __init__(self, schemas: List[Schema], logger):
+        self.schemas = schemas
         self.logger = logger
 
     @property
-    def configs_dct(self) -> Dict[str, InputFileConfiguration]:
-        """Return a mapping from file name to its input configuration."""
-        return {cfg.file_name: cfg for cfg in self.input_configurations}
+    def schemas_dct(self) -> Dict[str, Schema]:
+        """Return a mapping from file name to its schema."""
+        return {schema.file_name: schema for schema in self.schemas}
 
-    def get_schemas(self, file_name: str) -> Dict[str, Schema] | Schema:
+    def get_schema(self, file_name: str) -> Dict[str, Schema] | Schema:
         """Return schema(s) for the given file name based on configuration.
 
         Args:
-            file_name: Logical file name as defined in input configuration.
+            file_name: Logical file name as defined in a schema.
 
         Returns:
             Schema or mapping of sub-name to Schema depending on the
@@ -122,20 +116,11 @@ class ETLFactory(ABC):
             ETLConstructionError: If no configuration exists or it is invalid.
         """
         try:
-            cfg = self.configs_dct[file_name]
+            schema = self.schemas_dct[file_name]
         except KeyError:
-            raise ETLConstructionError(
-                f"No input configuration available for {file_name}."
-            )
+            raise ETLConstructionError(f"No Schema available for {file_name}.")
 
-        if isinstance(cfg, SingleInputFileConfiguration):
-            return cfg.file_schema
-        elif isinstance(cfg, MultiInputFileConfiguration):
-            return cfg.file_schemas
-        else:
-            raise ETLConstructionError(
-                f"{file_name} does not have a valid input file configuration"
-            )
+        return schema
 
     @abstractmethod
     def create_extraction_sequence(self, files: Dict[str, File]) -> ExtractionSequence:

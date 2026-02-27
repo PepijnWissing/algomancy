@@ -1,4 +1,8 @@
 (utils-logger-ref)=
 # Logger
-
-todo
+ 
+```{eval-rst}
+.. automodule:: algomancy_utils.logger
+   :members:
+   :member-order: bysource
+```

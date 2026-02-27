@@ -9,6 +9,7 @@ class PlaceholderParams(BaseParameterSet):
         super().__init__(name=name)
 
     def validate(self):
+        """ """
         pass
 
 

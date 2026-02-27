@@ -7,7 +7,7 @@ from algomancy_data import (
     ETLFactory,
     ValidationSequence,
     ExtractionSuccessVerification,
-    InputConfigurationValidator,
+    SchemaValidator,
     ValidationSeverity,
     Loader,
 )
@@ -63,7 +63,7 @@ class TSPETLFactory(ETLFactory):
         sequence.add_extractor(
             CSVSingleExtractor(
                 file=cast(CSVFile, files["stores"]),
-                schema=self.get_schemas("stores"),
+                schema=self.get_schema("stores"),
                 logger=self.logger,
                 separator=",",
             )
@@ -71,7 +71,7 @@ class TSPETLFactory(ETLFactory):
         sequence.add_extractor(
             XLSXSingleExtractor(
                 file=cast(XLSXFile, files["dc"]),
-                schema=self.get_schemas("dc"),
+                schema=self.get_schema("dc"),
                 sheet_name=0,
                 logger=self.logger,
             )
@@ -79,7 +79,7 @@ class TSPETLFactory(ETLFactory):
         sequence.add_extractor(
             XLSXMultiExtractor(
                 file=cast(XLSXFile, files["otherlocations"]),
-                schemas=self.get_schemas("otherlocations"),
+                schema=self.get_schema("otherlocations"),
                 logger=self.logger,
             )
         )
@@ -92,8 +92,8 @@ class TSPETLFactory(ETLFactory):
         vs.add_validator(ExtractionSuccessVerification())
 
         vs.add_validator(
-            InputConfigurationValidator(
-                configs=self.input_configurations,
+            SchemaValidator(
+                schemas=self.schemas,
                 severity=ValidationSeverity.CRITICAL,
             )
         )

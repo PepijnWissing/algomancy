@@ -47,7 +47,7 @@ from algomancy_content import (
     PlaceholderETLFactory,
     PlaceholderAlgorithm,
     PlaceholderKPI,
-    placeholder_input_config,
+    PlaceholderSchema,
 )
 from algomancy_data import DataSource
 
@@ -60,7 +60,7 @@ def main() -> None:
         etl_factory     = PlaceholderETLFactory,
         kpi_templates   = {"placeholder": PlaceholderKPI},
         algo_templates  = {"placeholder": PlaceholderAlgorithm},
-        input_configs   = [placeholder_input_config],
+        schemas         = [PlaceholderSchema()],
         host            = host,
         port            = port,
         title           = "My Algomancy Dashboard",

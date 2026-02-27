@@ -2,10 +2,10 @@ from typing import Dict, List, Optional, TypeVar, Type
 
 from algomancy_data import (
     ETLFactory,
-    InputFileConfiguration,
     StatefulDataManager,
     StatelessDataManager,
     BASE_DATA_BOUND,
+    Schema,
 )
 from algomancy_utils.logger import Logger, MessageStatus
 from .basealgorithm import ALGORITHM
@@ -31,7 +31,7 @@ class ScenarioManager:
             etl_factory=cfg.etl_factory,
             kpi_templates=cfg.kpi_templates,
             algo_templates=cfg.algo_templates,
-            input_configs=cfg.input_configs,
+            schemas=cfg.schemas,
             data_object_type=cfg.data_object_type,
             data_folder=cfg.data_path,
             has_persistent_state=cfg.has_persistent_state,
@@ -47,7 +47,7 @@ class ScenarioManager:
         etl_factory: type[E],
         kpi_templates: Dict[str, Type[BASE_KPI]],
         algo_templates: Dict[str, Type[ALGORITHM]],
-        input_configs: List[InputFileConfiguration],
+        schemas: List[Schema],
         data_object_type: type[BASE_DATA_BOUND],  # for extensions of datasource
         data_folder: str = None,
         logger: Logger = None,
@@ -76,7 +76,7 @@ class ScenarioManager:
             )
             self._dm = StatefulDataManager(
                 etl_factory=etl_factory,
-                input_configs=input_configs,
+                schemas=schemas,
                 data_folder=data_folder,
                 save_type=save_type,
                 data_object_type=data_object_type,
@@ -85,7 +85,7 @@ class ScenarioManager:
         else:
             self._dm = StatelessDataManager(
                 etl_factory=etl_factory,
-                input_configs=input_configs,
+                schemas=schemas,
                 save_type=save_type,
                 logger=self.logger,
                 data_object_type=data_object_type,
@@ -103,7 +103,7 @@ class ScenarioManager:
 
         # Keep inputs for accessors
         # self._algo_templates = algo_templates
-        self._input_configs = input_configs
+        self._schemas = schemas
 
         # Load initial data
         try:
@@ -130,8 +130,8 @@ class ScenarioManager:
         return self._save_type
 
     @property
-    def input_configurations(self):
-        return self._input_configs
+    def schemas(self):
+        return self._schemas
 
     @property
     def available_algorithms(self):

@@ -3,13 +3,25 @@ from typing import Any
 from dash import html, dash_table
 
 from algomancy_scenario import Scenario
-
 from .page import BaseOverviewPage
 
 OVERVIEW_TABLE = "overview-table"
 
 
 class StandardOverviewPage(BaseOverviewPage):
+    """
+    StandardOverviewPage is a subclass of BaseOverviewPage that provides a
+    standard overview page layout for an application. It includes a table
+    view of the scenarios and their KPIs.
+
+    USAGE:
+        >>> config = AppConfiguration(
+        ...             ...
+        ...             overview_page="standard",
+        ...             ...
+        ...          )
+    """
+
     @staticmethod
     def create_content(scenarios: list[Scenario]):
         """
@@ -103,4 +115,5 @@ class StandardOverviewPage(BaseOverviewPage):
 
     @staticmethod
     def register_callbacks():
+        """No additional callbacks"""
         pass

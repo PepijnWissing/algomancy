@@ -1,12 +1,12 @@
 from .backend import (
     PlaceholderSchema,
     PlaceholderETLFactory,
-    placeholder_input_config,
     PlaceholderKPI,
     PlaceholderAlgorithm,
     PlaceholderParams,
 )
 from .pages import (
+    BasePage,
     BaseHomePage,
     BaseDataPage,
     BaseScenarioPage,
@@ -24,6 +24,7 @@ from .librarymanager import LibraryManager
 
 __all__ = [
     "LibraryManager",
+    "BasePage",
     "BaseHomePage",
     "BaseDataPage",
     "BaseScenarioPage",
@@ -38,7 +39,6 @@ __all__ = [
     "StandardOverviewPage",
     "PlaceholderETLFactory",
     "PlaceholderSchema",
-    "placeholder_input_config",
     "PlaceholderKPI",
     "PlaceholderAlgorithm",
     "PlaceholderParams",

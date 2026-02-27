@@ -3,7 +3,7 @@ from typing import Dict, List, TypeVar, Type
 
 from algomancy_gui.appconfiguration import AppConfiguration
 from algomancy_utils.logger import Logger, MessageStatus
-from algomancy_data import ETLFactory, InputFileConfiguration, BASE_DATA_BOUND
+from algomancy_data import ETLFactory, Schema, BASE_DATA_BOUND
 from algomancy_scenario import (
     ScenarioManager,
     BaseKPI,
@@ -31,7 +31,7 @@ class SessionManager:
             etl_factory=configuration.etl_factory,
             kpi_templates=configuration.kpi_templates,
             algo_templates=configuration.algo_templates,
-            input_configs=configuration.input_configs,
+            schemas=configuration.schemas,
             data_object_type=configuration.data_object_type,
             data_folder=configuration.data_path,
             has_persistent_state=configuration.has_persistent_state,
@@ -47,7 +47,7 @@ class SessionManager:
         etl_factory: type[E],
         kpi_templates: Dict[str, Type[BaseKPI]],
         algo_templates: Dict[str, Type[BaseAlgorithm]],
-        input_configs: List[InputFileConfiguration],
+        schemas: List[Schema],
         data_object_type: type[BASE_DATA_BOUND],  # for extensions of datasource
         data_folder: str = None,
         logger: Logger = None,
@@ -64,7 +64,7 @@ class SessionManager:
         self._etl_factory = etl_factory
         self._kpi_templates = kpi_templates
         self._algo_templates = algo_templates
-        self._input_configs = input_configs
+        self._schemas = schemas
         self._data_object_type = data_object_type
         self._autorun = autorun
         self._scenario_save_location = scenario_save_location
@@ -131,7 +131,7 @@ class SessionManager:
             etl_factory=self._etl_factory,
             kpi_templates=self._kpi_templates,
             algo_templates=self._algo_templates,
-            input_configs=self._input_configs,
+            schemas=self._schemas,
             data_object_type=self._data_object_type,
             data_folder=session_path,
             logger=self.logger,

@@ -10,13 +10,9 @@ from enum import StrEnum
 from typing import List, Dict
 
 import pandas as pd
-from algomancy_utils import Logger
 
-from .inputfileconfiguration import (
-    InputFileConfiguration,
-    SingleInputFileConfiguration,
-    MultiInputFileConfiguration,
-)
+from .schema import Schema, DataType
+from algomancy_utils import Logger
 
 
 class ValidationSeverity(StrEnum):
@@ -125,7 +121,7 @@ class ExtractionSuccessVerification(Validator):
         return self.messages
 
 
-class InputConfigurationValidator(Validator):
+class SchemaValidator(Validator):
     """
     Handles the validation of data against predefined schemas.
 
@@ -135,7 +131,7 @@ class InputConfigurationValidator(Validator):
     reported as messages, which include information about errors or successful validations.
 
     Attributes:
-        _configs (Dict[str, InputFileConfiguration], optional): dictionary of InputFileConfiguration objects
+        _schemas (Dict[str, Schema], optional): dictionary of Schema objects
         _severity (ValidationSeverity, optional): configurable severity level for validation messages
                     yielded by this validator. Defaults to ValidationSeverity.ERROR.
 
@@ -143,42 +139,42 @@ class InputConfigurationValidator(Validator):
 
     def __init__(
         self,
-        configs: List[InputFileConfiguration] = None,
+        schemas: List[Schema] = None,
         severity: ValidationSeverity = ValidationSeverity.ERROR,
     ) -> None:
         super().__init__()
 
-        self._configs: Dict[str, InputFileConfiguration] | None = (
-            {cfg.file_name: cfg for cfg in configs} if configs else None
+        self._schemas: Dict[str, Schema] | None = (
+            {cfg.file_name: cfg for cfg in schemas} if schemas else None
         )
 
         self._severity = severity
 
     def validate(self, data: Dict[str, pd.DataFrame]) -> List[ValidationMessage]:
-        if not self._configs:
+        if not self._schemas:
             self.add_message(self._severity, "No configurations provided.")
             return self.messages
 
-        schemas = {}
-        for cfg in self._configs.values():
-            if isinstance(cfg, SingleInputFileConfiguration):
-                schemas[cfg.file_name] = cfg.file_schema
-            elif isinstance(cfg, MultiInputFileConfiguration):
-                for sub_cfg, schema in cfg.file_schemas.items():
-                    schemas[f"{cfg.file_name}.{sub_cfg}"] = schema
+        dtype_groups = {}
+        for cfg in self._schemas.values():
+            if cfg.is_single():
+                dtype_groups[cfg.file_name] = cfg.datatypes
+            elif cfg.is_multi():
+                for sub_cfg, type_group in cfg.datatype_groups.items():
+                    dtype_groups[f"{cfg.file_name}.{sub_cfg}"] = type_group
 
         for name, df in data.items():
-            if name not in schemas:
+            if name not in dtype_groups:
                 self.buffer_message(self._severity, f"No schema found for {name}.")
                 continue
 
-            schema = schemas[name]
+            type_group: dict[str, DataType] = dtype_groups[name]
             for col in df.columns:
-                if col not in schema.datatypes:
+                if col not in type_group:
                     self.buffer_message(
                         self._severity, f"Column '{col}' not in schema for {name}."
                     )
-                elif df[col].dtype != schema.datatypes[col]:
+                elif df[col].dtype != type_group[col]:
                     self.buffer_message(
                         ValidationSeverity.WARNING,
                         f"Column '{col}' has incorrect datatype for {name}.",

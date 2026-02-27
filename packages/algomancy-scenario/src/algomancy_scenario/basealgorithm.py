@@ -53,9 +53,9 @@ class BaseAlgorithm(ABC):
         associated AlgorithmParameters class.
 
         Example:
-            @staticmethod
-            def initialize_parameters() -> ExampleAlgorithmParams:
-                return ExampleAlgorithmParams()
+            >>> @staticmethod
+            >>> def initialize_parameters() -> ExampleAlgorithmParams:
+            ...    return ExampleAlgorithmParams()
 
         Raises:
             NotImplementedError: If the method is not overridden.

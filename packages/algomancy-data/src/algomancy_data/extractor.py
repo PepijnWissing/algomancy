@@ -16,14 +16,16 @@ class DateFormatError(Exception):
 
 class DataTypeConverter:
     @staticmethod
-    def convert_dtypes(df: pd.DataFrame, schema: Schema) -> pd.DataFrame:
+    def convert_dtypes(
+        df: pd.DataFrame, schema_types: dict[str, DataType]
+    ) -> pd.DataFrame:
         """
         Converts DataFrame columns to the specified data types in the schema.
         Attempts different localization options for numeric columns and date formats if the initial conversion fails.
 
         Args:
+            schema_types: dictionary containing target_types for data, obtained from schema
             df: The pandas DataFrame to convert
-            schema: The Schema object containing the target data types for each column in the DataFrame
 
         Returns:
             DataFrame with converted data types where possible
@@ -31,7 +33,7 @@ class DataTypeConverter:
 
         result_df = df.copy()
 
-        for column, target_type in schema.datatypes.items():
+        for column, target_type in schema_types.items():
             if column not in result_df.columns:
                 continue
 
@@ -236,7 +238,7 @@ class SingleExtractor(Extractor):
 
         self._extraction_message()
         df = self._extract_file()
-        df = DataTypeConverter.convert_dtypes(df, self.schema)
+        df = DataTypeConverter.convert_dtypes(df, self.schema.datatypes)
         self._extraction_success_message()
 
         return {self.file.name: df}
@@ -252,17 +254,24 @@ class SingleExtractor(Extractor):
 
 
 class MultiExtractor(Extractor):
-    def __init__(
-        self, files: File, schemas: Dict[str, Schema], logger: Logger = None
-    ) -> None:
+    def __init__(self, files: File, schema: Schema, logger: Logger = None) -> None:
         super().__init__(files, logger)
-        self.schemas = schemas
+        assert schema.is_multi(), (
+            f"MultiExtractor for {schema.file_name} requires a multi-schema"
+        )
+        self.schema = schema
 
     def _check_schemas(self, dfs: Dict[str, pd.DataFrame]):
         missing_keys = set(dfs.keys()) - set(
-            [self.get_extraction_key(name) for name in self.schemas.keys()]
+            [
+                self.get_extraction_key(name)
+                for name in self.schema.datatype_groups.keys()
+            ]
         )
         assert len(missing_keys) == 0, f"Missing schemas for keys: {missing_keys}"
+
+    def _get_schema_types(self, key) -> Dict[str, DataType]:
+        return self.schema.datatype_groups[key]
 
     def extract(self) -> Dict[str, pd.DataFrame]:
         """Returns Dict[name, dataframe], so each dataset is identifiable"""
@@ -276,7 +285,7 @@ class MultiExtractor(Extractor):
         self._check_schemas(dfs)
         dfs = {
             key: DataTypeConverter.convert_dtypes(
-                df, self.schemas[self.get_schema_name(key)]
+                df, self._get_schema_types(self.get_schema_name(key))
             )
             for key, df in dfs.items()
         }
@@ -467,13 +476,15 @@ class XLSXMultiExtractor(MultiExtractor):
     def __init__(
         self,
         file: XLSXFile,
-        schemas: Dict[str, Schema],
+        schema: Schema,
         logger: Logger = None,
     ) -> None:
-        super().__init__(file, schemas, logger)
-        self._sheet_names = list(self.schemas.keys())
+        super().__init__(file, schema, logger)
+        self._sheet_names = list(self.schema.sub_names)
         self._single_sheet_extractors = {
-            sheet_name: XLSXSingleExtractor(file, schemas[sheet_name], sheet_name)
+            sheet_name: XLSXSingleExtractor(
+                file, schema.generate_subschema(sheet_name), sheet_name
+            )
             for sheet_name in self._sheet_names
         }
 

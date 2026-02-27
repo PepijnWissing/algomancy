@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from typing import Any, Dict, List, Type
 
-from algomancy_data import InputFileConfiguration, BASE_DATA_BOUND
+from algomancy_data import Schema, BASE_DATA_BOUND
 from algomancy_scenario import AlgorithmFactory, ALGORITHM, BASE_KPI
 
 
@@ -54,7 +54,7 @@ class CoreConfiguration:
         etl_factory: Any | None = None,
         kpi_templates: Dict[str, Type[BASE_KPI]] | None = None,
         algo_templates: Dict[str, Type[ALGORITHM]] | None = None,
-        input_configs: List[InputFileConfiguration] | None = None,
+        schemas: List[Schema] | None = None,
         # === auto start/create features ===
         autocreate: bool | None = None,
         default_algo: str | None = None,
@@ -100,7 +100,7 @@ class CoreConfiguration:
         self.etl_factory = etl_factory
         self.kpi_templates = kpi_templates
         self.algo_templates = algo_templates
-        self.input_configs = input_configs
+        self.schemas = schemas
         self.autocreate = autocreate
         self.default_algo = default_algo
         self.default_algo_params_values = default_algo_params_values
@@ -122,7 +122,7 @@ class CoreConfiguration:
             "etl_factory": self.etl_factory,
             "kpi_templates": self.kpi_templates,
             "algo_templates": self.algo_templates,
-            "input_configs": self.input_configs,
+            "schemas": self.schemas,
             "autocreate": self.autocreate,
             "default_algo": self.default_algo,
             "default_algo_params_values": self.default_algo_params_values,
@@ -151,7 +151,7 @@ class CoreConfiguration:
             "etl_factory": self.etl_factory,
             "kpi_templates": self.kpi_templates,
             "algo_templates": self.algo_templates,
-            "input_configs": self.input_configs,
+            "schemas": self.schemas,
             "data_object_type": self.data_object_type,
         }
         missing = [k for k, v in required_fields.items() if v is None]
