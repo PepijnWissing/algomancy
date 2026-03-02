@@ -13,7 +13,12 @@
   The wizard features interactive prompts, intelligent file detection (CSV, XLSX, JSON), automatic datatype inference 
   with column mapping, and generates code templates using Jinja2. This significantly reduces the initial
   setup time and provides new users with a structured starting point following framework best practices.
-
+- Added charactersafe & existing scenario name checks (in InputChecker Class), resulting in a disabled create button
+- Added list_tags function to the scenario registry, making accessable via the scenario manager
+### Changed
+- Made dataset_name_invalid generic (name_invalid) for datasets and scenarios: 
+- Moved callback for name_invalid to inputchecker.py to avoid duplicate code in datamanagerderive/importmodal
+- Euro (€) is now the default quantity for money 
 
 ## 0.4.4
 _Released on 23-2-2026_
@@ -196,18 +201,17 @@ location_schema = LocationSchema()
 - Remove the separate `MultiInputFileConfiguration` wrapper and individual sheet schemas
 :::
 
+
 ## 0.3.21
 _12-02-2026_
 ### Added 
-- Added charactersafe & existing dataset name checks, resulting in a disabled import button
-
+- Added charactersafe & existing dataset name checks (in InputChecker Class), resulting in a disabled import button
 ### Changed
 - Custom pages should now subclass the appropriate base classes (moved from `Protocol` to `AbstractBaseClass`). Functional implementation should remain unchanged.
 
 ### Fixed
 - Fixed a bug where the overview page failed to use the `OverviewPage` content from the registry appropriately.
-- Fixed risk of App breaking down when user tries to import a new dataset with weird names (e.g. with .) or an already existing dataset name.
-
+- Fixed risk of App breaking down when user tries to import/derive a new dataset with weird names (e.g. with .) or an already existing dataset name.
 
 ## 0.3.20
 ### Fixed
