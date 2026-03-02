@@ -42,13 +42,28 @@ class ScenarioRegistry:
         return False
 
     def list(self) -> List[Scenario]:
+        """
+        Returns a list of all available Scenario objects.
+        """
         return list(self._scenarios.values())
 
     def list_ids(self) -> List[str]:
+        """
+        Returns a list of all available Scenario id strings.
+        """
         return list(self._scenarios.keys())
 
     def has_tag(self, tag: str) -> bool:
+        """
+        Returns a Boolean that indicates if a specified scenario tag exists in the scenario _tag_index dictionary.
+        """
         return tag in self._tag_index
 
     def used_datasets(self) -> List[str]:
         return [s.input_data_key for s in self._scenarios.values()]
+
+    def list_tags(self) -> List[str]:
+        """
+        Returns a list of scenario tag strings by retrieving the keys from the scenario _tag_index dictionary.
+        """
+        return list(self._tag_index.keys())
