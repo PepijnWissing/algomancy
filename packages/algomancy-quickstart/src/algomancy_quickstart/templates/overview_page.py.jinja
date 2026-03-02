@@ -1,0 +1,99 @@
+"""
+Custom overview page template for {{ project_name }}.
+
+This module defines a custom overview page for high-level dashboards and summaries.
+"""
+
+from typing import List
+from dash import html
+from algomancy_content import BaseOverviewPage
+from algomancy_scenario import Scenario
+
+
+class {{ class_name }}OverviewPage(BaseOverviewPage):
+    """
+    Custom overview page implementation for {{ project_name }}.
+
+    TODO: Customize the overview page layout and behavior.
+    """
+
+    @staticmethod
+    def create_content(scenarios: List[Scenario]) -> html.Div:
+        """
+        Define the layout and content of the overview page displaying multiple scenarios.
+
+        Args:
+            scenarios: A list of Scenario objects to display in the overview.
+
+        Returns:
+            A Dash html.Div containing the page content.
+
+        TODO: Implement your custom overview page layout.
+        """
+        # Get completed scenarios for display
+        completed_scenarios = [s for s in scenarios if s.is_completed()]
+
+        return html.Div(
+            [
+                html.H1("{{ project_name }} Overview Dashboard"),
+                html.P(
+                    f"Total scenarios: {len(scenarios)} | Completed: {len(completed_scenarios)}"
+                ),
+                html.Hr(),
+                html.Div(
+                    [
+                        html.H3("Scenarios Summary"),
+                        html.Div(
+                            [
+                                html.Div(
+                                    [
+                                        html.H5(scenario.name),
+                                        html.P(f"Tag: {scenario.tag}"),
+                                        html.P(f"Status: {scenario.status}"),
+                                        html.P(f"Algorithm: {scenario.algorithm_description}"),
+                                    ],
+                                    style={
+                                        "border": "1px solid #ddd",
+                                        "padding": "10px",
+                                        "marginBottom": "10px",
+                                        "borderRadius": "5px",
+                                    },
+                                )
+                                for scenario in scenarios
+                            ]
+                        )
+                        if scenarios
+                        else html.P("No scenarios found. Create your first scenario to get started."),
+                    ]
+                ),
+                html.Hr(),
+                html.Div(
+                    [
+                        html.H3("Dashboard Features"),
+                        html.Ul(
+                            [
+                                html.Li("Display key performance indicators across scenarios"),
+                                html.Li("Show summary statistics and trends"),
+                                html.Li("Compare scenario outcomes at a glance"),
+                                html.Li("Customize this page in src/pages/overview_page.py"),
+                            ]
+                        ),
+                    ]
+                ),
+                # TODO: Add KPI comparison table, summary charts, executive dashboard components
+            ],
+            style={"padding": "20px"},
+        )
+
+    @staticmethod
+    def register_callbacks() -> None:
+        """
+        Register Dash callbacks for this page if needed.
+
+        TODO: Add any interactive behavior for the overview page.
+        """
+        # Example:
+        # @app.callback(...)
+        # def filter_scenarios(...):
+        #     pass
+        pass

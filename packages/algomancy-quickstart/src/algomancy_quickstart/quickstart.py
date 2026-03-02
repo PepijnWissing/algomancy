@@ -219,6 +219,11 @@ class QuickstartWizard:
             ("algorithm", "src/templates/algorithm", f"{self.filename}_algorithm.py"),
             ("kpi", "src/templates/kpi", f"{self.filename}_kpi.py"),
             ("etl_factory", "src/data_handling", "etl_factory.py"),
+            ("home_page", "src/pages", "home_page.py"),
+            ("data_page", "src/pages", "data_page.py"),
+            ("scenario_page", "src/pages", "scenario_page.py"),
+            ("compare_page", "src/pages", "compare_page.py"),
+            ("overview_page", "src/pages", "overview_page.py"),
         ]
 
         click.echo("Generating implementation templates...")
@@ -612,6 +617,9 @@ class QuickstartWizard:
         )
 
         file_path = self.current_dir / target_dir / target_file
+
+        # Ensure the target directory exists
+        file_path.parent.mkdir(parents=True, exist_ok=True)
 
         # Don't overwrite existing files
         if file_path.exists() and not self.skip_confirmation:

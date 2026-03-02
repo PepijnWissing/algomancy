@@ -1,0 +1,133 @@
+"""
+Custom compare page template for {{ project_name }}.
+
+This module defines a custom compare page for side-by-side scenario comparison.
+"""
+
+from dash import html
+from algomancy_content import BaseComparePage
+from algomancy_scenario import Scenario
+
+
+class {{ class_name }}ComparePage(BaseComparePage):
+    """
+    Custom compare page implementation for {{ project_name }}.
+
+    TODO: Customize the compare page layout and behavior.
+    """
+
+    @staticmethod
+    def create_side_by_side_content(scenario: Scenario, side: str) -> html.Div:
+        """
+        Create content for one side of the side-by-side comparison view.
+
+        Args:
+            scenario: The Scenario object to display.
+            side: Identifier for which side ("left" or "right").
+
+        Returns:
+            A Dash html.Div containing the scenario content.
+
+        TODO: Customize the side-by-side scenario display.
+        """
+        return html.Div(
+            [
+                html.H3(f"{scenario.name} ({side.capitalize()})"),
+                html.P(f"Scenario ID: {scenario.id}"),
+                html.P(f"Status: {scenario.status}"),
+                # TODO: Add scenario-specific content (parameters, results, charts)
+            ],
+            className=f"compare-side-{side}",
+            style={"padding": "15px", "border": "1px solid #ddd"},
+        )
+
+    @staticmethod
+    def create_compare_section(left: Scenario, right: Scenario) -> html.Div:
+        """
+        Create a consolidated comparison section for both scenarios.
+
+        Args:
+            left: The left scenario.
+            right: The right scenario.
+
+        Returns:
+            A Dash html.Div containing the comparison content.
+
+        TODO: Implement comparison logic and visualizations.
+        """
+        return html.Div(
+            [
+                html.H3("Scenario Comparison"),
+                html.Table(
+                    [
+                        html.Tr([
+                            html.Th("Metric"),
+                            html.Th(left.name),
+                            html.Th(right.name),
+                        ]),
+                        html.Tr([
+                            html.Td("Status"),
+                            html.Td(left.status),
+                            html.Td(right.status),
+                        ]),
+                        # TODO: Add more comparison metrics
+                    ],
+                    style={"width": "100%", "borderCollapse": "collapse"},
+                ),
+            ],
+            style={"padding": "20px"},
+        )
+
+    @staticmethod
+    def create_details_section(left: Scenario, right: Scenario) -> html.Div:
+        """
+        Create a detailed analysis section comparing both scenarios.
+
+        Args:
+            left: The left scenario.
+            right: The right scenario.
+
+        Returns:
+            A Dash html.Div containing the detailed comparison content.
+
+        TODO: Implement detailed analysis and insights.
+        """
+        return html.Div(
+            [
+                html.H3("Detailed Analysis"),
+                html.Div(
+                    [
+                        html.H4("Key Differences"),
+                        html.Ul(
+                            [
+                                html.Li(f"Left scenario: {left.name}"),
+                                html.Li(f"Right scenario: {right.name}"),
+                                # TODO: Add detailed difference analysis
+                            ]
+                        ),
+                    ]
+                ),
+                html.Hr(),
+                html.Div(
+                    [
+                        html.H4("Performance Analysis"),
+                        html.P("TODO: Add charts and statistical comparisons"),
+                        # TODO: Add graphs, KPI comparisons, etc.
+                    ]
+                ),
+            ],
+            style={"padding": "20px"},
+        )
+
+    @staticmethod
+    def register_callbacks() -> None:
+        """
+        Register Dash callbacks for this page if needed.
+
+        TODO: Add any interactive behavior for the compare page.
+        """
+        # Example:
+        # @app.callback(...)
+        # def compare_scenarios(...):
+        #     pass
+        pass
