@@ -5,9 +5,13 @@ Mostly internal classes were moved to semantically more appropriate locations.
 ### Added
 
 ### Changed
-- **[Breaking]** Moved `BasePage` and subclasses to `algomancy_gui`; imports have to be updated appropriately
-- Moved `LibraryManager` to `algomancy-gui` from `algomancy-content`
-- Reorganized `algomancy-gui` internals 
+- Cleanup of dependencies between `algomancy-content` and `algomancy-gui`
+  - **[Breaking]** Moved `BasePage` and subclasses to `algomancy_gui`; imports have to be updated appropriately
+  - Moved `LibraryManager` to `algomancy-gui` from `algomancy-content`
+  - Reorganized `algomancy-gui` internals 
+- Refinement of `Schema` class
+  - **[Breaking]** Moved `_defined_datatypes` to `_DATATYPES` as class attribute to define the datatypes of each column.
+  - `Schema`s no longer need to be instantiated before being passed to the configuration. Passing types to the configuration is now possible; passing instances still works. 
 
 ### Fixed
 

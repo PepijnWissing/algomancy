@@ -22,7 +22,7 @@ The fields `_FILENAME`, `_EXTENSION` and `_SCHEMA_TYPE` must be provided. If not
 ```
 1. Create a file `schemas.py `in the directory `src/data_handling/`
 2. For each table in an input file (could be multiple in an Excel), create a `Schema` subclass in `schemas.py`. 
-This field `_defined_datatypes` defines the table structure, and must be implemented by the subclass:
+This field `_DATATYPES` defines the table structure, and must be implemented by the subclass:
 :::{dropdown} {octicon}`code` Code
 :color: info
 
@@ -45,12 +45,11 @@ class DCSchema(Schema):
     X = "x"
     Y = "y"
 
-    def _defined_datatypes(self) -> Dict[str, DataType]:
-        return {
-            DCSchema.ID: DataType.STRING,
-            DCSchema.X: DataType.INTEGER,
-            DCSchema.Y: DataType.INTEGER,
-        }
+    _DATATYPES = {
+        ID: DataType.STRING,
+        X: DataType.INTEGER,
+        Y: DataType.INTEGER,
+    }
 
 
 class LocationSchema(Schema):
@@ -62,19 +61,18 @@ class LocationSchema(Schema):
     X = "x"
     Y = "y"
 
-    def _defined_datatypes(self) -> Dict[str, Dict[str, DataType]]:
-        return {
-           "customer": {
-               LocationSchema.ID: DataType.STRING,
-               LocationSchema.X: DataType.INTEGER,
-               LocationSchema.Y: DataType.INTEGER,
-            },
-           "xdock": {
-               LocationSchema.ID: DataType.STRING,
-               LocationSchema.X: DataType.INTEGER,
-               LocationSchema.Y: DataType.INTEGER,
-            },
-        }
+    _DATATYPES = {
+        "customer": {
+            ID: DataType.STRING,
+            X: DataType.INTEGER,
+            Y: DataType.INTEGER,
+        },
+        "xdock": {
+            ID: DataType.STRING,
+            X: DataType.INTEGER,
+            Y: DataType.INTEGER,
+        },
+    }
 
 
 
@@ -87,12 +85,11 @@ class StoresSchema(Schema):
     X = "x"
     Y = "y"
 
-    def _defined_datatypes(self) -> Dict[str, DataType]:
-        return {
-            StoresSchema.ID: DataType.STRING,
-            StoresSchema.X: DataType.INTEGER,
-            StoresSchema.Y: DataType.INTEGER,
-        }
+    _DATATYPES = {
+        ID: DataType.STRING,
+        X: DataType.INTEGER,
+        Y: DataType.INTEGER,
+    }
 ```
 :::
 
@@ -100,7 +97,7 @@ class StoresSchema(Schema):
 A single `Schema` is associated with a single file. 
 In case a single file contains more than one data table (e.g., multiple Excel tabs), we should take care that:
 - the `_SCHEMA_TYPE` is set to `MULTI`,
-- `_defined_datatypes` returns a nested dictionary, such as on lines 34-46 of the code block above, and
+- `_DATATYPES` defines a nested dictionary, such as on lines 64-75 of the code block above, and
 - the keys of the outer dictionary corresponds to the identifyers of the input tables (e.g., each sheet name of an xlsx)
 ```
 

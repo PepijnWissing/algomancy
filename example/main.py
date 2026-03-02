@@ -98,7 +98,7 @@ def main(
     GuiLauncher.run(
         app=app,
         host=app_cfg.host,
-        port=app_cfg.port,
+        port=8051,
         threads=threads,
         connection_limit=connection_limit,
         debug=debug,
