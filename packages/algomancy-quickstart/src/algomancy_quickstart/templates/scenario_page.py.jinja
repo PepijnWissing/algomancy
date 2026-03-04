@@ -36,9 +36,8 @@ class {{ class_name }}ScenarioPage(BaseScenarioPage):
                 html.Div(
                     [
                         html.H3("Scenario Information"),
-                        html.P(f"Name: {scenario.name}"),
-                        html.P(f"ID: {scenario.id}"),
                         html.P(f"Tag: {scenario.tag}"),
+                        html.P(f"ID: {scenario.id}"),
                         html.P(f"Status: {scenario.status}"),
                         html.P(f"Algorithm: {scenario.algorithm_description}"),
                         html.P(f"Dataset: {scenario.input_data_key}"),
