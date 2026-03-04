@@ -84,7 +84,7 @@ class {{ class_name }}Algorithm(BaseAlgorithm):
         - Access parameters via self.params
         - Return a ScenarioResult with the data_id
         """
-        self.logger.log(f"Starting {{ class_name }} algorithm...")
+        self._logger.log(f"Starting {{ class_name }} algorithm...")
 
         # TODO: Replace this with your actual algorithm logic
         # Example placeholder implementation:
@@ -92,13 +92,13 @@ class {{ class_name }}Algorithm(BaseAlgorithm):
 
         # Update progress
         self.set_progress(50)
-        self.logger.log("Processing halfway done...")
+        self._logger.log("Processing halfway done...")
 
         # More processing...
         sleep(0.5)
 
         # Finish
         self.set_progress(100)
-        self.logger.success("Algorithm completed successfully!")
+        self._logger.success("Algorithm completed successfully!")
 
         return ScenarioResult(data_id=data.id)
