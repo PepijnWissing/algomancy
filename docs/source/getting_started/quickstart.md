@@ -126,8 +126,8 @@ to be guided through the set-up steps, outlined below.
 2. **Implementation templates**
 
     Next, the basic placeholders as provided by `algomancy-content` are replaced by implementation templates for `schema`,
-    `ETL`, `algorithm` and `kpi`. These templates include brief DocString and todo notes that indicate where the user's 
-    input is required. 
+    `ETL`, `algorithm`, `kpi` and each of the app pages. These templates include brief DocString and todo notes that 
+     indicate where the user's input is required. 
     
     The user is promped to provide a prefix for the generated files and classes, after which the templates are created and
     the `main.py` configuration is updated to include the generated material. 
@@ -183,6 +183,11 @@ to be guided through the set-up steps, outlined below.
     │   │   ├── etl_factory.py
     │   │   └── generated_schemas.py
     │   ├── pages/
+    │   │   ├── compare_page.py
+    │   │   ├── data_page.py
+    │   │   ├── home_page.py
+    │   │   ├── overview_page.py
+    │   │   └── scenario_page.py
     │   ├── templates/
     │   │   ├── kpi/
     │   │   │   └── custom_kpi.py
@@ -205,6 +210,11 @@ to be guided through the set-up steps, outlined below.
     # Import custom implementations
     from src.templates.algorithm.test_algorithm import TestAlgorithm
     from src.templates.kpi.test_kpi import TestKPI
+    from src.pages.home_page import TestHomePage
+    from src.pages.data_page import TestDataPage
+    from src.pages.scenario_page import TestScenarioPage
+    from src.pages.compare_page import TestComparePage
+    from src.pages.overview_page import TestOverviewPage
     
     # Import styling configuration
     from src.styling_config import app_styling
@@ -217,10 +227,15 @@ to be guided through the set-up steps, outlined below.
         port = 8050
     
         app_cfg = AppConfiguration(
-            etl_factory=TestETLFactory,  # your own custom name
+            etl_factory=TestETLFactory,  # 'Test' is replaced by your own custom name
             schemas=all_schemas,
-            kpi_templates={"test": TestKPI},  # your own custom name
-            algo_templates={"Test": TestAlgorithm},  # your own custom name
+            kpi_templates={"test": TestKPI},  
+            algo_templates={"Test": TestAlgorithm},  
+            home_page=TestHomePage(),
+            data_page=TestDataPage(),
+            scenario_page=TestScenarioPage(),
+            compare_page=TestComparePage(),
+    #       overview_page=TestOverviewPage(),  # uncomment to use CqmOverviewPage
             host=host,
             port=port,
             title="My Algomancy Dashboard",
