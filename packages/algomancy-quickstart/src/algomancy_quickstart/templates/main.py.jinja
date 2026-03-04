@@ -4,9 +4,8 @@ from algomancy_content import (
     PlaceholderETLFactory,
     PlaceholderAlgorithm,
     PlaceholderKPI,
-    placeholder_schema,
+    PlaceholderSchema,
 )
-from algomancy_data import DataSource
 
 
 def main() -> None:
@@ -15,9 +14,9 @@ def main() -> None:
 
     app_cfg = AppConfiguration(
         etl_factory=PlaceholderETLFactory,
+        schemas=[PlaceholderSchema()],
         kpi_templates={"placeholder": PlaceholderKPI},
         algo_templates={"placeholder": PlaceholderAlgorithm},
-        schemas=[placeholder_schema],
         host=host,
         port=port,
         title="{{ title }}",

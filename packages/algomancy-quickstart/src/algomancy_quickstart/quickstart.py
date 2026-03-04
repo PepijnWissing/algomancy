@@ -589,7 +589,9 @@ class QuickstartWizard:
             title=self.title,
             host="127.0.0.1",
             port=8050,
+            filename=self.filename or "custom",
             class_name=self.class_name or "Custom",
+            has_custom_implementations=self.has_custom_implementations,
         )
 
         main_py_path = self.current_dir / "main.py"

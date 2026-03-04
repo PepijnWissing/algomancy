@@ -6,9 +6,20 @@ from algomancy_data import DataSource
 from src.data_handling.etl_factory import {{ class_name }}ETLFactory
 from src.data_handling.generated_schemas import all_schemas
 
-# Import your custom KPI and Algorithm templates
+{% if has_custom_implementations %}
+# Import custom implementations
+from src.templates.algorithm.{{ filename }}_algorithm import {{ class_name }}Algorithm
+from src.templates.kpi.{{ filename }}_kpi import {{ class_name }}KPI
+from src.pages.home_page import {{ class_name }}HomePage
+from src.pages.data_page import {{ class_name }}DataPage
+from src.pages.scenario_page import {{ class_name }}ScenarioPage
+from src.pages.compare_page import {{ class_name }}ComparePage
+from src.pages.overview_page import {{ class_name }}OverviewPage
+{% else %}
+# Import placeholder KPI and Algorithm
 # TODO: Update these imports when you create custom implementations
 from algomancy_content import PlaceholderKPI, PlaceholderAlgorithm
+{% endif %}
 
 
 def main() -> None:
@@ -19,9 +30,19 @@ def main() -> None:
 
     app_cfg = AppConfiguration(
         etl_factory={{ class_name }}ETLFactory,
+        schemas=all_schemas,
+        {% if has_custom_implementations %}
+        kpi_templates={"{{ filename }}": {{ class_name }}KPI},
+        algo_templates={"{{ class_name }}": {{ class_name }}Algorithm},
+        home_page={{ class_name }}HomePage(),
+        data_page={{ class_name }}DataPage(),
+        scenario_page={{ class_name }}ScenarioPage(),
+        compare_page={{ class_name }}ComparePage(),
+#        overview_page={{ class_name }}OverviewPage(),  # uncomment to use {{ class_name }}OverviewPage
+        {% else %}
         kpi_templates={"placeholder": PlaceholderKPI},
         algo_templates={"placeholder": PlaceholderAlgorithm},
-        schemas=all_schemas,
+        {% endif %}
         host=host,
         port=port,
         title="{{ title }}",
