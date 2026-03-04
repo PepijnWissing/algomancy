@@ -47,8 +47,7 @@ class {{ class_name }}OverviewPage(BaseOverviewPage):
                             [
                                 html.Div(
                                     [
-                                        html.H5(scenario.name),
-                                        html.P(f"Tag: {scenario.tag}"),
+                                        html.H5(scenario.tag),
                                         html.P(f"Status: {scenario.status}"),
                                         html.P(f"Algorithm: {scenario.algorithm_description}"),
                                     ],
