@@ -13,7 +13,21 @@ from algomancy_content import (
 
 @dataclass
 class PageConfig:
-    """Page implementations and UI behavior."""
+    """
+    Page implementations and UI behavior.
+
+    Args:
+        home_page: Home page implementation or registered page name.
+            Defaults to `"standard"`.
+        data_page: Data page implementation or registered page name.
+            Defaults to `"placeholder"`.
+        scenario_page: Scenario page implementation or registered page name.
+            Defaults to `"placeholder"`.
+        compare_page: Compare page implementation or registered page name.
+            Defaults to `"placeholder"`.
+        overview_page: Overview page implementation or registered page name.
+            Defaults to `"standard"`.
+    """
 
     home_page: BaseHomePage | str = "standard"
     data_page: BaseDataPage | str = "placeholder"
@@ -81,7 +95,6 @@ class PageConfig:
         )
 
     def as_dict(self) -> Dict[str, Any]:
-        """Serialize to dictionary."""
         return {
             "home_page": self.home_page,
             "data_page": self.data_page,

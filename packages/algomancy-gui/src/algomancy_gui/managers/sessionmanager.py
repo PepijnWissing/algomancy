@@ -3,7 +3,7 @@ from typing import Dict, List, TypeVar, Type
 
 from algomancy_gui.configuration.appconfig import AppConfig
 from algomancy_utils.logger import Logger, MessageStatus
-from algomancy_data import ETLFactory, Schema, BASE_DATA_BOUND
+from algomancy_data import ETLFactory, Schema, BASEDATASOURCE
 from algomancy_scenario import (
     ScenarioManager,
     BaseKPI,
@@ -48,7 +48,7 @@ class SessionManager:
         kpi_templates: Dict[str, Type[BaseKPI]],
         algo_templates: Dict[str, Type[BaseAlgorithm]],
         schemas: List[Schema],
-        data_object_type: type[BASE_DATA_BOUND],  # for extensions of datasource
+        data_object_type: type[BASEDATASOURCE],  # for extensions of datasource
         data_folder: str = None,
         logger: Logger = None,
         scenario_save_location: str = "scenarios.json",

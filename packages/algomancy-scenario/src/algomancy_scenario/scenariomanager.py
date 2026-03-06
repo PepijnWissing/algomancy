@@ -4,7 +4,7 @@ from algomancy_data import (
     ETLFactory,
     StatefulDataManager,
     StatelessDataManager,
-    BASE_DATA_BOUND,
+    BASEDATASOURCE,
     Schema,
 )
 
@@ -55,7 +55,7 @@ class ScenarioManager:
         kpi_templates: Dict[str, Type[BASE_KPI]],
         algo_templates: Dict[str, Type[ALGORITHM]],
         schemas: List[Schema],
-        data_object_type: type[BASE_DATA_BOUND],  # for extensions of datasource
+        data_object_type: type[BASEDATASOURCE],  # for extensions of datasource
         data_folder: str = None,
         logger: Logger = None,
         scenario_save_location: str = "scenarios.json",

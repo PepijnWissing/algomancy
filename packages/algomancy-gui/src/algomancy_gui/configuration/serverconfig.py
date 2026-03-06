@@ -8,7 +8,7 @@ class ServerConfig:
     """
     Server and deployment settings.
 
-    Attributes:
+    Args:
         host: Server host (str), defaults to "127.0.0.1"
         port: Server port (int) defaults to 8050
 
@@ -32,7 +32,6 @@ class ServerConfig:
                 raise ValueError("port must be an integer between 1 and 65535")
 
     def as_dict(self) -> Dict[str, Any]:
-        """Serialize to dictionary."""
         return {
             "host": self.host,
             "port": self.port,

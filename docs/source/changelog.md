@@ -25,6 +25,7 @@
   
   _Note: these changes are backwards compatible._  
 - Implemented the Singleton pattern to Logger class for global access.
+- Bound type definition `BASE_DATA_BOUND` was renamed to `BASEDATASOURCE` for legibility. 
 
 ## 0.4.4
 _Released on 23-2-2026_
@@ -304,7 +305,7 @@ An outline of the expected functions is included below.
   - `create_content() -> html.Div`
   - `register_callbacks() -> None`
 - DataPage:
-  - `create_content(data: BASE_DATA_BOUND) -> html.Div`
+  - `create_content(data: BASEDATASOURCE) -> html.Div`
   - `register_callbacks() -> None`
 - ScenarioPage:
   - `create_content(scenario: Scenario) -> html.Div`

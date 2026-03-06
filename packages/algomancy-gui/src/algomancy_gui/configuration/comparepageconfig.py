@@ -4,11 +4,18 @@ from typing import List, Dict, Any
 
 @dataclass
 class ComparePageConfig:
-    """Compare page specific settings."""
+    """
+    Compare page specific settings.
+
+    Args:
+        default_open: Default components on the compare page. Defaults to an empty list.
+        ordered_components: List of components on the compare page. Defaults an to empty list.
+    """
 
     default_open: List[str] = field(default_factory=list)
     ordered_components: List[str] = field(default_factory=list)
 
+    #: List of valid components for the compare page.
     VALID_COMPONENTS = ["side-by-side", "kpis", "compare", "details"]
 
     def __post_init__(self):
@@ -50,7 +57,6 @@ class ComparePageConfig:
             raise ValueError("ordered_components contains duplicate values")
 
     def as_dict(self) -> Dict[str, Any]:
-        """Serialize to dictionary."""
         return {
             "compare_default_open": self.default_open,
             "compare_ordered_list_components": self.ordered_components,

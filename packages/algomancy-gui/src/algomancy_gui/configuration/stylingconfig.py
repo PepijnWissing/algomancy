@@ -74,7 +74,6 @@ class StylingConfig:
             )
 
     def as_dict(self) -> Dict[str, Any]:
-        """Serialize to dictionary."""
         return {
             "assets_path": self.assets_path,
             "layout_selection": self.layout_selection,

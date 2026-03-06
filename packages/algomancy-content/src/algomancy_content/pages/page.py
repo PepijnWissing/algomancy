@@ -18,7 +18,7 @@ from abc import ABC, abstractmethod
 from typing import List
 from dash import html
 
-from algomancy_data import BASE_DATA_BOUND
+from algomancy_data import BASEDATASOURCE
 from algomancy_scenario import Scenario
 
 
@@ -136,11 +136,11 @@ class BaseDataPage(BasePage, ABC):
     """
     Abstract base class for data-focused pages in the Algomancy application.
 
-    Data pages display and interact with data objects that conform to the BASE_DATA_BOUND
+    Data pages display and interact with data objects that conform to the BASEDATASOURCE
     type. These pages are designed to visualize, analyze, or manipulate data sets
     independently of specific scenarios.
 
-    The data parameter can be any type that satisfies the BASE_DATA_BOUND constraint,
+    The data parameter can be any type that satisfies the BASEDATASOURCE constraint,
     allowing for flexible data handling while maintaining type safety.
 
     Concrete implementations must provide both the content creation method with
@@ -167,18 +167,18 @@ class BaseDataPage(BasePage, ABC):
 
     @staticmethod
     @abstractmethod
-    def create_content(data: BASE_DATA_BOUND) -> html.Div:
+    def create_content(data: BASEDATASOURCE) -> html.Div:
         """
         Create the content for the data page based on the provided data.
 
         This method receives a data object and should return a Dash HTML component
         tree that visualizes or presents the data in a meaningful way. The data
-        parameter is type-bounded by BASE_DATA_BOUND, ensuring compatibility with
+        parameter is type-bounded by BASEDATASOURCE, ensuring compatibility with
         the Algomancy data framework.
 
         Args:
             data: The data object to display on this page. Must conform to the
-                BASE_DATA_BOUND type constraint.
+                BASEDATASOURCE type constraint.
 
         Returns:
             html.Div: A Dash Div component containing the data page layout and content.
