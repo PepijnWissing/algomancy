@@ -21,7 +21,10 @@
 - Made dataset_name_invalid generic (name_invalid) for datasets and scenarios: 
 - Moved callback for name_invalid to inputchecker.py to avoid duplicate code in datamanagerderive/importmodal
 - Euro (€) is now the default quantity for money 
-- Split up `AppConfigurtion` into separate configuration containers for better organization and maintainability.
+- Split up `AppConfigurtion` into separate configuration containers for better organization and maintainability. 
+  
+  _Note: these changes are backwards compatible._  
+
 
 ## 0.4.4
 _Released on 23-2-2026_
