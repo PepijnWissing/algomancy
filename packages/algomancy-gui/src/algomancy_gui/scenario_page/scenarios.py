@@ -340,13 +340,15 @@ def toggle_scenario_creator_modal(open_click, cancel_click, is_open):
     Output(SCENARIO_TAG_INPUT, "value"),
     Output(SCENARIO_DATA_INPUT, "value"),
     Output(SCENARIO_ALGO_INPUT, "value"),
+    Output(SCENARIO_NEW_BUTTON, "disabled", allow_duplicate=True),
+    Output(SCENARIO_NEW_BUTTON, "color", allow_duplicate=True),
     Input(SCENARIO_CREATOR_MODAL, "is_open"),
     prevent_initial_call=True,
 )
 def refresh_on_close(is_open):
     if not is_open:
-        return "", "", ""
-    return no_update, no_update, no_update
+        return "", "", "", True, "secondary"
+    return no_update, no_update, no_update, no_update, no_update
 
 
 @callback(
@@ -364,7 +366,15 @@ def open_algo_params_window(algo_name, session_id):
             return False, ""
     return False, ""
 
-InputChecker.register_name_callback(SCENARIO_TAG_INPUT, SCENARIO_TAG_FEEDBACK, SCENARIO_NEW_BUTTON, ACTIVE_SESSION, 'scenario')
+
+InputChecker.register_name_callback(
+    SCENARIO_TAG_INPUT,
+    SCENARIO_TAG_FEEDBACK,
+    SCENARIO_NEW_BUTTON,
+    ACTIVE_SESSION,
+    "scenario",
+)
+
 
 # --- Scenario Creation Callback ---
 @callback(

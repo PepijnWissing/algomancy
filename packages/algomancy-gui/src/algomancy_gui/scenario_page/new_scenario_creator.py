@@ -33,7 +33,8 @@ def new_scenario_creator(session_id: str):
                             dbc.Col(
                                 [
                                     dbc.Input(
-                                        id=SCENARIO_TAG_INPUT, placeholder="Scenario tag"
+                                        id=SCENARIO_TAG_INPUT,
+                                        placeholder="Scenario tag",
                                     ),
                                     dbc.FormFeedback(
                                         id=SCENARIO_TAG_FEEDBACK, type="invalid"
@@ -91,6 +92,8 @@ def new_scenario_creator(session_id: str):
                         "Create",
                         id=SCENARIO_NEW_BUTTON,
                         class_name="new-scenario-confirm-button",
+                        disabled=True,
+                        color="secondary",
                     ),
                     dbc.Button(
                         "Cancel",

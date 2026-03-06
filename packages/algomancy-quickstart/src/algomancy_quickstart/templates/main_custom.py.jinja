@@ -1,0 +1,43 @@
+from algomancy_gui.appconfiguration import AppConfiguration
+from algomancy_gui.gui_launcher import GuiLauncher
+from algomancy_data import DataSource
+
+# Import custom implementations
+from src.data_handling.etl_factory import {{ class_name }}ETLFactory
+from src.data_handling.schemas import {{ filename }}_schema
+from src.templates.algorithm.{{ filename }}_algorithm import {{ class_name }}Algorithm
+from src.templates.kpi.{{ filename }}_kpi import {{ class_name }}KPI
+from src.pages.home_page import {{ class_name }}HomePage
+from src.pages.data_page import {{ class_name }}DataPage
+from src.pages.scenario_page import {{ class_name }}ScenarioPage
+from src.pages.compare_page import {{ class_name }}ComparePage
+from src.pages.overview_page import {{ class_name }}OverviewPage
+
+
+def main() -> None:
+    """Main entry point for the {{ title }} application."""
+
+    host = "{{ host }}"
+    port = {{ port }}
+
+    app_cfg = AppConfiguration(
+        etl_factory={{ class_name }}ETLFactory,
+        kpi_templates={"{{ filename }}": {{ class_name }}KPI},
+        algo_templates={"{{ class_name }}": {{ class_name }}Algorithm},
+        schemas=[{{ filename }}_schema],
+        home_page={{ class_name }}HomePage(),
+        data_page={{ class_name }}DataPage(),
+        scenario_page={{ class_name }}ScenarioPage(),
+        compare_page={{ class_name }}ComparePage(),
+#        overview_page={{ class_name }}OverviewPage(),  # uncomment to use {{ class_name }}OverviewPage
+        host=host,
+        port=port,
+        title="{{ title }}",
+    )
+
+    app = GuiLauncher.build(app_cfg)
+    GuiLauncher.run(app=app, host=app_cfg.host, port=app_cfg.port)
+
+
+if __name__ == "__main__":
+    main()

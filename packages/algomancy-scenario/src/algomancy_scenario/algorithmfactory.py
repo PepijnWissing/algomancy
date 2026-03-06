@@ -38,7 +38,12 @@ class AlgorithmFactory(Generic[ALGORITHM]):
         algo_params = template.initialize_parameters()
         algo_params.set_validated_values(input_params)
 
-        return template(algo_params)
+        algorithm = template(algo_params)
+
+        if self._logger:
+            algorithm.set_logger(self._logger)
+
+        return algorithm
 
     def get_parameters(self, algo_name: str):
         template: Type[ALGORITHM] = (

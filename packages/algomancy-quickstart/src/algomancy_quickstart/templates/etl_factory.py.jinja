@@ -1,0 +1,115 @@
+"""
+ETL (Extract, Transform, Load) Factory for {{ project_name }}.
+
+This module defines how data is extracted from files, transformed, validated,
+and loaded into the application.
+"""
+
+from typing import Dict
+
+import algomancy_data as de
+from algomancy_data import File
+from algomancy_data.extractor import ExtractionSequence
+from algomancy_data.transformer import TransformationSequence
+from algomancy_utils import Logger
+
+
+class {{ class_name }}ETLFactory(de.ETLFactory):
+    """
+    Factory for creating ETL pipeline components.
+
+    This class orchestrates the data processing pipeline:
+    1. Extraction: Read data from files
+    2. Transformation: Clean and process the data
+    3. Validation: Check data quality
+    4. Loading: Store data in the application
+
+    TODO: Implement each pipeline stage according to your needs.
+    """
+
+    def __init__(self, configs, logger: Logger = None):
+        super().__init__(configs, logger)
+
+    def create_extraction_sequence(self, files: Dict[str, File]) -> ExtractionSequence:
+        """
+        Create the extraction sequence to read data from files.
+
+        Args:
+            files: Dictionary mapping file identifiers to File objects.
+
+        Returns:
+            ExtractionSequence with extraction operations.
+
+        TODO: Add extractors to read your data files.
+
+        Example:
+            sequence = ExtractionSequence(logger=self.logger)
+            sequence.add_extractor(
+                YourExtractor(
+                    file=files['your_file_key'],
+                    target='destination_name'
+                )
+            )
+            return sequence
+        """
+        # TODO: Implement extraction logic
+        # For now, return empty sequence:
+        return ExtractionSequence(logger=self.logger)
+
+    def create_transformation_sequence(self) -> TransformationSequence:
+        """
+        Create the transformation sequence to process extracted data.
+
+        Returns:
+            TransformationSequence with transformation operations.
+
+        TODO: Add transformers to clean and process your data.
+
+        Example:
+            sequence = TransformationSequence(logger=self.logger)
+            sequence.add_transformer(
+                YourTransformer(
+                    source='source_name',
+                    target='target_name'
+                )
+            )
+            return sequence
+        """
+        # TODO: Implement transformation logic
+        # For now, return empty sequence:
+        return TransformationSequence(logger=self.logger)
+
+    def create_validation_sequence(self) -> de.ValidationSequence:
+        """
+        Create the validation sequence to check data quality.
+
+        Returns:
+            ValidationSequence with validation checks.
+
+        TODO: Add validators to ensure data quality.
+
+        Example:
+            sequence = de.ValidationSequence(logger=self.logger)
+            sequence.add_validator(
+                YourValidator(
+                    data='data_to_validate',
+                    rules=[...]
+                )
+            )
+            return sequence
+        """
+        # TODO: Implement validation logic
+        # For now, return empty sequence:
+        return de.ValidationSequence(logger=self.logger)
+
+    def create_loader(self) -> de.Loader:
+        """
+        Create the loader to store processed data.
+
+        Returns:
+            Loader instance.
+
+        TODO: Customize if you need special loading logic.
+        For most cases, the default DataSourceLoader is sufficient.
+        """
+        return de.DataSourceLoader(self.logger)
