@@ -48,8 +48,8 @@ from .new_scenario_parameters_window import (
     create_algo_parameters_entry_card_body,
 )
 from .scenario_cards import scenario_cards
-from ..contentregistry import ContentRegistry
-from algomancy_gui.managergetters import get_scenario_manager, get_manager
+from algomancy_gui.managers.contentregistry import ContentRegistry
+from algomancy_gui.managers.managergetters import get_scenario_manager, get_manager
 from algomancy_gui.inputchecker import InputChecker
 
 from ..layouthelpers import create_wrapped_content_div
@@ -62,7 +62,7 @@ import dash_bootstrap_components as dbc
 
 from .scenario_cards import hidden_card
 from algomancy_scenario import ScenarioManager
-from ..settingsmanager import SettingsManager
+from algomancy_gui.managers.settingsmanager import SettingsManager
 
 
 def scenario_page():

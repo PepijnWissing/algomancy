@@ -7,7 +7,7 @@ from algomancy_data import Schema, BASE_DATA_BOUND
 from algomancy_scenario import AlgorithmFactory, ALGORITHM, BASE_KPI
 
 
-class CoreConfiguration:
+class CoreConfig:
     """
     Core configuration shared by GUI and CLI.
 

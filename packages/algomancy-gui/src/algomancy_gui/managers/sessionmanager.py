@@ -1,7 +1,7 @@
 import os
 from typing import Dict, List, TypeVar, Type
 
-from algomancy_gui.appconfiguration import AppConfiguration
+from algomancy_gui.configuration.appconfig import AppConfig
 from algomancy_utils.logger import Logger, MessageStatus
 from algomancy_data import ETLFactory, Schema, BASE_DATA_BOUND
 from algomancy_scenario import (
@@ -21,25 +21,25 @@ class SessionManager:
     E = TypeVar("E", bound=ETLFactory)
 
     @classmethod
-    def from_config(cls, configuration: "AppConfiguration") -> "SessionManager":
+    def from_config(cls, configuration: "AppConfig") -> "SessionManager":
         # Local import to avoid heavy top-level coupling
-        from algomancy_gui.appconfiguration import AppConfiguration  # type: ignore
+        from algomancy_gui.configuration.appconfig import AppConfig  # type: ignore
 
-        if not isinstance(configuration, AppConfiguration):
+        if not isinstance(configuration, AppConfig):
             raise TypeError("from_config expects an AppConfiguration instance")
         return cls(
-            etl_factory=configuration.etl_factory,
-            kpi_templates=configuration.kpi_templates,
-            algo_templates=configuration.algo_templates,
-            schemas=configuration.schemas,
-            data_object_type=configuration.data_object_type,
-            data_folder=configuration.data_path,
-            has_persistent_state=configuration.has_persistent_state,
-            save_type=configuration.save_type,
-            auto_create=configuration.autocreate,
-            default_algo_name=configuration.default_algo,
-            default_param_values=configuration.default_algo_params_values,
-            autorun=configuration.autorun,
+            etl_factory=configuration.core.etl_factory,
+            kpi_templates=configuration.core.kpi_templates,
+            algo_templates=configuration.core.algo_templates,
+            schemas=configuration.core.schemas,
+            data_object_type=configuration.core.data_object_type,
+            data_folder=configuration.core.data_path,
+            has_persistent_state=configuration.core.has_persistent_state,
+            save_type=configuration.core.save_type,
+            auto_create=configuration.core.autocreate,
+            default_algo_name=configuration.core.default_algo,
+            default_param_values=configuration.core.default_algo_params_values,
+            autorun=configuration.core.autorun,
         )
 
     def __init__(

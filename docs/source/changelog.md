@@ -320,7 +320,7 @@ Below is a conceptual before/after to illustrate the change.
 
 ```python
 # example (conceptual)
-from algomancy_gui.appconfiguration import AppConfiguration
+from algomancy_gui.configuration.appconfig import AppConfig
 
 
 class ExampleDataPage:
@@ -331,7 +331,7 @@ class ExampleDataPage:
     ...
 
 
-config = AppConfiguration(
+config = AppConfig(
   home_page_content='standard',
   data_page_content=ExampleDataPage.create_content,  # Callable[..., Div] or str
   data_page_callbacks=ExampleDataPage.register_callbacks  # Callable[..., None] or str
@@ -342,7 +342,7 @@ config = AppConfiguration(
 
 ```python
 # example (conceptual)
-from algomancy_gui.appconfiguration import AppConfiguration
+from algomancy_gui.configuration.appconfig import AppConfig
 
 
 class ExampleDataPage:
@@ -353,7 +353,7 @@ class ExampleDataPage:
     ...
 
 
-config = AppConfiguration(
+config = AppConfig(
   home_page_content='standard'  # Protocol[HomePage] or str
 data_page = ExampleDataPage,  # Protocol[DataPage] or str
 )
@@ -678,17 +678,17 @@ Your main method must be migrated to use the new class. An example is shown belo
 # main method: preferred version
 
 from algomancy_gui.gui_launcher import GuiLauncher
-from algomancy_gui.appconfiguration import AppConfiguration
+from algomancy_gui.configuration.appconfig import AppConfig
 
 
 def main():
-    app_cfg = AppConfiguration(
-        data_path="data",
-        has_persistent_state=True,
-        #       ...
-    )
-    app = GuiLauncher.build(app_cfg)
-    GuiLauncher.run(app=app, host=app_cfg.host, port=app_cfg.port)
+  app_cfg = AppConfig(
+    data_path="data",
+    has_persistent_state=True,
+    #       ...
+  )
+  app = GuiLauncher.build(app_cfg)
+  GuiLauncher.run(app=app, host=app_cfg.host, port=app_cfg.port)
 ```
 For migration, the `AppConfiguration.from_dict(...)` method can be used to create an `AppConfiguration` object from a dictionary. Note that this is not advised, as this will not allow for IDE support.
 
@@ -696,18 +696,18 @@ For migration, the `AppConfiguration.from_dict(...)` method can be used to creat
 # main method: migration alternative
 
 from algomancy_gui.gui_launcher import GuiLauncher
-from algomancy_gui.appconfiguration import AppConfiguration
+from algomancy_gui.configuration.appconfig import AppConfig
 
 
 def main():
-    configuration = {
-        "data_path": "data",
-        "has_persistent_state": True,
-        #       ...   
-    }
-    app_cfg = AppConfiguration.from_dict(configuration)
-    app = GuiLauncher.build(app_cfg)
-    GuiLauncher.run(app=app, host=app_cfg.host, port=app_cfg.port)
+  configuration = {
+    "data_path": "data",
+    "has_persistent_state": True,
+    #       ...   
+  }
+  app_cfg = AppConfig.from_dict(configuration)
+  app = GuiLauncher.build(app_cfg)
+  GuiLauncher.run(app=app, host=app_cfg.host, port=app_cfg.port)
 ```
 ### Autocreate
 Added automatic creation of scenarios. This will cause any creation of a `DataSource` (or derived) to spawn a `Scenario` with the same name (suffixed with `[auto]`). The algorithm template must be specified in the configuration dictionary.

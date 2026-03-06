@@ -6,14 +6,16 @@ creates the Dash application, and starts the web server.
 """
 
 from algomancy_data import DataSource
-from algomancy_gui.appconfiguration import AppConfiguration
+from algomancy_gui.configuration.appconfig import AppConfig
 from algomancy_gui.gui_launcher import GuiLauncher
-from algomancy_gui.stylingconfigurator import (
-    StylingConfigurator,
+from algomancy_gui.configuration.stylingconfig import (
+    StylingConfig,
     LayoutSelection,
-    ColorConfiguration,
-    ButtonColorMode,
+)
+from algomancy_gui.configuration.colorconfig import (
+    ColorConfig,
     CardHighlightMode,
+    ButtonColorMode,
 )
 
 from src.data_handling.TSPETLFactory import TSPETLFactory  # noqa
@@ -22,15 +24,15 @@ from src.templates.algorithm import algorithm_templates
 from src.templates.kpi import kpi_templates
 
 
-def configure_styling() -> StylingConfigurator:
+def configure_styling() -> StylingConfig:
     cornsilk = "#FEFAE0"
     white = "#FFFFFF"
     darkgrey = "#424242"
     lightblue = "#89B7D1"
 
-    styling = StylingConfigurator(
+    styling = StylingConfig(
         layout_selection=LayoutSelection.SIDEBAR,
-        color_configuration=ColorConfiguration(
+        color_configuration=ColorConfig(
             background_color=white,
             theme_color_primary=lightblue,
             theme_color_secondary=darkgrey,
@@ -62,7 +64,7 @@ def main() -> None:
     port = 8050
 
     # framework configuration via AppConfiguration
-    app_cfg = AppConfiguration(
+    app_cfg = AppConfig(
         etl_factory=TSPETLFactory,
         kpi_templates=kpi_templates,
         algo_templates=algorithm_templates,

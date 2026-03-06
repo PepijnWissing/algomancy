@@ -20,7 +20,7 @@ from ..componentids import (
     DM_DERIVE_OPEN_BTN,
     ACTIVE_SESSION,
 )
-from algomancy_gui.managergetters import get_scenario_manager
+from algomancy_gui.managers.managergetters import get_scenario_manager
 
 """
 Modal component for deriving new datasets from existing ones.
@@ -147,7 +147,9 @@ def _sanitize(name: str) -> str:
     ],
     prevent_initial_call=True,
 )
-def derive_data_callback(n_clicks, selected_data_key, derived_name, invalid_derived_name, session_id: str):
+def derive_data_callback(
+    n_clicks, selected_data_key, derived_name, invalid_derived_name, session_id: str
+):
     """
     Creates a derived dataset from an existing one when the derive button is clicked, except when dataset_name is invalid.
 
@@ -181,6 +183,7 @@ def derive_data_callback(n_clicks, selected_data_key, derived_name, invalid_deri
     except Exception as e:
         return no_update, "", False, f"Problem with deriving: {str(e)}", True, False
 
+
 @callback(
     Output(DM_DERIVE_MODAL, "is_open"),
     [
@@ -208,4 +211,11 @@ def toggle_modal_derive(open_clicks, close_clicks, is_open):
         return not is_open
     return is_open
 
-InputChecker.register_name_callback(DM_DERIVE_SET_NAME_INPUT, DM_DERIVE_MODAL_FEEDBACK, DM_DERIVE_MODAL_SUBMIT_BTN, ACTIVE_SESSION, 'dataset')
+
+InputChecker.register_name_callback(
+    DM_DERIVE_SET_NAME_INPUT,
+    DM_DERIVE_MODAL_FEEDBACK,
+    DM_DERIVE_MODAL_SUBMIT_BTN,
+    ACTIVE_SESSION,
+    "dataset",
+)
