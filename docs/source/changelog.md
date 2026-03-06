@@ -24,7 +24,7 @@
 - Split up `AppConfigurtion` into separate configuration containers for better organization and maintainability. 
   
   _Note: these changes are backwards compatible._  
-
+- Implemented the Singleton pattern to Logger class for global access.
 
 ## 0.4.4
 _Released on 23-2-2026_
