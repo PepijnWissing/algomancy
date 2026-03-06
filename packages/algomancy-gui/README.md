@@ -15,18 +15,17 @@ pip install -e packages/algomancy-gui
 Requires Python >= 3.14. Dependencies: `dash`, `dash_bootstrap_components`.
 
 #### Quick start: configure styling
-```python
-from algomancy_gui.stylingconfigurator import (
-    StylingConfigurator,
-    LayoutSelection,
-    ColorConfiguration,
-    CardHighlightMode,
-    ButtonColorMode,
-)
 
-styling = StylingConfigurator(
+```python
+from algomancy_gui.configuration.stylingconfig import (
+    StylingConfig,
+    LayoutSelection,
+)
+from algomancy_gui.configuration.colorconfig import ColorConfig, CardHighlightMode, ButtonColorMode
+
+styling = StylingConfig(
     layout_selection=LayoutSelection.SIDEBAR,
-    color_configuration=ColorConfiguration(
+    color_configuration=ColorConfig(
         background_color="#FFFFFF",
         theme_color_primary="#1F271B",
         theme_color_secondary="#6DA34D",

@@ -7,6 +7,8 @@ from algomancy_data import (
     BASE_DATA_BOUND,
     Schema,
 )
+
+# from algomancy_gui.configuration.appconfiguration import AppConfiguration
 from algomancy_utils.logger import Logger, MessageStatus
 from .basealgorithm import ALGORITHM
 from algomancy_utils.baseparameterset import BASE_PARAMS_BOUND
@@ -27,19 +29,24 @@ class ScenarioManager:
 
     @classmethod
     def from_config(cls, cfg) -> "ScenarioManager":
+        # Local import to avoid heavy top-level coupling
+        from algomancy_gui.configuration.appconfig import AppConfig  # type: ignore
+
+        if not isinstance(cfg, AppConfig):
+            raise TypeError("from_config expects an AppConfig instance")
         return cls(
-            etl_factory=cfg.etl_factory,
-            kpi_templates=cfg.kpi_templates,
-            algo_templates=cfg.algo_templates,
-            schemas=cfg.schemas,
-            data_object_type=cfg.data_object_type,
-            data_folder=cfg.data_path,
-            has_persistent_state=cfg.has_persistent_state,
-            save_type=cfg.save_type,
-            autocreate=cfg.autocreate,
-            default_algo_name=cfg.default_algo,
-            default_param_values=cfg.default_algo_params_values,
-            autorun=cfg.autorun,
+            etl_factory=cfg.core.etl_factory,
+            kpi_templates=cfg.core.kpi_templates,
+            algo_templates=cfg.core.algo_templates,
+            schemas=cfg.core.schemas,
+            data_object_type=cfg.core.data_object_type,
+            data_folder=cfg.core.data_path,
+            has_persistent_state=cfg.core.has_persistent_state,
+            save_type=cfg.core.save_type,
+            autocreate=cfg.core.autocreate,
+            default_algo_name=cfg.core.default_algo,
+            default_param_values=cfg.core.default_algo_params_values,
+            autorun=cfg.core.autorun,
         )
 
     def __init__(

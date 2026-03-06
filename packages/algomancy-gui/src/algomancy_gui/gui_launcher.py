@@ -8,11 +8,11 @@ from dash import get_app, Dash, html, dcc
 from dash_bootstrap_components.themes import BOOTSTRAP
 
 from .layout import LayoutCreator
-from .contentregistry import ContentRegistry
-from .settingsmanager import SettingsManager
-from .sessionmanager import SessionManager
+from algomancy_gui.managers.contentregistry import ContentRegistry
+from algomancy_gui.managers.settingsmanager import SettingsManager
+from algomancy_gui.managers.sessionmanager import SessionManager
 from .componentids import ACTIVE_SESSION
-from .appconfiguration import AppConfiguration
+from algomancy_gui.configuration.appconfig import AppConfig
 from algomancy_content.librarymanager import LibraryManager as lm
 from algomancy_scenario import ScenarioManager
 from algomancy_utils.logger import MessageStatus
@@ -20,16 +20,16 @@ from algomancy_utils.logger import MessageStatus
 
 class GuiLauncher:
     @staticmethod
-    def build(cfg: Union[AppConfiguration, Dict[str, Any]]) -> Dash:
+    def build(cfg: Union[AppConfig, Dict[str, Any]]) -> Dash:
         # Normalize configuration to AppConfiguration for a single source of truth
         if isinstance(cfg, dict):
-            cfg_obj = AppConfiguration(**cfg)
-        elif isinstance(cfg, AppConfiguration):
+            cfg_obj = AppConfig(**cfg)
+        elif isinstance(cfg, AppConfig):
             cfg_obj = cfg
         else:
             raise TypeError("DashLauncher.build expects AppConfiguration or dict")
 
-        if cfg_obj.use_sessions:
+        if cfg_obj.core.use_sessions:
             manager: SessionManager = SessionManager.from_config(cfg_obj)
         else:
             manager: ScenarioManager = ScenarioManager.from_config(cfg_obj)
@@ -41,7 +41,7 @@ class GuiLauncher:
         )
 
         # register authentication if enabled
-        if cfg_obj.use_authentication:
+        if cfg_obj.features.use_authentication:
             if not os.getenv("APP_USERNAME") or not os.getenv("APP_PASSWORD"):
                 raise ValueError(
                     "Environment variables 'APP_USERNAME' and 'APP_PASSWORD' must be set"
@@ -58,7 +58,7 @@ class GuiLauncher:
 
     @staticmethod
     def _construct(
-        cfg: AppConfiguration,
+        cfg: AppConfig,
         manager: SessionManager | ScenarioManager,
     ) -> Dash:
         # Initialize the app
@@ -69,14 +69,14 @@ class GuiLauncher:
 
         from pathlib import Path
 
-        assets_path = Path(os.getcwd()) / Path(cfg.assets_path)
+        assets_path = Path(os.getcwd()) / Path(cfg.styling.assets_path)
 
         app = Dash(
             external_stylesheets=external_stylesheets,
             suppress_callback_exceptions=True,
             assets_folder=str(assets_path),
         )
-        app.title = cfg.title
+        app.title = cfg.core.title
 
         # register the scenario manager on the app object
         if isinstance(manager, SessionManager):
@@ -93,7 +93,7 @@ class GuiLauncher:
             )
 
         # register the styling configuration on the app object
-        app.server.styling_config = cfg.styling_config
+        app.server.styling_config = cfg.styling
 
         # register the settings manager on the app object for access in callbacks
         app.server.settings = SettingsManager(cfg.as_dict())
@@ -115,7 +115,7 @@ class GuiLauncher:
         # fill and run the app
         app.layout = html.Div(
             [
-                LayoutCreator.create_layout(cfg.styling_config),
+                LayoutCreator.create_layout(cfg.styling),
                 dcc.Store(
                     id=ACTIVE_SESSION,
                     storage_type="session",

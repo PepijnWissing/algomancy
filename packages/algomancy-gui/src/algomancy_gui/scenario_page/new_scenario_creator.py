@@ -10,17 +10,17 @@ from algomancy_gui.componentids import (
     SCENARIO_CREATE_STATUS,
     SCENARIO_CREATOR_MODAL,
 )
-from algomancy_gui.managergetters import get_scenario_manager
+from algomancy_gui.managers.managergetters import get_scenario_manager
 from algomancy_gui.scenario_page.new_scenario_parameters_window import (
     create_algo_parameters_window,
 )
 from algomancy_scenario import ScenarioManager
-from algomancy_gui.stylingconfigurator import StylingConfigurator
+from algomancy_gui.configuration.stylingconfig import StylingConfig
 
 
 def new_scenario_creator(session_id: str):
     sm: ScenarioManager = get_scenario_manager(get_app().server, session_id)
-    sc: StylingConfigurator = get_app().server.styling_config
+    sc: StylingConfig = get_app().server.styling_config
 
     # Modal for creating a new scenario
     return dbc.Modal(
@@ -33,7 +33,8 @@ def new_scenario_creator(session_id: str):
                             dbc.Col(
                                 [
                                     dbc.Input(
-                                        id=SCENARIO_TAG_INPUT, placeholder="Scenario tag"
+                                        id=SCENARIO_TAG_INPUT,
+                                        placeholder="Scenario tag",
                                     ),
                                     dbc.FormFeedback(
                                         id=SCENARIO_TAG_FEEDBACK, type="invalid"
