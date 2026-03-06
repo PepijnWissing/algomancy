@@ -1,5 +1,6 @@
 from typing import Any, Dict
 
+from algomancy_utils import Logger
 from .comparepageconfig import ComparePageConfig
 from .feautureconfig import FeatureConfig
 from .pageconfig import PageConfig
@@ -83,22 +84,61 @@ class AppConfig:
             self.core = CoreConfig(**core_params)
 
         # Initialize GUI sub-configurations
-        self.server = server_config or ServerConfig(
-            **self._extract_dc_kwargs(kwargs, ServerConfig)
-        )
-        # self.paths = path_config or PathConfig(**self._extract_dc_kwargs(kwargs, PathConfig))
-        self.pages = page_config or PageConfig(
-            **self._extract_dc_kwargs(kwargs, PageConfig)
-        )
-        self.compare = compare_page_config or ComparePageConfig(
-            **self._extract_dc_kwargs(kwargs, ComparePageConfig)
-        )
-        self.styling = styling_config or StylingConfig(
-            **self._extract_dc_kwargs(kwargs, StylingConfig)
-        )
-        self.features = feature_config or FeatureConfig(
-            **self._extract_dc_kwargs(kwargs, FeatureConfig)
-        )
+        if server_config:
+            self.server = server_config
+        else:
+            logger = Logger()
+            logger.warning(
+                "DeprecatedWarning: Falling back to configuration via AppConfig keywords. "
+                "Use ServerConfig instead."
+            )
+            self.server = ServerConfig(**self._extract_dc_kwargs(kwargs, ServerConfig))
+
+        if page_config:
+            self.pages = page_config
+        else:
+            logger = Logger()
+            logger.warning(
+                "DeprecatedWarning: Falling back to configuration via AppConfig keywords. "
+                "Use PageConfig instead."
+            )
+            self.pages = PageConfig(**self._extract_dc_kwargs(kwargs, PageConfig))
+
+        if compare_page_config:
+            self.compare = compare_page_config
+        else:
+            logger = Logger()
+            logger.warning(
+                "DeprecatedWarning: Falling back to configuration via AppConfig keywords. "
+                "Use ComparePageConfig instead."
+            )
+            self.compare = compare_page_config or ComparePageConfig(
+                **self._extract_dc_kwargs(kwargs, ComparePageConfig)
+            )
+
+        if styling_config:
+            self.styling = styling_config
+        else:
+            logger = Logger()
+            logger.warning(
+                "DeprecatedWarning: Falling back to configuration via AppConfig keywords. "
+                "Use StylingConfig instead."
+            )
+            self.styling = styling_config or StylingConfig(
+                **self._extract_dc_kwargs(kwargs, StylingConfig)
+            )
+
+        if feature_config:
+            self.features = feature_config
+        else:
+            logger = Logger()
+            logger.warning(
+                "DeprecatedWarning: Falling back to configuration via AppConfig keywords. "
+                "Use FeatureConfig instead."
+            )
+            self.features = feature_config or FeatureConfig(
+                **self._extract_dc_kwargs(kwargs, FeatureConfig)
+            )
 
     @staticmethod
     def _extract_kwargs(kwargs: dict, func) -> dict:
