@@ -1,6 +1,8 @@
 (tutorial-pages-ref)=
 # Pages
-Now that the backend is complete, we can create the GUI elements. We build our own implementation of the Scenarios page, the Compare page and the Overview page.
+Now that the backend is complete, we can create the GUI elements. 
+We build our own implementation of the Scenarios page, the Compare page and the Overview page.
+Algomancy uses Plotly Dash for the GUI, and in this tutorial we will make use of components in the [Dash Core Components](https://dash.plotly.com/dash-core-components) and the [Dash Bootstrap Components](https://www.dash-bootstrap-components.com/) libraries. 
 
 ## Scenarios Page
 In the scenarios pages, we will show basic information about the scenario. Additionally, if the algorithm has run, we will show some result statistics and visualize the TSP route.  
@@ -133,13 +135,15 @@ def result_table(scenario) -> html.Div:
 :::
 
 Note that we re-used Algomancy's `status_badge` component. 
-5. In `page_scenarios.py`, import these components and use them in the `create_content` as follows:
+
+5. In `page_scenarios.py`, import these components and use them in the `create_content` function as follows:
 
 :::{dropdown} {octicon}`code` Code
 :color: info
 ```{code-block} python
 :caption: `page_scenarios.py`
 :linenos:
+:lineno-start: 12
 @staticmethod
 def create_content(scenario: Scenario) -> html.Div:
     # Case 1 – Scenario not ready
@@ -209,7 +213,7 @@ and add the following function:
 ```{code-block} python
 :caption: `components.py`
 :linenos:
-
+:lineno-start: 94
 def route_visualization(ordered_locations: List[Dict], tour: List[Dict]):
     """
     Create a Plotly figure visualizing a TSP route.
@@ -324,7 +328,7 @@ function such that it looks as follows:
 ```{code-block} python
 :caption: `page_scenarios.py`
 :linenos:
-
+:lineno-start: 12
 def create_content(scenario: Scenario) -> html.Div:
     """
     Create the main content of the scenario page.
@@ -417,14 +421,14 @@ def create_content(scenario: Scenario) -> html.Div:
 ```
 :::
 
-8. We must now implement the `register_callbacks()` function to listen to the `route-container` toggle:
+8. We have now created an on/off toggle for the visualization, but it is not responsive yet. We must implement the `register_callbacks()` function to listen to the `route-container` toggle:
 
 :::{dropdown} {octicon}`code` Code
 :color: info
 ```{code-block} python
 :caption: `page_scenarios.py`
 :linenos:
-
+:lineno-start: 10
 @staticmethod
 def register_callbacks():
     """
