@@ -1,13 +1,27 @@
 # Change log
 ## Prerelease
-### Added 
-- Added charactersafe & existing scenario name checks (in InputChecker Class), resulting in a disabled create button
-- Added list_tags function to the scenario registry, making accessable via the scenario manager
-- Added pages section to the tutorial. 
+### Added
+- **Quickstart Module**: Introduced `algomancy-quickstart` package with an interactive setup wizard (`QuickstartWizard`)
+  that streamlines the creation of new Algomancy applications. The wizard guides users through five configurable steps: 
+  1. creating folder structure and generating a basic `main.py`, 
+  2. generating custom implementation templates for schemas, 
+    algorithms, KPIs, and ETL factories, and custom pages.
+  3. automatically scanning data files and generating ETL pipelines with schema inference, 
+  4. installing default assets (CSS, images) from GitHub or bundled fallback, and 
+  5. configuring custom styling with colors and themes. 
 
+  The wizard features interactive prompts, intelligent file detection (CSV, XLSX, JSON), automatic datatype inference 
+  with column mapping, and generates code templates using Jinja2. This significantly reduces the initial
+  setup time and provides new users with a structured starting point following framework best practices.
+- Added charactersafe & existing scenario name checks (in `InputChecker` Class), resulting in a disabled create button
+- Added `list_tags` function to the scenario registry, making accessable via the scenario manager
+- `BaseAlgorithm` now has access to the application's central logger through the attribute `_logger`.
+- Added pages section to the tutorial. 
+- 
 ### Changed
 - Made dataset_name_invalid generic (name_invalid) for datasets and scenarios: 
 - Moved callback for name_invalid to inputchecker.py to avoid duplicate code in datamanagerderive/importmodal
+- Euro (€) is now the default quantity for money 
 
 ## 0.4.4
 _Released on 23-2-2026_

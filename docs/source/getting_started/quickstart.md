@@ -57,81 +57,203 @@ pip install --upgrade algomancy
 
 
 ## Set up a basic app
-1. Create the following directory structure:
-```text
-root/
-|── assets/ (*)
-├── data/   (*)
-├── src/
-│   ├── data_handling/
-│   ├── pages/
-│   └── templates/
-│       ├── kpi/
-│       └── algorithm/
-├── main.py  (*)
-├── README.md
-└── pyproject.toml
+To set up a new Algomancy project, it is recommended to follow the **quickstart wizard**. The wizard features interactive 
+prompts, intelligent file detection (CSV, XLSX, JSON), automatic datatype inference with column mapping, and generates 
+code templates using Jinja2. This significantly reduces the initial setup time and provides new users with a structured 
+starting point following framework best practices.
+
+To launch the wizard, open terminal and use the command
+```python
+algomancy-quickstart
 ```
-
-```{tip}
-Only the folders marked with (*) are required; the rest is considered good practice. 
-```
-
-2. create `main.py`
-
-```{code-block} python
-:linenos:
-from algomancy_gui import GuiLauncher, AppConfiguration
-from algomancy_content import (
-    PlaceholderETLFactory,
-    PlaceholderAlgorithm,
-    PlaceholderKPI,
-    placeholder_schema,
-)
-from algomancy_data import DataSource
-
-
-def main() -> None:
-    host = "127.0.0.1"
-    port = 8050
-
-    app_cfg = AppConfiguration(
-        etl_factory=PlaceholderETLFactory,
-        kpi_templates={"placeholder": PlaceholderKPI},
-        algo_templates={"placeholder": PlaceholderAlgorithm},
-        schemas=[placeholder_schema],
-        host=host,
-        port=port,
-        title="My Algomancy Dashboard",
-    )
-
-    app = GuiLauncher.build(app_cfg)
-    GuiLauncher.run(app=app, host=app_cfg.host, port=app_cfg.port)
-
-
-if __name__ == "__main__":
-    main()
-```
-
-## Include CSS
-At this point, the dashboard is missing the `style.css` styling instructions and several other assets. 
-To get going, copy the directory 'assets' from [the github page](https://github.com/PepijnWissing/algomancy/tree/main/example) to the **root** directory.
-
-```{warning} 
-
-We do **not** want the folder structure to look like:
-
-```{code-block} text
-root/
-|── assets/
-│   └── assets/
-├── main.py 
-... 
-```
+to be guided through the set-up steps, outlined below. 
+1. **Creating the folder structure**
     
+    The user is prompted for some basic information (app title, host, port), after which the following directory
+    structure is created, with a basic `main.py` file.
+    :::{dropdown} {octicon}`code` Content after step
+    :color: secondary
+    ```{code-block} text
+    :caption: Project directory after initializing with algomancy-quickstart
+    root/
+    |── assets/ 
+    ├── data/   
+    │   └── setup/
+    ├── src/
+    │   ├── data_handling/
+    │   ├── pages/
+    │   └── templates/
+    │       ├── kpi/
+    │       └── algorithm/
+    └── main.py  
+    ```
+    ```{code-block} python
+    :linenos:
+    :caption: main.py after initializing with algomancy-quickstart
+    from algomancy_gui.gui_launcher import GuiLauncher
+    from algomancy_gui.appconfiguration import AppConfiguration
+    from algomancy_content import (
+        PlaceholderETLFactory,
+        PlaceholderAlgorithm,
+        PlaceholderKPI,
+        placeholder_schema,
+    )
+    from algomancy_data import DataSource
+    
+    
+    def main() -> None:
+        host = "127.0.0.1"
+        port = 8050
+    
+        app_cfg = AppConfiguration(
+            etl_factory=PlaceholderETLFactory,
+            kpi_templates={"placeholder": PlaceholderKPI},
+            algo_templates={"placeholder": PlaceholderAlgorithm},
+            schemas=[placeholder_schema],
+            host=host,
+            port=port,
+            title="My Algomancy Dashboard",
+        )
+    
+        app = GuiLauncher.build(app_cfg)
+        GuiLauncher.run(app=app, host=app_cfg.host, port=app_cfg.port)
+    
+    
+    if __name__ == "__main__":
+        main()
+    ```
+    :::
+2. **Implementation templates**
+
+    Next, the basic placeholders as provided by `algomancy-content` are replaced by implementation templates for `schema`,
+    `ETL`, `algorithm`, `kpi` and each of the app pages. These templates include brief DocString and todo notes that 
+     indicate where the user's input is required. 
+    
+    The user is promped to provide a prefix for the generated files and classes, after which the templates are created and
+    the `main.py` configuration is updated to include the generated material. 
+
+3. **Generating an ETL pipeline**
+
+    The `data/setup/` directory is scanned for data files. In case the user has not plugged in any data files, they are
+    instructed to add them now.
+    ```{tip}
+    If the folder structure is not visible yet, try to _reload from disk_
+    ```
+    The user receives a prompt for each file that is found in `data/setup/`, asking whether it should be included. The
+    wizard attempts to detect the data type of each column. The appropriate `Schema` classes and `Extractors` are 
+    generated and the `etl_factory` is updated. 
+
+    By default, validation includes 
+    - `ExtractionSuccessValidator` that validates that the extraction was successful 
+    - `SchemaValidator` that validates that the data conforms to the schema
+    
+    Transformation is left as a configurable step. The user can choose to apply transformations to the data, or skip this step. 
+    Finally, the data is loaded into a default `DataSource` container
+    
+    ```{tip}
+    Use a small slice of validated data for this step, to ensure that the data types are correctly inferred
+    ```
+
+
+4. **Installing default assets**
+    
+    After confirmation by the user, the assets folder associated with the Algomancy library is imported from [the github page](https://github.com/PepijnWissing/algomancy/tree/main/example).
+    If the import fails, an offline fallback is included. _However, the baked-in assets are not guaranteed to be up-to-date._
+
+5. **Styling**
+
+    The user is prompted to configure the dashboard styling. A selection of default themes is made, followed by several
+    ways in which the styling configuration can be customized. 
+    
+    
+    :::{dropdown} {octicon}`code` Content after step
+    :color: secondary
+    ```{code-block} text
+    :caption: Project directory after algomancy-quickstart
+    root/
+    |── assets/ 
+    │   ├── css/
+    │   ├── ...
+    │   └── styling.css
+    ├── data/   
+    │   └── setup/
+    │       └── ...
+    ├── src/
+    │   ├── data_handling/
+    │   │   ├── etl_factory.py
+    │   │   └── generated_schemas.py
+    │   ├── pages/
+    │   │   ├── compare_page.py
+    │   │   ├── data_page.py
+    │   │   ├── home_page.py
+    │   │   ├── overview_page.py
+    │   │   └── scenario_page.py
+    │   ├── templates/
+    │   │   ├── kpi/
+    │   │   │   └── custom_kpi.py
+    │   │   └── algorithm/
+    │   │       └── custom_algorithm.py
+    │   └── styling_config.py
+    └── main.py  
+    ```
+    ```{code-block} python
+    :caption: main.py after algomancy-quickstart 
+    :linenos:
+    from algomancy_gui.appconfiguration import AppConfiguration
+    from algomancy_gui.gui_launcher import GuiLauncher
+    from algomancy_data import DataSource
+    
+    # Import generated ETL factory and schemas
+    from src.data_handling.etl_factory import TestETLFactory
+    from src.data_handling.generated_schemas import all_schemas
+    
+    # Import custom implementations
+    from src.templates.algorithm.test_algorithm import TestAlgorithm
+    from src.templates.kpi.test_kpi import TestKPI
+    from src.pages.home_page import TestHomePage
+    from src.pages.data_page import TestDataPage
+    from src.pages.scenario_page import TestScenarioPage
+    from src.pages.compare_page import TestComparePage
+    from src.pages.overview_page import TestOverviewPage
+    
+    # Import styling configuration
+    from src.styling_config import app_styling
+    
+    
+    def main() -> None:
+        """Main entry point for the My Algomancy Dashboard application."""
+    
+        host = "127.0.0.1"
+        port = 8050
+    
+        app_cfg = AppConfiguration(
+            etl_factory=TestETLFactory,  # 'Test' is replaced by your own custom name
+            schemas=all_schemas,
+            kpi_templates={"test": TestKPI},  
+            algo_templates={"Test": TestAlgorithm},  
+            home_page=TestHomePage(),
+            data_page=TestDataPage(),
+            scenario_page=TestScenarioPage(),
+            compare_page=TestComparePage(),
+    #       overview_page=TestOverviewPage(),  # uncomment to use CqmOverviewPage
+            host=host,
+            port=port,
+            title="My Algomancy Dashboard",
+            styling_config=app_styling,  # Apply custom styling
+        )
+    
+        app = GuiLauncher.build(app_cfg)
+        GuiLauncher.run(app=app, host=app_cfg.host, port=app_cfg.port)
+    
+    
+    if __name__ == "__main__":
+        main()
+    ```
+    :::
+
 
 ## Run
-- Save the file as `main.py` and start the app:
+- Start the app by running:
 ::::{tab-set}
 
 :::{tab-item} uv
@@ -147,4 +269,4 @@ todo
 :::
 
 ::::
-- Open your browser at http://127.0.0.1:8050
+- Open your browser at your selected host/port; the default is [http://127.0.0.1:8050](http://127.0.0.1:8050).

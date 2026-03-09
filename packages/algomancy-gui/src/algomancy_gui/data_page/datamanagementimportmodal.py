@@ -10,7 +10,7 @@ from .filenamematcher import match_file_names
 
 from ..cqmloader import cqm_loader
 from ..defaultloader import default_loader
-from ..inputchecker import  InputChecker
+from ..inputchecker import InputChecker
 from algomancy_gui.managergetters import get_scenario_manager
 from ..settingsmanager import SettingsManager
 from ..componentids import (
@@ -36,6 +36,7 @@ Modal component for loading data files into the application.
 This module provides a modal dialog that allows users to upload CSV files,
 view file mapping information, and create new datasets from the uploaded files.
 """
+
 
 def data_management_import_modal(sm: ScenarioManager, themed_styling):
     """
@@ -82,9 +83,7 @@ def data_management_import_modal(sm: ScenarioManager, themed_styling):
                         dbc.Collapse(
                             children=[
                                 dbc.Card(
-                                    dbc.CardBody(
-                                        id=DM_IMPORT_MODAL_FILEVIEWER_CARD
-                                    ),
+                                    dbc.CardBody(id=DM_IMPORT_MODAL_FILEVIEWER_CARD),
                                     className="uploaded-files-card",
                                 ),
                                 dbc.Input(
@@ -127,6 +126,8 @@ def data_management_import_modal(sm: ScenarioManager, themed_styling):
                         "Import",
                         id=DM_IMPORT_SUBMIT_BUTTON,
                         class_name="dm-import-modal-confirm-btn",
+                        disabled=True,
+                        color="secondary",
                     ),
                     dbc.Button(
                         "Close",
@@ -173,7 +174,15 @@ def toggle_modal_load(open_clicks, close_clicks, is_open):
         return not is_open
     return is_open
 
-InputChecker.register_name_callback(DM_IMPORT_MODAL_NAME_INPUT, DM_IMPORT_MODAL_FEEDBACK, DM_IMPORT_SUBMIT_BUTTON, ACTIVE_SESSION, 'dataset')
+
+InputChecker.register_name_callback(
+    DM_IMPORT_MODAL_NAME_INPUT,
+    DM_IMPORT_MODAL_FEEDBACK,
+    DM_IMPORT_SUBMIT_BUTTON,
+    ACTIVE_SESSION,
+    "dataset",
+)
+
 
 def render_file_mapping_table(mapping):
     """
@@ -206,6 +215,7 @@ def render_file_mapping_table(mapping):
         },
     )
     return html.Div([html.Strong("File Mapping:"), table])
+
 
 @callback(
     [
@@ -286,7 +296,9 @@ def show_uploaded_filename(filename, session_id: str):
     ],
     prevent_initial_call=True,
 )
-def process_imports(n_clicks, contents, filenames, dataset_name, invalid_dataset_name, session_id: str):
+def process_imports(
+    n_clicks, contents, filenames, dataset_name, invalid_dataset_name, session_id: str
+):
     """
     Processes uploaded files when the import submit button is clicked, except when dataset_name is invalid.
 
@@ -302,7 +314,13 @@ def process_imports(n_clicks, contents, filenames, dataset_name, invalid_dataset
         Tuple containing updated dropdown options, modal state, and alert messages
     """
     # Guard clause for empty inputs
-    if not n_clicks or not contents or not filenames or not dataset_name or invalid_dataset_name is True:
+    if (
+        not n_clicks
+        or not contents
+        or not filenames
+        or not dataset_name
+        or invalid_dataset_name is True
+    ):
         return no_update, no_update, "", False, "", False, ""
 
     # Get scenario manager from app context
@@ -365,6 +383,8 @@ def prepare_files_from_upload(sm, filenames, contents):
 @callback(
     Output(DM_IMPORT_UPLOADER, "content"),
     Output(DM_IMPORT_UPLOADER, "filename"),
+    Output(DM_IMPORT_SUBMIT_BUTTON, "disabled", allow_duplicate=True),
+    Output(DM_IMPORT_SUBMIT_BUTTON, "color", allow_duplicate=True),
     Input(DM_IMPORT_MODAL, "is_open"),
     prevent_initial_call=True,
 )
@@ -380,8 +400,8 @@ def clean_contents_on_close(modal_is_open: bool):
                or no_update if the modal is open
     """
     if not modal_is_open:
-        return None, None
-    return no_update, no_update
+        return None, None, True, "secondary"
+    return no_update, no_update, no_update, no_update
 
 
 def create_dropdown_options(sm):
@@ -412,36 +432,3 @@ def create_derived_dropdown_options(sm):
         for ds in sm.get_data_keys()
         if not sm.get_data(ds).is_master_data()
     ]
-
-
-#
-# def decode_contents(contents):
-#     """
-#     Decodes the uploaded contents string from dcc.Upload.
-#
-#     Parameters:
-#         contents (str): The contents string (data URI) from the uploader
-#
-#     Returns:
-#         tuple: (mime_type, decoded_bytes)
-#     """
-#     if not contents:
-#         return None, None
-#
-#     content_type, content_string = contents.split(",", 1)
-#     mime_type = content_type.split(";")[0][5:]
-#     decoded = base64.b64decode(content_string)
-#     return mime_type, decoded
-#
-#
-# def handle_csv_upload(contents):
-#     mime_type, decoded = decode_contents(contents)
-#     if mime_type == "text/csv":
-#         from io import StringIO
-#
-#         data_str = decoded.decode("utf-8")
-#         df = pd.read_csv(StringIO(data_str))
-#         return df
-#     else:
-#         raise ValueError("Unsupported file type")
-#
