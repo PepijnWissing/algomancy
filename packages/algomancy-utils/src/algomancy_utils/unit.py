@@ -59,9 +59,9 @@ Example: Time with tighter bounds
 
 Example: Money
     >>> money = QUANTITIES["money"]
-    >>> usd = BaseMeasurement(money["$"], min_digits=0, max_digits=3, decimals=2)
+    >>> usd = BaseMeasurement(money["€"], min_digits=0, max_digits=3, decimals=2)
     >>> print(Measurement(usd, 1_234_567).pretty())
-    $1.23M
+    €1.23M
 
 Formatting Preferences:
     - **min_digits** / **max_digits** bound the number of significant digits before a unit
@@ -751,23 +751,17 @@ def create_data_decimal_quantity() -> Quantity:
     return data
 
 
-def create_money_quantity() -> Quantity:
-    money = Quantity("Money", Unit("$"))
-    money.add_unit(Unit("k$"), 1_000)
-    money.add_unit(Unit("M$"), 1_000_000)
-    money.add_unit(Unit("B$"), 1_000_000_000)
-    money.add_unit(Unit("T$"), 1_000_000_000_000)
-    # Cents
-    money.add_unit(Unit("¢"), 0.01)
-    return money
-
-
 def create_currency_quantity(symbol: str, name: str) -> Quantity:
     currency = Quantity(name, Unit(symbol))
     currency.add_unit(Unit(f"k{symbol}"), 1_000)
     currency.add_unit(Unit(f"M{symbol}"), 1_000_000)
     currency.add_unit(Unit(f"B{symbol}"), 1_000_000_000)
     return currency
+
+
+def create_money_quantity() -> Quantity:
+    money = create_currency_quantity("€", "Euro")
+    return money
 
 
 def create_percentage_quantity() -> Quantity:
@@ -984,11 +978,11 @@ def example_usage():
 
     print("\n=== Money Examples ===")
     money = QUANTITIES["money"]
-    money_usd = BaseMeasurement(money["$"], min_digits=0, max_digits=3, decimals=2)
+    money_usd = BaseMeasurement(money["€"], min_digits=0, max_digits=3, decimals=2)
 
     for val in [0.50, 50, 1_234_567, 5_000_000_000, 1_500_000_000_000]:
         m = Measurement(money_usd, val)
-        print(f"${val:>18,.2f} -> {m.pretty()}")
+        print(f"€{val:>18,.2f} -> {m.pretty()}")
 
     print("\n=== Custom Currency Example (EUR) ===")
     eur = create_currency_quantity("€", "Euro")
@@ -1057,13 +1051,13 @@ def example_usage():
     # Example 2: Money at different scales
     print()
     money = QUANTITIES["money"]
-    revenue = Measurement(BaseMeasurement(money["$"], decimals=2), 1_234_567)
-    budget = Measurement(BaseMeasurement(money["M$"], decimals=2), 5.5)
+    revenue = Measurement(BaseMeasurement(money["€"], decimals=2), 1_234_567)
+    budget = Measurement(BaseMeasurement(money["M€"], decimals=2), 5.5)
 
     print(f"Revenue: {revenue}")
     print(f"Budget: {budget}")
-    print(f"Revenue in M$: {revenue.scale_to_unit(budget.unit)}")
-    print(f"Budget in $: {budget.scale_to_unit(revenue.unit)}")
+    print(f"Revenue in M€: {revenue.scale_to_unit(budget.unit)}")
+    print(f"Budget in €: {budget.scale_to_unit(revenue.unit)}")
 
     # Example 3: Compare auto-scaled measurements
     print()
