@@ -37,6 +37,11 @@ class TSPScenarioPage(BaseScenarioPage):
 
 :::{dropdown} {octicon}`code` Code
 :color: info
+```{tip}
+While not strictly necessary, the `getattr` function (see, e.g., line 23 of the below) can be used to access attributes dynamically. 
+This can be useful in scenarios where attribute names are not known until runtime, or when dealing with objects with many attributes. 
+As objects may not exist yet, this offers a safe way to access attributes without causing errors, and is considered good practice. 
+```
 ```{code-block} python
 :caption: `components.py`
 :linenos:
