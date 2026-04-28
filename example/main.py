@@ -103,8 +103,6 @@ def configure_app() -> AppConfig:
         page_config=pages,
         server_config=server,
         styling_config=styling,
-        # legacy below
-        title="Example implementation of an Algomancy Dashboard",
     )
     return app_cfg
 
@@ -195,6 +193,7 @@ def configure_core(data_path: str, use_sessions: bool) -> CoreConfig:
         default_algo="Slow",
         default_algo_params_values={"duration": 1},
         autorun=True,
+        title="Example implementation of an Algomancy Dashboard",
     )
     return core
 

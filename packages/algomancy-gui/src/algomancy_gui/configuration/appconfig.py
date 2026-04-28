@@ -206,16 +206,16 @@ class AppConfig:
     @classmethod
     def from_dict(cls, config: Dict[str, Any]) -> "AppConfig":
         """
-        Create an AppConfiguration instance from a flat dictionary.
+        Create an AppConfig instance from a flat dictionary.
 
-        This factory method reconstructs an AppConfiguration object from a
+        This factory method reconstructs an AppConfig object from a
         dictionary representation, typically one created by `as_dict()`.
 
         Args:
             config: Dictionary containing configuration parameters.
 
         Returns:
-            A new AppConfiguration instance initialized with the provided values.
+            A new AppConfig instance initialized with the provided values.
 
         Example:
             >>> config_dict = {
