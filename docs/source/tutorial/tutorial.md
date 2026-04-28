@@ -9,13 +9,27 @@ kpi
 algorithms
 pages
 ```
-In this section, we will discuss the step-by-step implementation of a basic application
-## Outline
-We use an example of a TSP problem in this problem. 
+In this tutorial, we build a complete Algomancy application step by step, using a vehicle routing example to illustrate each framework concept in context.
 
-```{warning}
-The outline section of this tutorial is incomplete. A basic description of the tutorial intentions should be added
-```
+## What we are building
+
+We model a **Traveling Salesman Problem (TSP)**: given a set of locations distributed on a grid, find a route that visits each location exactly once at minimum total cost.
+By the end of the tutorial, we will have a fully functioning Algomancy dashboard that can:
+
+- import and validate location data from multiple input files,
+- run and compare two routing algorithms against the same dataset,
+- evaluate results through a KPI, and
+- visualize routes and compare scenario outcomes through a set of custom dashboard pages.
+
+## Steps
+
+The tutorial walks through the following pages in order:
+
+1. **{ref}`Data intake<tutorial-etl-ref>`** — define the input file schemas and implement the {ref}`ETL<etl-ref>` pipeline to extract, validate, transform, and load location data into a domain-specific data model.
+2. **{ref}`Results<tutorial-results-ref>`** — create a `ResultModel` class to carry the solution produced by an algorithm.
+3. **{ref}`KPIs<tutorial-kpi-ref>`** — define a `TotalCostsKPI` that measures the total travel cost of a computed tour.
+4. **{ref}`Algorithms<tutorial-algorithms-ref>`** — implement a deterministic Nearest Neighbor heuristic and a parameter-driven Simulated Annealing algorithm.
+5. **{ref}`Pages<tutorial-pages-ref>`** — build custom dashboard pages for scenario detail, side-by-side comparison, and a scenario overview table.
 
 ## Setting up
 ### Set up basic project
@@ -35,7 +49,7 @@ root/
 ```
 
 ```{tip}
-The tutorial data is now available at [this link](https://github.com/PepijnWissing/Algomancy), under tutorial/data
+The tutorial data is available at [this link](https://github.com/PepijnWissing/Algomancy), under tutorial/data
 ```
 
 ## Next step
