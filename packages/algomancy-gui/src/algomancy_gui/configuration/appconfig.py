@@ -2,7 +2,7 @@ from typing import Any, Dict
 
 from algomancy_utils import Logger
 from .comparepageconfig import ComparePageConfig
-from .feautureconfig import FeatureConfig
+from .featureconfig import FeatureConfig
 from .pageconfig import PageConfig
 from .serverconfig import ServerConfig
 from .stylingconfig import StylingConfig

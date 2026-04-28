@@ -26,7 +26,7 @@ class StylingConfig:
     """
     Manages the configuration and customization of application styling.
 
-    The StylingConfigurator class provides a mechanism to configure various UI
+    The StylingConfig class provides a mechanism to configure various UI
     styling options such as layout, colors, logos, and button visuals. It allows
     for the definition of consistent styling themes and reusable configurations
     for an application.
@@ -103,7 +103,7 @@ class StylingConfig:
         )
 
     def initiate_theme_colors(self) -> dict[str, str]:
-        """Retrieves theme colors from the ColorConfiguration and formats them for
+        """Retrieves theme colors from the ColorConfig and formats them for
         CSS styling.
 
         Returns:

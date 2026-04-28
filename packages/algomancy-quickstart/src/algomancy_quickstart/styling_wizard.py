@@ -9,7 +9,7 @@ from rich.console import Console
 from rich.table import Table
 from rich.text import Text
 
-from algomancy_gui.stylingconfigurator import ButtonColorMode, CardHighlightMode
+from algomancy_gui.configuration.colorconfig import ButtonColorMode, CardHighlightMode
 
 
 class StylingWizard:
