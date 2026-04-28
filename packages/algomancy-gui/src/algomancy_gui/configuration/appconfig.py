@@ -30,14 +30,16 @@ class AppConfig:
     Example:
         Using sub-configurations:
 
-        >>> from algomancy_gui.appconfiguration import AppConfiguration, ServerConfig, ComparePageConfig
-        >>> config = AppConfiguration(
+        >>> from algomancy_gui.configuration.appconfig import AppConfig
+        >>> from algomancy_gui.configuration.serverconfig import ServerConfig
+        >>> from algomancy_gui.configuration.comparepageconfig import ComparePageConfig
+        >>> config = AppConfig(
         ...     core_config=CoreConfig(
         ...         etl_factory=ExampleETLFactory,
         ...         kpi_templates=kpi_templates,
         ...         algo_templates=algorithm_templates,
         ...     ),
-        ...     server_config=ServerConfig(port=9000, use_authentication=True),
+        ...     server_config=ServerConfig(port=9000),
         ...     compare_page_config=ComparePageConfig(
         ...         default_open=["side-by-side", "kpis"]
         ...     ),
@@ -46,14 +48,6 @@ class AppConfig:
         9000
         >>> config.core.etl_factory
         <ExampleETLFactory>
-
-        Using flat parameters (backwards compatible):
-
-        >>> config = AppConfiguration(
-        ...     etl_factory=ExampleETLFactory,
-        ...     port=9000,
-        ...     compare_default_open=["side-by-side", "kpis"],
-        ... )
     """
 
     def __init__(
@@ -70,7 +64,7 @@ class AppConfig:
         **kwargs,
     ):
         """
-        Initialize AppConfiguration with sub-configs or flat parameters.
+        Initialize AppConfig with sub-configs or flat parameters.
 
         Sub-config objects take precedence over flat kwargs. If a sub-config
         is not provided, it will be created from relevant kwargs.
@@ -187,7 +181,10 @@ class AppConfig:
             A dictionary containing all configuration parameters as key-value pairs.
 
         Example:
-            >>> config = AppConfig(port=9000, title="My Dashboard")
+            >>> config = AppConfig(
+            ...     core_config=CoreConfig(title="My Dashboard"),
+            ...     server_config=ServerConfig(port=9000),
+            ... )
             >>> config_dict = config.as_dict()
             >>> config_dict["port"]
             9000

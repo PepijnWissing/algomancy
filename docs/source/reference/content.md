@@ -6,7 +6,7 @@
 - A corresponding set of [placeholder pages](content-library-placeholders-ref) to see your progress before having implemented all required pages,
 - And finally, a set of [standard pages](content-library-standard-pages-ref)  that may be sufficient for _quick and dirty_ apps. 
 
-Each of the provided components is used as an input for `AppConfiguration`, either through direct imports or by using a string reference. 
+Each of the provided components is used as an input for `AppConfig`, either through direct imports or by using a string reference. 
 
 ```{toctree}
 :maxdepth: 1

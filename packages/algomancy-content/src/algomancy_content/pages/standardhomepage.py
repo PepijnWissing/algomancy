@@ -13,11 +13,10 @@ class StandardHomePage(BaseHomePage):
     It includes a logo, status indicators for scenario processing, and a summary of scenario counts.
 
     USAGE:
-        >>> config = AppConfiguration(
-        ...             ...
-        ...             home_page="standard",
-        ...             ...
-        ...          )
+        >>> config = AppConfig(
+        ...     page_config=PageConfig(home_page="standard"),
+        ...     ...
+        ... )
 
     """
 

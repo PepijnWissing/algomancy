@@ -45,7 +45,7 @@ styling = StylingConfig(
 )
 ```
 
-Use this `styling` in your `AppConfiguration` (see `example/main.py`).
+Use this `styling` in your `AppConfig` (see `example/main.py`).
 
 #### Related docs and examples
 - Example application wiring: `example/main.py`

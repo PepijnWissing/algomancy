@@ -13,11 +13,10 @@ class StandardDataPage(BaseDataPage):
     view of the data.tables dictionary.
 
     USAGE:
-        >>> config = AppConfiguration(
-        ...             ...
-        ...             data_page="standard",
-        ...             ...
-        ...          )
+        >>> config = AppConfig(
+        ...     page_config=PageConfig(data_page="standard"),
+        ...     ...
+        ... )
 
     """
 

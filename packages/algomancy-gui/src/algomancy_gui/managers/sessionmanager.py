@@ -26,7 +26,7 @@ class SessionManager:
         from algomancy_gui.configuration.appconfig import AppConfig  # type: ignore
 
         if not isinstance(configuration, AppConfig):
-            raise TypeError("from_config expects an AppConfiguration instance")
+            raise TypeError("from_config expects an AppConfig instance")
         return cls(
             etl_factory=configuration.core.etl_factory,
             kpi_templates=configuration.core.kpi_templates,

@@ -7,6 +7,8 @@ creates the Dash application, and starts the web server.
 
 from algomancy_data import DataSource
 from algomancy_gui.configuration.appconfig import AppConfig
+from algomancy_gui.configuration.pageconfig import PageConfig
+from algomancy_gui.configuration.serverconfig import ServerConfig
 from algomancy_gui.gui_launcher import GuiLauncher
 from algomancy_gui.configuration.stylingconfig import (
     StylingConfig,
@@ -17,6 +19,7 @@ from algomancy_gui.configuration.colorconfig import (
     CardHighlightMode,
     ButtonColorMode,
 )
+from algomancy_scenario.core_configuration import CoreConfig
 
 from src.data_handling.TSPETLFactory import TSPETLFactory  # noqa
 from src.data_handling.schemas import schemas
@@ -60,22 +63,21 @@ def main() -> None:
     Loads data from CSV files, initializes the data source, creates the Dash application,
     and starts the web server.
     """
-    host = "127.0.0.1"
-    port = 8050
-
-    # framework configuration via AppConfiguration
     app_cfg = AppConfig(
-        etl_factory=TSPETLFactory,
-        kpi_templates=kpi_templates,
-        algo_templates=algorithm_templates,
-        schemas=schemas,
-        data_object_type=DataSource,
-        host=host,
-        port=port,
-        data_page="standard",  # this will be the default in next release
-        has_persistent_state=True,
+        core_config=CoreConfig(
+            etl_factory=TSPETLFactory,
+            kpi_templates=kpi_templates,
+            algo_templates=algorithm_templates,
+            schemas=schemas,
+            data_object_type=DataSource,
+            has_persistent_state=True,
+            autocreate=False,
+            autorun=False,
+            title="Algomancy tutorial dashboard",
+        ),
+        server_config=ServerConfig(host="127.0.0.1", port=8050),
+        page_config=PageConfig(data_page="standard"),
         styling_config=configure_styling(),
-        title="Algomancy tutorial dashboard",
     )
 
     # Build the app with AppConfiguration object directly
@@ -84,8 +86,8 @@ def main() -> None:
     # Run the app
     GuiLauncher.run(
         app=app,
-        host=app_cfg.host,
-        port=app_cfg.port,
+        host=app_cfg.server.host,
+        port=app_cfg.server.port,
     )
 
 

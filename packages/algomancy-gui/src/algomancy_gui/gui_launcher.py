@@ -21,13 +21,13 @@ from algomancy_utils.logger import MessageStatus
 class GuiLauncher:
     @staticmethod
     def build(cfg: Union[AppConfig, Dict[str, Any]]) -> Dash:
-        # Normalize configuration to AppConfiguration for a single source of truth
+        # Normalize configuration to AppConfig for a single source of truth
         if isinstance(cfg, dict):
             cfg_obj = AppConfig(**cfg)
         elif isinstance(cfg, AppConfig):
             cfg_obj = cfg
         else:
-            raise TypeError("DashLauncher.build expects AppConfiguration or dict")
+            raise TypeError("DashLauncher.build expects AppConfig or dict")
 
         if cfg_obj.core.use_sessions:
             manager: SessionManager = SessionManager.from_config(cfg_obj)

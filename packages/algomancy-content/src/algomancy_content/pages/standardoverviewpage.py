@@ -15,11 +15,10 @@ class StandardOverviewPage(BaseOverviewPage):
     view of the scenarios and their KPIs.
 
     USAGE:
-        >>> config = AppConfiguration(
-        ...             ...
-        ...             overview_page="standard",
-        ...             ...
-        ...          )
+        >>> config = AppConfig(
+        ...     page_config=PageConfig(overview_page="standard"),
+        ...     ...
+        ... )
     """
 
     @staticmethod

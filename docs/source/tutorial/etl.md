@@ -274,19 +274,20 @@ def create_extraction_sequence(
    ```python
    from data_handling.TSPETLFactory import TSPETLFactory
    ```
-   3. Modify the arguments of AppConfiguration to use TSPETLFactory and schemas
+   3. Modify the arguments of `AppConfig` to use `TSPETLFactory` and `schemas`
    ```python
-   app_cfg = AppConfiguration(
-        etl_factory=TSPETLFactory,
-        kpi_templates={'placeholder': PlaceholderKPI},
-        algo_templates={'placeholder': PlaceholderAlgorithm},
-        schemas=schemas,
-        data_object_type=DataSource,
-        autocreate=False, #this will be the default in next release
-        autorun=False, #this will be the default in next release
-        host=host,
-        port=port,
-        data_page="standard",#this will be the default in next release
+   app_cfg = AppConfig(
+        core_config=CoreConfig(
+            etl_factory=TSPETLFactory,
+            kpi_templates={'placeholder': PlaceholderKPI},
+            algo_templates={'placeholder': PlaceholderAlgorithm},
+            schemas=schemas,
+            data_object_type=DataSource,
+            autocreate=False,
+            autorun=False,
+        ),
+        server_config=ServerConfig(host=host, port=port),
+        page_config=PageConfig(data_page="standard"),
     )
    ```
 3. Run main.py in IDE
