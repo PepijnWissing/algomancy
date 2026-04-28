@@ -25,6 +25,9 @@ from src.data_handling.TSPETLFactory import TSPETLFactory  # noqa
 from src.data_handling.schemas import schemas
 from src.templates.algorithm import algorithm_templates
 from src.templates.kpi import kpi_templates
+from tutorial.src.pages.page_compare import TSPComparePage
+from tutorial.src.pages.page_overview import TSPOverviewPage
+from tutorial.src.pages.page_scenarios import TSPScenarioPage
 
 
 def configure_styling() -> StylingConfig:
@@ -78,6 +81,10 @@ def main() -> None:
         server_config=ServerConfig(host="127.0.0.1", port=8050),
         page_config=PageConfig(data_page="standard"),
         styling_config=configure_styling(),
+        title="Algomancy tutorial dashboard",
+        scenario_page=TSPScenarioPage(),
+        compare_page=TSPComparePage(),
+        overview_page=TSPOverviewPage(),
     )
 
     # Build the app with AppConfiguration object directly
