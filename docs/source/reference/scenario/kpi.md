@@ -68,11 +68,17 @@ Note that the KPI class is normally passed to the [app configuration](configurat
 is constructed every Scenario. Typical use of the `DurationKPI` class would therefore be:
 
 ```{code-block} python
-:caption: Using KPIs in the AppConfiguration
+:caption: Using KPIs in AppConfig
 :linenos: 
-config = AppConfiguration(
-    ...
-    kpi_templates = [DurationKPI, ...],
+from algomancy_gui.configuration.appconfig import AppConfig
+from algomancy_scenario.core_configuration import CoreConfig
+
+config = AppConfig(
+    core_config=CoreConfig(
+        ...
+        kpi_templates={"duration": DurationKPI, ...},
+        ...
+    ),
     ...
 )
 ```

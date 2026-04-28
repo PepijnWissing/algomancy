@@ -11,7 +11,7 @@ from typing import List, Dict
 import pandas as pd
 
 from .validator import ValidationMessage
-from .datasource import DataClassification, DataSource, BASE_DATA_BOUND
+from .datasource import DataClassification, DataSource, BASEDATASOURCE
 
 
 class Loader(ABC):
@@ -27,7 +27,7 @@ class Loader(ABC):
         data: Dict[str, pd.DataFrame],
         validation_messages: List[ValidationMessage],
         ds_type: DataClassification,  # -- todo remove input argument: ETL'd data should always be master?
-    ) -> BASE_DATA_BOUND:
+    ) -> BASEDATASOURCE:
         """Create the destination object from transformed data.
 
         Args:
@@ -37,7 +37,7 @@ class Loader(ABC):
             ds_type: Classification of the destination data.
 
         Returns:
-            BASE_DATA_BOUND: A destination object containing the data.
+            BASEDATASOURCE: A destination object containing the data.
         """
         raise NotImplementedError
 

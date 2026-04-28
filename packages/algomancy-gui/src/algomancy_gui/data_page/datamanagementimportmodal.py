@@ -8,11 +8,11 @@ from algomancy_data import ValidationError, DataManager
 from algomancy_scenario import ScenarioManager
 from .filenamematcher import match_file_names
 
-from ..cqmloader import cqm_loader
-from ..defaultloader import default_loader
+from algomancy_gui.loaders.cqmloader import cqm_loader
+from algomancy_gui.loaders.defaultloader import default_loader
 from ..inputchecker import InputChecker
-from algomancy_gui.managergetters import get_scenario_manager
-from ..settingsmanager import SettingsManager
+from algomancy_gui.managers.managergetters import get_scenario_manager
+from algomancy_gui.managers.settingsmanager import SettingsManager
 from ..componentids import (
     DM_IMPORT_MODAL_CLOSE_BTN,
     DM_IMPORT_MODAL,

@@ -16,11 +16,10 @@ class PlaceholderComparePage(BaseComparePage):
     Placeholder content for the Compare page - Secondary Results Component
 
     USAGE:
-        >>> config = AppConfiguration(
-        ...             ...
-        ...             compare_page="placeholder",
-        ...             ...
-        ...          )
+        >>> config = AppConfig(
+        ...     page_config=PageConfig(compare_page="placeholder"),
+        ...     ...
+        ... )
     """
 
     @staticmethod

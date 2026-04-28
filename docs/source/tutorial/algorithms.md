@@ -97,15 +97,18 @@ The dict key is the algorithm name shown in the dashboard; the value is the clas
 
 3. Update `main.py` to use the algorithm templates. The quickstart already added an `algo_templates` argument — update the import and the dict:
 
+4. Add the algorithm template(s) to `CoreConfig` in `main.py`.
 ```python
 from src.templates.algorithm import algorithm_templates
 ```
 
 ```python
-app_cfg = AppConfiguration(
-    ...
-    algo_templates=algorithm_templates,
-    ...
+app_cfg = AppConfig(
+    core_config=CoreConfig(
+        ...
+        algo_templates=algorithm_templates,
+        ...
+    )
 )
 ```
 

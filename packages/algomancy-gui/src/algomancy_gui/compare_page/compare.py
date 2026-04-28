@@ -33,10 +33,10 @@ from ..compare_page.scenarioselector import (
     create_side_by_side_viewer,
     create_side_by_side_selector,
 )
-from algomancy_gui.managergetters import get_scenario_manager
+from algomancy_gui.managers.managergetters import get_scenario_manager
 
-from ..settingsmanager import SettingsManager
-from ..contentregistry import ContentRegistry
+from algomancy_gui.managers.settingsmanager import SettingsManager
+from algomancy_gui.managers.contentregistry import ContentRegistry
 from algomancy_scenario import ScenarioManager, Scenario
 
 

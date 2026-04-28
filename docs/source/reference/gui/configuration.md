@@ -3,18 +3,41 @@
 
 
 [//]: # (## AppConfiguration)
+
+
 ```{eval-rst}
-.. automodule:: algomancy_gui.appconfiguration
+.. automodule:: algomancy_gui.configuration.appconfig
    :members:
-   :undoc-members:
-   :show-inheritance:
+   :member-order: bysource
+```
+ 
+```{eval-rst}
+.. automodule:: algomancy_scenario.core_configuration
+   :members:
+   :member-order: bysource
+```
+ 
+```{eval-rst}
+.. automodule:: algomancy_gui.configuration.serverconfig
+   :members:
    :member-order: bysource
 ```
 
 ```{eval-rst}
-.. automodule:: algomancy_scenario.core_configuration
+.. automodule:: algomancy_gui.configuration.feautureconfig
    :members:
-   :undoc-members:
-   :show-inheritance:
    :member-order: bysource
 ```
+
+```{eval-rst}
+.. automodule:: algomancy_gui.configuration.pageconfig
+   :members:
+   :member-order: bysource
+```
+
+```{eval-rst}
+.. automodule:: algomancy_gui.configuration.comparepageconfig
+   :members:
+   :member-order: bysource
+``` 
+ 

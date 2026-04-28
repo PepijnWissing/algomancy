@@ -18,7 +18,7 @@ from ..componentids import (
     DM_DELETE_OPEN_BUTTON,
     ACTIVE_SESSION,
 )
-from algomancy_gui.managergetters import get_scenario_manager
+from algomancy_gui.managers.managergetters import get_scenario_manager
 
 """
 Modal component for deleting datasets from the application.

@@ -56,8 +56,10 @@ from src.templates.kpi import kpi_templates
 
 ```python
 app_cfg = AppConfiguration(
-    ...
-    kpi_templates=kpi_templates,
-    ...
+    core_config=CoreConfig(
+        ...
+        kpi_templates=kpi_templates,
+        ...
+    ),
 )
 ```

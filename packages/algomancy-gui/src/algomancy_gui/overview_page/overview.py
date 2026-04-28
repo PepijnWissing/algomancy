@@ -1,8 +1,8 @@
 from dash import html, get_app, callback, Output, Input
 
 from algomancy_gui.componentids import OVERVIEW_PAGE_CONTENT, ACTIVE_SESSION
-from algomancy_gui.contentregistry import ContentRegistry
-from algomancy_gui.managergetters import get_scenario_manager
+from algomancy_gui.managers.contentregistry import ContentRegistry
+from algomancy_gui.managers.managergetters import get_scenario_manager
 from algomancy_scenario import ScenarioManager
 
 
