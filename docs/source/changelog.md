@@ -16,7 +16,8 @@
 - Added charactersafe & existing scenario name checks (in `InputChecker` Class), resulting in a disabled create button
 - Added `list_tags` function to the scenario registry, making accessable via the scenario manager
 - `BaseAlgorithm` now has access to the application's central logger through the attribute `_logger`.
-
+- Added pages section to the tutorial. 
+- 
 ### Changed
 - Made dataset_name_invalid generic (name_invalid) for datasets and scenarios: 
 - Moved callback for name_invalid to inputchecker.py to avoid duplicate code in datamanagerderive/importmodal
