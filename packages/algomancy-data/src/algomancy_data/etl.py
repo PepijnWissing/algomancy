@@ -13,7 +13,7 @@ from typing import Dict, List
 from algomancy_utils import Logger
 
 from .schema import Schema
-from .datasource import BASE_DATA_BOUND, DataClassification
+from .datasource import BASEDATASOURCE, DataClassification
 from .extractor import ExtractionSequence
 from .file import File
 from .loader import Loader
@@ -39,7 +39,7 @@ class ETLPipeline:
         self.loader = loader
         self.logger = logger
 
-    def run(self) -> BASE_DATA_BOUND:
+    def run(self) -> BASEDATASOURCE:
         """Execute the ETL job and return the loaded destination object.
 
         Orchestrates the following steps:
@@ -52,7 +52,7 @@ class ETLPipeline:
             ValidationError: If validation fails with a critical error.
 
         Returns:
-            BASE_DATA_BOUND: The created destination object (e.g. DataSource).
+            BASEDATASOURCE: The created destination object (e.g. DataSource).
         """
         # Extraction
         raw_data = self.extraction_sequence.data

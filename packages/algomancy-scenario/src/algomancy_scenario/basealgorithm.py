@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import TypeVar
 
-from algomancy_data import BASE_DATA_BOUND
+from algomancy_data import BASEDATASOURCE
 from algomancy_utils import Logger
 from .result import BASE_RESULT_BOUND
 from algomancy_utils.baseparameterset import BASE_PARAMS_BOUND
@@ -72,7 +72,7 @@ class BaseAlgorithm(ABC):
         raise NotImplementedError("Abstract method")
 
     @abstractmethod
-    def run(self, data: BASE_DATA_BOUND) -> BASE_RESULT_BOUND:
+    def run(self, data: BASEDATASOURCE) -> BASE_RESULT_BOUND:
         raise NotImplementedError("Abstract method")
 
 

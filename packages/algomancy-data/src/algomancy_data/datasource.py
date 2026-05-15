@@ -131,7 +131,7 @@ class BaseDataSource(ABC):
         pass
 
 
-BASE_DATA_BOUND = TypeVar("BASE_DATA_BOUND", bound=BaseDataSource)
+BASEDATASOURCE = TypeVar("BASEDATASOURCE", bound=BaseDataSource)
 
 
 # todo: consider excluding from package

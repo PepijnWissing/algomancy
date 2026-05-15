@@ -6,7 +6,7 @@ from typing import Dict, List, Tuple, TypeVar
 import pandas as pd
 from algomancy_utils import Logger
 
-from .datasource import DataClassification, BASE_DATA_BOUND
+from .datasource import DataClassification, BASEDATASOURCE
 from .etl import ETLFactory, ETLConstructionError
 from .schema import Schema, FileExtension
 from .validator import ValidationSequence
@@ -25,15 +25,15 @@ class DataManager(ABC):
         etl_factory: type[E],
         schemas: List[Schema],
         save_type: str,
-        data_object_type: type[BASE_DATA_BOUND],
+        data_object_type: type[BASEDATASOURCE],
         logger: Logger | None = None,
     ) -> None:
         self.logger = logger
         self._etl_factory = etl_factory(schemas, self.logger)
         self._schemas = schemas
-        self._data: Dict[str, BASE_DATA_BOUND] = {}
+        self._data: Dict[str, BASEDATASOURCE] = {}
         self._save_type = save_type
-        self._data_object_type: type[BASE_DATA_BOUND] = data_object_type
+        self._data_object_type: type[BASEDATASOURCE] = data_object_type
 
     @property
     def data_object_type(self):
@@ -52,10 +52,10 @@ class DataManager(ABC):
     def get_data_keys(self) -> List[str]:
         return list(self._data.keys())
 
-    def get_data(self, data_key: str) -> BASE_DATA_BOUND | None:
+    def get_data(self, data_key: str) -> BASEDATASOURCE | None:
         return self._data.get(data_key)
 
-    def set_data(self, data_key: str, data: BASE_DATA_BOUND) -> None:
+    def set_data(self, data_key: str, data: BASEDATASOURCE) -> None:
         self._data[data_key] = data
 
     # Derive/Delete
@@ -69,7 +69,7 @@ class DataManager(ABC):
 
         self.log(f"Derived data '{derived_key}' derived from '{existing_key}'.")
 
-    def add_data_source(self, data_source: BASE_DATA_BOUND) -> None:
+    def add_data_source(self, data_source: BASEDATASOURCE) -> None:
         # Add to the data dictionary
         self._data[str(data_source.name)] = data_source
         self.log(f"Loaded DataSource '{data_source.name}' from {self._save_type} file.")
@@ -158,11 +158,11 @@ class StatelessDataManager(DataManager):
         etl_factory: type[ETLFactory],
         schemas: List[Schema],
         save_type: str,
-        data_object_type: type[BASE_DATA_BOUND],
+        data_object_type: type[BASEDATASOURCE],
         logger: Logger | None = None,
     ):
         super().__init__(etl_factory, schemas, save_type, data_object_type, logger)
-        self._data: Dict[str, BASE_DATA_BOUND] = {}
+        self._data: Dict[str, BASEDATASOURCE] = {}
 
     def startup(self):
         # Stateless data manager does not need to perform any additional actions on startup
@@ -185,12 +185,12 @@ class StatefulDataManager(DataManager):
         schemas: List[Schema],
         data_folder: str,
         save_type: str,
-        data_object_type: type[BASE_DATA_BOUND],
+        data_object_type: type[BASEDATASOURCE],
         logger: Logger | None = None,
     ):
         super().__init__(etl_factory, schemas, save_type, data_object_type, logger)
         self._data_folder = data_folder
-        self._data: Dict[str, BASE_DATA_BOUND] = {}  # Loading
+        self._data: Dict[str, BASEDATASOURCE] = {}  # Loading
 
     def startup(self):
         try:

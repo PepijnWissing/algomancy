@@ -42,19 +42,20 @@ kpi_templates = {
     "Total_costs": TotalCostsKPI,
 }
 ```
-3. Add the kpi_templates dict to the main.py script in the AppConfiguration so that Algomancy knows about the KPIs.
+3. Add the `kpi_templates` dict to `CoreConfig` in `main.py` so that Algomancy knows about the KPIs.
 Make sure to also import schemas (PyCharm has built-in autocompletion for this)
 ```python
-app_cfg = AppConfiguration(
+app_cfg = AppConfig(
+    core_config=CoreConfig(
         etl_factory=TSPETLFactory,
         kpi_templates=kpi_templates,
         algo_templates={'placeholder': PlaceholderAlgorithm},
         schemas=schemas,
         data_object_type=DataSource,
-        autocreate=False, #this will be the default in next release
-        autorun=False, #this will be the default in next release
-        host=host,
-        port=port,
-        data_page="standard",#this will be the default in next release
-    )
+        autocreate=False,
+        autorun=False,
+    ),
+    server_config=ServerConfig(host=host, port=port),
+    page_config=PageConfig(data_page="standard"),
+)
 ```

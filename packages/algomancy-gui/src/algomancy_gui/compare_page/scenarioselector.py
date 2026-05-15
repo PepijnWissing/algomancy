@@ -19,7 +19,7 @@ from ..componentids import (
     PERF_SBS_LEFT_COLLAPSE,
     PERF_SBS_RIGHT_COLLAPSE,
 )
-from ..settingsmanager import SettingsManager
+from algomancy_gui.managers.settingsmanager import SettingsManager
 
 
 # === Helper ===

@@ -6,8 +6,8 @@ Logging output is shown in the standard admin page. To access the logger during 
 use the `get_logger` function from the `algomancy_utils` module.
 
 EXAMPLE:
-    >>> from algomancy_utils import Logger, get_logger
-    >>> logger: Logger = get_logger()
+    >>> from algomancy_utils import Logger
+    >>> logger: Logger = Logger()
     ...
     >>> logger.log("This is a test message")
     >>> logger.success("This is a test message")
@@ -82,7 +82,16 @@ class Message:
                 print(f"{self.__str__()}")
 
 
-class Logger:
+class Singleton(object):
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if not isinstance(cls._instance, cls):
+            cls._instance = object.__new__(cls, *args, **kwargs)
+        return cls._instance
+
+
+class Logger(Singleton):
     """
     A logger that stores and manages a collection of log messages.
     """
@@ -167,16 +176,3 @@ class Logger:
         self.error(f"An error occurred: {e.__class__.__name__}: {e}")
         for msg in traceback.format_tb(e.__traceback__):
             self.error(msg)
-
-
-def get_logger() -> Logger:
-    """
-    Retrieves the global logger instance.
-
-    WARNING:
-        This function is not yet implemented.
-
-    Returns:
-        The global Logger instance.
-    """
-    pass

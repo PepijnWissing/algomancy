@@ -95,21 +95,21 @@ algorithm_templates = {
 ```
 The dict key is the algorithm name, and the value is the algorithm class.
 
-4. Add the algorithm template(s) to the ETL Factory (TSPETLFactory.py).
+4. Add the algorithm template(s) to `CoreConfig` in `main.py`.
 ```python
-# framework configuration via AppConfiguration
-    app_cfg = AppConfiguration(
+app_cfg = AppConfig(
+    core_config=CoreConfig(
         etl_factory=TSPETLFactory,
         kpi_templates=kpi_templates,
         algo_templates=algorithm_templates,
         schemas=schemas,
         data_object_type=DataSource,
-        autocreate=False, #this will be the default in next release
-        autorun=False, #this will be the default in next release
-        host=host,
-        port=port,
-        data_page="standard",#this will be the default in next release
-    )
+        autocreate=False,
+        autorun=False,
+    ),
+    server_config=ServerConfig(host=host, port=port),
+    page_config=PageConfig(data_page="standard"),
+)
 ```
 5. Start the application.
 6. Load the data

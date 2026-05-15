@@ -46,13 +46,16 @@ class MyDataPage(BaseDataPage):
         # Define interactivity here
         pass
 ```
-The page creation template can then be passed to the app via the AppConfiguration. 
+The page creation template can then be passed to the app via `AppConfig`. 
 ```{code-block} python
-:caption: Using Pages in the AppConfiguration
+:caption: Using Pages in AppConfig
 :linenos: 
-config = AppConfiguration(
+from algomancy_gui.configuration.appconfig import AppConfig
+from algomancy_gui.configuration.pageconfig import PageConfig
+
+config = AppConfig(
     ...
-    data_page=MyDataPage(),
+    page_config=PageConfig(data_page=MyDataPage()),
     ...
 )
 ```

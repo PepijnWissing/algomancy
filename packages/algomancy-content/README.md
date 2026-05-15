@@ -19,7 +19,7 @@ Requires Python >= 3.14.
 ```python
 from algomancy_content import ShowcaseHomePage
 
-# Plug into your AppConfiguration (see project root `example/main.py`)
+# Plug into your AppConfig (see project root `example/main.py`)
 home_content = ShowcaseHomePage.create_default_elements_showcase
 home_callbacks = ShowcaseHomePage.register_callbacks
 ```

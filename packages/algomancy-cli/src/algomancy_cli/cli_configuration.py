@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
-from algomancy_scenario.core_configuration import CoreConfiguration
+from algomancy_scenario.core_configuration import CoreConfig
 
 
-class CliConfiguration(CoreConfiguration):
+class CliConfiguration(CoreConfig):
     """Configuration for the CLI application.
 
     Extends the core configuration with CLI-specific options.

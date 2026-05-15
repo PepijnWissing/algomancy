@@ -2,21 +2,6 @@ from enum import StrEnum
 from typing import Dict
 
 
-class LayoutSelection(StrEnum):
-    """
-    Enum for different layout selection options.
-
-    Determines which core layout structure is applied to the application
-    interface.
-    """
-
-    #: Default layout with sidebar navigation
-    SIDEBAR = "sidebar"
-    # TABBED = "tabbed"
-    # FULLSCREEN = "fullscreen"
-    # CUSTOM = "custom"
-
-
 class CardHighlightMode(StrEnum):
     """
     Enum for different card highlight modes.
@@ -52,7 +37,7 @@ class ButtonColorMode(StrEnum):
     SEPARATE = "separate"
 
 
-class ColorConfiguration:
+class ColorConfig:
     """
     Configuration for color settings in the GUI.
 
@@ -129,7 +114,7 @@ class ColorConfiguration:
 
     Example:
         >>> # Create configuration with separate button colors
-        >>> config = ColorConfiguration(
+        >>> config = ColorConfig(
         ...     background_color="#FFFFFF",
         ...     theme_color_primary="#3366CA",
         ...     theme_color_secondary="#009688",
@@ -141,7 +126,7 @@ class ColorConfiguration:
         ... )
 
         >>> # Create configuration with unified button colors
-        >>> config_unified = ColorConfiguration(
+        >>> config_unified = ColorConfig(
         ...     button_color_mode=ButtonColorMode.UNIFIED,
         ...     button_colors={
         ...         "unified_color": "#4CAF50",
@@ -214,9 +199,9 @@ class ColorConfiguration:
 
         """
         assert 0 <= opacity <= 1, "opacity must be between 0 and 1"
-        r, g, b, _ = ColorConfiguration._hex_to_rgba(color)
+        r, g, b, _ = ColorConfig._hex_to_rgba(color)
         alpha = int(opacity * 255)
-        return ColorConfiguration._rgba_to_hex((r, g, b, alpha))
+        return ColorConfig._rgba_to_hex((r, g, b, alpha))
 
     @staticmethod
     def linear_combination_hex(a_hex: str, b_hex: str, t: float) -> str:
@@ -246,13 +231,13 @@ class ColorConfiguration:
 
         """
         assert 0 <= t <= 1, "t must be between 0 and 1"
-        ar, ag, ab, ao = ColorConfiguration._hex_to_rgba(a_hex)
-        br, bg, bb, bo = ColorConfiguration._hex_to_rgba(b_hex)
+        ar, ag, ab, ao = ColorConfig._hex_to_rgba(a_hex)
+        br, bg, bb, bo = ColorConfig._hex_to_rgba(b_hex)
         rr = int(ar + (br - ar) * t)
         rg = int(ag + (bg - ag) * t)
         rb = int(ab + (bb - ab) * t)
         ro = int(ao + (bo - ao) * t)
-        return ColorConfiguration._rgba_to_hex((rr, rg, rb, ro))
+        return ColorConfig._rgba_to_hex((rr, rg, rb, ro))
 
     def _get_card_surface_shading(
         self, card_highlight_mode: str = CardHighlightMode.SUBTLE_DARK
@@ -775,129 +760,3 @@ class ColorConfiguration:
         }
 
         return all_colors
-
-
-class StylingConfigurator:
-    """
-    Manages the configuration and customization of application styling.
-
-    The StylingConfigurator class provides a mechanism to configure various UI
-    styling options such as layout, colors, logos, and button visuals. It allows
-    for the definition of consistent styling themes and reusable configurations
-    for an application.
-
-    Args:
-        layout_selection (LayoutSelection): Defines the layout selection for the
-            application interface (e.g., sidebar layout).
-        color_configuration (ColorConfiguration): Manages the colors for different
-            UI components such as background, text, and highlights.
-        logo_url (str): Path or URL to the logo image file to be used in the UI.
-            important: should be provided as a path relative to the assets folder.
-        button_url (str): Path or URL to the button image file to be used in the UI.
-            important: should be provided as a path relative to the assets folder.
-        card_highlight_mode (str): Specifies the mode for highlighting cards in
-            the UI, affecting the appearance of card components.
-    """
-
-    def __init__(
-        self,
-        layout_selection: LayoutSelection = LayoutSelection.SIDEBAR,
-        color_configuration: ColorConfiguration = ColorConfiguration(),
-        logo_path: str = None,
-        button_path: str = None,
-        card_highlight_mode: str = CardHighlightMode.SUBTLE_LIGHT,
-    ):
-        self.layout_selection = layout_selection
-        self.color_configuration = color_configuration
-        self.logo_url = "assets/" + logo_path if logo_path else ""
-        self.button_url = "assets/" + button_path if button_path else ""
-        self.card_highlight_mode = card_highlight_mode
-
-    @property
-    def card_surface_shading(self):
-        """Get the surface shading color for cards based on the specified highlight mode.
-
-        Returns:
-            Hexadecimal representation of the shading color for card surfaces.
-        """
-        return self.color_configuration._get_card_surface_shading(
-            self.card_highlight_mode
-        )
-
-    def initiate_theme_colors(self) -> dict[str, str]:
-        """Retrieves theme colors from the ColorConfiguration and formats them for
-        CSS styling.
-
-        Returns:
-            Dictionary mapping CSS color variables to their corresponding color values.
-        """
-        return self.color_configuration.get_theme_colors(self.card_highlight_mode)
-
-    @staticmethod
-    def get_cqm_config() -> "StylingConfigurator":
-        """
-        Retrieves the default configuration for the CQM application.
-
-        Returns:
-            StylingConfigurator: Configuration for the CQM application.
-        """
-        return StylingConfigurator(
-            layout_selection=LayoutSelection.SIDEBAR,
-            color_configuration=ColorConfiguration(
-                background_color="#e3f8ff",
-                theme_color_primary="#4C0265",
-                theme_color_secondary="#3EBDF3",
-                text_color="#424242",
-                text_color_highlight="#EF7B13",
-                text_color_selected="#e3f8ff",
-            ),
-            logo_path="cqm-logo-white.png",
-            button_path="cqm-button-white.png",
-            card_highlight_mode=CardHighlightMode.LIGHT,
-        )
-
-    @staticmethod
-    def get_blue_config() -> "StylingConfigurator":
-        """
-        Retrieves the default configuration for a blue themed application.
-
-        Returns:
-            StylingConfigurator: Configuration for the blue themed application.
-        """
-        return StylingConfigurator(
-            layout_selection=LayoutSelection.SIDEBAR,
-            color_configuration=ColorConfiguration(
-                background_color="#FFFFFF",
-                theme_color_primary="#3366CA",
-                theme_color_secondary="#000000",
-                text_color="#3366CA",
-                text_color_highlight="#FFFFFF",
-                text_color_selected="#FFFFFF",
-            ),
-            logo_path="cqm-logo-white.png",
-            button_path="cqm-button-white.png",
-            card_highlight_mode=CardHighlightMode.SUBTLE_DARK,
-        )
-
-    @staticmethod
-    def get_red_config() -> "StylingConfigurator":
-        """
-        Retrieves the default configuration for a red themed application.
-
-        Returns:
-            StylingConfigurator: Configuration for the red themed application.
-        """
-        return StylingConfigurator(
-            layout_selection=LayoutSelection.SIDEBAR,
-            color_configuration=ColorConfiguration(
-                background_color="#E4EEF1",
-                theme_color_primary="#982649",
-                theme_color_secondary="#FFB86F",
-                text_color="#131B23",
-                text_color_highlight="#000000",
-                text_color_selected="#FFFFFF",
-            ),
-            logo_path="cqm-logo-white.png",
-            button_path="cqm-button-white.png",
-            card_highlight_mode=CardHighlightMode.SUBTLE_DARK,
-        )

@@ -1,6 +1,9 @@
-from algomancy_gui.appconfiguration import AppConfiguration
-from algomancy_gui.gui_launcher import GuiLauncher
 from algomancy_data import DataSource
+from algomancy_gui.configuration.appconfig import AppConfig
+from algomancy_gui.configuration.pageconfig import PageConfig
+from algomancy_gui.configuration.serverconfig import ServerConfig
+from algomancy_gui.gui_launcher import GuiLauncher
+from algomancy_scenario.core_configuration import CoreConfig
 
 # Import generated ETL factory and schemas
 from src.data_handling.etl_factory import {{ class_name }}ETLFactory
@@ -25,31 +28,36 @@ from algomancy_content import PlaceholderKPI, PlaceholderAlgorithm
 def main() -> None:
     """Main entry point for the {{ title }} application."""
 
-    host = "{{ host }}"
-    port = {{ port }}
-
-    app_cfg = AppConfiguration(
-        etl_factory={{ class_name }}ETLFactory,
-        schemas=all_schemas,
+    app_cfg = AppConfig(
+        core_config=CoreConfig(
+            etl_factory={{ class_name }}ETLFactory,
+            schemas=all_schemas,
+            {% if has_custom_implementations %}
+            kpi_templates={"{{ filename }}": {{ class_name }}KPI},
+            algo_templates={"{{ class_name }}": {{ class_name }}Algorithm},
+            {% else %}
+            kpi_templates={"placeholder": PlaceholderKPI},
+            algo_templates={"placeholder": PlaceholderAlgorithm},
+            {% endif %}
+            data_object_type=DataSource,
+            autocreate=False,
+            autorun=False,
+            title="{{ title }}",
+        ),
+        server_config=ServerConfig(host="{{ host }}", port={{ port }}),
         {% if has_custom_implementations %}
-        kpi_templates={"{{ filename }}": {{ class_name }}KPI},
-        algo_templates={"{{ class_name }}": {{ class_name }}Algorithm},
-        home_page={{ class_name }}HomePage(),
-        data_page={{ class_name }}DataPage(),
-        scenario_page={{ class_name }}ScenarioPage(),
-        compare_page={{ class_name }}ComparePage(),
-#        overview_page={{ class_name }}OverviewPage(),  # uncomment to use {{ class_name }}OverviewPage
-        {% else %}
-        kpi_templates={"placeholder": PlaceholderKPI},
-        algo_templates={"placeholder": PlaceholderAlgorithm},
+        page_config=PageConfig(
+            home_page={{ class_name }}HomePage(),
+            data_page={{ class_name }}DataPage(),
+            scenario_page={{ class_name }}ScenarioPage(),
+            compare_page={{ class_name }}ComparePage(),
+#           overview_page={{ class_name }}OverviewPage(),  # uncomment to use {{ class_name }}OverviewPage
+        ),
         {% endif %}
-        host=host,
-        port=port,
-        title="{{ title }}",
     )
 
     app = GuiLauncher.build(app_cfg)
-    GuiLauncher.run(app=app, host=app_cfg.host, port=app_cfg.port)
+    GuiLauncher.run(app=app, host=app_cfg.server.host, port=app_cfg.server.port)
 
 
 if __name__ == "__main__":

@@ -10,11 +10,10 @@ class PlaceholderScenarioPage(BaseScenarioPage):
     Placeholder content for the Scenario page - Secondary Results Component
 
     USAGE:
-        >>> config = AppConfiguration(
-        ...             ...
-        ...             scenario_page="placeholder",
-        ...             ...
-        ...          )
+        >>> config = AppConfig(
+        ...     page_config=PageConfig(scenario_page="placeholder"),
+        ...     ...
+        ... )
     """
 
     @staticmethod

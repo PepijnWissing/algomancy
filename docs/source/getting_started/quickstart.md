@@ -90,33 +90,36 @@ to be guided through the set-up steps, outlined below.
     ```{code-block} python
     :linenos:
     :caption: main.py after initializing with algomancy-quickstart
+    from algomancy_data import DataSource
+    from algomancy_gui.configuration.appconfig import AppConfig
+    from algomancy_gui.configuration.serverconfig import ServerConfig
     from algomancy_gui.gui_launcher import GuiLauncher
-    from algomancy_gui.appconfiguration import AppConfiguration
+    from algomancy_scenario.core_configuration import CoreConfig
     from algomancy_content import (
         PlaceholderETLFactory,
         PlaceholderAlgorithm,
         PlaceholderKPI,
-        placeholder_schema,
+        PlaceholderSchema,
     )
-    from algomancy_data import DataSource
     
     
     def main() -> None:
-        host = "127.0.0.1"
-        port = 8050
-    
-        app_cfg = AppConfiguration(
-            etl_factory=PlaceholderETLFactory,
-            kpi_templates={"placeholder": PlaceholderKPI},
-            algo_templates={"placeholder": PlaceholderAlgorithm},
-            schemas=[placeholder_schema],
-            host=host,
-            port=port,
-            title="My Algomancy Dashboard",
+        app_cfg = AppConfig(
+            core_config=CoreConfig(
+                etl_factory=PlaceholderETLFactory,
+                kpi_templates={"placeholder": PlaceholderKPI},
+                algo_templates={"placeholder": PlaceholderAlgorithm},
+                schemas=[PlaceholderSchema()],
+                data_object_type=DataSource,
+                autocreate=False,
+                autorun=False,
+                title="My Algomancy Dashboard",
+            ),
+            server_config=ServerConfig(host="127.0.0.1", port=8050),
         )
     
         app = GuiLauncher.build(app_cfg)
-        GuiLauncher.run(app=app, host=app_cfg.host, port=app_cfg.port)
+        GuiLauncher.run(app=app, host=app_cfg.server.host, port=app_cfg.server.port)
     
     
     if __name__ == "__main__":
@@ -199,9 +202,12 @@ to be guided through the set-up steps, outlined below.
     ```{code-block} python
     :caption: main.py after algomancy-quickstart 
     :linenos:
-    from algomancy_gui.appconfiguration import AppConfiguration
-    from algomancy_gui.gui_launcher import GuiLauncher
     from algomancy_data import DataSource
+    from algomancy_gui.configuration.appconfig import AppConfig
+    from algomancy_gui.configuration.pageconfig import PageConfig
+    from algomancy_gui.configuration.serverconfig import ServerConfig
+    from algomancy_gui.gui_launcher import GuiLauncher
+    from algomancy_scenario.core_configuration import CoreConfig
     
     # Import generated ETL factory and schemas
     from src.data_handling.etl_factory import TestETLFactory
@@ -223,27 +229,30 @@ to be guided through the set-up steps, outlined below.
     def main() -> None:
         """Main entry point for the My Algomancy Dashboard application."""
     
-        host = "127.0.0.1"
-        port = 8050
-    
-        app_cfg = AppConfiguration(
-            etl_factory=TestETLFactory,  # 'Test' is replaced by your own custom name
-            schemas=all_schemas,
-            kpi_templates={"test": TestKPI},  
-            algo_templates={"Test": TestAlgorithm},  
-            home_page=TestHomePage(),
-            data_page=TestDataPage(),
-            scenario_page=TestScenarioPage(),
-            compare_page=TestComparePage(),
-    #       overview_page=TestOverviewPage(),  # uncomment to use CqmOverviewPage
-            host=host,
-            port=port,
-            title="My Algomancy Dashboard",
-            styling_config=app_styling,  # Apply custom styling
+        app_cfg = AppConfig(
+            core_config=CoreConfig(
+                etl_factory=TestETLFactory,  # 'Test' is replaced by your own custom name
+                schemas=all_schemas,
+                kpi_templates={"test": TestKPI},
+                algo_templates={"Test": TestAlgorithm},
+                data_object_type=DataSource,
+                autocreate=False,
+                autorun=False,
+                title="My Algomancy Dashboard",
+            ),
+            server_config=ServerConfig(host="127.0.0.1", port=8050),
+            page_config=PageConfig(
+                home_page=TestHomePage(),
+                data_page=TestDataPage(),
+                scenario_page=TestScenarioPage(),
+                compare_page=TestComparePage(),
+    #           overview_page=TestOverviewPage(),  # uncomment to use TestOverviewPage
+            ),
+            styling_config=app_styling,
         )
     
         app = GuiLauncher.build(app_cfg)
-        GuiLauncher.run(app=app, host=app_cfg.host, port=app_cfg.port)
+        GuiLauncher.run(app=app, host=app_cfg.server.host, port=app_cfg.server.port)
     
     
     if __name__ == "__main__":

@@ -2,7 +2,7 @@ import re
 
 from dash import get_app, callback, Output, Input, State
 
-from algomancy_gui.managergetters import get_scenario_manager
+from algomancy_gui.managers.managergetters import get_scenario_manager
 from algomancy_scenario import ScenarioManager
 
 

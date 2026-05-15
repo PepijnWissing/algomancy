@@ -12,11 +12,10 @@ class ShowcaseHomePage(BaseHomePage):
     ShowcaseHomePage is a subclass of BaseHomePage that provides a showcase of various HTML elements and their styling.
 
     USAGE:
-        >>> config = AppConfiguration(
-        ...             ...
-        ...             home_page="showcase",
-        ...             ...
-        ...          )
+        >>> config = AppConfig(
+        ...     page_config=PageConfig(home_page="showcase"),
+        ...     ...
+        ... )
     """
 
     @staticmethod
