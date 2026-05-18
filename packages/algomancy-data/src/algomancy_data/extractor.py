@@ -356,7 +356,7 @@ class JSONSingleExtractor(SingleExtractor):
     uses similar initialization parameters such as a file path and an
     optional logger.
 
-    JSONExtractor expects the JSON file to be formatted such that the root level is
+    JSONSingleExtractor expects the JSON file to be formatted such that the root level is
     a list. Each item in the list represents a single record, and each record has
     some properties. The properties are represented as key-value pairs. If the value
     is a dictionary, it is treated as a nested object. Each nested object is converted

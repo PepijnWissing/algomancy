@@ -1,0 +1,104 @@
+"""
+Algorithm implementations for {{ project_name }}.
+
+This module defines the algorithms that process your data and generate scenarios.
+"""
+
+from time import sleep
+
+from algomancy_data import DataSource
+from algomancy_scenario import BaseParameterSet, ScenarioResult, BaseAlgorithm
+
+
+class {{ class_name }}Params(BaseParameterSet):
+    """
+    Parameter set for {{ class_name }} algorithm.
+
+    This class holds the configuration parameters for your algorithm.
+
+    TODO: Add your algorithm parameters as instance variables.
+    """
+
+    def __init__(
+            self,
+            name: str = "Default",
+            # TODO: Add your parameter definitions here with default values
+            # example_param: int = 10,
+    ) -> None:
+        super().__init__(name=name)
+        # TODO: Store your parameters as instance variables
+        # self.example_param = example_param
+
+    def validate(self):
+        """
+        Validate the parameters.
+
+        Raise exceptions if parameters are invalid.
+
+        TODO: Implement validation logic for your parameters.
+
+        Example:
+            if self.example_param < 0:
+                raise ValueError("example_param must be non-negative")
+        """
+        pass
+
+
+class {{ class_name }}Algorithm(BaseAlgorithm):
+    """
+    Main algorithm implementation for {{ project_name }}.
+
+    This class implements the core logic of your algorithm.
+
+    TODO: Implement your algorithm logic in the run() method.
+    """
+
+    def __init__(self, params: {{ class_name }}Params):
+        super().__init__("{{ class_name }}", params)
+
+    @staticmethod
+    def initialize_parameters() -> {{ class_name }}Params:
+        """
+        Create default parameters for this algorithm.
+
+        Returns:
+            Default parameter set.
+        """
+        return {{ class_name }}Params()
+
+    def run(self, data: DataSource) -> ScenarioResult:
+        """
+        Execute the algorithm on the provided data.
+
+        Args:
+            data: The input data source to process.
+
+        Returns:
+            ScenarioResult containing the algorithm's output.
+
+        TODO: Implement your algorithm logic here.
+
+        Tips:
+        - Use self.logger.log() to log progress messages
+        - Use self.set_progress(percentage) to update progress (0-100)
+        - Access parameters via self.params
+        - Return a ScenarioResult with the data_id
+        """
+        self._logger.log(f"Starting {{ class_name }} algorithm...")
+
+        # TODO: Replace this with your actual algorithm logic
+        # Example placeholder implementation:
+        sleep(0.5)  # Simulate processing time
+
+        # Update progress
+        self.set_progress(50)
+        self._logger.log("Processing halfway done...")
+
+        # More processing...
+        sleep(0.5)
+
+        # Finish
+        self.set_progress(100)
+        self._logger.success("Algorithm completed successfully!")
+
+        return ScenarioResult(data_id=data.id)

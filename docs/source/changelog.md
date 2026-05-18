@@ -1,8 +1,22 @@
 # Change log
 ## Prerelease
-Mostly internal classes were moved to semantically more appropriate locations. 
-
 ### Added
+- **Quickstart Module**: Introduced `algomancy-quickstart` package with an interactive setup wizard (`QuickstartWizard`)
+  that streamlines the creation of new Algomancy applications. The wizard guides users through five configurable steps: 
+  1. creating folder structure and generating a basic `main.py`, 
+  2. generating custom implementation templates for schemas, 
+    algorithms, KPIs, and ETL factories, and custom pages.
+  3. automatically scanning data files and generating ETL pipelines with schema inference, 
+  4. installing default assets (CSS, images) from GitHub or bundled fallback, and 
+  5. configuring custom styling with colors and themes. 
+
+  The wizard features interactive prompts, intelligent file detection (CSV, XLSX, JSON), automatic datatype inference 
+  with column mapping, and generates code templates using Jinja2. This significantly reduces the initial
+  setup time and provides new users with a structured starting point following framework best practices.
+- Added charactersafe & existing scenario name checks (in `InputChecker` Class), resulting in a disabled create button
+- Added `list_tags` function to the scenario registry, making accessable via the scenario manager
+- `BaseAlgorithm` now has access to the application's central logger through the attribute `_logger`.
+- Added pages section to the tutorial. 
 
 ### Changed
 - Cleanup of dependencies between `algomancy-content` and `algomancy-gui`
@@ -12,8 +26,22 @@ Mostly internal classes were moved to semantically more appropriate locations.
 - Refinement of `Schema` class
   - **[Breaking]** Moved `_defined_datatypes` to `_DATATYPES` as class attribute to define the datatypes of each column.
   - `Schema`s no longer need to be instantiated before being passed to the configuration. Passing types to the configuration is now possible; passing instances still works. 
+- Made dataset_name_invalid generic (name_invalid) for datasets and scenarios: 
+- Moved callback for name_invalid to inputchecker.py to avoid duplicate code in datamanagerderive/importmodal
+- Euro (€) is now the default quantity for money 
+- Split up `AppConfigurtion` into separate configuration containers for better organization and maintainability. 
+  
+  _Note: these changes are backwards compatible._  
+- Implemented the Singleton pattern to Logger class for global access.
+- Bound type definition `BASE_DATA_BOUND` was renamed to `BASEDATASOURCE` for legibility. 
 
 ### Fixed
+
+## 0.4.4
+_Released on 23-2-2026_
+
+### Added 
+- Documentation updates: reference is now complete with some todos
 
 ## 0.4.3
 _Released on 18-2-2026_
@@ -190,18 +218,17 @@ location_schema = LocationSchema()
 - Remove the separate `MultiInputFileConfiguration` wrapper and individual sheet schemas
 :::
 
+
 ## 0.3.21
 _12-02-2026_
 ### Added 
-- Added charactersafe & existing dataset name checks, resulting in a disabled import button
-
+- Added charactersafe & existing dataset name checks (in InputChecker Class), resulting in a disabled import button
 ### Changed
 - Custom pages should now subclass the appropriate base classes (moved from `Protocol` to `AbstractBaseClass`). Functional implementation should remain unchanged.
 
 ### Fixed
 - Fixed a bug where the overview page failed to use the `OverviewPage` content from the registry appropriately.
-- Fixed risk of App breaking down when user tries to import a new dataset with weird names (e.g. with .) or an already existing dataset name.
-
+- Fixed risk of App breaking down when user tries to import/derive a new dataset with weird names (e.g. with .) or an already existing dataset name.
 
 ## 0.3.20
 ### Fixed
@@ -288,7 +315,7 @@ An outline of the expected functions is included below.
   - `create_content() -> html.Div`
   - `register_callbacks() -> None`
 - DataPage:
-  - `create_content(data: BASE_DATA_BOUND) -> html.Div`
+  - `create_content(data: BASEDATASOURCE) -> html.Div`
   - `register_callbacks() -> None`
 - ScenarioPage:
   - `create_content(scenario: Scenario) -> html.Div`
@@ -308,7 +335,7 @@ Below is a conceptual before/after to illustrate the change.
 
 ```python
 # example (conceptual)
-from algomancy_gui.configuration.appconfiguration import AppConfiguration
+from algomancy_gui.configuration.appconfig import AppConfig
 
 
 class ExampleDataPage:
@@ -319,7 +346,7 @@ class ExampleDataPage:
     ...
 
 
-config = AppConfiguration(
+config = AppConfig(
   home_page_content='standard',
   data_page_content=ExampleDataPage.create_content,  # Callable[..., Div] or str
   data_page_callbacks=ExampleDataPage.register_callbacks  # Callable[..., None] or str
@@ -330,7 +357,7 @@ config = AppConfiguration(
 
 ```python
 # example (conceptual)
-from algomancy_gui.configuration.appconfiguration import AppConfiguration
+from algomancy_gui.configuration.appconfig import AppConfig
 
 
 class ExampleDataPage:
@@ -341,7 +368,7 @@ class ExampleDataPage:
     ...
 
 
-config = AppConfiguration(
+config = AppConfig(
   home_page_content='standard'  # Protocol[HomePage] or str
 data_page = ExampleDataPage,  # Protocol[DataPage] or str
 )
@@ -666,11 +693,11 @@ Your main method must be migrated to use the new class. An example is shown belo
 # main method: preferred version
 
 from algomancy_gui.gui_launcher import GuiLauncher
-from algomancy_gui.configuration.appconfiguration import AppConfiguration
+from algomancy_gui.configuration.appconfig import AppConfig
 
 
 def main():
-  app_cfg = AppConfiguration(
+  app_cfg = AppConfig(
     data_path="data",
     has_persistent_state=True,
     #       ...
@@ -684,7 +711,7 @@ For migration, the `AppConfiguration.from_dict(...)` method can be used to creat
 # main method: migration alternative
 
 from algomancy_gui.gui_launcher import GuiLauncher
-from algomancy_gui.configuration.appconfiguration import AppConfiguration
+from algomancy_gui.configuration.appconfig import AppConfig
 
 
 def main():
@@ -693,7 +720,7 @@ def main():
     "has_persistent_state": True,
     #       ...   
   }
-  app_cfg = AppConfiguration.from_dict(configuration)
+  app_cfg = AppConfig.from_dict(configuration)
   app = GuiLauncher.build(app_cfg)
   GuiLauncher.run(app=app, host=app_cfg.host, port=app_cfg.port)
 ```

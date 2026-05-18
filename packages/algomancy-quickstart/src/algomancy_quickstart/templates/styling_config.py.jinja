@@ -1,0 +1,53 @@
+"""
+Styling configuration for {{ project_name }}.
+
+This file defines the visual styling for your Algomancy application.
+You can customize colors, button modes, and other visual elements here.
+"""
+
+from algomancy_gui.configuration.stylingconfig import (
+    StylingConfig,
+    LayoutSelection,
+)
+from algomancy_gui.configuration.colorconfig import (
+    ColorConfig,
+    CardHighlightMode,
+    ButtonColorMode,
+)
+
+
+def get_styling_config() -> StylingConfig:
+    """
+    Create and return the styling configuration for this application.
+
+    Returns:
+        StylingConfig instance with custom colors and settings.
+    """
+
+    # Color configuration
+    color_config = ColorConfig(
+        background_color="{{ background }}",
+        theme_color_primary="{{ primary }}",
+        theme_color_secondary="{{ secondary }}",
+        theme_color_tertiary="{{ primary }}",  # Using primary as tertiary
+        text_color="{{ text }}",
+        text_color_highlight="{{ text_highlight }}",
+        text_color_selected="{{ text_selected }}",
+        button_color_mode=ButtonColorMode.{{ button_mode }},
+    )
+
+    # Create styling configuration
+    styling = StylingConfig(
+        assets_path="assets",
+        layout_selection=LayoutSelection.SIDEBAR,
+        color_configuration=color_config,
+        {% if logo_path %}logo_path="{{ logo_path }}",{% endif %}
+        {% if button_path %}button_path="{{ button_path }}",{% endif %}
+        card_highlight_mode=CardHighlightMode.{{ card_mode }},
+    )
+
+    return styling
+
+
+# Create the default styling instance
+app_styling = get_styling_config()

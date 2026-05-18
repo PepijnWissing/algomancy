@@ -3,6 +3,7 @@ import dash_bootstrap_components as dbc
 
 from algomancy_gui.componentids import (
     SCENARIO_TAG_INPUT,
+    SCENARIO_TAG_FEEDBACK,
     SCENARIO_DATA_INPUT,
     SCENARIO_ALGO_INPUT,
     SCENARIO_NEW_BUTTON,
@@ -14,12 +15,12 @@ from algomancy_gui.scenario_page.new_scenario_parameters_window import (
     create_algo_parameters_window,
 )
 from algomancy_scenario import ScenarioManager
-from algomancy_gui.configuration.stylingconfigurator import StylingConfigurator
+from algomancy_gui.configuration.stylingconfig import StylingConfig
 
 
 def new_scenario_creator(session_id: str):
     sm: ScenarioManager = get_scenario_manager(get_app().server, session_id)
-    sc: StylingConfigurator = get_app().server.styling_config
+    sc: StylingConfig = get_app().server.styling_config
 
     # Modal for creating a new scenario
     return dbc.Modal(
@@ -30,9 +31,15 @@ def new_scenario_creator(session_id: str):
                     dbc.Row(
                         [
                             dbc.Col(
-                                dbc.Input(
-                                    id=SCENARIO_TAG_INPUT, placeholder="Scenario tag"
-                                ),
+                                [
+                                    dbc.Input(
+                                        id=SCENARIO_TAG_INPUT,
+                                        placeholder="Scenario tag",
+                                    ),
+                                    dbc.FormFeedback(
+                                        id=SCENARIO_TAG_FEEDBACK, type="invalid"
+                                    ),
+                                ],
                                 width=12,
                             ),
                         ],
@@ -85,6 +92,8 @@ def new_scenario_creator(session_id: str):
                         "Create",
                         id=SCENARIO_NEW_BUTTON,
                         class_name="new-scenario-confirm-button",
+                        disabled=True,
+                        color="secondary",
                     ),
                     dbc.Button(
                         "Cancel",

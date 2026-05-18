@@ -5,10 +5,7 @@ import dash_bootstrap_components as dbc
 from dash import html, Output, callback, Input, State, dcc
 from dash.html import Div
 
-from algomancy_gui.configuration.stylingconfigurator import (
-    StylingConfigurator,
-    LayoutSelection,
-)
+from algomancy_gui.configuration.stylingconfig import StylingConfig, LayoutSelection
 from algomancy_gui.componentids import (
     SIDEBAR_TOGGLE,
     SIDEBAR,
@@ -26,7 +23,7 @@ from algomancy_gui.overview_page.overview import overview_page
 
 class LayoutCreator:
     @staticmethod
-    def _create_menu_sidebar(styling: StylingConfigurator):
+    def _create_menu_sidebar(styling: StylingConfig):
         # Create toggle button
         toggle_button = html.Button(
             html.I(className="fas fa-chevron-left"),
@@ -36,22 +33,22 @@ class LayoutCreator:
 
         # Create the sidebar (build children list dynamically based on available images)
         sidebar_children: list[Any] = [toggle_button]
-        if styling.logo_url is not None or styling.button_url is not None:
+        if styling.logo_path is not None or styling.button_path is not None:
             logos = []
-            if styling.logo_url is not None:
+            if styling.logo_path is not None:
                 logos.append(
                     html.Img(
-                        src=styling.logo_url,
+                        src=styling.format_from_assets(styling.logo_path),
                         width="210px",
                         className="mb-2 expanded-logo sidebar-content-fade",
                         id="sidebar-logo",
                     )
                 )
 
-            if styling.button_url is not None:
+            if styling.button_path is not None:
                 logos.append(
                     html.Img(
-                        src=styling.button_url,
+                        src=str(styling.format_from_assets(styling.button_path)),
                         width="40px",
                         className="mb-2 collapsed-logo",
                         id="sidebar-icon",
@@ -168,7 +165,7 @@ class LayoutCreator:
         return sidebar
 
     @staticmethod
-    def _create_sidebar_layout(styling: StylingConfigurator) -> html.Div:
+    def _create_sidebar_layout(styling: StylingConfig) -> html.Div:
         themed_styling = styling.initiate_theme_colors()
 
         layout = html.Div(
@@ -189,7 +186,7 @@ class LayoutCreator:
         return layout
 
     @staticmethod
-    def create_layout(styling_config: StylingConfigurator) -> Div | None:
+    def create_layout(styling_config: StylingConfig) -> Div | None:
         match styling_config.layout_selection:
             case LayoutSelection.SIDEBAR:
                 return LayoutCreator._create_sidebar_layout(styling_config)

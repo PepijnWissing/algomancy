@@ -2,7 +2,7 @@ from typing import Callable, List
 
 from dash import html
 
-from algomancy_data import BASE_DATA_BOUND
+from algomancy_data import BASEDATASOURCE
 from algomancy_gui.page import (
     BaseHomePage,
     BaseDataPage,
@@ -16,7 +16,7 @@ from algomancy_scenario import Scenario
 class ContentRegistry:
     def __init__(self):
         self._home_content: Callable[[], html.Div] | None = None
-        self._data_content: Callable[[BASE_DATA_BOUND], html.Div] | None = None
+        self._data_content: Callable[[BASEDATASOURCE], html.Div] | None = None
         self._scenario_content: Callable[[Scenario], html.Div] | None = None
         self._compare_side_by_side: Callable[[Scenario, str], html.Div] | None = None
         self._compare_compare: Callable[[Scenario, Scenario], html.Div] | None = None
@@ -75,12 +75,12 @@ class ContentRegistry:
             return default_content
 
     @property
-    def data_content(self) -> Callable[[BASE_DATA_BOUND], html.Div]:
+    def data_content(self) -> Callable[[BASEDATASOURCE], html.Div]:
         if self._data_content:
             return self._data_content
         else:
 
-            def default_content(data: BASE_DATA_BOUND):
+            def default_content(data: BASEDATASOURCE):
                 return html.Div(
                     [
                         html.H1("Data content was not filled."),

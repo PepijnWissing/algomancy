@@ -6,31 +6,39 @@ creates the Dash application, and starts the web server.
 """
 
 from algomancy_data import DataSource
-from algomancy_gui.configuration.appconfiguration import AppConfiguration
+from algomancy_gui.configuration.appconfig import AppConfig
+from algomancy_gui.configuration.pageconfig import PageConfig
+from algomancy_gui.configuration.serverconfig import ServerConfig
 from algomancy_gui.gui_launcher import GuiLauncher
-from algomancy_gui.configuration.stylingconfigurator import (
-    StylingConfigurator,
+from algomancy_gui.configuration.stylingconfig import (
+    StylingConfig,
     LayoutSelection,
-    ColorConfiguration,
-    ButtonColorMode,
-    CardHighlightMode,
 )
+from algomancy_gui.configuration.colorconfig import (
+    ColorConfig,
+    CardHighlightMode,
+    ButtonColorMode,
+)
+from algomancy_scenario.core_configuration import CoreConfig
 
 from src.data_handling.TSPETLFactory import TSPETLFactory  # noqa
 from src.data_handling.schemas import schemas
 from src.templates.algorithm import algorithm_templates
 from src.templates.kpi import kpi_templates
+from tutorial.src.pages.page_compare import TSPComparePage
+from tutorial.src.pages.page_overview import TSPOverviewPage
+from tutorial.src.pages.page_scenarios import TSPScenarioPage
 
 
-def configure_styling() -> StylingConfigurator:
+def configure_styling() -> StylingConfig:
     cornsilk = "#FEFAE0"
     white = "#FFFFFF"
     darkgrey = "#424242"
     lightblue = "#89B7D1"
 
-    styling = StylingConfigurator(
+    styling = StylingConfig(
         layout_selection=LayoutSelection.SIDEBAR,
-        color_configuration=ColorConfiguration(
+        color_configuration=ColorConfig(
             background_color=white,
             theme_color_primary=lightblue,
             theme_color_secondary=darkgrey,
@@ -58,22 +66,25 @@ def main() -> None:
     Loads data from CSV files, initializes the data source, creates the Dash application,
     and starts the web server.
     """
-    host = "127.0.0.1"
-    port = 8050
-
-    # framework configuration via AppConfiguration
-    app_cfg = AppConfiguration(
-        etl_factory=TSPETLFactory,
-        kpi_templates=kpi_templates,
-        algo_templates=algorithm_templates,
-        schemas=schemas,
-        data_object_type=DataSource,
-        host=host,
-        port=port,
-        data_page="standard",  # this will be the default in next release
-        has_persistent_state=True,
+    app_cfg = AppConfig(
+        core_config=CoreConfig(
+            etl_factory=TSPETLFactory,
+            kpi_templates=kpi_templates,
+            algo_templates=algorithm_templates,
+            schemas=schemas,
+            data_object_type=DataSource,
+            has_persistent_state=True,
+            autocreate=False,
+            autorun=False,
+            title="Algomancy tutorial dashboard",
+        ),
+        server_config=ServerConfig(host="127.0.0.1", port=8050),
+        page_config=PageConfig(data_page="standard"),
         styling_config=configure_styling(),
         title="Algomancy tutorial dashboard",
+        scenario_page=TSPScenarioPage(),
+        compare_page=TSPComparePage(),
+        overview_page=TSPOverviewPage(),
     )
 
     # Build the app with AppConfiguration object directly
@@ -82,8 +93,8 @@ def main() -> None:
     # Run the app
     GuiLauncher.run(
         app=app,
-        host=app_cfg.host,
-        port=app_cfg.port,
+        host=app_cfg.server.host,
+        port=app_cfg.server.port,
     )
 
 

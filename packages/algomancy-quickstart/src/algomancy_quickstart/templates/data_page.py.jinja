@@ -1,0 +1,94 @@
+"""
+Custom data page template for {{ project_name }}.
+
+This module defines a custom data page for viewing and managing raw data.
+"""
+
+from dash import html
+from algomancy_content import BaseDataPage
+from algomancy_data import DataSource
+
+
+class {{ class_name }}DataPage(BaseDataPage):
+    """
+    Custom data page implementation for {{ project_name }}.
+
+    TODO: Customize the data page layout and behavior.
+    """
+
+    @staticmethod
+    def create_content(data: DataSource) -> html.Div:
+        """
+        Define the layout and content of the data page based on the provided data.
+
+        Args:
+            data: The DataSource object containing the data to display.
+
+        Returns:
+            A Dash html.Div containing the page content.
+
+        TODO: Implement your custom data page layout.
+        """
+        # Check if data has tables attribute
+        data_info = []
+        if hasattr(data, "tables") and isinstance(data.tables, dict):
+            data_info.append(html.H3("Available Data Tables"))
+            table_list = []
+            for key, table in data.tables.items():
+                table_list.append(
+                    html.Li(
+                        f"{key}: {len(table)} rows × {len(table.columns)} columns"
+                    )
+                )
+            data_info.append(html.Ul(table_list))
+        else:
+            data_info.append(html.P("Data structure information not available."))
+
+        return html.Div(
+            [
+                html.H1("{{ project_name }} Data View"),
+                html.P(
+                    "This page displays the raw data loaded into the application."
+                ),
+                html.Hr(),
+                html.Div(data_info),
+                html.Hr(),
+                html.Div(
+                    [
+                        html.H3("Data Management Features"),
+                        html.Ul(
+                            [
+                                html.Li("View and filter raw data tables"),
+                                html.Li("Export data to various formats"),
+                                html.Li("Validate data quality and completeness"),
+                                html.Li("Customize this page in src/pages/data_page.py"),
+                            ]
+                        ),
+                    ]
+                ),
+                # TODO: Add data table components (e.g., dash_table.DataTable), filters, export buttons
+                # Example:
+                # html.Div([
+                #     dash_table.DataTable(
+                #         id='data-table',
+                #         columns=[{"name": i, "id": i} for i in data.tables['your_table'].columns],
+                #         data=data.tables['your_table'].to_dict('records'),
+                #         page_size=10,
+                #     )
+                # ])
+            ],
+            style={"padding": "20px"},
+        )
+
+    @staticmethod
+    def register_callbacks() -> None:
+        """
+        Register Dash callbacks for this page if needed.
+
+        TODO: Add any interactive behavior for the data page.
+        """
+        # Example:
+        # @app.callback(...)
+        # def filter_data(...):
+        #     pass
+        pass

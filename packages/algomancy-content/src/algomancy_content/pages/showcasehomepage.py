@@ -8,8 +8,21 @@ from algomancy_gui.page import BaseHomePage
 
 
 class ShowcaseHomePage(BaseHomePage):
+    """
+    ShowcaseHomePage is a subclass of BaseHomePage that provides a showcase of various HTML elements and their styling.
+
+    USAGE:
+        >>> config = AppConfig(
+        ...     page_config=PageConfig(home_page="showcase"),
+        ...     ...
+        ... )
+    """
+
     @staticmethod
     def register_callbacks():
+        """
+        ShowcaseHomePage does not have any callbacks.
+        """
         pass
 
     @staticmethod

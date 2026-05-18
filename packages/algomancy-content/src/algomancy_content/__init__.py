@@ -6,6 +6,7 @@ from .backend import (
     PlaceholderParams,
 )
 from .pages import (
+    BasePage,
     BaseHomePage,
     BaseDataPage,
     BaseScenarioPage,
@@ -23,6 +24,7 @@ from algomancy_gui.managers.librarymanager import LibraryManager
 
 __all__ = [
     "LibraryManager",
+    "BasePage",
     "BaseHomePage",
     "BaseDataPage",
     "BaseScenarioPage",

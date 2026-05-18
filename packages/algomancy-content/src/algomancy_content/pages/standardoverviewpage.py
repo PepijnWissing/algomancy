@@ -9,6 +9,18 @@ OVERVIEW_TABLE = "overview-table"
 
 
 class StandardOverviewPage(BaseOverviewPage):
+    """
+    StandardOverviewPage is a subclass of BaseOverviewPage that provides a
+    standard overview page layout for an application. It includes a table
+    view of the scenarios and their KPIs.
+
+    USAGE:
+        >>> config = AppConfig(
+        ...     page_config=PageConfig(overview_page="standard"),
+        ...     ...
+        ... )
+    """
+
     @staticmethod
     def create_content(scenarios: list[Scenario]):
         """
@@ -102,4 +114,5 @@ class StandardOverviewPage(BaseOverviewPage):
 
     @staticmethod
     def register_callbacks():
+        """No additional callbacks"""
         pass

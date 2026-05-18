@@ -2,6 +2,11 @@
 build-backend = "uv_build"
 requires = ["uv_build>=0.9.22,<0.10.0"]
 
+[dependency-groups]
+dev = [
+  "pytest>=9.0.3"
+]
+
 [project]
 authors = [
   {email = "pepijn.wissing@cqm.nl", name = "Pepijn Wissing"}
@@ -17,6 +22,7 @@ dependencies = [
   "algomancy-gui >= 0.4.4",
   "algomancy-scenario >= 0.4.4",
   "algomancy-utils >= 0.4.4",
+  "algomancy-quickstart >= 0.4.4",
   "furo>=2025.12.19",
   "ipykernel>=7.2.0",
   "myst-parser>=5.0.0",
@@ -43,6 +49,7 @@ version = "0.4.4"
 
 [project.scripts]
 algomancy-cli = "algomancy_cli.main:main"
+algomancy-quickstart = "algomancy_quickstart.main:main"
 
 [project.urls]
 Documentation = "https://algomancy.readthedocs.io/en/latest/"
@@ -56,6 +63,7 @@ algomancy-cli = {workspace = true}
 algomancy-content = {workspace = true}
 algomancy-data = {workspace = true}
 algomancy-gui = {workspace = true}
+algomancy-quickstart = {workspace = true}
 algomancy-scenario = {workspace = true}
 algomancy-utils = {workspace = true}
 
@@ -66,5 +74,6 @@ members = [
   "packages/algomancy-utils",
   "packages/algomancy-data",
   "packages/algomancy-scenario",
-  "packages/algomancy-cli"
+  "packages/algomancy-cli",
+  "packages/algomancy-quickstart"
 ]

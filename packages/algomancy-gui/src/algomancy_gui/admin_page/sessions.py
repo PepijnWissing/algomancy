@@ -6,7 +6,7 @@ from ..componentids import (
     SESSION_CREATOR_MODAL,
     NEW_SESSION_NAME,
 )
-from algomancy_gui.configuration.stylingconfigurator import StylingConfigurator
+from algomancy_gui.configuration.stylingconfig import StylingConfig
 
 
 def create_new_session_window() -> dbc.Modal:
@@ -15,7 +15,7 @@ def create_new_session_window() -> dbc.Modal:
     Coping a session and creating a new session opens the same modal.
     Therefore, the information of the button which is clicked is stored.
     """
-    sc: StylingConfigurator = get_app().server.styling_config
+    sc: StylingConfig = get_app().server.styling_config
     window = dbc.Modal(
         [
             dbc.ModalHeader(dbc.ModalTitle("Create New Session"), close_button=False),

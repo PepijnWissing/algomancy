@@ -1,66 +1,117 @@
-# Architecture
+(scenario-architecture-ref)=
+# Scenario architecture
+ 
+The backend of the framework is structured around a clear conceptual model. At its core, the model consists of several
+primary components: `DataSource`, `Algorithm`, `Scenario`, `ScenarioResult`, and `KPI`. Each plays a distinct role in 
+representing, processing, and analyzing data within the system.
 
-## Backend architecture
-The backend of the framework is structured around a clear conceptual model, ensuring both extensibility and maintainability. At its core, the model consists of three primary components: `DataSource`, `Algorithm`, and `Scenario`. Each plays a distinct role in representing, processing, and analyzing data within the system.
-The following diagram illustrates the overall architecture:
+The following diagram illustrates the overall architecture and the relationships between these components:
 
 ```{eval-rst}
 .. mermaid::
 
     flowchart LR
-        A([Raw Data]) --> B{ETL} 
-        B --> C[Data Source]
-        C --> E[Scenario]
-        D[Algorithm] --> E
-        X([Parameters]) --> D
-        Y([Template]) --> D
-        E --> R{Run}
-        R --> F[Scenario Result]
-        F --> G{Visualization}
-        G --> H((Dashboard))
+        subgraph Data [Data Layer]
+            Raw([Raw Data]) --> ETL{ETL Process}
+            ETL --> DS[DataSource]
+        end
+
+        subgraph Logic [Logic Layer]
+            Params([Parameters]) --> Algo[Algorithm]
+            Template([Template]) --> Algo
+        end
+
+        subgraph Execution [Execution Layer]
+            DS --> Scen[Scenario]
+            Algo --> Scen
+            Scen --> Run{Run}
+            Run --> Res[Scenario Result]
+        end
+
+        subgraph Analysis [Analysis Layer]
+            Res --> KPI_Comp{Compute KPIs}
+            KPI_Comp --> KPIs[KPI Results]
+            KPIs --> Viz[Visualization]
+            Viz --> Dash((Dashboard))
+        end
 ```
 
+## DataSource
+A `DataSource` serves as the foundation for any scenario, encapsulating the data required to describe a physical or 
+logical situation. Typically, this data is aggregated from multiple files through an **Extract, Transform, Load (ETL)** 
+process, which standardizes and prepares the information for further analysis. 
 
+The framework distinguishes between:
+- **Master Data**: Immutable data tied directly to source files.
+- **Derived Data**: Data that can be modified or extended during an experiment.
 
+To optimize performance, the framework supports serialization and deserialization of data sources to and from JSON, 
+significantly reducing loading times for large datasets. Additionally, the `DataSource` component is designed to be 
+extensible, allowing developers to implement object-oriented data models tailored to their specific domain requirements.
 
-### DataSource: Managing Raw Data
-A `DataSource` serves as the foundation for any scenario, encapsulating the raw data required to describe a physical or logical situation. Typically, this data is aggregated from multiple files through an Extract, Transform, Load (ETL) process, which standardizes and prepares the information for further analysis. To optimize performance, the framework supports serialization and deserialization of data sources to and from JSON, significantly reducing loading times for large datasets. Additionally, the `DataSource` component is designed to be extensible, allowing developers to implement object-oriented data models tailored to their specific domain requirements.
+> A **DataSource** should **define** the world in which one is trying to solve a problem. It should **not** contain any 
+> logic about **how** to solve the problem.
 
-Often times, deciding where to draw the line between _data transformation_ and _decision-making_ is not a black and white issue. There may be several ways to achieve the same end-goal, none of which are strictly enforced or prohibited by the framework. We feel that this is an important design decision that has a significant impact on the long-term maintainability of a project.  We aim to stick to the line below:
-> A DataSource should **define** the world, in which one is trying to solve a problem. It should **not** contain any logic about **how** to solve the problem.
+## Algorithm
+The `Algorithm` component defines the logic that processes a `DataSource` and produces a `ScenarioResult`. This 
+transformation can range from straightforward business rule evaluations to sophisticated optimization or machine 
+learning procedures. 
 
-### Algorithm: Transforming Data into Results
-The `Algorithm` component defines the logic that processes a `DataSource` and produces a `ScenarioResult`. This transformation can range from straightforward business rule evaluations to sophisticated decision-making procedures. Depending on the use case, an algorithm might be implemented directly within the framework or act as an interface to external services, such as optimization solvers or machine learning models. This flexibility enables users to address a wide variety of analytical challenges, ensuring that the framework remains adaptable to evolving needs.
+Key aspects of an `Algorithm` include parameters, execution, and progress tracking. 
+Parameters are defined using `BaseParameterSet` and allow users to tune the algorithm's behavior without changing the code. 
+Algorithms run against a `DataSource` to produce results, with built-in support for tracking and reporting execution progress.
 
-### Scenario: Combining Data and Logic
-A `Scenario` represents a unique combination of a `DataSource` and an `Algorithm`. It encapsulates both the input data and the processing logic, allowing users to execute analyses and generate visualizations based on the results. Scenarios can be run independently or in parallel, facilitating direct comparison between different approaches or datasets. The framework provides mechanisms for scenario comparison, where two scenarios are executed simultaneously and their results are evaluated side by side. Visualization of these results is left to the user, who can implement custom views to best communicate the insights derived from each scenario.
+> An **Algorithm** should contain the **logic** and parameters for processing a `DataSource` into a `ScenarioResult`. It 
+> should **not** contain any data manipulation.
 
-This architecture ensures that each component has a well-defined responsibility, promoting clarity and ease of extension. By separating data management, processing logic, and scenario execution, the framework supports robust development practices and enables users to build complex analytical workflows with confidence.
+An elaborated intuitive explanation can be found [here](fundamentals-algorithm-ref); a complete technical explanation 
+can be found in the [reference](algorithm-ref).
 
-## Frontend architecture
-The frontend architecture is organized into several pages:
-- The data page allows users to import, export, view, and manipulate underlying data.
-- The scenario page combines data with algorithms to create scenarios, execute them, and visualize results.
-- The compare page enables side-by-side comparison of two scenarios.
-- The overview page provides a summary of all scenarios.
+## Scenario
+A `Scenario` represents a unique combination of a `DataSource` and an `Algorithm` (with a specific set of parameters). 
+It encapsulates both the input data and the processing logic, serving as the primary unit of execution in the framework.
 
+Scenarios manage the lifecycle of a run through three stages. 
+Creation involves binding data and algorithm together.
+During queuing and processing, the execution state is managed. 
+Finally, completion entails storing the resulting `ScenarioResult` and triggering KPI computation.
 
+> A **Scenario** facilitates the interaction between `DataSource` and `Algorithm` to produce a `ScenarioResult`, and 
+> provides a structured way for the front-end and the back-end to communicate. 
 
-## Features and limitations
-- Data import/export, through ETL as well as Serialized files
-- Scenario creation and execution
-- Side-by-side scenario comparison
-- Asyncronous running of scenarios, with progress tracking
-- Extensive logging 
-- Basic authentication
+## ScenarioResult
+The `ScenarioResult` captures the raw output of an `Algorithm` after execution. 
+When an algorithm processes a `DataSource`, it produces a result object that contains all the computational outputs, 
+solution details, and any intermediate artifacts generated during the run.
 
-## Limitations
-- Comparison of exactly two scenarios only
-- No support for multiple users
+While the result itself contains the complete details of the "solution," it is often too dense and detailed for direct 
+comparison between different scenarios. The raw data may include complex data structures, large datasets, or numerous 
+intermediate calculations that make side-by-side evaluation challenging. This is where KPIs become essential—they 
+extract and summarize the most relevant metrics from these comprehensive results.
 
-## Roadmap
-- A library of re-usable visualziation components
-- Loading/saving of completed scenarios
+A `ScenarioResult` typically stores references to its source data, execution metadata (such as completion time), and 
+domain-specific outputs that are meaningful for your particular use case. By design, the framework provides a minimal 
+base implementation that you extend to capture your algorithm's specific outputs.
+
+For in-depth technical detail, refer to the {ref}`Scenario Result reference <result-ref>`.
+
+## KPI
+**Key Performance Indicators (KPIs)** are used to distill `ScenarioResult`s into comparable metrics. They serve as the 
+primary mechanism for extracting meaningful, quantifiable insights from complex algorithmic outputs, enabling users to 
+quickly evaluate and compare the quality of different solutions.
+
+Each KPI defines a specific metric (e.g., "Total Cost", "Throughput", "Service Level") that represents an important 
+aspect of solution quality. The KPI implements a `compute` method that knows how to extract and calculate this metric 
+from a `ScenarioResult`, translating raw output data into a single, interpretable value. Additionally, KPIs can include 
+thresholds for "success" or "failure" (binary KPIs), allowing you to define acceptance criteria and automatically flag 
+solutions that don't meet requirements.
+
+KPIs leverage the framework's measurement system for intelligent unit formatting and automatic scaling, ensuring values 
+are displayed in human-readable formats (e.g., "2.5 km" instead of "2500 m", or "$1.2M" instead of "$1,234,567"). This 
+makes comparison across scenarios intuitive and accessible.
+
+For in-depth technical detail, refer to the {ref}`KPI reference <kpi-ref>`.
+
 
 ## More
 For an in-depth discussion of the underlying concepts, visit the pages below. 
@@ -68,5 +119,7 @@ For an in-depth discussion of the underlying concepts, visit the pages below.
 :maxdepth: 1
 
 data
+ETL
 algorithms
+result
 ```

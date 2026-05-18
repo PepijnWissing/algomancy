@@ -6,10 +6,12 @@ import dash_bootstrap_components as dbc
 from dash import html, dcc, callback, Output, Input, State, no_update, get_app
 
 from algomancy_scenario import ScenarioManager
+from ..inputchecker import InputChecker
 from ..componentids import (
     DM_DERIVE_SET_SELECTOR,
     DM_DERIVE_MODAL_SUBMIT_BTN,
     DM_DERIVE_SET_NAME_INPUT,
+    DM_DERIVE_MODAL_FEEDBACK,
     DM_DERIVE_MODAL_CLOSE_BTN,
     DM_DERIVE_MODAL,
     DM_LIST_UPDATER_STORE,
@@ -80,10 +82,16 @@ def data_management_derive_modal(sm: ScenarioManager, themed_styling):
                             [
                                 dbc.Col(html.Div(html.P("Name: ")), width=3),
                                 dbc.Col(
-                                    dbc.Input(
-                                        id=DM_DERIVE_SET_NAME_INPUT,
-                                        placeholder="Name of new dataset",
-                                    ),
+                                    [
+                                        dbc.Input(
+                                            id=DM_DERIVE_SET_NAME_INPUT,
+                                            placeholder="Name of new dataset",
+                                        ),
+                                        dbc.FormFeedback(
+                                            id=DM_DERIVE_MODAL_FEEDBACK,
+                                            type="invalid",
+                                        ),
+                                    ],
                                     width=9,
                                 ),
                             ]
@@ -139,9 +147,11 @@ def _sanitize(name: str) -> str:
     ],
     prevent_initial_call=True,
 )
-def derive_data_callback(n_clicks, selected_data_key, derived_name, session_id: str):
+def derive_data_callback(
+    n_clicks, selected_data_key, derived_name, invalid_derived_name, session_id: str
+):
     """
-    Creates a derived dataset from an existing one when the derive button is clicked.
+    Creates a derived dataset from an existing one when the derive button is clicked, except when dataset_name is invalid.
 
     Updates dropdown options across the application with the new dataset list,
     displays success or error messages, and closes the modal upon completion.
@@ -150,12 +160,13 @@ def derive_data_callback(n_clicks, selected_data_key, derived_name, session_id: 
         n_clicks: Number of times the submit button has been clicked
         selected_data_key: Key of the dataset to derive from
         derived_name: Name for the new derived dataset
+        invalid_derived_name: Boolean indicating if feedback should be shown
         session_id: ID of the active session
 
     Returns:
         Tuple containing updated dropdown options, alert messages, and modal state
     """
-    if not selected_data_key or not derived_name:
+    if not selected_data_key or not derived_name or invalid_derived_name is True:
         return no_update, "", False, "Choose a dataset and enter a name!", True, False
     sm: ScenarioManager = get_scenario_manager(get_app().server, session_id)
     try:
@@ -199,3 +210,12 @@ def toggle_modal_derive(open_clicks, close_clicks, is_open):
     if open_clicks or close_clicks:
         return not is_open
     return is_open
+
+
+InputChecker.register_name_callback(
+    DM_DERIVE_SET_NAME_INPUT,
+    DM_DERIVE_MODAL_FEEDBACK,
+    DM_DERIVE_MODAL_SUBMIT_BTN,
+    ACTIVE_SESSION,
+    "dataset",
+)
