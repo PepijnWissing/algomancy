@@ -2,7 +2,7 @@
 # Pages
  
 ```{eval-rst}
-.. automodule:: algomancy_content.pages.page
+.. automodule:: algomancy_gui.page
    :members:
    :undoc-members:
    :show-inheritance:

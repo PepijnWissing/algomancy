@@ -24,7 +24,7 @@
 ```
 
 ```{eval-rst}
-.. automodule:: algomancy_gui.configuration.feautureconfig
+.. automodule:: algomancy_gui.configuration.featureconfig
    :members:
    :member-order: bysource
 ```

@@ -29,6 +29,7 @@ getting_started/quickstart
 fundamentals/fundamentals
 tutorial/tutorial
 reference/reference
+contributing
 changelog
 ```
  

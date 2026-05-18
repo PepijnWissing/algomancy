@@ -5,7 +5,6 @@ todo intro text
 
 ## ScenarioFactory
 ```{eval-rst}
-.. scenario-factory ::
 .. automodule:: algomancy_scenario.scenariofactory
    :members:
    :undoc-members:
@@ -15,7 +14,6 @@ todo intro text
 
 ## AlgorithmFactory
 ```{eval-rst}
-.. algorithm-factory ::
 .. automodule:: algomancy_scenario.algorithmfactory
    :members:
    :undoc-members:

@@ -51,7 +51,12 @@ class classproperty(property):
         # If accessed from an instance, pass the instance
         if instance is not None:
             return self.fget(instance)
-        # If accessed from the class, pass the class
+        # If accessed directly from the abstract base, return the descriptor
+        # so introspection tools (e.g., Sphinx autodoc) can inspect it without
+        # triggering the subclass-required guards.
+        if owner is Schema:
+            return self
+        # If accessed from a concrete subclass, pass the class
         return self.fget(owner)
 
 
