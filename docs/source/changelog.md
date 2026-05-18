@@ -17,8 +17,15 @@
 - Added `list_tags` function to the scenario registry, making accessable via the scenario manager
 - `BaseAlgorithm` now has access to the application's central logger through the attribute `_logger`.
 - Added pages section to the tutorial. 
-- 
+
 ### Changed
+- Cleanup of dependencies between `algomancy-content` and `algomancy-gui`
+  - **[Breaking]** Moved `BasePage` and subclasses to `algomancy_gui`; imports have to be updated appropriately
+  - Moved `LibraryManager` to `algomancy-gui` from `algomancy-content`
+  - Reorganized `algomancy-gui` internals 
+- Refinement of `Schema` class
+  - **[Breaking]** Moved `_defined_datatypes` to `_DATATYPES` as class attribute to define the datatypes of each column.
+  - `Schema`s no longer need to be instantiated before being passed to the configuration. Passing types to the configuration is now possible; passing instances still works. 
 - Made dataset_name_invalid generic (name_invalid) for datasets and scenarios: 
 - Moved callback for name_invalid to inputchecker.py to avoid duplicate code in datamanagerderive/importmodal
 - Euro (€) is now the default quantity for money 
@@ -27,6 +34,8 @@
   _Note: these changes are backwards compatible._  
 - Implemented the Singleton pattern to Logger class for global access.
 - Bound type definition `BASE_DATA_BOUND` was renamed to `BASEDATASOURCE` for legibility. 
+
+### Fixed
 
 ## 0.4.4
 _Released on 23-2-2026_

@@ -3,7 +3,7 @@ import pandas as pd
 from algomancy_data import DataSource
 from dash import html, dash_table
 
-from .page import BaseDataPage
+from algomancy_gui.page import BaseDataPage
 
 
 class StandardDataPage(BaseDataPage):

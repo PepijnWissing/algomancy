@@ -54,7 +54,7 @@ class CoreConfig:
         etl_factory: Any | None = None,
         kpi_templates: Dict[str, Type[BASE_KPI]] | None = None,
         algo_templates: Dict[str, Type[ALGORITHM]] | None = None,
-        schemas: List[Schema] | None = None,
+        schemas: List[Type[Schema]] | None = None,
         # === auto start/create features ===
         autocreate: bool | None = None,
         default_algo: str | None = None,

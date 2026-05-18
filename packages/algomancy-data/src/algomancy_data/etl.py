@@ -8,7 +8,7 @@ for a concrete dataset configuration.
 # --- Abstract Factory ---
 from algomancy_data.transformer import TransformationSequence
 from abc import ABC, abstractmethod
-from typing import Dict, List
+from typing import Dict, List, Type
 
 from algomancy_utils import Logger
 
@@ -93,7 +93,7 @@ class ETLConstructionError(Exception):
 class ETLFactory(ABC):
     """Abstract factory that constructs ETL sequences and loader."""
 
-    def __init__(self, schemas: List[Schema], logger):
+    def __init__(self, schemas: List[Type[Schema]], logger):
         self.schemas = schemas
         self.logger = logger
 

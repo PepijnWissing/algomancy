@@ -10,7 +10,7 @@ from ..componentids import (
 )
 from ..data_page.datamanagementtopbar import top_bar
 from algomancy_gui.managers.managergetters import get_scenario_manager
-from ..layouthelpers import create_wrapped_content_div
+from algomancy_gui.loaders.contentwrapper import create_wrapped_content_div
 from algomancy_gui.managers.contentregistry import ContentRegistry
 
 from ..data_page import dialogcallbacks  # noqa

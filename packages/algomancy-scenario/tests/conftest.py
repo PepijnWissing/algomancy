@@ -52,13 +52,12 @@ class WarehouseLayoutSchema(Schema):
     Y = "y"
     ZONE = "zone"
 
-    def _defined_datatypes(self) -> Dict[str, DataType]:
-        return {
-            WarehouseLayoutSchema.ID: DataType.STRING,
-            WarehouseLayoutSchema.ZONE: DataType.STRING,
-            WarehouseLayoutSchema.X: DataType.FLOAT,
-            WarehouseLayoutSchema.Y: DataType.FLOAT,
-        }
+    _DATATYPES = {
+        ID: DataType.STRING,
+        ZONE: DataType.STRING,
+        X: DataType.FLOAT,
+        Y: DataType.FLOAT,
+    }
 
 
 class ItemDataSchema(Schema):
@@ -78,18 +77,17 @@ class ItemDataSchema(Schema):
     CURRENT_SLOT = "currentslot"
     OPTIMAL_SLOT = "optimalslot"
 
-    def _defined_datatypes(self) -> Dict[str, DataType]:
-        return {
-            ItemDataSchema.ID: DataType.STRING,
-            ItemDataSchema.SKU: DataType.STRING,
-            ItemDataSchema.DESCRIPTION: DataType.STRING,
-            ItemDataSchema.CATEGORY: DataType.STRING,
-            ItemDataSchema.DAILY_PICKS: DataType.INTEGER,
-            ItemDataSchema.VOLUME_CM3: DataType.FLOAT,
-            ItemDataSchema.WEIGHT_KG: DataType.FLOAT,
-            ItemDataSchema.CURRENT_SLOT: DataType.STRING,
-            ItemDataSchema.OPTIMAL_SLOT: DataType.STRING,
-        }
+    _DATATYPES = {
+        ID: DataType.STRING,
+        SKU: DataType.STRING,
+        DESCRIPTION: DataType.STRING,
+        CATEGORY: DataType.STRING,
+        DAILY_PICKS: DataType.INTEGER,
+        VOLUME_CM3: DataType.FLOAT,
+        WEIGHT_KG: DataType.FLOAT,
+        CURRENT_SLOT: DataType.STRING,
+        OPTIMAL_SLOT: DataType.STRING,
+    }
 
 
 class EmployeeDataSchema(Schema):
@@ -111,20 +109,19 @@ class EmployeeDataSchema(Schema):
     position = "attributes.position"
     skills = "attributes.skills"
 
-    def _defined_datatypes(self) -> Dict[str, DataType]:
-        return {
-            EmployeeDataSchema.ID: DataType.STRING,
-            EmployeeDataSchema.name: DataType.STRING,
-            EmployeeDataSchema.email: DataType.STRING,
-            EmployeeDataSchema.hire_date: DataType.DATETIME,
-            EmployeeDataSchema.last_login: DataType.DATETIME,
-            EmployeeDataSchema.dates_with_typo: DataType.DATETIME,
-            EmployeeDataSchema.is_active: DataType.BOOLEAN,
-            EmployeeDataSchema.age: DataType.INTEGER,
-            EmployeeDataSchema.department: DataType.STRING,
-            EmployeeDataSchema.position: DataType.STRING,
-            EmployeeDataSchema.skills: DataType.STRING,
-        }
+    _DATATYPES = {
+        ID: DataType.STRING,
+        name: DataType.STRING,
+        email: DataType.STRING,
+        hire_date: DataType.DATETIME,
+        last_login: DataType.DATETIME,
+        dates_with_typo: DataType.DATETIME,
+        is_active: DataType.BOOLEAN,
+        age: DataType.INTEGER,
+        department: DataType.STRING,
+        position: DataType.STRING,
+        skills: DataType.STRING,
+    }
 
 
 class InventorySchema(Schema):
@@ -155,29 +152,28 @@ class InventorySchema(Schema):
     SAFETY_STOCK = "Safety\nStock"
     VALUE_BASED_ON_SAFETY_STOCK = "Value \nBased on \nSafety Stock"
 
-    def _defined_datatypes(self) -> Dict[str, DataType]:
-        return {
-            InventorySchema.BRANCH: DataType.STRING,
-            InventorySchema.LOCATION_TYPE: DataType.STRING,
-            InventorySchema.LOCATION: DataType.STRING,
-            InventorySchema.ITEM_NUMBER: DataType.STRING,
-            InventorySchema.ITEM_DESCRIPTION: DataType.STRING,
-            InventorySchema.ITEM_DESCRIPTION_2: DataType.STRING,
-            InventorySchema.LOT_SERIAL_NUMBER: DataType.STRING,
-            InventorySchema.IB_SETUP_STATUS: DataType.STRING,
-            InventorySchema.TECHNICAL_STATUS: DataType.STRING,
-            InventorySchema.STOCKING_TYPE: DataType.STRING,
-            InventorySchema.LINE_TYPE: DataType.STRING,
-            InventorySchema.MASTER_PLANNING_FAMILY: DataType.STRING,
-            InventorySchema.INVENTORY_COST_SELECTOR: DataType.STRING,
-            InventorySchema.GL_CATEGORY: DataType.STRING,
-            InventorySchema.UOM_PRIMARY: DataType.STRING,
-            InventorySchema.UNIT_COST: DataType.FLOAT,
-            InventorySchema.QUANTITY_ON_HAND: DataType.FLOAT,
-            InventorySchema.INVENTORY_VALUE: DataType.FLOAT,
-            InventorySchema.SAFETY_STOCK: DataType.FLOAT,
-            InventorySchema.VALUE_BASED_ON_SAFETY_STOCK: DataType.FLOAT,
-        }
+    _DATATYPES = {
+        BRANCH: DataType.STRING,
+        LOCATION_TYPE: DataType.STRING,
+        LOCATION: DataType.STRING,
+        ITEM_NUMBER: DataType.STRING,
+        ITEM_DESCRIPTION: DataType.STRING,
+        ITEM_DESCRIPTION_2: DataType.STRING,
+        LOT_SERIAL_NUMBER: DataType.STRING,
+        IB_SETUP_STATUS: DataType.STRING,
+        TECHNICAL_STATUS: DataType.STRING,
+        STOCKING_TYPE: DataType.STRING,
+        LINE_TYPE: DataType.STRING,
+        MASTER_PLANNING_FAMILY: DataType.STRING,
+        INVENTORY_COST_SELECTOR: DataType.STRING,
+        GL_CATEGORY: DataType.STRING,
+        UOM_PRIMARY: DataType.STRING,
+        UNIT_COST: DataType.FLOAT,
+        QUANTITY_ON_HAND: DataType.FLOAT,
+        INVENTORY_VALUE: DataType.FLOAT,
+        SAFETY_STOCK: DataType.FLOAT,
+        VALUE_BASED_ON_SAFETY_STOCK: DataType.FLOAT,
+    }
 
 
 class LocationSchema(Schema):
@@ -193,17 +189,16 @@ class LocationSchema(Schema):
     ID = "ID"
     Name = "Naam"
 
-    def _defined_datatypes(self) -> Dict[str, Dict[str, DataType]]:
-        return {
-            "Steden": {
-                LocationSchema.COUNTRY: DataType.STRING,
-                LocationSchema.CITY: DataType.STRING,
-            },
-            "Klanten": {
-                LocationSchema.ID: DataType.INTEGER,
-                LocationSchema.Name: DataType.STRING,
-            },
-        }
+    _DATATYPES = {
+        "Steden": {
+            COUNTRY: DataType.STRING,
+            CITY: DataType.STRING,
+        },
+        "Klanten": {
+            ID: DataType.INTEGER,
+            Name: DataType.STRING,
+        },
+    }
 
 
 example_schemas = [

@@ -10,7 +10,7 @@ from dash import html, dcc, get_app
 
 from algomancy_scenario import ScenarioManager
 
-from ..layouthelpers import create_wrapped_content_div
+from algomancy_gui.loaders.contentwrapper import create_wrapped_content_div
 from ..componentids import (
     LEFT_SCENARIO_DROPDOWN,
     RIGHT_SCENARIO_DROPDOWN,

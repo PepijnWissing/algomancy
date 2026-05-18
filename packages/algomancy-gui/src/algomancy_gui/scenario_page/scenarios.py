@@ -52,7 +52,7 @@ from algomancy_gui.managers.contentregistry import ContentRegistry
 from algomancy_gui.managers.managergetters import get_scenario_manager, get_manager
 from algomancy_gui.inputchecker import InputChecker
 
-from ..layouthelpers import create_wrapped_content_div
+from algomancy_gui.loaders.contentwrapper import create_wrapped_content_div
 from .delete_confirmation import (
     delete_confirmation_modal,
 )

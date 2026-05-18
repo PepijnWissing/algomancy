@@ -481,12 +481,12 @@ class XLSXMultiExtractor(MultiExtractor):
     ) -> None:
         super().__init__(file, schema, logger)
         self._sheet_names = list(self.schema.sub_names)
-        self._single_sheet_extractors = {
-            sheet_name: XLSXSingleExtractor(
-                file, schema.generate_subschema(sheet_name), sheet_name
+        self._single_sheet_extractors = {}
+        for sheet_name in self._sheet_names:
+            subschema = self.schema.get_subschema(sheet_name)
+            self._single_sheet_extractors[sheet_name] = XLSXSingleExtractor(
+                file, subschema, sheet_name
             )
-            for sheet_name in self._sheet_names
-        }
 
     def _extract_files(self) -> Dict[str, pd.DataFrame]:
         dfs = {}
