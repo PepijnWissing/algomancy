@@ -1,46 +1,28 @@
 (tutorial-pages-ref)=
 # Pages
-Now that the backend is complete, we can create the GUI elements. 
-We build our own implementation of the Scenarios page, the Compare page and the Overview page.
-Algomancy uses Plotly Dash for the GUI, and in this tutorial we will make use of components in the [Dash Core Components](https://dash.plotly.com/dash-core-components) and the [Dash Bootstrap Components](https://www.dash-bootstrap-components.com/) libraries. 
+Now that the backend is complete, we can create the GUI elements.
+We build our own implementation of the Scenarios page, the Compare page, and the Overview page.
+Algomancy uses Plotly Dash for the GUI; in this tutorial we use components from [Dash Core Components](https://dash.plotly.com/dash-core-components) and [Dash Bootstrap Components](https://www.dash-bootstrap-components.com/).
+
+The quickstart generated skeleton page classes in `src/pages/`:
+- `scenario_page.py` → `TSPScenarioPage`
+- `compare_page.py` → `TSPComparePage`
+- `overview_page.py` → `TSPOverviewPage`
+
+These are already wired into `main.py`. We implement them one by one below.
 
 ## Scenarios Page
-In the scenarios pages, we will show basic information about the scenario. Additionally, if the algorithm has run, we will show some result statistics and visualize the TSP route.  
-1. Create a file `page_scenarios.py `in the directory `src/pages/`
-2. Create the class TSPScenarioPage which inherits from the BaseScenarioPage, and implements the static methods `register_callbacks` and `create_content`, using the code below:
+On the Scenarios page we show basic information about the scenario, and — once the algorithm has run — result statistics and a route visualisation.
 
-:::{dropdown} {octicon}`code` Code
-:color: info
-```{code-block} python
-:caption: `page_scenarios.py`
-:linenos:
+1. Open `src/pages/scenario_page.py`. The quickstart generated a `TSPScenarioPage` skeleton. Replace its `create_content` and `register_callbacks` methods with the implementations below.
 
-from dash import html, dcc, callback, Input, Output, State
-import dash_bootstrap_components as dbc
-from algomancy_content.pages.page import BaseScenarioPage
-from algomancy_scenario import Scenario, ScenarioStatus
-
-class TSPScenarioPage(BaseScenarioPage):
-    @staticmethod
-    def register_callbacks():
-    pass
-
-
-    @staticmethod
-    def create_content(scenario: Scenario) -> html.Div:
-    pass
-```
-:::
-
-3. We will create several visualization components which we want to use on different pages. For this, create a file `components.py` in the directory `src/pages/`.
-4. In this file, we create two components: a table with information about a scenario and a table with results:
+2. We will share several visualisation components across pages. Create `components.py` in `src/pages/`:
 
 :::{dropdown} {octicon}`code` Code
 :color: info
 ```{tip}
-While not strictly necessary, the `getattr` function (see, e.g., line 23 of the below) can be used to access attributes dynamically. 
-This can be useful in scenarios where attribute names are not known until runtime, or when dealing with objects with many attributes. 
-As objects may not exist yet, this offers a safe way to access attributes without causing errors, and is considered good practice. 
+The `getattr` function (see, e.g., line 23 below) provides safe attribute access for objects that may not yet carry results.
+This is considered good practice when the object's state is not guaranteed at render time.
 ```
 ```{code-block} python
 :caption: `components.py`
@@ -112,7 +94,6 @@ def result_table(scenario) -> html.Div:
     ordered_locations = getattr(getattr(scenario, "result", None), "ordered_locations", []) or []
     tour = getattr(getattr(scenario, "result", None), "tour", []) or []
 
-    # KPI calculations (as provided)
     total_cost = round(getattr(scenario.kpis.get("Total_costs", None), "value", 0.0), 1) if getattr(scenario, "kpis", None) else 0.0
     number_of_routes = len(tour)
     avg_cost = round(total_cost / number_of_routes, 1) if number_of_routes > 0 else 0.0
@@ -139,14 +120,14 @@ def result_table(scenario) -> html.Div:
 ```
 :::
 
-Note that we re-used Algomancy's `status_badge` component. 
+Note that we re-use Algomancy's `status_badge` component.
 
-5. In `page_scenarios.py`, import these components and use them in the `create_content` function as follows:
+3. In `scenario_page.py`, import these components and implement the `create_content` function:
 
 :::{dropdown} {octicon}`code` Code
 :color: info
 ```{code-block} python
-:caption: `page_scenarios.py`
+:caption: `scenario_page.py`
 :linenos:
 :lineno-start: 12
 @staticmethod
@@ -191,11 +172,9 @@ def create_content(scenario: Scenario) -> html.Div:
         dbc.Row(
             [
                 dbc.Col(
-                    # Scenario info
                     scenario_table(scenario)
                     ),
                 dbc.Col(
-                    # Key statistics
                     result_table(scenario)
                 ))
             ])
@@ -204,10 +183,9 @@ def create_content(scenario: Scenario) -> html.Div:
 ```
 :::
 
-In the just created page, we check if the scenario has already run. If yes, we show the results. If not, we show a
-notification to the user.
+In the created page, we check if the scenario has already run. If yes, we show the results; if not, we show a notification.
 
-6. Next, we want to add a visualization of the resulting route to the page. In the file `components.py`, add the following import statement:
+4. Next, add a route visualisation component. In `components.py`, add:
 ```{code-block} python
 import plotly.graph_objects as go
 ```
@@ -237,11 +215,9 @@ def route_visualization(ordered_locations: List[Dict], tour: List[Dict]):
     # Lookup table for coordinates
     loc_lookup = {loc['id']: (loc['x'], loc['y']) for loc in ordered_locations}
 
-    # Location coordinates for convenience
     xs = [loc['x'] for loc in ordered_locations]
     ys = [loc['y'] for loc in ordered_locations]
 
-    # Data bounds
     if not xs or not ys:
         x_min = y_min = 0.0
         x_max = y_max = 1.0
@@ -252,11 +228,9 @@ def route_visualization(ordered_locations: List[Dict], tour: List[Dict]):
     x_span = max(1e-9, x_max - x_min)
     y_span = max(1e-9, y_max - y_min)
 
-    # Create figure
     fig = go.Figure()
     LINE_COLOR = "#0074D9"
-    
-    # Plot route segments one by one
+
     for route in tour:
         try:
             x0, y0 = loc_lookup[route["from_id"]]
@@ -264,7 +238,6 @@ def route_visualization(ordered_locations: List[Dict], tour: List[Dict]):
         except KeyError:
             continue
 
-        # Draw segment
         fig.add_trace(
             go.Scatter(
                 x=[x0, x1],
@@ -275,7 +248,6 @@ def route_visualization(ordered_locations: List[Dict], tour: List[Dict]):
             )
         )
 
-        # Plot edge labels at midpoint of line
         xm = (x0 + x1) / 2.0
         ym = (y0 + y1) / 2.0
 
@@ -294,7 +266,6 @@ def route_visualization(ordered_locations: List[Dict], tour: List[Dict]):
             borderpad=3,
         )
 
-    # Scatter plot Locations
     fig.add_trace(
         go.Scatter(
             x=xs,
@@ -307,16 +278,14 @@ def route_visualization(ordered_locations: List[Dict], tour: List[Dict]):
         )
     )
 
-    # Layout styling
     fig.update_layout(
         xaxis_title="X",
         yaxis_title="Y",
         hovermode="closest",
-        paper_bgcolor="rgba(0,0,0,0)",  # transparent background
-        plot_bgcolor="rgba(0,0,0,0)"  # transparent plotting area
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)"
     )
 
-    # Tight axes with small padding
     x_pad = 0.05 * x_span
     y_pad = 0.05 * y_span
     fig.update_xaxes(range=[x_min - x_pad, x_max + x_pad], zeroline=True, showgrid=True)
@@ -325,13 +294,13 @@ def route_visualization(ordered_locations: List[Dict], tour: List[Dict]):
     return fig
 ```
 :::
-7. In `page_scenarios.py` we want to give the user the option to toggle the visualization on/off. Import the `route_visualization` function from `components.py` and edit the `create_content` 
-function such that it looks as follows:
+
+5. In `scenario_page.py`, import `route_visualization` from `components.py` and update `create_content` to add a toggle for the visualisation:
 
 :::{dropdown} {octicon}`code` Code
 :color: info
 ```{code-block} python
-:caption: `page_scenarios.py`
+:caption: `scenario_page.py`
 :linenos:
 :lineno-start: 12
 def create_content(scenario: Scenario) -> html.Div:
@@ -426,12 +395,12 @@ def create_content(scenario: Scenario) -> html.Div:
 ```
 :::
 
-8. We have now created an on/off toggle for the visualization, but it is not responsive yet. We must implement the `register_callbacks()` function to listen to the `route-container` toggle:
+6. Implement `register_callbacks` to respond to the visualisation toggle:
 
 :::{dropdown} {octicon}`code` Code
 :color: info
 ```{code-block} python
-:caption: `page_scenarios.py`
+:caption: `scenario_page.py`
 :linenos:
 :lineno-start: 10
 @staticmethod
@@ -463,24 +432,18 @@ def register_callbacks():
 ```
 :::
 
-9. Lastly, we must change the app configuration to use our newly created page. In `main.py` import the TSPScenarioPage 
-class using `from pages.page_scenarios import TSPScenarioPage`, and in the AppConfiguration instance initialization 
-use the argument `scenario_page=TSPScenarioPage()`.
-10. Start the application, load the data and create a new scenario on the Scenarios page. 
-Verify that you see the page that has just been created.
+7. Start the application, load the data, and create a new scenario on the Scenarios page.
+   Verify that the page you just implemented is shown.
 
 ## Compare Page
-On the compare page, we can perform a more detailed comparison between two scenarios. 
-On our TSPComparePage we will show the results of two scenarios side by side, and display some similarities/differences.  
+On the Compare page we can do a more detailed side-by-side comparison of two scenarios.
 
-1. Create a file `page_compare.py `in the directory `src/pages/`
-2. Create the class TSPComparePage which inherits from the BaseComparePage, and implements the static methods
-`create_side_by_side_content`, `create_compare_section`, `create_details_section` and `register_callbacks` using the code below:
+1. Open `src/pages/compare_page.py`. Implement `create_side_by_side_content`, `create_compare_section`, `create_details_section`, and `register_callbacks`:
 
 :::{dropdown} {octicon}`code` Code
 :color: info
 ```{code-block} python
-:caption: `page_compare.py`
+:caption: `compare_page.py`
 :linenos:
 
 from algomancy_scenario import Scenario
@@ -521,30 +484,28 @@ class TSPComparePage(BaseComparePage):
 ```
 :::
 
-Note that for the side-by-side content we have re-used the result table which was also on the scenarios page.
-By placing it in the `create_side_by_side_content` it is shown for both selected scenarios side by side.
+Note that we re-use the `result_table` component from the Scenarios page.
 
-3. In the `create_compare_section` and `create_details_section` we have access to a `left` and `right` scenario. 
-With the following code block we implement a comparison in the compare section and show the scenario IDs in the details section:
+2. Implement `create_compare_section` and `create_details_section` with TSP-specific comparison logic:
 
 :::{dropdown} {octicon}`code` Code
 :color: info
 ```{code-block} python
-:caption: `page_compare.py`
+:caption: `compare_page.py`
 :linenos:
 
     @staticmethod
     def create_compare_section(left: Scenario, right: Scenario) -> html.Div:
         """
         Create a comparison summary between two completed scenarios.
-    
+
         Computes simple similarities and differences between scenario results,
         including overlapping route segments and the most expensive route used.
-    
+
         Inputs / assumptions:
         - left and right are Scenario instances with existing tours
         - Route IDs uniquely identify comparable route segments
-    
+
         Output:
         - html.Div containing textual comparison metrics
         """
@@ -554,7 +515,6 @@ With the following code block we implement a comparison in the compare section a
         common_route_ids = {r.route_id for r in tour_left} & {r.route_id for r in tour_right}
         number_of_common_routes = len(common_route_ids)
 
-        # Most expensive route segment used:
         all_routes = tour_left + tour_right
         if all_routes:
             highest = max(all_routes, key=lambda r: r.cost)
@@ -564,7 +524,6 @@ With the following code block we implement a comparison in the compare section a
             highest_cost_id = ''
             highest_cost = 0
 
-        # Determine where highest cost occurs
         left_ids = {r.route_id for r in tour_left}
         right_ids = {r.route_id for r in tour_right}
 
@@ -583,14 +542,14 @@ With the following code block we implement a comparison in the compare section a
 
 
     @staticmethod
-    def create_details_section(left: Scenario, right: Scenario) -> html.Div:    
+    def create_details_section(left: Scenario, right: Scenario) -> html.Div:
         """
         Create a simple details section displaying identifiers of both scenarios.
-    
+
         Inputs / assumptions:
         - left and right are Scenario instances
         - Each scenario exposes an 'id' attribute
-    
+
         Output:
         - html.Div containing basic scenario identification details
         """
@@ -603,21 +562,17 @@ With the following code block we implement a comparison in the compare section a
 ```
 :::
 
-4. If desired, you can also add interactivity by adding callbacks to the `register_callbacks` function, in the same way as this was done on the TSP scenarios page.
-5. Similar to the TSPScenarioPage, also import the TSPComparePage in `main.py` and provide it as input to the app configuration.
+3. If desired, add interactivity by implementing the `register_callbacks` function, in the same way as on the Scenarios page.
 
 ## Overview Page
-On the overview page, we have access to all scenarios at the same time. For TSPOverviewPage, we will create a table 
-with all scenarios, and show basic info and the resulting total cost for each scenario.
+On the Overview page we have access to all scenarios at once. For the TSP Overview page, we create a table with all scenarios, showing basic info and total cost for each.
 
-1. Create a file `page_overview.py `in the directory `src/pages/`
-2. Create the class TSPOverviewPage which inherits from the BaseOverviewPage, and implements the static methods
-`create_content` and `register_callbacks` using the code below:
+1. Open `src/pages/overview_page.py`. Implement `create_content` and `register_callbacks`:
 
 :::{dropdown} {octicon}`code` Code
 :color: info
 ```{code-block} python
-:caption: `page_overview.py`
+:caption: `overview_page.py`
 :linenos:
 from algomancy_scenario import Scenario
 from algomancy_scenario import ScenarioStatus
@@ -645,7 +600,7 @@ class TSPOverviewPage(BaseOverviewPage):
 
         Output:
         - html.Div containing a Bootstrap card with a summary table, or an alert message if no scenarios are provided
-        """  
+        """
         # Empty-state
         if not scenarios:
             return html.Div(
@@ -709,7 +664,12 @@ class TSPOverviewPage(BaseOverviewPage):
 ```
 :::
 
-2. If desired, you can also add interactivity by adding callbacks to the `register_callbacks` function, in the same way as this was done on the TSP scenarios page.
-3. Similar to the previous pages, import the TSPOverviewPage in `main.py` and provide it as input to the app configuration.
+2. To enable the Overview page, uncomment the `overview_page` line in `main.py`:
 
-The created pages can be further customized to your preferences.
+```python
+overview_page=TSPOverviewPage(),
+```
+
+3. If desired, add interactivity by implementing the `register_callbacks` function, in the same way as on the Scenarios page.
+
+The created pages can be further customised to your preferences.

@@ -1,15 +1,20 @@
 (tutorial-results-ref)=
 # Results
-We need to create a class to store out results.
+We need to create a class to store our results.
 
-1. Create the directory result_model in src/data_handling/
-2. Create the file result_model.py in the directory src/data_handling/result_model. 
-This result model stores the tour (= a list of routes), but also a sorted list of locations.
+1. Create the directory `src/data_handling/result_model/`.
+2. Create `result_model.py` in that directory.
+   This result model stores the tour (a list of routes) and an ordered list of locations:
+
+:::{dropdown} {octicon}`code` Code
+:color: info
+
 ```python
 from typing import List
 from algomancy_scenario import ScenarioResult
 from data_handling.data_model.location import Location
 from data_handling.data_model.route import Route
+
 
 class ResultModel(ScenarioResult):
     def __init__(
@@ -36,3 +41,4 @@ class ResultModel(ScenarioResult):
     def ordered_locations(self):
         return self._ordered_locations
 ```
+:::

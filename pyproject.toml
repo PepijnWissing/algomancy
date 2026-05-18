@@ -2,6 +2,11 @@
 build-backend = "uv_build"
 requires = ["uv_build>=0.9.22,<0.10.0"]
 
+[dependency-groups]
+dev = [
+  "pytest>=9.0.3"
+]
+
 [project]
 authors = [
   {email = "pepijn.wissing@cqm.nl", name = "Pepijn Wissing"}

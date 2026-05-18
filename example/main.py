@@ -12,7 +12,7 @@ import sys
 
 from algomancy_data import DataSource
 from algomancy_gui.configuration.comparepageconfig import ComparePageConfig
-from algomancy_gui.configuration.feautureconfig import FeatureConfig
+from algomancy_gui.configuration.featureconfig import FeatureConfig
 from algomancy_gui.configuration.stylingconfig import (
     StylingConfig,
     LayoutSelection,
