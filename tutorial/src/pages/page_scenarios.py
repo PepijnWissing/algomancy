@@ -21,6 +21,7 @@ class TSPScenarioPage(BaseScenarioPage):
         - html.Div with a message if hidden, or
         - dcc.Graph containing the route visualization
         """
+
         @callback(
             Output("route-container", "children"),
             Input("show-route", "value"),
@@ -30,9 +31,15 @@ class TSPScenarioPage(BaseScenarioPage):
         def render_route(values, ordered_locations, tour):
             show = "show" in (values or [])
             if not show:
-                return html.Div("Visualization is hidden.", style={"opacity": 0.7, "fontStyle": "italic"})
-            return dcc.Graph(id="route", figure=route_visualization(ordered_locations, tour),
-                             style={"height": "58vh"})
+                return html.Div(
+                    "Visualization is hidden.",
+                    style={"opacity": 0.7, "fontStyle": "italic"},
+                )
+            return dcc.Graph(
+                id="route",
+                figure=route_visualization(ordered_locations, tour),
+                style={"height": "58vh"},
+            )
 
     @staticmethod
     def create_content(scenario: Scenario) -> html.Div:
@@ -55,19 +62,27 @@ class TSPScenarioPage(BaseScenarioPage):
         """
         # Case 1 – Scenario not ready
         if scenario.status != ScenarioStatus.COMPLETE:
-            unavailable_page = dbc.Container([dbc.Row(
+            unavailable_page = dbc.Container(
                 [
-                    dbc.Col(scenario_table(scenario)),
-                    dbc.Col(html.Div([
-                        dbc.Alert("Scenario results are not available yet. Please run the scenario or refresh "
-                                  "the page once the computation is complete.",
-                                  color="info")
-                    ],
-                        style={"paddingTop": "4px"})
+                    dbc.Row(
+                        [
+                            dbc.Col(scenario_table(scenario)),
+                            dbc.Col(
+                                html.Div(
+                                    [
+                                        dbc.Alert(
+                                            "Scenario results are not available yet. Please run the scenario or refresh "
+                                            "the page once the computation is complete.",
+                                            color="info",
+                                        )
+                                    ],
+                                    style={"paddingTop": "4px"},
+                                )
+                            ),
+                        ]
                     )
                 ]
             )
-            ])
             return html.Div(unavailable_page)
 
         # Case 2 – Scenario finished: extract results
@@ -89,38 +104,49 @@ class TSPScenarioPage(BaseScenarioPage):
         ]
 
         # Construct page
-        result_page = dbc.Container([
-            dbc.Row(
-                [
-                    dbc.Col(scenario_table(scenario)),
-                    dbc.Col(html.Div([
-                        # Key statistics
-                        result_table(scenario),
-
-                        # Toggle visualization on/off
-                        dbc.Checklist(
-                            id="show-route",
-                            options=[{"label": " Show visualization", "value": "show"}],
-                            value=["show"],  # default: visible
-                            switch=True,
-                            style={"marginTop": "8px", "marginBottom": "8px"},
-                        )
-                    ]))
-                ]),
-            dbc.Row(
-                [
-                    html.Div([
-                        html.Hr(),
-                        dcc.Store(
-                            id='locations_store', data=locations_payload
+        result_page = dbc.Container(
+            [
+                dbc.Row(
+                    [
+                        dbc.Col(scenario_table(scenario)),
+                        dbc.Col(
+                            html.Div(
+                                [
+                                    # Key statistics
+                                    result_table(scenario),
+                                    # Toggle visualization on/off
+                                    dbc.Checklist(
+                                        id="show-route",
+                                        options=[
+                                            {
+                                                "label": " Show visualization",
+                                                "value": "show",
+                                            }
+                                        ],
+                                        value=["show"],  # default: visible
+                                        switch=True,
+                                        style={
+                                            "marginTop": "8px",
+                                            "marginBottom": "8px",
+                                        },
+                                    ),
+                                ]
+                            )
                         ),
-                        dcc.Store(
-                            id='tour_store', data=tour_payload
-                        ),
-                        html.Div(id="route-container")
                     ]
-                    )
-                ]
-            )
-        ])
+                ),
+                dbc.Row(
+                    [
+                        html.Div(
+                            [
+                                html.Hr(),
+                                dcc.Store(id="locations_store", data=locations_payload),
+                                dcc.Store(id="tour_store", data=tour_payload),
+                                html.Div(id="route-container"),
+                            ]
+                        )
+                    ]
+                ),
+            ]
+        )
         return html.Div(result_page)

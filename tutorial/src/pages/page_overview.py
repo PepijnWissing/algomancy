@@ -7,6 +7,7 @@ from typing import List
 import dash_bootstrap_components as dbc
 from dash import html
 
+
 class TSPOverviewPage(BaseOverviewPage):
     @staticmethod
     def create_content(scenarios: List[Scenario]) -> html.Div:
@@ -27,9 +28,7 @@ class TSPOverviewPage(BaseOverviewPage):
         """
         # Empty-state
         if not scenarios:
-            return html.Div(
-                dbc.Alert("No scenarios to display.", color="info")
-            )
+            return html.Div(dbc.Alert("No scenarios to display.", color="info"))
 
         header = html.Thead(
             html.Tr(
@@ -68,9 +67,7 @@ class TSPOverviewPage(BaseOverviewPage):
                 )
             )
 
-        table = dbc.Table(
-            [header, html.Tbody(body_rows)]
-        )
+        table = dbc.Table([header, html.Tbody(body_rows)])
 
         return html.Div(
             dbc.Card(

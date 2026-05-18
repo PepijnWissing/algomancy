@@ -49,12 +49,12 @@ class ScenarioFactory:
         if algo_params is None:
             algo_params = {}
 
-        assert (
-            algo_name in self.available_algorithms
-        ), f"Algorithm '{algo_name}' not found."
-        assert (
-            dataset_key in self._data_manager.get_data_keys()
-        ), f"Data '{dataset_key}' not found."
+        assert algo_name in self.available_algorithms, (
+            f"Algorithm '{algo_name}' not found."
+        )
+        assert dataset_key in self._data_manager.get_data_keys(), (
+            f"Data '{dataset_key}' not found."
+        )
 
         algorithm = self._algorithm_factory.create(
             input_name=algo_name,

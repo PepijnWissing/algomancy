@@ -1,4 +1,4 @@
-from .algorithm import *
+from .algorithm import algorithm_templates
 from .kpi import kpi_templates
 from .scenarios import debug_create_example_scenarios
 

@@ -22,31 +22,38 @@ def scenario_table(scenario) -> html.Div:
     - html.Div containing a Bootstrap card with a metadata table
     """
     rows = [
-        html.Tr([html.Th("ID"),
-                 html.Td(str(getattr(scenario, "id", "—")))]),
+        html.Tr([html.Th("ID"), html.Td(str(getattr(scenario, "id", "—")))]),
         html.Tr([html.Th("Tag"), html.Td(getattr(scenario, "tag", "—") or "—")]),
-        html.Tr([
-            html.Th("Status"),
-            html.Td(
-                status_badge(getattr(scenario, "status", "—"))
-            )
-        ]),
-        html.Tr([html.Th("Algorithm"),
-                 html.Td(getattr(scenario, "algorithm_description", "—") or "—")]),
-        html.Tr([html.Th("Dataset"),
-                 html.Td(getattr(scenario, "input_data_key", "—") or "—")]),
+        html.Tr(
+            [html.Th("Status"), html.Td(status_badge(getattr(scenario, "status", "—")))]
+        ),
+        html.Tr(
+            [
+                html.Th("Algorithm"),
+                html.Td(getattr(scenario, "algorithm_description", "—") or "—"),
+            ]
+        ),
+        html.Tr(
+            [
+                html.Th("Dataset"),
+                html.Td(getattr(scenario, "input_data_key", "—") or "—"),
+            ]
+        ),
     ]
 
-    return html.Div(dbc.Card(
-        [
-            dbc.CardHeader("Selected Scenario"),
-            dbc.CardBody(
-                dbc.Table(
-                    [html.Tbody(rows)],
-                )
-            ),
-        ]
-    ))
+    return html.Div(
+        dbc.Card(
+            [
+                dbc.CardHeader("Selected Scenario"),
+                dbc.CardBody(
+                    dbc.Table(
+                        [html.Tbody(rows)],
+                    )
+                ),
+            ]
+        )
+    )
+
 
 def result_table(scenario) -> html.Div:
     """
@@ -63,11 +70,17 @@ def result_table(scenario) -> html.Div:
     Output:
     - html.Div containing a Bootstrap card with result KPIs
     """
-    ordered_locations = getattr(getattr(scenario, "result", None), "ordered_locations", []) or []
+    ordered_locations = (
+        getattr(getattr(scenario, "result", None), "ordered_locations", []) or []
+    )
     tour = getattr(getattr(scenario, "result", None), "tour", []) or []
 
     # KPI calculations (as provided)
-    total_cost = round(getattr(scenario.kpis.get("Total_costs", None), "value", 0.0), 1) if getattr(scenario, "kpis", None) else 0.0
+    total_cost = (
+        round(getattr(scenario.kpis.get("Total_costs", None), "value", 0.0), 1)
+        if getattr(scenario, "kpis", None)
+        else 0.0
+    )
     number_of_routes = len(tour)
     avg_cost = round(total_cost / number_of_routes, 1) if number_of_routes > 0 else 0.0
 
@@ -82,14 +95,11 @@ def result_table(scenario) -> html.Div:
         dbc.Card(
             [
                 dbc.CardHeader("Result Summary"),
-                dbc.CardBody(
-                    dbc.Table(
-                        [html.Tbody(rows)]
-                    )
-                ),
+                dbc.CardBody(dbc.Table([html.Tbody(rows)])),
             ]
         )
     )
+
 
 def route_visualization(ordered_locations: List[Dict], tour: List[Dict]):
     """
@@ -107,11 +117,11 @@ def route_visualization(ordered_locations: List[Dict], tour: List[Dict]):
     - plotly.graph_objects.Figure showing route segments and locations
     """
     # Lookup table for coordinates
-    loc_lookup = {loc['id']: (loc['x'], loc['y']) for loc in ordered_locations}
+    loc_lookup = {loc["id"]: (loc["x"], loc["y"]) for loc in ordered_locations}
 
     # Location coordinates for convenience
-    xs = [loc['x'] for loc in ordered_locations]
-    ys = [loc['y'] for loc in ordered_locations]
+    xs = [loc["x"] for loc in ordered_locations]
+    ys = [loc["y"] for loc in ordered_locations]
 
     # Data bounds
     if not xs or not ys:
@@ -173,7 +183,7 @@ def route_visualization(ordered_locations: List[Dict], tour: List[Dict]):
             y=ys,
             mode="markers",
             marker=dict(size=9, color="#111111"),
-            text=[loc['id'] for loc in ordered_locations],
+            text=[loc["id"] for loc in ordered_locations],
             hovertemplate="<b>Location:</b> %{text}<extra></extra>",
             showlegend=False,
         )
@@ -195,4 +205,3 @@ def route_visualization(ordered_locations: List[Dict], tour: List[Dict]):
     fig.update_yaxes(range=[y_min - y_pad, y_max + y_pad], zeroline=True, showgrid=True)
 
     return fig
-
