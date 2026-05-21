@@ -145,7 +145,7 @@ class SchemaValidator(Validator):
         super().__init__()
 
         self._schemas: Dict[str, Schema] | None = (
-            {cfg.file_name: cfg for cfg in schemas} if schemas else None
+            {cfg.file_name(): cfg for cfg in schemas} if schemas else None
         )
 
         self._severity = severity
@@ -158,10 +158,10 @@ class SchemaValidator(Validator):
         dtype_groups = {}
         for cfg in self._schemas.values():
             if cfg.is_single():
-                dtype_groups[cfg.file_name] = cfg.datatypes
+                dtype_groups[cfg.file_name()] = cfg.datatypes()
             elif cfg.is_multi():
-                for sub_cfg, type_group in cfg.datatype_groups.items():
-                    dtype_groups[f"{cfg.file_name}.{sub_cfg}"] = type_group
+                for sub_cfg, type_group in cfg.datatype_groups().items():
+                    dtype_groups[f"{cfg.file_name()}.{sub_cfg}"] = type_group
 
         for name, df in data.items():
             if name not in dtype_groups:

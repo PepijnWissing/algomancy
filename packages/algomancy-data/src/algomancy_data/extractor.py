@@ -238,7 +238,7 @@ class SingleExtractor(Extractor):
 
         self._extraction_message()
         df = self._extract_file()
-        df = DataTypeConverter.convert_dtypes(df, self.schema.datatypes)
+        df = DataTypeConverter.convert_dtypes(df, self.schema.datatypes())
         self._extraction_success_message()
 
         return {self.file.name: df}
@@ -257,7 +257,7 @@ class MultiExtractor(Extractor):
     def __init__(self, files: File, schema: Schema, logger: Logger = None) -> None:
         super().__init__(files, logger)
         assert schema.is_multi(), (
-            f"MultiExtractor for {schema.file_name} requires a multi-schema"
+            f"MultiExtractor for {schema.file_name()} requires a multi-schema"
         )
         self.schema = schema
 
@@ -265,13 +265,13 @@ class MultiExtractor(Extractor):
         missing_keys = set(dfs.keys()) - set(
             [
                 self.get_extraction_key(name)
-                for name in self.schema.datatype_groups.keys()
+                for name in self.schema.datatype_groups().keys()
             ]
         )
         assert len(missing_keys) == 0, f"Missing schemas for keys: {missing_keys}"
 
     def _get_schema_types(self, key) -> Dict[str, DataType]:
-        return self.schema.datatype_groups[key]
+        return self.schema.datatype_groups()[key]
 
     def extract(self) -> Dict[str, pd.DataFrame]:
         """Returns Dict[name, dataframe], so each dataset is identifiable"""
@@ -480,7 +480,7 @@ class XLSXMultiExtractor(MultiExtractor):
         logger: Logger = None,
     ) -> None:
         super().__init__(file, schema, logger)
-        self._sheet_names = list(self.schema.sub_names)
+        self._sheet_names = list(self.schema.sub_names())
         self._single_sheet_extractors = {}
         for sheet_name in self._sheet_names:
             subschema = self.schema.get_subschema(sheet_name)

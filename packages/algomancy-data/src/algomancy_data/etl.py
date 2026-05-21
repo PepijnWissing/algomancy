@@ -100,7 +100,7 @@ class ETLFactory(ABC):
     @property
     def schemas_dct(self) -> Dict[str, Schema]:
         """Return a mapping from file name to its schema."""
-        return {schema.file_name: schema for schema in self.schemas}
+        return {schema.file_name(): schema for schema in self.schemas}
 
     def get_schema(self, file_name: str) -> Dict[str, Schema] | Schema:
         """Return schema(s) for the given file name based on configuration.
