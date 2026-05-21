@@ -1,3 +1,4 @@
+(tutorial-etl-ref)=
 # Data intake
 An Algomancy app reads data through an {ref}`ETL<etl-ref>` pipeline.
 The quickstart wizard has already generated the folder structure, schemas, and ETL factory for us.
@@ -5,7 +6,7 @@ In this section we review the generated files, then write the custom transformat
 
 ## Review the generated schemas
 
-Open `src/data_handling/generated_schemas.py`. The wizard scanned the three input files and created a [Schema](backend-schema-ref) subclass for each one, with inferred column names and types:
+Open `src/data_handling/generated_schemas.py`. The wizard scanned the three input files and created a {ref}`Schema<fundamentals-schema-ref>` subclass for each one, with inferred column names and types:
 
 :::{dropdown} {octicon}`code` Code
 :color: info
@@ -646,4 +647,4 @@ data_object_type=DataModel,
 ```
 
 ## Next step
-All right. The information is loaded in Algomancy. Now it is time to define the {ref}`algorithm(s)<tutorial-algorithm-ref>`.
+All right. The information is loaded in Algomancy. Now it is time to define the {ref}`algorithm(s)<tutorial-algorithms-ref>`.

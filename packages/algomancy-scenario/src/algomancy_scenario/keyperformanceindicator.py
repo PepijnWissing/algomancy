@@ -64,11 +64,12 @@ class ImprovementDirection(StrEnum):
     """
     Defines the direction of improvement or success criteria for a KPI.
 
-    Attributes:
-        HIGHER: The KPI is better when its value is higher (e.g., Accuracy).
-        LOWER: The KPI is better when its value is lower (e.g., Latency).
-        AT_LEAST: A binary success criterion; successful if value >= threshold.
-        AT_MOST: A binary success criterion; successful if value <= threshold.
+    Members:
+
+    - ``HIGHER``: The KPI is better when its value is higher (e.g., Accuracy).
+    - ``LOWER``: The KPI is better when its value is lower (e.g., Latency).
+    - ``AT_LEAST``: A binary success criterion; successful if value >= threshold.
+    - ``AT_MOST``: A binary success criterion; successful if value <= threshold.
     """
 
     HIGHER = auto()

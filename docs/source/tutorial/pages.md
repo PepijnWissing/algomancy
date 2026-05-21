@@ -447,7 +447,7 @@ On the Compare page we can do a more detailed side-by-side comparison of two sce
 :linenos:
 
 from algomancy_scenario import Scenario
-from algomancy_content.pages.page import BaseComparePage
+from algomancy_gui.page import BaseComparePage
 from dash import html
 import dash_bootstrap_components as dbc
 from pages.components import result_table
@@ -576,7 +576,7 @@ On the Overview page we have access to all scenarios at once. For the TSP Overvi
 :linenos:
 from algomancy_scenario import Scenario
 from algomancy_scenario import ScenarioStatus
-from algomancy_content.pages.page import BaseOverviewPage
+from algomancy_gui.page import BaseOverviewPage
 from algomancy_gui.scenario_page.scenario_badge import status_badge
 
 from typing import List

@@ -4,7 +4,7 @@
 The ETL engine orchestrates the movement of data from source files into a `DataSource`.
 It uses **Sequences** to manage multiple steps of extraction, validation, and transformation.
 
-### ETL Pipeline Components
+## ETL Pipeline Components
 1. **`ETLFactory`**: Manages the orchestration of ETL processes.
 2. **`Schema`**: Contains source file metadata and data types.
 1. **`ExtractionSequence`**: Manages a collection of extractors that read files.
@@ -80,7 +80,7 @@ To implement a `Schema`, you should subclass the `Schema` class and define the f
 :color: success
 TODO Explain example 
 ```{code-block} python
-:caption:
+:caption: Creating a Schema
 :linenos: 
 from algomancy_data import Schema, FileExtension, DataType
 from algomancy_data.schema import SchemaType
