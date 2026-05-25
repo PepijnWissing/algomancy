@@ -17,7 +17,7 @@ from .datasource import BASEDATASOURCE, DataClassification
 from .extractor import ExtractionSequence
 from .file import File
 from .loader import Loader
-from .validator import ValidationError, ValidationSequence
+from .validator import ValidationError, ValidationResult, ValidationSequence
 
 
 class ETLPipeline:
@@ -58,13 +58,14 @@ class ETLPipeline:
         raw_data = self.extraction_sequence.data
 
         # Validation
-        is_valid, validation_messages = self.validation_sequence.run_validation(
+        validation_result: ValidationResult = self.validation_sequence.run_validation(
             raw_data
         )
 
-        if not is_valid:
+        if not validation_result.is_valid:
             raise ValidationError(
-                "A critical validation error occurred. See log for details."
+                "A critical validation error occurred. See log for details.",
+                context=validation_result,
             )
 
         # Transformation
@@ -74,7 +75,7 @@ class ETLPipeline:
         datasource = self.loader.load(
             name=self.destination_name,
             data=transformed_data,
-            validation_messages=validation_messages,
+            validation_messages=validation_result.messages,
             ds_type=DataClassification.MASTER_DATA,
         )
 
