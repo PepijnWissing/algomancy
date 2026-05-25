@@ -18,7 +18,13 @@ can import most types via ``from algomancy_data import ...``.
 from .datamanager import DataManager, StatelessDataManager, StatefulDataManager
 from .datasource import BaseDataSource, DataSource, DataClassification, BASEDATASOURCE
 from .schema import Schema, DataType, FileExtension, SchemaType, Column
-from .etl import ETLFactory, ETLConstructionError, ETLPipeline, ETLResult
+from .etl import (
+    ETLFactory,
+    SimpleETLFactory,
+    ETLConstructionError,
+    ETLPipeline,
+    ETLResult,
+)
 from .extractor import (
     Extractor,
     SingleExtractor,
@@ -47,6 +53,14 @@ from .validator import (
 )
 from .loader import Loader, DataSourceLoader
 from .file import File, CSVFile, JSONFile, XLSXFile
+from .registry import (
+    register_extractor,
+    get_extractor_class,
+    registered_keys,
+    _populate_defaults as _populate_registry_defaults,
+)
+
+_populate_registry_defaults()
 
 __all__ = [
     "DataManager",
@@ -61,6 +75,7 @@ __all__ = [
     "DataType",
     "SchemaType",
     "ETLFactory",
+    "SimpleETLFactory",
     "ETLPipeline",
     "ETLResult",
     "ETLConstructionError",
@@ -96,4 +111,7 @@ __all__ = [
     "JSONFile",
     "CSVFile",
     "XLSXFile",
+    "register_extractor",
+    "get_extractor_class",
+    "registered_keys",
 ]

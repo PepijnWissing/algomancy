@@ -14,24 +14,33 @@ masked.
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import ABC
 from dataclasses import dataclass
 from typing import Dict, List, Literal, Optional, Type
 
 from algomancy_utils import Logger
 
-from algomancy_data.transformer import TransformationSequence
+from algomancy_data.transformer import (
+    NoopTransformer,
+    TransformationSequence,
+    Transformer,
+)
 from .schema import Schema
 from .datasource import BASEDATASOURCE, DataClassification
 from .extractor import ConversionIssue, ExtractionSequence
 from .file import File
-from .loader import Loader
+from .loader import Loader, DataSourceLoader
+from .registry import get_extractor_class
 from .validator import (
+    PrimaryKeyValidator,
+    RequiredColumnsValidator,
+    SchemaValidator,
     ValidationError,
     ValidationMessage,
     ValidationResult,
     ValidationSequence,
     ValidationSeverity,
+    Validator,
 )
 
 
@@ -246,7 +255,13 @@ class ETLConstructionError(Exception):
 
 
 class ETLFactory(ABC):
-    """Abstract factory that constructs ETL sequences and loader."""
+    """Factory that constructs ETL sequences and loader.
+
+    Provides sensible defaults so that subclasses can override only the
+    pieces they need to customise. The previous fully-abstract contract
+    is preserved by the fact that all four ``create_*`` methods are still
+    overridable — they are simply no longer ``@abstractmethod``.
+    """
 
     def __init__(self, schemas: List[Type[Schema]], logger: Optional[Logger] = None):
         self.schemas = schemas
@@ -277,37 +292,107 @@ class ETLFactory(ABC):
 
         return schema
 
-    @abstractmethod
     def create_extraction_sequence(self, files: Dict[str, File]) -> ExtractionSequence:
-        pass
+        """Default extractor wiring keyed off the registry.
 
-    @abstractmethod
+        For each ``File`` in ``files`` looks up the matching schema by
+        name and selects an extractor class via ``get_extractor_class``
+        on ``(extension, schema_type)``. Override only when you need
+        non-default extractor parameters (e.g. CSV separator).
+
+        Raises:
+            ETLConstructionError: If no extractor is registered for a
+                schema's ``(extension, schema_type)`` pair.
+        """
+        extractors = []
+        for name, file in files.items():
+            schema = self.get_schema(name)
+            ext_cls = get_extractor_class(schema.extension(), schema.schema_type())
+            if ext_cls is None:
+                raise ETLConstructionError(
+                    "No extractor registered for "
+                    f"({schema.extension()}, {schema.schema_type()})."
+                )
+            extractors.append(ext_cls(file, schema, logger=self.logger))
+        return ExtractionSequence(extractors=extractors, logger=self.logger)
+
     def create_validation_sequence(self) -> ValidationSequence:
-        pass
+        """Default validation sequence using the new built-in validators.
 
-    @abstractmethod
+        Includes (in order): ``RequiredColumnsValidator``, ``SchemaValidator``,
+        and — when any schema declares a primary key — ``PrimaryKeyValidator``.
+        Subclasses can override to add domain-specific validators.
+        """
+        validators: List[Validator] = [
+            RequiredColumnsValidator(self.schemas),
+            SchemaValidator(self.schemas),
+        ]
+        if any(schema.primary_key() for schema in self.schemas):
+            validators.append(PrimaryKeyValidator(self.schemas))
+        return ValidationSequence(validators, logger=self.logger)
+
     def create_transformation_sequence(self) -> TransformationSequence:
-        pass
+        """Default to a no-op transformation step. Override to customise."""
+        return TransformationSequence([NoopTransformer(logger=self.logger)])
 
-    @abstractmethod
     def create_loader(self) -> Loader:
-        pass
+        """Default loader materialises a ``DataSource``."""
+        return DataSourceLoader(logger=self.logger)
 
     def build_pipeline(
-        self, dataset_name: str, files: Dict[str, File], logger: Logger
+        self, dataset_name: str, files: Dict[str, File], logger: Optional[Logger] = None
     ) -> ETLPipeline:
         """Assemble and return an ``ETLPipeline`` instance.
 
         Args:
             dataset_name: Destination dataset name.
             files: Mapping of logical file names to ``File`` objects.
-            logger: Logger for the pipeline.
+            logger: Logger for the pipeline; falls back to ``self.logger``.
 
         Returns:
             ETLPipeline ready to run.
         """
+        logger = logger if logger is not None else self.logger
         e_seq = self.create_extraction_sequence(files)
         v_seq = self.create_validation_sequence()
         t_seq = self.create_transformation_sequence()
         loader = self.create_loader()
         return ETLPipeline(dataset_name, e_seq, v_seq, t_seq, loader, logger)
+
+
+class SimpleETLFactory(ETLFactory):
+    """Concrete factory for the common zero-subclass case.
+
+    Lets users build a working pipeline by simply pointing schemas at
+    files. Custom transformers and/or a custom loader can be supplied
+    without subclassing; everything else is inherited from
+    :class:`ETLFactory`'s defaults.
+
+    Args:
+        schemas: List of ``Schema`` classes describing the input files.
+        transformers: Optional ordered list of ``Transformer`` instances.
+            Defaults to ``[NoopTransformer()]``.
+        loader: Optional custom ``Loader``. Defaults to ``DataSourceLoader``.
+        logger: Optional logger forwarded to extractors/validators.
+    """
+
+    def __init__(
+        self,
+        schemas: List[Type[Schema]],
+        transformers: Optional[List[Transformer]] = None,
+        loader: Optional[Loader] = None,
+        logger: Optional[Logger] = None,
+    ) -> None:
+        super().__init__(schemas, logger)
+        self._transformers = transformers
+        self._loader = loader
+
+    def create_transformation_sequence(self) -> TransformationSequence:
+        if self._transformers is None:
+            return super().create_transformation_sequence()
+        return TransformationSequence(self._transformers, logger=self.logger)
+
+    def create_loader(self) -> Loader:
+        if self._loader is None:
+            return super().create_loader()
+        return self._loader

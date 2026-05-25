@@ -1,7 +1,7 @@
 import os
 import shutil
 from abc import ABC, abstractmethod
-from typing import Dict, List, Tuple, TypeVar
+from typing import Dict, List, Optional, Tuple, TypeVar
 
 import pandas as pd
 from algomancy_utils import Logger
@@ -86,15 +86,15 @@ class DataManager(ABC):
             if not os.path.exists(path):
                 raise ETLConstructionError(f"File at path '{path}' does not exist.")
 
-    @staticmethod
     def prepare_files(
+        self,
         file_items_with_content: List[Tuple[str, str, str]] = None,
         file_items_with_path: List[Tuple[str, str]] = None,
     ) -> Dict[str, File]:
         if file_items_with_content:
-            return DataManager._prepare_files_from_content(file_items_with_content)
+            return self._prepare_files_from_content(file_items_with_content)
         elif file_items_with_path:
-            return DataManager._prepare_files_from_path(file_items_with_path)
+            return self._prepare_files_from_path(file_items_with_path)
         else:
             raise ETLConstructionError("No file data provided.")
 
@@ -111,24 +111,45 @@ class DataManager(ABC):
         else:
             raise ETLConstructionError(f"Unsupported file type: '{extension}'.")
 
-    @staticmethod
+    def _schema_extension(self, name: str) -> Optional[str]:
+        """Return the schema-declared extension for ``name`` (lower-cased).
+
+        Falls back to ``None`` if no schema matches; callers handle that case.
+        """
+        for schema in self._schemas:
+            if schema.file_name() == name:
+                return str(schema.extension()).lower()
+        return None
+
     def _prepare_files_from_content(
+        self,
         file_items: List[Tuple[str, str, str]] = None,
     ) -> Dict[str, File]:
-        files = {}
+        files: Dict[str, File] = {}
         for name, extension, content in file_items:
-            DataManager._add_to_files(files, name, extension, content=content)
-
+            # Prefer the schema-declared extension when one is available, so
+            # callers do not have to derive the extension from the filename.
+            ext = self._schema_extension(name) or extension
+            self._add_to_files(files, name, ext, content=content)
         return files
 
-    @staticmethod
-    def _prepare_files_from_path(file_items: List[Tuple[str, str]]) -> Dict[str, File]:
-        DataManager.check_existence_of_files(file_items)
-        files = {}
-        for file, path in file_items:
-            extension = path.split(".")[-1].lower()
-            DataManager._add_to_files(files, file, extension, path=path)
-
+    def _prepare_files_from_path(
+        self, file_items: List[Tuple[str, str]]
+    ) -> Dict[str, File]:
+        self.check_existence_of_files(file_items)
+        files: Dict[str, File] = {}
+        for name, path in file_items:
+            # Dispatch by schema-declared extension when available; only fall
+            # back to the path suffix when no schema matches the logical name.
+            ext = self._schema_extension(name)
+            if ext is None:
+                ext = path.rsplit(".", 1)[-1].lower() if "." in path else ""
+            if not ext:
+                raise ETLConstructionError(
+                    f"Cannot determine extension for '{name}'. "
+                    "Declare _EXTENSION on its Schema or rename the file."
+                )
+            self._add_to_files(files, name, ext, path=path)
         return files
 
     def etl_data(self, files: Dict[str, File], dataset_name: str) -> ETLResult:
