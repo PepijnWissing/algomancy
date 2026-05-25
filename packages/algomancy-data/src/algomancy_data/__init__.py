@@ -18,7 +18,7 @@ can import most types via ``from algomancy_data import ...``.
 from .datamanager import DataManager, StatelessDataManager, StatefulDataManager
 from .datasource import BaseDataSource, DataSource, DataClassification, BASEDATASOURCE
 from .schema import Schema, DataType, FileExtension, SchemaType, Column
-from .etl import ETLFactory, ETLConstructionError, ETLPipeline
+from .etl import ETLFactory, ETLConstructionError, ETLPipeline, ETLResult
 from .extractor import (
     Extractor,
     SingleExtractor,
@@ -62,6 +62,7 @@ __all__ = [
     "SchemaType",
     "ETLFactory",
     "ETLPipeline",
+    "ETLResult",
     "ETLConstructionError",
     "Extractor",
     "SingleExtractor",

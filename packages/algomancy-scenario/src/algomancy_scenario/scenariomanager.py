@@ -280,13 +280,17 @@ class ScenarioManager:
         if self._auto_create_scenario:
             self.auto_create_scenarios([datasource.name])
 
-    def etl_data(self, files, dataset_name: str) -> None:
-        # Process the files
-        self._dm.etl_data(files, dataset_name)
+    def etl_data(self, files, dataset_name: str):
+        """Run ETL for ``dataset_name``; returns the underlying ETLResult.
 
-        # create scenario if auto-create is enabled
-        if self._auto_create_scenario:
+        Auto-creates a scenario only on successful loads.
+        """
+        result = self._dm.etl_data(files, dataset_name)
+
+        # create scenario if auto-create is enabled and ETL succeeded
+        if result.is_success and self._auto_create_scenario:
             self.auto_create_scenarios([dataset_name])
+        return result
 
     def auto_create_scenarios(self, keys: List[str] = None):
         for key in keys:
