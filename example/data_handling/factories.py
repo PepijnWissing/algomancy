@@ -1,49 +1,51 @@
+"""Example ETL factory showcasing M2–M5 features.
+
+The factory inherits from :class:`SimpleETLFactory` and reuses the
+default validation sequence wherever possible. Extraction is overridden
+because the CSV files use a semicolon separator and the inventory XLSX
+references a specific sheet by index — everything else lives on the
+``ETLFactory`` defaults (registry-driven extractor lookup, default
+validators, no-op transformer, ``DataSourceLoader``).
+"""
+
 from typing import Dict, TypeVar, cast
 
 from algomancy_data import (
-    File,
     CSVFile,
+    File,
+    ForeignKeyValidator,
     JSONFile,
-    XLSXFile,
-    ETLFactory,
+    OptionalColumnGuard,
+    SimpleETLFactory,
     ValidationSequence,
-    ExtractionSuccessVerification,
-    SchemaValidator,
     ValidationSeverity,
-    Loader,
-    DataSourceLoader,
+    XLSXFile,
 )
 from algomancy_data.extractor import (
-    ExtractionSequence,
     CSVSingleExtractor,
+    ExtractionSequence,
     JSONSingleExtractor,
-    XLSXSingleExtractor,
     XLSXMultiExtractor,
+    XLSXSingleExtractor,
 )
-from algomancy_data.transformer import TransformationSequence, CleanTransformer
+from algomancy_data.transformer import CleanTransformer, TransformationSequence
 
 F = TypeVar("F", bound=File)
 
 
-class ExampleETLFactory(ETLFactory):
-    def __init__(self, configs, logger=None):
-        super().__init__(configs, logger)
+class ExampleETLFactory(SimpleETLFactory):
+    """ETL factory for the bundled example data."""
 
     def create_extraction_sequence(
         self,
-        files: Dict[str, F],  # name to path format
+        files: Dict[str, F],
     ) -> ExtractionSequence:
-        """
-        Input:
-            files: A dictionary mapping file names to file paths.
+        """Custom extraction because of non-default CSV separator + sheet selection.
 
-        Output:
-            An extraction sequence object
-
-        raises:
-            ETLConstructionError: If any of the expected files or configurations are missing.
+        For schemas with no custom needs you would simply inherit the
+        registry-driven default from :class:`ETLFactory`.
         """
-        sequence = ExtractionSequence()
+        sequence = ExtractionSequence(logger=self.logger)
 
         sequence.add_extractor(
             CSVSingleExtractor(
@@ -83,27 +85,30 @@ class ExampleETLFactory(ETLFactory):
                 logger=self.logger,
             )
         )
-
         return sequence
 
     def create_validation_sequence(self) -> ValidationSequence:
-        vs = ValidationSequence(logger=self.logger)
+        """Default validators (Required/Schema/PK) + cross-table integrity.
 
-        vs.add_validator(ExtractionSuccessVerification())
-
-        vs.add_validator(
-            SchemaValidator(
-                schemas=self.schemas,
-                severity=ValidationSeverity.CRITICAL,
+        Adding a ``ForeignKeyValidator`` makes sure every SKU referenced
+        by a warehouse slot exists in the SKU table. ``OptionalColumnGuard``
+        materialises any missing optional column using its declared
+        ``Column.default`` so downstream code can rely on it.
+        """
+        sequence = super().create_validation_sequence()
+        sequence.add_validator(OptionalColumnGuard(self.schemas))
+        sequence.add_validator(
+            ForeignKeyValidator(
+                left_table="warehouse_layout",
+                left_col="slotid",
+                right_table="sku_data",
+                right_col="currentslot",
+                severity=ValidationSeverity.WARNING,
             )
         )
-
-        return vs
-
-    def create_transformation_sequence(self) -> TransformationSequence:
-        sequence = TransformationSequence()
-        sequence.add_transformer(CleanTransformer(self.logger))
         return sequence
 
-    def create_loader(self) -> Loader:
-        return DataSourceLoader(self.logger)
+    def create_transformation_sequence(self) -> TransformationSequence:
+        sequence = TransformationSequence(logger=self.logger)
+        sequence.add_transformer(CleanTransformer(self.logger))
+        return sequence
