@@ -28,14 +28,19 @@ from .extractor import (
     XLSXMultiExtractor,
     JSONSingleExtractor,
 )
-from .transformer import Transformer, NoopTransformer, CleanTransformer, JoinTransformer
+from .transformer import (
+    Transformer,
+    NoopTransformer,
+    CleanTransformer,
+    JoinTransformer,
+    OptionalColumnGuard,
+)
 from .validator import (
     Validator,
     DefaultValidator,
     ExtractionSuccessVerification,
     SchemaValidator,
     RequiredColumnsValidator,
-    OptionalColumnGuard,
     PrimaryKeyValidator,
     UniqueValueValidator,
     MissingValueValidator,
