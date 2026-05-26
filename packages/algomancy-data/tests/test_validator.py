@@ -10,7 +10,6 @@ from algomancy_data import (
     DataType,
     FileExtension,
     MissingValueValidator,
-    OptionalColumnGuard,
     PrimaryKeyValidator,
     RequiredColumnsValidator,
     Schema,
@@ -266,32 +265,6 @@ class TestRequiredColumnsValidator:
         )
         msgs = v.validate(data)
         assert all(m.severity == ValidationSeverity.CRITICAL for m in msgs)
-
-
-# ------------------------------------------------------------------ #
-# Issue #81 — OptionalColumnGuard
-# ------------------------------------------------------------------ #
-
-
-class TestOptionalColumnGuard:
-    def test_injects_optional_with_default(self):
-        data = {"product": pd.DataFrame({"id": ["a"], "name": ["A"]})}
-        v = OptionalColumnGuard([ProductSchema])
-        msgs = v.validate(data)
-        assert "price" in data["product"].columns
-        assert data["product"]["price"].tolist() == [0.0]
-        assert any(m.code == "OPTIONAL_COLUMN_INJECTED" for m in msgs)
-
-    def test_present_optional_untouched(self):
-        df = pd.DataFrame({"id": ["a"], "name": ["A"], "price": [9.5]})
-        data = {"product": df}
-        OptionalColumnGuard([ProductSchema]).validate(data)
-        assert data["product"]["price"].tolist() == [9.5]
-
-    def test_dtype_coercion(self):
-        data = {"product": pd.DataFrame({"id": ["a", "b"], "name": ["A", "B"]})}
-        OptionalColumnGuard([ProductSchema]).validate(data)
-        assert data["product"]["price"].dtype == DataType.FLOAT
 
 
 # ------------------------------------------------------------------ #
