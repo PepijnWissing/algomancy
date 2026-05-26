@@ -164,6 +164,10 @@ class Schema(ABC):
                 "Use datatype_groups() to inspect its column groups."
             )
 
+        return cls.get_legacy_columns_with_warning()
+
+    @classmethod
+    def get_legacy_columns_with_warning(cls) -> dict[str, Column]:
         warnings.warn(
             f"{cls.__name__} uses the legacy _DATATYPES dict. "
             "Declare Column instances as class attributes instead "
@@ -171,10 +175,11 @@ class Schema(ABC):
             DeprecationWarning,
             stacklevel=2,
         )
-        return {
+        legacy_columns = {
             col_name: Column(name=col_name, dtype=dtype)
             for col_name, dtype in cls._DATATYPES.items()
         }
+        return legacy_columns
 
     @classmethod
     def required_columns(cls) -> List[str]:
