@@ -9,7 +9,7 @@ from algomancy_utils import Logger
 from .datasource import DataClassification, BASEDATASOURCE
 from .etl import ETLFactory, ETLConstructionError
 from .schema import Schema, FileExtension
-from .validator import ValidationSequence
+from .validator import ValidationSequence, ValidationError
 from .file import File, CSVFile, JSONFile, XLSXFile
 
 E = TypeVar("E", bound=ETLFactory)
@@ -259,6 +259,10 @@ class StatefulDataManager(DataManager):
             elif os.path.isdir(item_path):
                 try:
                     self.load_data_from_dir(item)
+                except ValidationError as ve:
+                    self.logger.error(
+                        f"Failed to load directory '{item_path}' as a DataSource: {str(ve)}"
+                    )
                 except Exception as e:
                     self.logger.error(
                         f"Failed to load directory '{item_path}' as a DataSource: {str(e)}"
