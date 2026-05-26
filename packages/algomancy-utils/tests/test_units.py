@@ -86,14 +86,14 @@ def test_mass_time_data_examples_do_not_raise_and_return_strings():
 
 def test_money_and_custom_currency_scaling_contains_expected_unit_symbols():
     money = QUANTITIES["money"]
-    usd_base = BaseMeasurement(money["$"], min_digits=0, max_digits=3, decimals=2)
+    usd_base = BaseMeasurement(money["€"], min_digits=0, max_digits=3, decimals=2)
 
     vals = [0.50, 50, 1_234_567, 5_000_000_000]
     outs = [Measurement(usd_base, v).pretty() for v in vals]
 
     # Check that expected money unit symbols appear at some scales
-    assert any("$" in o for o in outs)
-    assert any("k$" in o or "M$" in o or "B$" in o or "T$" in o for o in outs)
+    assert any("€" in o for o in outs)
+    assert any("k€" in o or "M€" in o or "B€" in o or "T€" in o for o in outs)
 
     # Custom currency (EUR)
     eur = create_currency_quantity("€", "Euro")
@@ -122,8 +122,8 @@ def test_scale_to_same_unit_behaviour():
 
     # Money example: $ vs M$
     money = QUANTITIES["money"]
-    revenue = Measurement(BaseMeasurement(money["$"], decimals=2), 1_234_567)
-    budget = Measurement(BaseMeasurement(money["M$"], decimals=2), 5.5)
+    revenue = Measurement(BaseMeasurement(money["€"], decimals=2), 1_234_567)
+    budget = Measurement(BaseMeasurement(money["M€"], decimals=2), 5.5)
 
     rev_in_budget_units = revenue.scale_to_unit(budget.unit)
     bud_in_revenue_units = budget.scale_to_unit(revenue.unit)
