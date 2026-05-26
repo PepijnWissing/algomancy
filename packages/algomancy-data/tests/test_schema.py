@@ -85,6 +85,63 @@ class TestColumn:
 
 
 # ------------------------------------------------------------------ #
+# Cascade / FK metadata on Column (#112)
+# ------------------------------------------------------------------ #
+
+
+class TestColumnCascadeMetadata:
+    def test_cascade_field_defaults(self):
+        col = Column(name="col", dtype=DataType.STRING)
+        assert col.foreign_key is None
+        assert col.parent_requires_child is False
+        assert col.track_partial_loss is False
+
+    def test_foreign_key_basic(self):
+        col = Column(
+            name="product_id",
+            dtype=DataType.STRING,
+            foreign_key=("product", "id"),
+        )
+        assert col.foreign_key == ("product", "id")
+        assert col.parent_requires_child is False
+        assert col.track_partial_loss is False
+
+    def test_parent_requires_child_with_fk(self):
+        col = Column(
+            name="product_id",
+            dtype=DataType.STRING,
+            foreign_key=("product", "id"),
+            parent_requires_child=True,
+        )
+        assert col.parent_requires_child is True
+
+    def test_track_partial_loss_with_fk(self):
+        col = Column(
+            name="product_id",
+            dtype=DataType.STRING,
+            foreign_key=("product", "id"),
+            track_partial_loss=True,
+        )
+        assert col.track_partial_loss is True
+
+    def test_parent_requires_child_without_fk_raises(self):
+        with pytest.raises(ValueError, match="parent_requires_child"):
+            Column(
+                name="col",
+                dtype=DataType.STRING,
+                parent_requires_child=True,
+            )
+
+    def test_track_partial_loss_without_fk_raises(self):
+        with pytest.raises(ValueError, match="track_partial_loss"):
+            Column(
+                name="col",
+                dtype=DataType.STRING,
+                track_partial_loss=True,
+            )
+
+
+# ------------------------------------------------------------------ #
 # Schema.columns() (#74, #75)
 # ------------------------------------------------------------------ #
 

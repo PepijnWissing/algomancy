@@ -54,6 +54,19 @@ class Column:
         nullable: If ``True`` the column may contain null/NaN values.
         unique: If ``True`` all values in the column must be distinct.
         description: Human-readable description of the column.
+        foreign_key: Optional ``(parent_table, parent_column)`` tuple declaring
+            that this column references a column on another table. Used by
+            :class:`ForeignKeyValidator` (for reporting violations) and by
+            :class:`CascadeDropTransformer` (for cascade cleanup).
+        parent_requires_child: If ``True``, the referenced parent row requires
+            at least one referencing child on this relation; parents with zero
+            children get dropped by ``CascadeDropTransformer``. Only meaningful
+            when ``foreign_key`` is set.
+        track_partial_loss: If ``True``, enables partial-loss cascade for this
+            relation: parents that lose *some* (but not all) of their children
+            mid-pipeline are dropped. Requires a ``CascadeSnapshot`` paired
+            with the cascade transformer. Only meaningful when ``foreign_key``
+            is set.
     """
 
     name: str
@@ -64,6 +77,22 @@ class Column:
     nullable: bool = False
     unique: bool = False
     description: str = field(default="")
+    foreign_key: Tuple[str, str] | None = None
+    parent_requires_child: bool = False
+    track_partial_loss: bool = False
+
+    def __post_init__(self) -> None:
+        if self.foreign_key is None:
+            if self.parent_requires_child:
+                raise ValueError(
+                    f"Column '{self.name}': parent_requires_child=True requires "
+                    "foreign_key to be set."
+                )
+            if self.track_partial_loss:
+                raise ValueError(
+                    f"Column '{self.name}': track_partial_loss=True requires "
+                    "foreign_key to be set."
+                )
 
 
 class Schema(ABC):

@@ -420,7 +420,7 @@ class OptionalColumnGuard(Validator):
                 df[col_name] = col.default
                 try:
                     df[col_name] = df[col_name].astype(col.dtype)
-                except (ValueError, TypeError):
+                except ValueError, TypeError:
                     # Default may not be coercible (e.g. None for non-nullable
                     # numerics); leave dtype as-is and let SchemaValidator flag.
                     pass
@@ -715,6 +715,43 @@ class ForeignKeyValidator(Validator):
                     code="FK_VIOLATION",
                 )
         return self.messages
+
+    @classmethod
+    def from_schemas(
+        cls,
+        schemas: Iterable[type],
+        severity: ValidationSeverity = ValidationSeverity.ERROR,
+    ) -> List["ForeignKeyValidator"]:
+        """Build a list of validators from ``Column.foreign_key`` declarations.
+
+        Walks each schema's columns; for every column with a non-null
+        ``foreign_key`` declaration, returns a ``ForeignKeyValidator``
+        instance covering that relation. Columns sharing the same parent
+        table on the same schema are collapsed into a single composite-key
+        validator.
+
+        Args:
+            schemas: Iterable of ``Schema`` subclasses.
+            severity: Severity for emitted FK-violation messages.
+
+        Returns:
+            List of ``ForeignKeyValidator`` instances, one per derived
+            relation. The list is empty if no schema declares a FK.
+        """
+        # Local import to avoid a circular import at module load time.
+        from .relations import resolve_relations_from_schemas
+
+        relations = resolve_relations_from_schemas(list(schemas))
+        return [
+            cls(
+                left_table=r.child_table,
+                left_col=list(r.child_cols),
+                right_table=r.parent_table,
+                right_col=list(r.parent_cols),
+                severity=severity,
+            )
+            for r in relations
+        ]
 
 
 class ValidationSequence:

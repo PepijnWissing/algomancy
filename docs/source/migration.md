@@ -180,3 +180,53 @@ can now delete a lot of plumbing:
 
 See [Extending file types and data types](extending-ref) for the public
 `register_extractor` API introduced in M5.
+
+## Bonus: M7 relational cascade cleanup
+
+M7 is **fully additive** — no existing pipeline changes behavior unless
+you add the new transformer. Three new optional `Column` fields and two
+new transformers let you declaratively clean up incomplete input data.
+
+### Adding FK declarations to existing schemas
+
+```{code-block} python
+:caption: Before — relations are implicit
+class OrderSchema(Schema):
+    _FILENAME = "order"
+    _EXTENSION = FileExtension.CSV
+    _SCHEMA_TYPE = SchemaType.SINGLE
+
+    ID = Column(name="id", dtype=DataType.STRING, primary_key=True)
+    PRODUCT_ID = Column(name="product_id", dtype=DataType.STRING)
+```
+
+```{code-block} python
+:caption: After — relations declared on the FK column
+class OrderSchema(Schema):
+    _FILENAME = "order"
+    _EXTENSION = FileExtension.CSV
+    _SCHEMA_TYPE = SchemaType.SINGLE
+
+    ID = Column(name="id", dtype=DataType.STRING, primary_key=True)
+    PRODUCT_ID = Column(
+        name="product_id",
+        dtype=DataType.STRING,
+        foreign_key=("product", "id"),
+        parent_requires_child=True,   # opt-in
+    )
+```
+
+### Wiring `CascadeDropTransformer` into a `SimpleETLFactory`
+
+```{code-block} python
+:caption: Opt-in cleanup
+from algomancy_data import CascadeDropTransformer, SimpleETLFactory
+
+factory = SimpleETLFactory(
+    schemas=[ProductSchema, OrderSchema],
+    transformers=[CascadeDropTransformer(schemas=[ProductSchema, OrderSchema])],
+)
+```
+
+See [Relational cascade cleanup](cascade-cleanup-ref) for the full feature
+description, including partial-loss detection via `CascadeSnapshot`.

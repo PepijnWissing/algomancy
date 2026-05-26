@@ -5,6 +5,19 @@
 
 ## Prerelease
 ### Added
+- **Relational cascade cleanup (M7)**: `algomancy-data` ships a declarative
+  cascade-drop mechanism. Declare foreign keys on schemas via
+  `Column(foreign_key=("parent_table", "parent_col"))`, opt parents into
+  cascade with `parent_requires_child=True`, and optionally
+  `track_partial_loss=True`. Add `CascadeDropTransformer` to your
+  transformation sequence to drop orphans and parents-with-missing-children
+  to a fixpoint, and pair it with `CascadeSnapshot` to enable partial-loss
+  detection. Drops surface as aggregated `ValidationMessage`s with codes
+  `CASCADE_ORPHAN_DROP`, `CASCADE_REQUIRED_CHILD_DROP`, and
+  `CASCADE_PARTIAL_LOSS_DROP` at `Severity.ERROR`. `ForeignKeyValidator`
+  now also exposes `from_schemas([...])` to auto-derive validators from the
+  same declarations. Fully opt-in: pipelines that don't add the transformer
+  see no change.
 - **Quickstart Module**: Introduced `algomancy-quickstart` package with an interactive setup wizard (`QuickstartWizard`)
   that streamlines the creation of new Algomancy applications. The wizard guides users through five configurable steps: 
   1. creating folder structure and generating a basic `main.py`, 

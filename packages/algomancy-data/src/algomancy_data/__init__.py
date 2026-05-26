@@ -35,7 +35,15 @@ from .extractor import (
     JSONSingleExtractor,
     DataFrameExtractor,
 )
-from .transformer import Transformer, NoopTransformer, CleanTransformer, JoinTransformer
+from .transformer import (
+    Transformer,
+    NoopTransformer,
+    CleanTransformer,
+    JoinTransformer,
+    CascadeDropTransformer,
+    CascadeSnapshot,
+)
+from .relations import Relation, resolve_relations_from_schemas, merge_relations
 from .validator import (
     Validator,
     DefaultValidator,
@@ -93,6 +101,11 @@ __all__ = [
     "NoopTransformer",
     "CleanTransformer",
     "JoinTransformer",
+    "CascadeDropTransformer",
+    "CascadeSnapshot",
+    "Relation",
+    "resolve_relations_from_schemas",
+    "merge_relations",
     "Validator",
     "DefaultValidator",
     "ExtractionSuccessVerification",

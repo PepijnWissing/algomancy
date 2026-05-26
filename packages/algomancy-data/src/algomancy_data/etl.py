@@ -189,6 +189,11 @@ class ETLPipeline:
         # ---- Transformation / Load -----------------------------------
         # Programmer errors in user-supplied transformers/loaders propagate.
         transformed_data = self.transformation_sequence.run_transformation(raw_data)
+        transform_messages = self.transformation_sequence.collect_messages()
+        if transform_messages:
+            validation_result = _augment_with_messages(
+                validation_result, transform_messages
+            )
         datasource = self.loader.load(
             name=self.destination_name,
             data=transformed_data,
@@ -199,8 +204,8 @@ class ETLPipeline:
         if self.logger:
             self.logger.log("ETL job completed.")
         return ETLResult(
-            status="success",
-            datasource=datasource,
+            status="success" if validation_result.is_valid else "failed",
+            datasource=datasource if validation_result.is_valid else None,
             validation_result=validation_result,
             raised=None,
         )
