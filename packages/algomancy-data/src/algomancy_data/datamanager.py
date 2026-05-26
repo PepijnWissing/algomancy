@@ -7,7 +7,7 @@ import pandas as pd
 from algomancy_utils import Logger
 
 from .datasource import DataClassification, BASEDATASOURCE
-from .etl import ETLFactory, ETLConstructionError
+from .etl import ETLFactory, ETLConstructionError, ETLResult
 from .schema import Schema, FileExtension
 from .validator import ValidationSequence, ValidationError
 from .file import File, CSVFile, JSONFile, XLSXFile
@@ -131,22 +131,39 @@ class DataManager(ABC):
 
         return files
 
-    def etl_data(self, files: Dict[str, File], dataset_name: str) -> None:
-        """
-        todo write header
+    def etl_data(self, files: Dict[str, File], dataset_name: str) -> ETLResult:
+        """Run the ETL pipeline for ``dataset_name`` and store the result.
 
-        raises:
-            ETLConstructionError: if ETL pipeline construction fails.
-            ValidationError: if data validation yields critical errors.
+        Args:
+            files: Mapping of logical file names to ``File`` objects.
+            dataset_name: Logical name for the resulting dataset.
+
+        Returns:
+            ETLResult: structured outcome. Inspect ``result.status`` to tell
+            success from failure and ``result.validation_result.messages``
+            for details.
+
+        Raises:
+            ETLConstructionError: If pipeline construction fails.
+            Exception: Programmer errors from user-supplied components are
+                allowed to propagate unchanged.
         """
-        etl = self._etl_factory.build_pipeline(
-            dataset_name, files, self.logger
-        )  # Raises ETLError
+        etl = self._etl_factory.build_pipeline(dataset_name, files, self.logger)
         self.log(f"ETL pipeline for dataset '{dataset_name}' created.")
-        ds = etl.run()  # Raises ValidationError
-        self._data[dataset_name] = ds
-        if self.logger:
-            self.logger.success(f"ETL pipeline for dataset '{dataset_name}' completed.")
+        result = etl.run()
+        if result.is_success:
+            self._data[dataset_name] = result.datasource
+            if self.logger:
+                self.logger.success(
+                    f"ETL pipeline for dataset '{dataset_name}' completed."
+                )
+        else:
+            if self.logger:
+                self.logger.error(
+                    f"ETL pipeline for dataset '{dataset_name}' failed: "
+                    f"{result.validation_result.counts_by_severity if result.validation_result else 'unknown'}"
+                )
+        return result
 
     def create_validation_sequence(self) -> ValidationSequence:
         return self._etl_factory.create_validation_sequence()
@@ -191,16 +208,30 @@ class StatefulDataManager(DataManager):
         super().__init__(etl_factory, schemas, save_type, data_object_type, logger)
         self._data_folder = data_folder
         self._data: Dict[str, BASEDATASOURCE] = {}  # Loading
+        self.startup_errors: List[Tuple[str, Exception]] = []
 
-    def startup(self):
+    def startup(self) -> None:
+        """Load persisted data sources from the data folder.
+
+        Each item is loaded independently; if a single file/directory fails
+        to load it is logged and skipped, and any partial in-memory state
+        for that item is rolled back so the manager remains consistent.
+        Other items continue to load. Failures are surfaced through the
+        configured logger; ``self.startup_errors`` collects them so callers
+        can inspect what happened.
+        """
+        self.startup_errors: List[Tuple[str, Exception]] = []
         try:
             self._load_data_from_data_folder()
             self.log(f"Data folder '{self._data_folder}' loaded.")
-        except Exception as e:
+        except Exception as exc:
+            # Hitting this branch indicates a defect in the loader itself;
+            # individual file failures are handled inside the loop.
+            self.startup_errors.append((self._data_folder, exc))
             if self.logger:
-                self.logger.error(f"Data load on startup failed: {str(e)}")
-                self.logger.log_traceback(e)
-            print(e)
+                self.logger.error(f"Data load on startup failed: {exc}")
+                self.logger.log_traceback(exc)
+            raise
 
     def load_data_from_file(self, file_name: str, root: str | None = None) -> None:
         if root is None:
@@ -241,33 +272,42 @@ class StatefulDataManager(DataManager):
             if os.path.isfile(item_path):
                 # Verify that item is of the appropriate data format
                 if not item.endswith(f".{self._save_type}"):
-                    self.logger.warning(
-                        f"Skipping file '{item_path}' because it is not a {self._save_type} file."
-                    )
+                    if self.logger:
+                        self.logger.warning(
+                            f"Skipping file '{item_path}' because it is not a {self._save_type} file."
+                        )
                     continue
 
+                pre_keys = set(self._data.keys())
                 try:
                     self.load_data_from_file(item)
-
-                except Exception as e:
-                    self.logger.error(
-                        f"Failed to load file '{item_path}' as a DataSource: {str(e)}"
-                    )
-                    self.traceback = self.logger.log_traceback(e)
+                except Exception as exc:
+                    # Roll back any partial keys that this load added so the
+                    # manager is never left in an undefined state.
+                    for added in set(self._data.keys()) - pre_keys:
+                        del self._data[added]
+                    if self.logger:
+                        self.logger.error(
+                            f"Failed to load file '{item_path}' as a DataSource: {exc}"
+                        )
+                        self.logger.log_traceback(exc)
+                    self.startup_errors.append((item_path, exc))
 
             # If it's a directory, run ETL
             elif os.path.isdir(item_path):
+                pre_keys = set(self._data.keys())
                 try:
                     self.load_data_from_dir(item)
-                except ValidationError as ve:
-                    self.logger.error(
-                        f"Failed to load directory '{item_path}' as a DataSource: {str(ve)}"
-                    )
-                except Exception as e:
-                    self.logger.error(
-                        f"Failed to load directory '{item_path}' as a DataSource: {str(e)}"
-                    )
-                    self.logger.log_traceback(e)
+                except Exception as exc:
+                    for added in set(self._data.keys()) - pre_keys:
+                        del self._data[added]
+                    if self.logger:
+                        self.logger.error(
+                            f"Failed to load directory '{item_path}' as a DataSource: {exc}"
+                        )
+                        if not isinstance(exc, ValidationError):
+                            self.logger.log_traceback(exc)
+                    self.startup_errors.append((item_path, exc))
 
     def load_data_from_dir(self, directory: str, root: str | None = None) -> None:
         if root is None:
@@ -285,7 +325,13 @@ class StatefulDataManager(DataManager):
 
         # Run ETL
         prepared_files = self.prepare_files(file_items_with_path=file_items_with_path)
-        self.etl_data(prepared_files, dataset_name)
+        result = self.etl_data(prepared_files, dataset_name)
+        if result.is_failure:
+            # Surface failure to the outer startup loop so it can roll back.
+            raise ETLConstructionError(
+                f"ETL for dataset '{dataset_name}' failed: "
+                f"{result.validation_result.counts_by_severity if result.validation_result else 'unknown'}"
+            )
 
     def delete_data(
         self, data_key: str, prevent_masterdata_removal: bool = False

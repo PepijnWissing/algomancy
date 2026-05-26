@@ -333,12 +333,25 @@ def process_imports(
         files = prepare_files_from_upload(sm, filenames, contents)
 
         # Load the data
-        sm.etl_data(files, dataset_name)
+        result = sm.etl_data(files, dataset_name)
+
+        # M3: data-quality failures arrive as ETLResult(status='failed') rather
+        # than as exceptions. Surface validation messages to the user.
+        if result is not None and getattr(result, "is_failure", False):
+            counts = (
+                result.validation_result.counts_by_severity
+                if result.validation_result is not None
+                else {}
+            )
+            error_text = f"Validation failed: {counts}"
+            sm.logger.error(error_text)
+            return no_update, False, "", False, error_text, True, ""
 
         # Return successful response
         return datetime.now(), False, "Data loaded successfully!", True, "", False, ""
 
     except ValidationError as e:
+        # Retained for back-compat; new flow no longer raises this.
         sm.logger.error(f"Validation error: {str(e)}")
         return no_update, False, "", False, f"Validation error: {str(e)}", True, ""
 

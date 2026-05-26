@@ -43,7 +43,7 @@ def fill_empty(data: pd.DataFrame) -> pd.DataFrame:
     Returns:
         DataFrame with values forward-filled along axis=1.
     """
-    return data.fillna(method="ffill", axis=1)
+    return data.ffill(axis=1)
 
 
 def drop_empty(data: pd.DataFrame) -> pd.DataFrame:
