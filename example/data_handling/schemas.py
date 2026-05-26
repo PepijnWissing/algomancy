@@ -1,4 +1,4 @@
-from algomancy_data import Column, DataType, FileExtension, Schema
+from algomancy_data import Column, ColumnGroup, DataType, FileExtension, Schema
 from algomancy_data.schema import SchemaType
 
 
@@ -95,24 +95,20 @@ class LocationSchema(Schema):
     _EXTENSION = FileExtension.XLSX
     _SCHEMA_TYPE = SchemaType.MULTI
 
-    # steden
-    COUNTRY = "Country"
-    CITY = "City"
-
-    # klanten
-    ID = "ID"
-    Name = "Naam"
-
-    _DATATYPES = {
-        "Steden": {
-            COUNTRY: DataType.STRING,
-            CITY: DataType.STRING,
-        },
-        "Klanten": {
-            ID: DataType.INTEGER,
-            Name: DataType.STRING,
-        },
-    }
+    STEDEN = ColumnGroup(
+        "Steden",
+        [
+            Column("Country", dtype=DataType.STRING),
+            Column("City", dtype=DataType.STRING),
+        ],
+    )
+    KLANTEN = ColumnGroup(
+        "Klanten",
+        [
+            Column("ID", dtype=DataType.INTEGER, primary_key=True),
+            Column("Naam", dtype=DataType.STRING),
+        ],
+    )
 
 
 example_schemas = [

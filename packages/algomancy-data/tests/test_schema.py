@@ -4,7 +4,7 @@ import warnings
 
 import pytest
 
-from algomancy_data import Column, DataType, FileExtension, Schema
+from algomancy_data import Column, ColumnGroup, DataType, FileExtension, Schema
 from algomancy_data.schema import SchemaType
 
 
@@ -43,6 +43,28 @@ class MultiSchema(Schema):
         "SheetA": {"col_a": DataType.STRING},
         "SheetB": {"col_b": DataType.INTEGER},
     }
+
+
+class ModernMultiSchema(Schema):
+    _FILENAME = "modern_multi"
+    _EXTENSION = FileExtension.XLSX
+    _SCHEMA_TYPE = SchemaType.MULTI
+
+    SHEET_A = ColumnGroup(
+        "SheetA",
+        [
+            Column("col_a", dtype=DataType.STRING, primary_key=True),
+            Column("col_b", dtype=DataType.INTEGER),
+            Column("col_c", dtype=DataType.FLOAT, optional=True, default=0.0),
+        ],
+    )
+    SHEET_B = ColumnGroup(
+        "SheetB",
+        [
+            Column("x", dtype=DataType.INTEGER, primary_key=True),
+            Column("y", dtype=DataType.INTEGER, primary_key=True),
+        ],
+    )
 
 
 # ------------------------------------------------------------------ #
@@ -247,3 +269,145 @@ class TestIdentityAccessors:
             "name": DataType.STRING,
             "score": DataType.FLOAT,
         }
+
+
+# ------------------------------------------------------------------ #
+# ColumnGroup dataclass
+# ------------------------------------------------------------------ #
+
+
+class TestColumnGroup:
+    def test_construction(self):
+        cg = ColumnGroup("Sheet1", [Column("a", dtype=DataType.STRING)])
+        assert cg.name == "Sheet1"
+        assert len(cg.columns) == 1
+
+    def test_columns_are_column_instances(self):
+        cg = ColumnGroup(
+            "Sheet1",
+            [
+                Column("a", dtype=DataType.STRING),
+                Column("b", dtype=DataType.INTEGER),
+            ],
+        )
+        assert all(isinstance(c, Column) for c in cg.columns)
+
+
+# ------------------------------------------------------------------ #
+# column_groups() classmethod
+# ------------------------------------------------------------------ #
+
+
+class TestColumnGroups:
+    def test_returns_nested_column_mapping(self):
+        groups = ModernMultiSchema.column_groups()
+        assert set(groups.keys()) == {"SheetA", "SheetB"}
+        assert all(isinstance(v, Column) for v in groups["SheetA"].values())
+
+    def test_column_metadata_preserved(self):
+        groups = ModernMultiSchema.column_groups()
+        assert groups["SheetA"]["col_a"].primary_key is True
+        assert groups["SheetA"]["col_c"].optional is True
+        assert groups["SheetA"]["col_c"].default == 0.0
+
+    def test_joint_primary_key_columns(self):
+        groups = ModernMultiSchema.column_groups()
+        assert groups["SheetB"]["x"].primary_key is True
+        assert groups["SheetB"]["y"].primary_key is True
+
+    def test_raises_on_single_schema(self):
+        with pytest.raises(ValueError, match="MULTI"):
+            SingleSchema.column_groups()
+
+    def test_legacy_fallback_warns(self):
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            MultiSchema.column_groups()
+        assert len(w) == 1
+        assert issubclass(w[0].category, DeprecationWarning)
+        assert "MultiSchema" in str(w[0].message)
+
+    def test_legacy_fallback_builds_bare_columns(self):
+        with warnings.catch_warnings(record=True):
+            warnings.simplefilter("always")
+            groups = MultiSchema.column_groups()
+        assert isinstance(groups["SheetA"]["col_a"], Column)
+        assert groups["SheetA"]["col_a"].optional is False
+        assert groups["SheetA"]["col_a"].primary_key is False
+
+    def test_no_warning_for_new_style(self):
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            ModernMultiSchema.column_groups()
+        assert not any(issubclass(x.category, DeprecationWarning) for x in w)
+
+    def test_datatype_groups_no_warning_for_new_style(self):
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            ModernMultiSchema.datatype_groups()
+        assert not any(issubclass(x.category, DeprecationWarning) for x in w)
+
+
+# ------------------------------------------------------------------ #
+# get_subschema() with Column injection
+# ------------------------------------------------------------------ #
+
+
+class TestModernMultiSubschema:
+    def test_subschema_is_single(self):
+        sub = ModernMultiSchema.get_subschema("SheetA")
+        assert sub.is_single()
+
+    def test_subschema_columns_are_proper_column_objects(self):
+        sub = ModernMultiSchema.get_subschema("SheetA")
+        cols = sub.columns()
+        assert isinstance(cols["col_a"], Column)
+        assert isinstance(cols["col_c"], Column)
+
+    def test_subschema_preserves_primary_key(self):
+        sub = ModernMultiSchema.get_subschema("SheetA")
+        assert sub.primary_key() == ("col_a",)
+
+    def test_subschema_preserves_optional(self):
+        sub = ModernMultiSchema.get_subschema("SheetA")
+        assert "col_c" in sub.optional_columns()
+
+    def test_subschema_required_columns(self):
+        sub = ModernMultiSchema.get_subschema("SheetA")
+        assert sub.required_columns() == ["col_a", "col_b"]
+
+    def test_subschema_datatypes(self):
+        sub = ModernMultiSchema.get_subschema("SheetA")
+        assert sub.datatypes() == {
+            "col_a": DataType.STRING,
+            "col_b": DataType.INTEGER,
+            "col_c": DataType.FLOAT,
+        }
+
+    def test_joint_pk_subschema(self):
+        sub = ModernMultiSchema.get_subschema("SheetB")
+        assert set(sub.primary_key()) == {"x", "y"}
+
+    def test_subschema_name_includes_key(self):
+        sub = ModernMultiSchema.get_subschema("SheetA")
+        assert "SheetA" in sub.__name__
+
+    def test_sub_names_unchanged(self):
+        assert ModernMultiSchema.sub_names() == ["SheetA", "SheetB"]
+
+    def test_legacy_subschema_still_works(self):
+        sub = MultiSchema.get_subschema("SheetA")
+        assert sub.is_single()
+        assert sub.datatypes() == {"col_a": DataType.STRING}
+
+
+# ------------------------------------------------------------------ #
+# get_data_members() excludes ColumnGroup attrs
+# ------------------------------------------------------------------ #
+
+
+class TestGetDataMembersExcludesColumnGroup:
+    def test_column_group_attrs_not_in_data_members(self):
+        members = ModernMultiSchema.get_data_members()
+        assert "SHEET_A" not in members
+        assert "SHEET_B" not in members
