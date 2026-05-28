@@ -326,7 +326,8 @@ class StatefulDataManager(DataManager):
                         self.logger.error(
                             f"Failed to load directory '{item_path}' as a DataSource: {exc}"
                         )
-                        self.logger.log_traceback(exc)
+                        if not isinstance(exc, ETLConstructionError):
+                            self.logger.log_traceback(exc)
                     self.startup_errors.append((item_path, exc))
 
     def load_data_from_dir(self, directory: str, root: str | None = None) -> None:
