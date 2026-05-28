@@ -10,6 +10,11 @@ from algomancy_data import (
     ExtractionSuccessVerification,
     SchemaValidator,
     ValidationSeverity,
+    RequiredColumnsValidator,
+    OptionalColumnGuard,
+    PrimaryKeyValidator,
+    UniqueValueValidator,
+    MissingValueValidator,
     Loader,
     DataSourceLoader,
 )
@@ -92,9 +97,39 @@ class ExampleETLFactory(ETLFactory):
         vs.add_validator(ExtractionSuccessVerification())
 
         vs.add_validator(
+            RequiredColumnsValidator(
+                schemas=self.schemas,
+                severity=ValidationSeverity.CRITICAL,
+            )
+        )
+
+        vs.add_validator(
             SchemaValidator(
                 schemas=self.schemas,
                 severity=ValidationSeverity.CRITICAL,
+            )
+        )
+
+        vs.add_validator(
+            PrimaryKeyValidator(
+                schemas=self.schemas,
+                severity=ValidationSeverity.ERROR,
+            )
+        )
+
+        vs.add_validator(
+            MissingValueValidator(
+                table="employees",
+                columns=["name", "email", "is_active"],
+                severity=ValidationSeverity.ERROR,
+            )
+        )
+
+        vs.add_validator(
+            UniqueValueValidator(
+                table="employees",
+                columns=["email"],
+                severity=ValidationSeverity.WARNING,
             )
         )
 
@@ -102,6 +137,9 @@ class ExampleETLFactory(ETLFactory):
 
     def create_transformation_sequence(self) -> TransformationSequence:
         sequence = TransformationSequence()
+        sequence.add_transformer(
+            OptionalColumnGuard(schemas=self.schemas, logger=self.logger)
+        )
         sequence.add_transformer(CleanTransformer(self.logger))
         return sequence
 

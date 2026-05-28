@@ -17,7 +17,7 @@ can import most types via ``from algomancy_data import ...``.
 
 from .datamanager import DataManager, StatelessDataManager, StatefulDataManager
 from .datasource import BaseDataSource, DataSource, DataClassification, BASEDATASOURCE
-from .schema import Schema, DataType, FileExtension, SchemaType, Column
+from .schema import Schema, DataType, FileExtension, SchemaType, Column, ColumnGroup
 from .etl import (
     ETLFactory,
     SimpleETLFactory,
@@ -35,14 +35,19 @@ from .extractor import (
     JSONSingleExtractor,
     DataFrameExtractor,
 )
-from .transformer import Transformer, NoopTransformer, CleanTransformer, JoinTransformer
+from .transformer import (
+    Transformer,
+    NoopTransformer,
+    CleanTransformer,
+    JoinTransformer,
+    OptionalColumnGuard,
+)
 from .validator import (
     Validator,
     DefaultValidator,
     ExtractionSuccessVerification,
     SchemaValidator,
     RequiredColumnsValidator,
-    OptionalColumnGuard,
     PrimaryKeyValidator,
     UniqueValueValidator,
     MissingValueValidator,
@@ -74,6 +79,7 @@ __all__ = [
     "BASEDATASOURCE",
     "Schema",
     "Column",
+    "ColumnGroup",
     "DataType",
     "SchemaType",
     "ETLFactory",

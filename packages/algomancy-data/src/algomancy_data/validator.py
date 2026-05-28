@@ -389,51 +389,6 @@ class RequiredColumnsValidator(Validator):
         return self.messages
 
 
-class OptionalColumnGuard(Validator):
-    """Materialise missing optional columns using each ``Column.default``.
-
-    Acts as a validator/transformer hybrid: missing optional columns are
-    injected into the corresponding DataFrame (in-place) using
-    ``Column.default`` and coerced to the declared dtype. Downstream code can
-    then assume the full schema is present.
-
-    Emits one INFO message per injected column.
-
-    Attributes:
-        _schemas: Schemas whose optional columns may be injected.
-    """
-
-    def __init__(self, schemas: List[Schema]) -> None:
-        super().__init__()
-        self._schemas = schemas
-
-    def validate(self, data: Dict[str, pd.DataFrame]) -> List[ValidationMessage]:
-        table_map = _schema_table_map(self._schemas)
-        for table_name, schema in table_map.items():
-            if table_name not in data:
-                continue
-            df = data[table_name]
-            cols = schema.columns()
-            for col_name, col in cols.items():
-                if not col.optional or col_name in df.columns:
-                    continue
-                df[col_name] = col.default
-                try:
-                    df[col_name] = df[col_name].astype(col.dtype)
-                except (ValueError, TypeError):
-                    # Default may not be coercible (e.g. None for non-nullable
-                    # numerics); leave dtype as-is and let SchemaValidator flag.
-                    pass
-                self.add_message(
-                    ValidationSeverity.INFO,
-                    f"Injected optional column '{col_name}' with default into {table_name}.",
-                    table=table_name,
-                    column=col_name,
-                    code="OPTIONAL_COLUMN_INJECTED",
-                )
-        return self.messages
-
-
 def _composite_key(df: pd.DataFrame, columns: List[str]) -> pd.Series:
     """Render a composite key as tuple values for duplicate/null checks."""
     if len(columns) == 1:
