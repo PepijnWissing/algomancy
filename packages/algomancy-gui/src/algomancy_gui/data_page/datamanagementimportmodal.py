@@ -4,7 +4,7 @@ import dash
 import dash_bootstrap_components as dbc
 from dash import html, dcc, get_app, callback, Output, Input, no_update, State
 
-from algomancy_data import ValidationError, DataManager
+from algomancy_data import ValidationError
 from algomancy_scenario import ScenarioManager
 from .filenamematcher import match_file_names
 
@@ -389,8 +389,9 @@ def prepare_files_from_upload(sm, filenames, contents):
         for file_name in filenames
     ]
 
-    # Return prepared files
-    return DataManager.prepare_files(file_items_with_content=file_items)
+    # Return prepared files (instance method so schema-declared extensions
+    # are honoured when matching uploaded files to schemas).
+    return sm._dm.prepare_files(file_items_with_content=file_items)
 
 
 @callback(
