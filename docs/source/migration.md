@@ -115,10 +115,12 @@ sequence = ValidationSequence(
 | Validator | Replaces ad-hoc check |
 |---|---|
 | `RequiredColumnsValidator` | manual "is column X here?" checks |
-| `OptionalColumnGuard` | manual `df[col] = default` lines |
 | `PrimaryKeyValidator` | per-project uniqueness/non-null checks |
 | `UniqueValueValidator` / `MissingValueValidator` | per-column checks |
 | `ForeignKeyValidator` (M5) | per-project FK checks |
+
+The `OptionalColumnGuard` transformer (which injects missing optional
+columns using `Column.default`) replaces manual `df[col] = default` lines.
 
 ## v0.8.0 — Predictable ETL termination
 

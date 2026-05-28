@@ -95,6 +95,37 @@ class Column:
                 )
 
 
+@dataclass
+class ColumnGroup:
+    """Metadata for one sheet (sub-schema) of a MULTI schema.
+
+    Declare ``ColumnGroup`` instances as class attributes on a ``Schema``
+    subclass with ``_SCHEMA_TYPE = SchemaType.MULTI``::
+
+        class LocationSchema(Schema):
+            _FILENAME = "multisheet"
+            _EXTENSION = FileExtension.XLSX
+            _SCHEMA_TYPE = SchemaType.MULTI
+
+            STEDEN = ColumnGroup("Steden", [
+                Column("Country", dtype=DataType.STRING),
+                Column("City",    dtype=DataType.STRING),
+            ])
+            KLANTEN = ColumnGroup("Klanten", [
+                Column("ID",   dtype=DataType.INTEGER, primary_key=True),
+                Column("Naam", dtype=DataType.STRING),
+            ])
+
+    Args:
+        name:    Actual sheet / sub-schema name as it appears in the source
+                 file (may contain spaces and mixed case).
+        columns: Ordered list of ``Column`` objects for this sub-schema.
+    """
+
+    name: str
+    columns: List[Column]
+
+
 class Schema(ABC):
     """Abstract base class for table schemas.
 
@@ -208,6 +239,10 @@ class Schema(ABC):
                 "Use datatype_groups() to inspect its column groups."
             )
 
+        return cls.get_legacy_columns_with_warning()
+
+    @classmethod
+    def get_legacy_columns_with_warning(cls) -> dict[str, Column]:
         warnings.warn(
             f"{cls.__name__} uses the legacy _DATATYPES dict. "
             "Declare Column instances as class attributes instead "
@@ -215,9 +250,58 @@ class Schema(ABC):
             DeprecationWarning,
             stacklevel=2,
         )
-        return {
+        legacy_columns = {
             col_name: Column(name=col_name, dtype=dtype)
             for col_name, dtype in cls._DATATYPES.items()
+        }
+        return legacy_columns
+
+    @classmethod
+    def column_groups(cls) -> Dict[str, Dict[str, Column]]:
+        """Return ``{group_name: {col_name: Column}}`` for MULTI schemas.
+
+        Scans ``vars(cls)`` for ``ColumnGroup`` attributes first (new API).
+        Falls back to ``_DATATYPES`` for legacy schemas, emitting a
+        ``DeprecationWarning`` and constructing bare ``Column`` objects
+        (``optional=False``, ``primary_key=False``, ``default=None``).
+
+        Raises:
+            ValueError:          If called on a SINGLE schema.
+            NotImplementedError: If neither ColumnGroup attrs nor ``_DATATYPES``
+                                 are defined.
+        """
+        if not cls.is_multi():
+            raise ValueError(
+                "column_groups() is only available for MULTI schemas. "
+                "Use columns() for SINGLE schemas."
+            )
+
+        group_attrs = [
+            attr for attr in vars(cls).values() if isinstance(attr, ColumnGroup)
+        ]
+        if group_attrs:
+            return {
+                grp.name: {col.name: col for col in grp.columns} for grp in group_attrs
+            }
+
+        if cls._DATATYPES == "default_datatypes":
+            raise NotImplementedError(
+                f"{cls.__name__} must declare ColumnGroup attributes or override _DATATYPES"
+            )
+
+        warnings.warn(
+            f"{cls.__name__} uses the legacy _DATATYPES dict for a MULTI schema. "
+            "Declare ColumnGroup instances as class attributes instead "
+            "(e.g. STEDEN = ColumnGroup('Steden', [Column('Country', dtype=DataType.STRING)])).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return {
+            group_name: {
+                col_name: Column(name=col_name, dtype=dtype)
+                for col_name, dtype in sub_dict.items()
+            }
+            for group_name, sub_dict in cls._DATATYPES.items()
         }
 
     @classmethod
@@ -276,9 +360,27 @@ class Schema(ABC):
 
     @classmethod
     def datatype_groups(cls) -> Dict[str, Dict[str, DataType]]:
-        """Return ``{sub_name: {column_name: DataType}}`` for MULTI schemas."""
+        """Return ``{sub_name: {column_name: DataType}}`` for MULTI schemas.
+
+        Derived from ``ColumnGroup`` class attributes when present; falls back
+        to the legacy ``_DATATYPES`` nested dict otherwise.
+
+        Raises:
+            ValueError:          If called on a SINGLE schema.
+            NotImplementedError: If neither ColumnGroup attrs nor ``_DATATYPES``
+                                 are defined.
+        """
         if not cls.is_multi():
             raise ValueError("datatype_groups() is only available for MULTI schemas")
+
+        group_attrs = [
+            attr for attr in vars(cls).values() if isinstance(attr, ColumnGroup)
+        ]
+        if group_attrs:
+            return {
+                grp.name: {col.name: col.dtype for col in grp.columns}
+                for grp in group_attrs
+            }
 
         if cls._DATATYPES == "default_datatypes":
             raise NotImplementedError("_DATATYPES must be overridden by subclasses")
@@ -340,6 +442,23 @@ class Schema(ABC):
                 f"Key '{key}' does not define a subschema. Available: {cls.sub_names()}"
             )
 
+        group_attrs = [
+            attr for attr in vars(cls).values() if isinstance(attr, ColumnGroup)
+        ]
+        if group_attrs:
+            matching = next(grp for grp in group_attrs if grp.name == key)
+            ns: Dict[str, Any] = {
+                "_FILENAME": cls._FILENAME,
+                "_EXTENSION": cls._EXTENSION,
+                "_SCHEMA_TYPE": SchemaType.SINGLE,
+            }
+            for col in matching.columns:
+                safe_key = "_SYNTH_" + col.name.upper().replace(" ", "_").replace(
+                    ".", "_"
+                )
+                ns[safe_key] = col
+            return type(f"{cls.__name__}_{key}", (Schema,), ns)
+
         sub_datatypes = cls.datatype_groups()[key]
         return type(
             f"{cls.__name__}_{key}",
@@ -380,7 +499,7 @@ class Schema(ABC):
             name
             for name, attr in vars(cls).items()
             if not (name.startswith("__") and name.endswith("__"))
-            and not isinstance(attr, Column)
+            and not isinstance(attr, (Column, ColumnGroup))
             and not inspect.isroutine(attr)
             and not inspect.isclass(attr)
             and not inspect.isbuiltin(attr)

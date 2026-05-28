@@ -158,7 +158,6 @@ Built-in validators:
 |---|---|
 | `RequiredColumnsValidator` | Every required column is present per schema. |
 | `SchemaValidator` | dtype + unexpected-column check per schema. |
-| `OptionalColumnGuard` | Injects missing optional columns using `Column.default`. |
 | `PrimaryKeyValidator` | Uniqueness + non-null over each `primary_key`. |
 | `UniqueValueValidator` / `MissingValueValidator` | Per-column unique / null checks. |
 | `ForeignKeyValidator` | Cross-table referential integrity. |
@@ -215,8 +214,15 @@ class NonNegativeQuantityValidator(Validator):
 ## Transformers
 
 Transformers run after validation succeeds and reshape the data into the
-form expected downstream. The framework provides `NoopTransformer`,
-`CleanTransformer` (dropna + lowercase columns), and `JoinTransformer`.
+form expected downstream. The framework provides:
+
+| Transformer | Purpose |
+|---|---|
+| `NoopTransformer` | Pass-through; no changes. |
+| `CleanTransformer` | dropna + lowercase columns. |
+| `JoinTransformer` | Joins tables together. |
+| `OptionalColumnGuard` | Injects missing optional columns using `Column.default`. |
+
 Subclass `Transformer` for project-specific reshaping.
 
 ```{important}

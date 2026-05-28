@@ -1,0 +1,4 @@
+itemid;sku;description;category;volume_cm3;weight_kg;currentslot;extra_info
+1001;SKU-0001;Product 1;Electronics;1611.0;7.94;SLOT-001;legacy
+1001;SKU-0002;Product 1 (duplicate);Electronics;3200.0;5.20;SLOT-002;legacy
+1002;SKU-0003;Product 3;Grocery;900.0;2.10;SLOT-003;legacy

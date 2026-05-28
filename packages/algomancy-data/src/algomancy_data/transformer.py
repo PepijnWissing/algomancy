@@ -423,6 +423,46 @@ def _relation_label(relation: Relation) -> str:
     return f"{child}->{parent}"
 
 
+class OptionalColumnGuard(Transformer):
+    """Materialise missing optional columns using each ``Column.default``.
+
+    Injects missing optional columns into the corresponding DataFrame in-place,
+    using ``Column.default`` and coercing to the declared dtype. Downstream
+    code can then assume the full schema is present.
+
+    Attributes:
+        _schemas: Schemas whose optional columns may be injected.
+    """
+
+    def __init__(self, schemas: List, logger=None) -> None:
+        super().__init__(name="OptionalColumnGuard", logger=logger)
+        self._schemas = schemas
+
+    def transform(self, data: dict[str, pd.DataFrame]) -> None:
+        from .validator import _schema_table_map
+
+        table_map = _schema_table_map(self._schemas)
+        for table_name, schema in table_map.items():
+            if table_name not in data:
+                continue
+            df = data[table_name]
+            cols = schema.columns()
+            for col_name, col in cols.items():
+                if not col.optional or col_name in df.columns:
+                    continue
+                df[col_name] = col.default
+                try:
+                    df[col_name] = df[col_name].astype(col.dtype)
+                except (ValueError, TypeError):
+                    # Default may not be coercible (e.g. None for non-nullable
+                    # numerics); leave dtype as-is and let SchemaValidator flag.
+                    pass
+                if self._logger:
+                    self._logger.log(
+                        f"Injected optional column '{col_name}' with default into {table_name}."
+                    )
+
+
 class TransformationSequence:
     """A sequence of transformers executed in order."""
 

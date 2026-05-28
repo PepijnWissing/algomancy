@@ -1,22 +1,29 @@
-"""Example ETL factory showcasing M2–M5 features.
+"""ETL factory for the example app.
 
-The factory inherits from :class:`SimpleETLFactory` and reuses the
-default validation sequence wherever possible. Extraction is overridden
-because the CSV files use a semicolon separator and the inventory XLSX
-references a specific sheet by index — everything else lives on the
-``ETLFactory`` defaults (registry-driven extractor lookup, default
-validators, no-op transformer, ``DataSourceLoader``).
+Demonstrates the M4 boilerplate reductions in ``algomancy_data``:
+
+* ``create_loader`` is not overridden — the inherited default
+  (``DataSourceLoader``) is used.
+* ``create_validation_sequence`` calls ``super()`` to inherit
+  ``RequiredColumnsValidator + SchemaValidator + PrimaryKeyValidator``
+  (the PK validator is added automatically because some schemas declare
+  a primary key) and only adds the dataset-specific
+  ``MissingValueValidator`` and ``UniqueValueValidator``.
+* ``create_extraction_sequence`` defers to the registry for files that
+  work with default extractor constructor args and only hand-wires the
+  files that need non-default parameters (CSV separator, XLSX sheet
+  index).
 """
 
 from typing import Dict, TypeVar, cast
 
 from algomancy_data import (
     CSVFile,
+    ETLFactory,
     File,
-    ForeignKeyValidator,
-    JSONFile,
+    MissingValueValidator,
     OptionalColumnGuard,
-    SimpleETLFactory,
+    UniqueValueValidator,
     ValidationSequence,
     ValidationSeverity,
     XLSXFile,
@@ -24,8 +31,6 @@ from algomancy_data import (
 from algomancy_data.extractor import (
     CSVSingleExtractor,
     ExtractionSequence,
-    JSONSingleExtractor,
-    XLSXMultiExtractor,
     XLSXSingleExtractor,
 )
 from algomancy_data.transformer import CleanTransformer, TransformationSequence
@@ -33,40 +38,41 @@ from algomancy_data.transformer import CleanTransformer, TransformationSequence
 F = TypeVar("F", bound=File)
 
 
-class ExampleETLFactory(SimpleETLFactory):
-    """ETL factory for the bundled example data."""
+class ExampleETLFactory(ETLFactory):
+    """Showcases the M4 boilerplate reductions.
+
+    Inherits the default loader and the default schema / required-column /
+    primary-key validators. Only customises the bits that the example
+    data actually needs.
+    """
 
     def create_extraction_sequence(
         self,
         files: Dict[str, F],
     ) -> ExtractionSequence:
-        """Custom extraction because of non-default CSV separator + sheet selection.
+        # Files that work with the registry's default extractors —
+        # ``super()`` builds them straight from each schema's
+        # ``(extension, schema_type)`` pair.
+        default_files = {
+            name: files[name] for name in ("employees", "multisheet") if name in files
+        }
+        sequence = super().create_extraction_sequence(default_files)
 
-        For schemas with no custom needs you would simply inherit the
-        registry-driven default from :class:`ETLFactory`.
-        """
-        sequence = ExtractionSequence(logger=self.logger)
-
+        # Files that need non-default extractor params (custom separator,
+        # explicit sheet index) — still wired by hand.
         sequence.add_extractor(
             CSVSingleExtractor(
                 file=cast(CSVFile, files["sku_data"]),
                 schema=self.get_schema("sku_data"),
-                logger=self.logger,
                 separator=";",
+                logger=self.logger,
             )
         )
         sequence.add_extractor(
             CSVSingleExtractor(
                 file=cast(CSVFile, files["warehouse_layout"]),
                 schema=self.get_schema("warehouse_layout"),
-                logger=self.logger,
                 separator=";",
-            )
-        )
-        sequence.add_extractor(
-            JSONSingleExtractor(
-                file=cast(JSONFile, files["employees"]),
-                schema=self.get_schema("employees"),
                 logger=self.logger,
             )
         )
@@ -78,31 +84,21 @@ class ExampleETLFactory(SimpleETLFactory):
                 logger=self.logger,
             )
         )
-        sequence.add_extractor(
-            XLSXMultiExtractor(
-                file=cast(XLSXFile, files["multisheet"]),
-                schema=self.get_schema("multisheet"),
-                logger=self.logger,
-            )
-        )
         return sequence
 
     def create_validation_sequence(self) -> ValidationSequence:
-        """Default validators (Required/Schema/PK) + cross-table integrity.
-
-        Adding a ``ForeignKeyValidator`` makes sure every SKU referenced
-        by a warehouse slot exists in the SKU table. ``OptionalColumnGuard``
-        materialises any missing optional column using its declared
-        ``Column.default`` so downstream code can rely on it.
-        """
         sequence = super().create_validation_sequence()
-        sequence.add_validator(OptionalColumnGuard(self.schemas))
         sequence.add_validator(
-            ForeignKeyValidator(
-                left_table="warehouse_layout",
-                left_col="slotid",
-                right_table="sku_data",
-                right_col="currentslot",
+            MissingValueValidator(
+                table="employees",
+                columns=["name", "email", "is_active"],
+                severity=ValidationSeverity.ERROR,
+            )
+        )
+        sequence.add_validator(
+            UniqueValueValidator(
+                table="employees",
+                columns=["email"],
                 severity=ValidationSeverity.WARNING,
             )
         )
@@ -110,5 +106,8 @@ class ExampleETLFactory(SimpleETLFactory):
 
     def create_transformation_sequence(self) -> TransformationSequence:
         sequence = TransformationSequence(logger=self.logger)
+        sequence.add_transformer(
+            OptionalColumnGuard(schemas=self.schemas, logger=self.logger)
+        )
         sequence.add_transformer(CleanTransformer(self.logger))
         return sequence
