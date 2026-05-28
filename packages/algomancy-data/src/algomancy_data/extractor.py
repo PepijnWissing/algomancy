@@ -15,23 +15,20 @@ class DateFormatError(Exception):
 
 
 class ConversionIssue:
-    """Single dtype-conversion failure surfaced by ``DataTypeConverter``.
-
-    Attributes:
-        table: Logical table/file name where the failure occurred.
-        column: Column whose conversion failed.
-        target_type: The schema-declared target ``DataType``.
-        reason: Short description of the failure.
-    """
+    """Single dtype-conversion failure surfaced by ``DataTypeConverter``."""
 
     __slots__ = ("table", "column", "target_type", "reason")
 
     def __init__(
         self, table: str, column: str, target_type: DataType, reason: str
     ) -> None:
+        #: Logical table/file name where the failure occurred.
         self.table = table
+        #: Column whose conversion failed.
         self.column = column
+        #: The schema-declared target ``DataType``.
         self.target_type = target_type
+        #: Short description of the failure.
         self.reason = reason
 
     def __repr__(self) -> str:

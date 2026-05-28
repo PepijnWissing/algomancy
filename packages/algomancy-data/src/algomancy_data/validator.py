@@ -140,19 +140,19 @@ class ValidationMessage:
 
 @dataclass
 class ValidationResult:
-    """Structured outcome of a ``ValidationSequence`` run.
-
-    Attributes:
-        is_valid: ``True`` if no message met or exceeded the halt threshold.
-        messages: All messages collected during the run.
-        halt_on: Severity threshold that determined ``is_valid``.
-        counts_by_severity: Count of messages per severity level.
-    """
+    """Structured outcome of a ``ValidationSequence`` run."""
 
     is_valid: bool
+    """``True`` if no message met or exceeded the halt threshold."""
+
     messages: List[ValidationMessage] = field(default_factory=list)
+    """All messages collected during the run."""
+
     halt_on: ValidationSeverity = ValidationSeverity.CRITICAL
+    """Severity threshold that determined ``is_valid``."""
+
     counts_by_severity: Dict[str, int] = field(default_factory=dict)
+    """Count of messages per severity level."""
 
     def messages_by_severity(
         self, severity: ValidationSeverity
@@ -579,9 +579,7 @@ class ForeignKeyValidator(Validator):
 
     Attributes:
         left_table: Table that holds the foreign key values.
-        left_col: Column name (or list of names) on the left side.
         right_table: Table that holds the referenced values.
-        right_col: Column name (or list of names) on the right side.
         severity: Severity used when a value is not found.
     """
 
@@ -599,9 +597,11 @@ class ForeignKeyValidator(Validator):
         self.left_col: List[str] = (
             [left_col] if isinstance(left_col, str) else list(left_col)
         )
+        """Column name (or list of names) on the left side."""
         self.right_col: List[str] = (
             [right_col] if isinstance(right_col, str) else list(right_col)
         )
+        """Column name (or list of names) on the right side."""
         if len(self.left_col) != len(self.right_col):
             raise ValueError(
                 "left_col and right_col must have the same length "
