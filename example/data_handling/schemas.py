@@ -111,10 +111,69 @@ class LocationSchema(Schema):
     )
 
 
+class CategorySchema(Schema):
+    """Top-level parent table for the cascade-drop demo."""
+
+    _FILENAME = "categories"
+    _EXTENSION = FileExtension.CSV
+    _SCHEMA_TYPE = SchemaType.SINGLE
+
+    ID = Column("category_id", dtype=DataType.STRING, primary_key=True)
+    NAME = Column("name", dtype=DataType.STRING)
+    DEPARTMENT = Column("department", dtype=DataType.STRING)
+
+
+class ProductSchema(Schema):
+    """Middle table: child of ``categories``, parent of ``order_items``.
+
+    ``category_id`` references ``categories.category_id``. The relation is
+    ``parent_requires_child=True`` so categories with zero products are
+    dropped by ``CascadeDropTransformer``.
+    """
+
+    _FILENAME = "products"
+    _EXTENSION = FileExtension.CSV
+    _SCHEMA_TYPE = SchemaType.SINGLE
+
+    ID = Column("product_id", dtype=DataType.STRING, primary_key=True)
+    CATEGORY_ID = Column(
+        "category_id",
+        dtype=DataType.STRING,
+        foreign_key=("categories", "category_id"),
+        parent_requires_child=True,
+    )
+    NAME = Column("name", dtype=DataType.STRING)
+    PRICE = Column("price", dtype=DataType.FLOAT)
+
+
+class OrderItemSchema(Schema):
+    """Leaf table: child of ``products``.
+
+    ``product_id`` references ``products.product_id``. Orphan rows are
+    dropped on the first cascade pass; rows whose parent product itself gets
+    dropped are removed on a subsequent pass (transitive cascade).
+    """
+
+    _FILENAME = "order_items"
+    _EXTENSION = FileExtension.CSV
+    _SCHEMA_TYPE = SchemaType.SINGLE
+
+    ID = Column("order_item_id", dtype=DataType.STRING, primary_key=True)
+    PRODUCT_ID = Column(
+        "product_id",
+        dtype=DataType.STRING,
+        foreign_key=("products", "product_id"),
+    )
+    QUANTITY = Column("quantity", dtype=DataType.INTEGER)
+
+
 example_schemas = [
     WarehouseLayoutSchema(),
     ItemDataSchema(),
     InventorySchema,
     EmployeeDataSchema,
     LocationSchema,
+    CategorySchema,
+    ProductSchema,
+    OrderItemSchema,
 ]

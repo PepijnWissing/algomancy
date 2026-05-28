@@ -41,7 +41,10 @@ from .transformer import (
     CleanTransformer,
     JoinTransformer,
     OptionalColumnGuard,
+    CascadeDropTransformer,
+    CascadeSnapshot,
 )
+from .relations import Relation, resolve_relations_from_schemas, merge_relations
 from .validator import (
     Validator,
     DefaultValidator,
@@ -99,6 +102,11 @@ __all__ = [
     "NoopTransformer",
     "CleanTransformer",
     "JoinTransformer",
+    "CascadeDropTransformer",
+    "CascadeSnapshot",
+    "Relation",
+    "resolve_relations_from_schemas",
+    "merge_relations",
     "Validator",
     "DefaultValidator",
     "ExtractionSuccessVerification",

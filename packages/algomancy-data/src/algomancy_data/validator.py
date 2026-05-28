@@ -140,19 +140,19 @@ class ValidationMessage:
 
 @dataclass
 class ValidationResult:
-    """Structured outcome of a ``ValidationSequence`` run."""
+    """Structured outcome of a ``ValidationSequence`` run.
+
+    Attributes:
+        is_valid: ``True`` if no message met or exceeded the halt threshold.
+        messages: All messages collected during the run.
+        halt_on: Severity threshold that determined ``is_valid``.
+        counts_by_severity: Count of messages per severity level.
+    """
 
     is_valid: bool
-    """``True`` if no message met or exceeded the halt threshold."""
-
     messages: List[ValidationMessage] = field(default_factory=list)
-    """All messages collected during the run."""
-
     halt_on: ValidationSeverity = ValidationSeverity.CRITICAL
-    """Severity threshold that determined ``is_valid``."""
-
     counts_by_severity: Dict[str, int] = field(default_factory=dict)
-    """Count of messages per severity level."""
 
     def messages_by_severity(
         self, severity: ValidationSeverity
@@ -579,7 +579,9 @@ class ForeignKeyValidator(Validator):
 
     Attributes:
         left_table: Table that holds the foreign key values.
+        left_col: Column name (or list of names) on the left side.
         right_table: Table that holds the referenced values.
+        right_col: Column name (or list of names) on the right side.
         severity: Severity used when a value is not found.
     """
 
@@ -670,6 +672,43 @@ class ForeignKeyValidator(Validator):
                     code="FK_VIOLATION",
                 )
         return self.messages
+
+    @classmethod
+    def from_schemas(
+        cls,
+        schemas: Iterable[type],
+        severity: ValidationSeverity = ValidationSeverity.ERROR,
+    ) -> List["ForeignKeyValidator"]:
+        """Build a list of validators from ``Column.foreign_key`` declarations.
+
+        Walks each schema's columns; for every column with a non-null
+        ``foreign_key`` declaration, returns a ``ForeignKeyValidator``
+        instance covering that relation. Columns sharing the same parent
+        table on the same schema are collapsed into a single composite-key
+        validator.
+
+        Args:
+            schemas: Iterable of ``Schema`` subclasses.
+            severity: Severity for emitted FK-violation messages.
+
+        Returns:
+            List of ``ForeignKeyValidator`` instances, one per derived
+            relation. The list is empty if no schema declares a FK.
+        """
+        # Local import to avoid a circular import at module load time.
+        from .relations import resolve_relations_from_schemas
+
+        relations = resolve_relations_from_schemas(list(schemas))
+        return [
+            cls(
+                left_table=r.child_table,
+                left_col=list(r.child_cols),
+                right_table=r.parent_table,
+                right_col=list(r.parent_cols),
+                severity=severity,
+            )
+            for r in relations
+        ]
 
 
 class ValidationSequence:

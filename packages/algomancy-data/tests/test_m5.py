@@ -162,6 +162,82 @@ class TestForeignKeyValidator:
         with pytest.raises(ValueError, match="same length"):
             ForeignKeyValidator("a", ["x", "y"], "b", "z")
 
+    def test_from_schemas_derives_validator(self):
+        """#116 — `ForeignKeyValidator.from_schemas` builds validators from
+        `Column.foreign_key` declarations on the supplied schemas."""
+        from algomancy_data import Column, DataType, FileExtension, Schema
+        from algomancy_data.schema import SchemaType
+
+        class _Product(Schema):
+            _FILENAME = "product"
+            _EXTENSION = FileExtension.CSV
+            _SCHEMA_TYPE = SchemaType.SINGLE
+            ID = Column(name="id", dtype=DataType.STRING, primary_key=True)
+
+        class _Order(Schema):
+            _FILENAME = "order"
+            _EXTENSION = FileExtension.CSV
+            _SCHEMA_TYPE = SchemaType.SINGLE
+            ID = Column(name="id", dtype=DataType.STRING, primary_key=True)
+            PRODUCT_ID = Column(
+                name="product_id",
+                dtype=DataType.STRING,
+                foreign_key=("product", "id"),
+            )
+
+        validators = ForeignKeyValidator.from_schemas([_Order, _Product])
+        assert len(validators) == 1
+        v = validators[0]
+        assert v.left_table == "order"
+        assert v.left_col == ["product_id"]
+        assert v.right_table == "product"
+        assert v.right_col == ["id"]
+
+    def test_from_schemas_matches_explicit_on_violation(self):
+        from algomancy_data import Column, DataType, FileExtension, Schema
+        from algomancy_data.schema import SchemaType
+
+        class _Product(Schema):
+            _FILENAME = "product"
+            _EXTENSION = FileExtension.CSV
+            _SCHEMA_TYPE = SchemaType.SINGLE
+            ID = Column(name="id", dtype=DataType.STRING, primary_key=True)
+
+        class _Order(Schema):
+            _FILENAME = "order"
+            _EXTENSION = FileExtension.CSV
+            _SCHEMA_TYPE = SchemaType.SINGLE
+            ID = Column(name="id", dtype=DataType.STRING, primary_key=True)
+            PRODUCT_ID = Column(
+                name="product_id",
+                dtype=DataType.STRING,
+                foreign_key=("product", "id"),
+            )
+
+        data = {
+            "product": pd.DataFrame({"id": ["p1"]}),
+            "order": pd.DataFrame({"id": ["o1", "o2"], "product_id": ["p1", "BAD"]}),
+        }
+        derived = ForeignKeyValidator.from_schemas([_Order, _Product])[0]
+        explicit = ForeignKeyValidator("order", "product_id", "product", "id")
+        d_msgs = derived.validate(data)
+        e_msgs = explicit.validate(data)
+        assert len(d_msgs) == len(e_msgs) == 1
+        assert d_msgs[0].code == e_msgs[0].code == "FK_VIOLATION"
+        assert d_msgs[0].row == e_msgs[0].row
+
+    def test_from_schemas_no_fk_returns_empty(self):
+        from algomancy_data import Column, DataType, FileExtension, Schema
+        from algomancy_data.schema import SchemaType
+
+        class _Product(Schema):
+            _FILENAME = "product"
+            _EXTENSION = FileExtension.CSV
+            _SCHEMA_TYPE = SchemaType.SINGLE
+            ID = Column(name="id", dtype=DataType.STRING, primary_key=True)
+
+        assert ForeignKeyValidator.from_schemas([_Product]) == []
+
 
 # ------------------------------------------------------------------ #
 # Issue #99 — DataFrameExtractor

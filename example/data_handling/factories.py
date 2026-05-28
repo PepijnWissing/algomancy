@@ -33,7 +33,11 @@ from algomancy_data.extractor import (
     ExtractionSequence,
     XLSXSingleExtractor,
 )
-from algomancy_data.transformer import CleanTransformer, TransformationSequence
+from algomancy_data.transformer import (
+    CascadeDropTransformer,
+    CleanTransformer,
+    TransformationSequence,
+)
 
 F = TypeVar("F", bound=File)
 
@@ -57,6 +61,18 @@ class ExampleETLFactory(ETLFactory):
             name: files[name] for name in ("employees", "multisheet") if name in files
         }
         sequence = super().create_extraction_sequence(default_files)
+
+        # Parent/child demo files for the cascade-drop showcase.
+        for name in ("categories", "products", "order_items"):
+            if name in files:
+                sequence.add_extractor(
+                    CSVSingleExtractor(
+                        file=cast(CSVFile, files[name]),
+                        schema=self.get_schema(name),
+                        separator=";",
+                        logger=self.logger,
+                    )
+                )
 
         # Files that need non-default extractor params (custom separator,
         # explicit sheet index) — still wired by hand.
@@ -110,4 +126,7 @@ class ExampleETLFactory(ETLFactory):
             OptionalColumnGuard(schemas=self.schemas, logger=self.logger)
         )
         sequence.add_transformer(CleanTransformer(self.logger))
+        sequence.add_transformer(
+            CascadeDropTransformer(schemas=self.schemas, logger=self.logger)
+        )
         return sequence

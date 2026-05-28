@@ -232,6 +232,155 @@ are not converted to `ETLResult(status='failed')` because they indicate
 real defects rather than data-quality issues.
 ```
 
+(cascade-cleanup-ref)=
+## Relational cascade cleanup
+
+Real-world input data is often incomplete: an order may reference a
+product that wasn't in the latest export, a parent record may have lost
+all its children mid-pipeline, and so on. The `CascadeDropTransformer`
+declaratively cleans up such inconsistencies by walking foreign-key
+relations declared on your schemas and dropping rows whose references
+are unsatisfied. Drops surface as aggregated `ValidationMessage`s with
+`Severity.ERROR` — visible but non-halting by default.
+
+### Declaring relations on `Column`
+
+Foreign-key relations live on the **child** column. Two opt-in flags
+control parent-side cascade behavior:
+
+| Field | Purpose |
+|---|---|
+| `foreign_key=(parent_table, parent_col)` | Declares the FK reference. |
+| `parent_requires_child=True` | Drop the parent when it has zero referencing children on this relation. |
+| `track_partial_loss=True` | Enable partial-loss detection (drop the parent when it loses *some* of its children mid-pipeline). Requires a paired `CascadeSnapshot`. |
+
+```{code-block} python
+:caption: Schemas with FK declarations
+from algomancy_data import Column, DataType, FileExtension, Schema
+from algomancy_data.schema import SchemaType
+
+
+class ProductSchema(Schema):
+    _FILENAME = "product"
+    _EXTENSION = FileExtension.CSV
+    _SCHEMA_TYPE = SchemaType.SINGLE
+
+    ID = Column(name="id", dtype=DataType.STRING, primary_key=True)
+
+
+class OrderSchema(Schema):
+    _FILENAME = "order"
+    _EXTENSION = FileExtension.CSV
+    _SCHEMA_TYPE = SchemaType.SINGLE
+
+    ID = Column(name="id", dtype=DataType.STRING, primary_key=True)
+    PRODUCT_ID = Column(
+        name="product_id",
+        dtype=DataType.STRING,
+        foreign_key=("product", "id"),
+        parent_requires_child=True,
+    )
+```
+
+### The three drop rules
+
+`CascadeDropTransformer.transform(data)` iterates to fixpoint, applying
+on each pass:
+
+| Rule | Code | Trigger |
+|---|---|---|
+| Orphan-child drop | `CASCADE_ORPHAN_DROP` | Child row's FK is not in the parent's referenced column set. Always on. |
+| Required-child parent drop | `CASCADE_REQUIRED_CHILD_DROP` | Parent row has zero referencing children. Opt-in via `parent_requires_child=True`. |
+| Partial-loss parent drop | `CASCADE_PARTIAL_LOSS_DROP` | Parent row lost *some* (but not all) of its children vs. a baseline snapshot. Opt-in via `track_partial_loss=True` **and** a paired `CascadeSnapshot`. |
+
+NULL values in an FK column are treated as "no reference" and never
+trigger an orphan drop. Combine with `nullable=False` on the column if
+you want NULLs to be rejected by `MissingValueValidator` instead.
+
+### Wiring it into the pipeline
+
+`CascadeDropTransformer` is a regular `Transformer` — add it to the
+transformation sequence:
+
+```{code-block} python
+:caption: Cascade cleanup in a SimpleETLFactory
+from algomancy_data import (
+    CascadeDropTransformer,
+    SimpleETLFactory,
+)
+
+factory = SimpleETLFactory(
+    schemas=[ProductSchema, OrderSchema],
+    transformers=[CascadeDropTransformer(schemas=[ProductSchema, OrderSchema])],
+)
+result = factory.build_pipeline("orders_2026", files).run()
+
+for message in result.messages:
+    if message.code and message.code.startswith("CASCADE_"):
+        print(message)
+# e.g. "ERROR: 3 row(s) dropped from 'order' by CASCADE_ORPHAN_DROP …"
+```
+
+### Partial-loss with `CascadeSnapshot`
+
+Partial-loss detection compares the current child-counts to a baseline
+captured **before** any drop-capable transformer runs. Place a
+`CascadeSnapshot` early in the transformation sequence and pass it to
+the cascade transformer:
+
+```{code-block} python
+from algomancy_data import CascadeDropTransformer, CascadeSnapshot
+
+snapshot = CascadeSnapshot(schemas=[ProductSchema, OrderSchema])
+factory = SimpleETLFactory(
+    schemas=[ProductSchema, OrderSchema],
+    transformers=[
+        snapshot,
+        # ... any user transformers that may drop rows go here ...
+        CascadeDropTransformer(
+            schemas=[ProductSchema, OrderSchema],
+            snapshot=snapshot,
+        ),
+    ],
+)
+```
+
+The snapshot is a no-op on data — it only records baselines — so it is
+safe to leave in place even when no other transformer drops rows.
+
+### Overriding schema-derived relations
+
+If you need to add or override a relation without changing the schema,
+pass `extra_relations=` to the transformer. Overrides match on
+`(child_table, child_cols)` and replace any schema-derived entry with
+the same key:
+
+```{code-block} python
+from algomancy_data import CascadeDropTransformer, Relation
+
+CascadeDropTransformer(
+    schemas=[ProductSchema, OrderSchema],
+    extra_relations=[
+        Relation("order", ("product_id",), "product", ("id",),
+                 parent_requires_child=False),  # turn the schema flag off
+    ],
+)
+```
+
+### Auto-wiring `ForeignKeyValidator` from the same declarations
+
+`ForeignKeyValidator.from_schemas([...])` returns one validator per
+relation, derived from the same `Column.foreign_key` declarations. Use
+it together with `CascadeDropTransformer` so that violations are
+reported (validator) and cleaned (transformer) without duplicating the
+relation list:
+
+```{code-block} python
+from algomancy_data import ForeignKeyValidator
+
+validators = ForeignKeyValidator.from_schemas([ProductSchema, OrderSchema])
+```
+
 ## Loader
 
 `DataSourceLoader` is the default and produces a `DataSource` whose
