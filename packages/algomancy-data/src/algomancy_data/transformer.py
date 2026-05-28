@@ -147,7 +147,7 @@ class OptionalColumnGuard(Transformer):
                     # numerics); leave dtype as-is and let SchemaValidator flag.
                     pass
                 if self._logger:
-                    self._logger.info(
+                    self._logger.log(
                         f"Injected optional column '{col_name}' with default into {table_name}."
                     )
 
