@@ -595,6 +595,55 @@ class XLSXMultiExtractor(MultiExtractor):
         return dfs
 
 
+class DataFrameExtractor(Extractor):
+    """Extractor that wraps a pre-built ``pandas.DataFrame``.
+
+    Useful for tests and notebook workflows where the input data is
+    already in memory and no file IO is needed.
+
+    Attributes:
+        name: Logical table/file name under which the DataFrame is exposed.
+        df: The DataFrame to expose.
+        schema: ``Schema`` (SINGLE) whose ``datatypes()`` are applied via
+            ``DataTypeConverter``. ``MULTI`` schemas are not supported.
+    """
+
+    def __init__(
+        self,
+        name: str,
+        df: pd.DataFrame,
+        schema: Schema,
+        logger: Logger = None,
+    ) -> None:
+        # Construct a minimal pseudo-File so the base class plumbing
+        # (extraction messages, etc.) keeps working without on-disk IO.
+        class _MemoryFile:
+            __slots__ = ("name",)
+
+            def __init__(self, n: str) -> None:
+                self.name = n
+
+        super().__init__(_MemoryFile(name), logger)
+        if not schema.is_single():
+            raise ValueError(
+                "DataFrameExtractor only supports SINGLE schemas; "
+                f"got {schema.schema_type()}."
+            )
+        self._df = df
+        self.schema = schema
+
+    def extract(self) -> Dict[str, pd.DataFrame]:
+        self._extraction_message()
+        df = DataTypeConverter.convert_dtypes(
+            self._df.copy(),
+            self.schema.datatypes(),
+            issues=self.conversion_issues,
+            table_name=self.file.name,
+        )
+        self._extraction_success_message()
+        return {self.file.name: df}
+
+
 class ExtractionSequence:
     def __init__(
         self, extractors: List[Extractor] = None, logger: Logger = None

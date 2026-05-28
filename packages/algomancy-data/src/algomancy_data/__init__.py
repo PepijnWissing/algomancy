@@ -33,6 +33,7 @@ from .extractor import (
     XLSXSingleExtractor,
     XLSXMultiExtractor,
     JSONSingleExtractor,
+    DataFrameExtractor,
 )
 from .transformer import (
     Transformer,
@@ -50,6 +51,7 @@ from .validator import (
     PrimaryKeyValidator,
     UniqueValueValidator,
     MissingValueValidator,
+    ForeignKeyValidator,
     ValidationMessage,
     ValidationResult,
     ValidationError,
@@ -92,6 +94,7 @@ __all__ = [
     "XLSXSingleExtractor",
     "XLSXMultiExtractor",
     "JSONSingleExtractor",
+    "DataFrameExtractor",
     "Transformer",
     "NoopTransformer",
     "CleanTransformer",
@@ -105,6 +108,7 @@ __all__ = [
     "PrimaryKeyValidator",
     "UniqueValueValidator",
     "MissingValueValidator",
+    "ForeignKeyValidator",
     "ValidationMessage",
     "ValidationResult",
     "ValidationError",

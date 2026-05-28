@@ -22,4 +22,5 @@ For a deeper dive into the principles and components that make up Algomancy, exp
 
 architecture
 front_end
+extending
 ```

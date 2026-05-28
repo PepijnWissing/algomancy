@@ -134,13 +134,28 @@ class Schema(ABC):
 
     @classmethod
     def extension(cls) -> FileExtension:
-        """Return the file extension."""
+        """Return the file extension.
+
+        Accepts any ``StrEnum``-derived value (including user-defined
+        ``FileExtension`` subclasses created for custom file formats —
+        see :ref:`extending-ref`). A plain ``str`` is upcast to the
+        built-in ``FileExtension`` for compatibility, or returned as-is
+        when it does not match a built-in value.
+        """
         if cls._EXTENSION == "default_extension":
             raise NotImplementedError("_EXTENSION must be overridden by subclasses")
         if isinstance(cls._EXTENSION, FileExtension):
             return cls._EXTENSION
+        if isinstance(cls._EXTENSION, StrEnum):
+            # Custom extension StrEnum from a user project — pass through.
+            return cls._EXTENSION
         if isinstance(cls._EXTENSION, str):
-            return FileExtension(cls._EXTENSION)
+            try:
+                return FileExtension(cls._EXTENSION)
+            except ValueError:
+                # Unknown string extension — return raw so registry lookups
+                # can still resolve by string equality.
+                return cls._EXTENSION
         raise TypeError(f"Invalid extension type: {type(cls._EXTENSION)}")
 
     @classmethod

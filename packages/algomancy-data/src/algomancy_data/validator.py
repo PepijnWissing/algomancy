@@ -570,6 +570,108 @@ class MissingValueValidator(Validator):
         return self.messages
 
 
+class ForeignKeyValidator(Validator):
+    """Cross-table integrity check.
+
+    Verifies that every (non-null) value of ``left_table[left_col]`` exists
+    in ``right_table[right_col]``. Supports composite keys when ``left_col``
+    and ``right_col`` are lists of equal length.
+
+    Attributes:
+        left_table: Table that holds the foreign key values.
+        left_col: Column name (or list of names) on the left side.
+        right_table: Table that holds the referenced values.
+        right_col: Column name (or list of names) on the right side.
+        severity: Severity used when a value is not found.
+    """
+
+    def __init__(
+        self,
+        left_table: str,
+        left_col,
+        right_table: str,
+        right_col,
+        severity: ValidationSeverity = ValidationSeverity.ERROR,
+    ) -> None:
+        super().__init__()
+        self.left_table = left_table
+        self.right_table = right_table
+        self.left_col: List[str] = (
+            [left_col] if isinstance(left_col, str) else list(left_col)
+        )
+        self.right_col: List[str] = (
+            [right_col] if isinstance(right_col, str) else list(right_col)
+        )
+        if len(self.left_col) != len(self.right_col):
+            raise ValueError(
+                "left_col and right_col must have the same length "
+                f"(got {len(self.left_col)} and {len(self.right_col)})."
+            )
+        self.severity = severity
+
+    def _bail(self, msg: str, **kwargs) -> None:
+        self.add_message(self.severity, msg, **kwargs)
+
+    def validate(self, data: Dict[str, pd.DataFrame]) -> List[ValidationMessage]:
+        if self.left_table not in data:
+            self._bail(
+                f"Left table '{self.left_table}' not found for FK check.",
+                table=self.left_table,
+                code="TABLE_NOT_FOUND",
+            )
+            return self.messages
+        if self.right_table not in data:
+            self._bail(
+                f"Right table '{self.right_table}' not found for FK check.",
+                table=self.right_table,
+                code="TABLE_NOT_FOUND",
+            )
+            return self.messages
+
+        left_df = data[self.left_table]
+        right_df = data[self.right_table]
+
+        for col in self.left_col:
+            if col not in left_df.columns:
+                self._bail(
+                    f"Left column '{col}' missing from {self.left_table}.",
+                    table=self.left_table,
+                    column=col,
+                    code="COLUMN_NOT_FOUND",
+                )
+                return self.messages
+        for col in self.right_col:
+            if col not in right_df.columns:
+                self._bail(
+                    f"Right column '{col}' missing from {self.right_table}.",
+                    table=self.right_table,
+                    column=col,
+                    code="COLUMN_NOT_FOUND",
+                )
+                return self.messages
+
+        left_keys = _composite_key(left_df, self.left_col)
+        right_keys = set(_composite_key(right_df, self.right_col).dropna().tolist())
+
+        # Skip nulls — they should be caught by MissingValueValidator instead.
+        non_null_mask = ~left_df[self.left_col].isna().any(axis=1)
+        for row_idx in left_df.index[non_null_mask].tolist():
+            value = left_keys.loc[row_idx]
+            if value not in right_keys:
+                self._bail(
+                    (
+                        f"Foreign key {tuple(self.left_col)}={value!r} in "
+                        f"{self.left_table} has no match in "
+                        f"{self.right_table}.{tuple(self.right_col)}."
+                    ),
+                    table=self.left_table,
+                    column=",".join(self.left_col),
+                    row=int(row_idx),
+                    code="FK_VIOLATION",
+                )
+        return self.messages
+
+
 class ValidationSequence:
     """A sequence of validators executed in order with message aggregation.
 
