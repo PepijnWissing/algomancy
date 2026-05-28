@@ -67,6 +67,11 @@ def resolve_relations_from_schemas(
     grouped: Dict[Tuple[str, str], Dict[str, object]] = {}
 
     for schema in schemas:
+        # Foreign keys are declared on flat (SINGLE) schemas via Column.
+        # MULTI schemas group columns per sheet and don't participate in
+        # cascade relations — skip them so callers can pass a mixed list.
+        if not schema.is_single():
+            continue
         child_table = schema.file_name()
         for col_name, col in schema.columns().items():
             if col.foreign_key is None:
