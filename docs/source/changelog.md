@@ -1,4 +1,8 @@
 # Change log
+
+> Migrating from v0.5 or earlier? See the [migration guide](migration-ref)
+> for before/after snippets covering every breaking change in v0.6–v0.8.
+
 ## Prerelease
 ### Added
 - **Quickstart Module**: Introduced `algomancy-quickstart` package with an interactive setup wizard (`QuickstartWizard`)

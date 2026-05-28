@@ -30,6 +30,7 @@ fundamentals/fundamentals
 tutorial/tutorial
 reference/reference
 contributing
+migration
 changelog
 ```
  

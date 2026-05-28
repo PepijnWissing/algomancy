@@ -57,24 +57,23 @@ _EXPECTED_ETL_EXCEPTIONS: tuple = (
 
 @dataclass
 class ETLResult:
-    """Structured outcome of an ``ETLPipeline.run()`` invocation.
-
-    Attributes:
-        status: ``'success'`` if the run completed and validation passed;
-            ``'failed'`` if a data-quality issue was detected.
-        datasource: Loaded destination object (``None`` on failure).
-        validation_result: Messages and counts from the validation step.
-            Always present, even when extraction never produced data.
-        raised: Original exception when a recognised data-quality
-            exception was caught and converted to a failure. ``None``
-            otherwise. Programmer errors are not captured here — they
-            propagate from ``run()`` unchanged.
-    """
+    """Structured outcome of an ``ETLPipeline.run()`` invocation."""
 
     status: Literal["success", "failed"]
+    """``'success'`` if the run completed and validation passed;
+    ``'failed'`` if a data-quality issue was detected."""
+
     datasource: Optional[BASEDATASOURCE] = None
+    """Loaded destination object (``None`` on failure)."""
+
     validation_result: Optional[ValidationResult] = None
+    """Messages and counts from the validation step.
+    Always present, even when extraction never produced data."""
+
     raised: Optional[Exception] = None
+    """Original exception when a recognised data-quality exception was caught
+    and converted to a failure. ``None`` otherwise. Programmer errors are not
+    captured here — they propagate from ``run()`` unchanged."""
 
     @property
     def is_success(self) -> bool:
