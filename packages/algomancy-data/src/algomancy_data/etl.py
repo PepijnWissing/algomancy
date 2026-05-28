@@ -292,7 +292,9 @@ class ETLFactory(ABC):
 
         return schema
 
-    def create_extraction_sequence(self, files: Dict[str, File]) -> ExtractionSequence:
+    def create_extraction_sequence(
+        self, files: Dict[str, File] | None = None
+    ) -> ExtractionSequence:
         """Default extractor wiring keyed off the registry.
 
         For each ``File`` in ``files`` looks up the matching schema by
@@ -304,6 +306,9 @@ class ETLFactory(ABC):
             ETLConstructionError: If no extractor is registered for a
                 schema's ``(extension, schema_type)`` pair.
         """
+        if files is None:
+            return ExtractionSequence(logger=self.logger)
+
         extractors = []
         for name, file in files.items():
             schema = self.get_schema(name)

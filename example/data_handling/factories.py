@@ -1,75 +1,78 @@
+"""ETL factory for the example app.
+
+Demonstrates the M4 boilerplate reductions in ``algomancy_data``:
+
+* ``create_loader`` is not overridden — the inherited default
+  (``DataSourceLoader``) is used.
+* ``create_validation_sequence`` calls ``super()`` to inherit
+  ``RequiredColumnsValidator + SchemaValidator + PrimaryKeyValidator``
+  (the PK validator is added automatically because some schemas declare
+  a primary key) and only adds the dataset-specific
+  ``MissingValueValidator`` and ``UniqueValueValidator``.
+* ``create_extraction_sequence`` defers to the registry for files that
+  work with default extractor constructor args and only hand-wires the
+  files that need non-default parameters (CSV separator, XLSX sheet
+  index).
+"""
+
 from typing import Dict, TypeVar, cast
 
 from algomancy_data import (
-    File,
     CSVFile,
-    JSONFile,
-    XLSXFile,
     ETLFactory,
-    ValidationSequence,
-    ExtractionSuccessVerification,
-    SchemaValidator,
-    ValidationSeverity,
-    RequiredColumnsValidator,
-    OptionalColumnGuard,
-    PrimaryKeyValidator,
-    UniqueValueValidator,
+    File,
     MissingValueValidator,
-    Loader,
-    DataSourceLoader,
+    OptionalColumnGuard,
+    UniqueValueValidator,
+    ValidationSequence,
+    ValidationSeverity,
+    XLSXFile,
 )
 from algomancy_data.extractor import (
-    ExtractionSequence,
     CSVSingleExtractor,
-    JSONSingleExtractor,
+    ExtractionSequence,
     XLSXSingleExtractor,
-    XLSXMultiExtractor,
 )
-from algomancy_data.transformer import TransformationSequence, CleanTransformer
+from algomancy_data.transformer import CleanTransformer, TransformationSequence
 
 F = TypeVar("F", bound=File)
 
 
 class ExampleETLFactory(ETLFactory):
-    def __init__(self, configs, logger=None):
-        super().__init__(configs, logger)
+    """Showcases the M4 boilerplate reductions.
+
+    Inherits the default loader and the default schema / required-column /
+    primary-key validators. Only customises the bits that the example
+    data actually needs.
+    """
 
     def create_extraction_sequence(
         self,
-        files: Dict[str, F],  # name to path format
+        files: Dict[str, F],
     ) -> ExtractionSequence:
-        """
-        Input:
-            files: A dictionary mapping file names to file paths.
+        # Files that work with the registry's default extractors —
+        # ``super()`` builds them straight from each schema's
+        # ``(extension, schema_type)`` pair.
+        default_files = {
+            name: files[name] for name in ("employees", "multisheet") if name in files
+        }
+        sequence = super().create_extraction_sequence(default_files)
 
-        Output:
-            An extraction sequence object
-
-        raises:
-            ETLConstructionError: If any of the expected files or configurations are missing.
-        """
-        sequence = ExtractionSequence()
-
+        # Files that need non-default extractor params (custom separator,
+        # explicit sheet index) — still wired by hand.
         sequence.add_extractor(
             CSVSingleExtractor(
                 file=cast(CSVFile, files["sku_data"]),
                 schema=self.get_schema("sku_data"),
-                logger=self.logger,
                 separator=";",
+                logger=self.logger,
             )
         )
         sequence.add_extractor(
             CSVSingleExtractor(
                 file=cast(CSVFile, files["warehouse_layout"]),
                 schema=self.get_schema("warehouse_layout"),
-                logger=self.logger,
                 separator=";",
-            )
-        )
-        sequence.add_extractor(
-            JSONSingleExtractor(
-                file=cast(JSONFile, files["employees"]),
-                schema=self.get_schema("employees"),
                 logger=self.logger,
             )
         )
@@ -81,67 +84,30 @@ class ExampleETLFactory(ETLFactory):
                 logger=self.logger,
             )
         )
-        sequence.add_extractor(
-            XLSXMultiExtractor(
-                file=cast(XLSXFile, files["multisheet"]),
-                schema=self.get_schema("multisheet"),
-                logger=self.logger,
-            )
-        )
-
         return sequence
 
     def create_validation_sequence(self) -> ValidationSequence:
-        vs = ValidationSequence(logger=self.logger)
-
-        vs.add_validator(ExtractionSuccessVerification())
-
-        vs.add_validator(
-            RequiredColumnsValidator(
-                schemas=self.schemas,
-                severity=ValidationSeverity.CRITICAL,
-            )
-        )
-
-        vs.add_validator(
-            SchemaValidator(
-                schemas=self.schemas,
-                severity=ValidationSeverity.CRITICAL,
-            )
-        )
-
-        vs.add_validator(
-            PrimaryKeyValidator(
-                schemas=self.schemas,
-                severity=ValidationSeverity.ERROR,
-            )
-        )
-
-        vs.add_validator(
+        sequence = super().create_validation_sequence()
+        sequence.add_validator(
             MissingValueValidator(
                 table="employees",
                 columns=["name", "email", "is_active"],
                 severity=ValidationSeverity.ERROR,
             )
         )
-
-        vs.add_validator(
+        sequence.add_validator(
             UniqueValueValidator(
                 table="employees",
                 columns=["email"],
                 severity=ValidationSeverity.WARNING,
             )
         )
-
-        return vs
+        return sequence
 
     def create_transformation_sequence(self) -> TransformationSequence:
-        sequence = TransformationSequence()
+        sequence = TransformationSequence(logger=self.logger)
         sequence.add_transformer(
             OptionalColumnGuard(schemas=self.schemas, logger=self.logger)
         )
         sequence.add_transformer(CleanTransformer(self.logger))
         return sequence
-
-    def create_loader(self) -> Loader:
-        return DataSourceLoader(self.logger)
