@@ -9,6 +9,8 @@ from algomancy_scenario.core_configuration import CoreConfig
 
 from .api_configuration import ApiConfiguration
 from .errors import install_exception_handlers
+from .routers import algorithms as algorithms_router
+from .routers import sessions as sessions_router
 
 
 class ApiLauncher:
@@ -104,3 +106,6 @@ class ApiLauncher:
                 "sessions": sm.sessions_names,
                 "use_sessions": cfg.use_sessions,
             }
+
+        app.include_router(sessions_router.router, prefix=cfg.prefix)
+        app.include_router(algorithms_router.router, prefix=cfg.prefix)
