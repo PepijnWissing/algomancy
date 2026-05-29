@@ -2,7 +2,7 @@ from dash import html
 
 from algomancy_scenario import Scenario
 
-from .page import BaseScenarioPage
+from algomancy_gui.page import BaseScenarioPage
 
 
 class PlaceholderScenarioPage(BaseScenarioPage):
@@ -10,11 +10,10 @@ class PlaceholderScenarioPage(BaseScenarioPage):
     Placeholder content for the Scenario page - Secondary Results Component
 
     USAGE:
-        >>> config = AppConfiguration(
-        ...             ...
-        ...             scenario_page="placeholder",
-        ...             ...
-        ...          )
+        >>> config = AppConfig(
+        ...     page_config=PageConfig(scenario_page="placeholder"),
+        ...     ...
+        ... )
     """
 
     @staticmethod

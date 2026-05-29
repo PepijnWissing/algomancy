@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import TypeVar
 
-from algomancy_data import BASE_DATA_BOUND
+from algomancy_data import BASEDATASOURCE
+from algomancy_utils import Logger
 from .result import BASE_RESULT_BOUND
 from algomancy_utils.baseparameterset import BASE_PARAMS_BOUND
 
@@ -12,6 +13,7 @@ class BaseAlgorithm(ABC):
         self.description = str(params.serialize())
         self._params: BASE_PARAMS_BOUND = params
         self._progress: float = 0
+        self._logger: Logger | None = None  # set by factory after initialization
 
     def __str__(self):
         return f"{self.name} [{self._progress:.0f}%]: {self.description}"
@@ -27,6 +29,9 @@ class BaseAlgorithm(ABC):
     @property
     def name(self) -> str:
         return self._name
+
+    def set_logger(self, logger: Logger) -> None:
+        self._logger = logger
 
     def set_progress(self, progress: float):
         assert 0 <= progress <= 100, "progress must be between 0 and 100"
@@ -67,7 +72,7 @@ class BaseAlgorithm(ABC):
         raise NotImplementedError("Abstract method")
 
     @abstractmethod
-    def run(self, data: BASE_DATA_BOUND) -> BASE_RESULT_BOUND:
+    def run(self, data: BASEDATASOURCE) -> BASE_RESULT_BOUND:
         raise NotImplementedError("Abstract method")
 
 

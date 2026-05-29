@@ -14,12 +14,15 @@ Key features and design goals include:
 
 For a deeper dive into the principles and components that make up Algomancy, explore the following sections:
 - [Scenario architecture](scenario-architecture-ref): A detailed look at the `DataSource`, `Algorithm`, `Scenario`, and `KPI` components.
-- [Graphical interface](fundamentals-frontend-ref): An overview of the web interface and its functional areas.
+- [Frontends](fundamentals-frontends-ref): The three ways to drive an Algomancy backend — Dash GUI, CLI shell, and HTTP API.
+- [Graphical interface](fundamentals-frontend-ref): An overview of the Dash web interface and its functional areas.
 
 ```{toctree}
 :maxdepth: 1
 :hidden:
 
 architecture
+frontends
 front_end
+extending
 ```

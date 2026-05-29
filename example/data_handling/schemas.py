@@ -1,179 +1,179 @@
-from typing import Dict
-
-from algomancy_data import Schema, FileExtension, DataType
+from algomancy_data import Column, ColumnGroup, DataType, FileExtension, Schema
 from algomancy_data.schema import SchemaType
 
 
 class WarehouseLayoutSchema(Schema):
-    """Schema class that holds column names for warehouse layout data"""
+    """Schema for warehouse layout data."""
 
     _FILENAME = "warehouse_layout"
     _EXTENSION = FileExtension.CSV
     _SCHEMA_TYPE = SchemaType.SINGLE
 
-    ID = "slotid"
-    X = "x"
-    Y = "y"
-    ZONE = "zone"
-
-    def _defined_datatypes(self) -> Dict[str, DataType]:
-        return {
-            WarehouseLayoutSchema.ID: DataType.STRING,
-            WarehouseLayoutSchema.ZONE: DataType.STRING,
-            WarehouseLayoutSchema.X: DataType.FLOAT,
-            WarehouseLayoutSchema.Y: DataType.FLOAT,
-        }
+    ID = Column("slotid", dtype=DataType.STRING, primary_key=True)
+    X = Column("x", dtype=DataType.FLOAT)
+    Y = Column("y", dtype=DataType.FLOAT)
+    ZONE = Column("zone", dtype=DataType.STRING)
 
 
 class ItemDataSchema(Schema):
-    """Schema class that holds column names for item data"""
+    """Schema for item / SKU data."""
 
     _FILENAME = "sku_data"
     _EXTENSION = FileExtension.CSV
     _SCHEMA_TYPE = SchemaType.SINGLE
 
-    ID = "itemid"
-    SKU = "sku"
-    DESCRIPTION = "description"
-    CATEGORY = "category"
-    DAILY_PICKS = "daily_picks"
-    VOLUME_CM3 = "volume_cm3"
-    WEIGHT_KG = "weight_kg"
-    CURRENT_SLOT = "currentslot"
-    OPTIMAL_SLOT = "optimalslot"
-
-    def _defined_datatypes(self) -> Dict[str, DataType]:
-        return {
-            ItemDataSchema.ID: DataType.STRING,
-            ItemDataSchema.SKU: DataType.STRING,
-            ItemDataSchema.DESCRIPTION: DataType.STRING,
-            ItemDataSchema.CATEGORY: DataType.STRING,
-            ItemDataSchema.DAILY_PICKS: DataType.INTEGER,
-            ItemDataSchema.VOLUME_CM3: DataType.FLOAT,
-            ItemDataSchema.WEIGHT_KG: DataType.FLOAT,
-            ItemDataSchema.CURRENT_SLOT: DataType.STRING,
-            ItemDataSchema.OPTIMAL_SLOT: DataType.STRING,
-        }
+    ID = Column("itemid", dtype=DataType.STRING, primary_key=True)
+    SKU = Column("sku", dtype=DataType.STRING)
+    DESCRIPTION = Column("description", dtype=DataType.STRING)
+    CATEGORY = Column("category", dtype=DataType.STRING)
+    DAILY_PICKS = Column("daily_picks", dtype=DataType.INTEGER)
+    VOLUME_CM3 = Column("volume_cm3", dtype=DataType.FLOAT)
+    WEIGHT_KG = Column("weight_kg", dtype=DataType.FLOAT)
+    CURRENT_SLOT = Column("currentslot", dtype=DataType.STRING)
+    OPTIMAL_SLOT = Column("optimalslot", dtype=DataType.STRING, optional=True)
 
 
 class EmployeeDataSchema(Schema):
-    """Schema class that holds column names for employee data"""
+    """Schema for employee data."""
 
     _FILENAME = "employees"
     _EXTENSION = FileExtension.JSON
     _SCHEMA_TYPE = SchemaType.SINGLE
 
-    ID = "id"
-    name = "name"
-    email = "email"
-    hire_date = "joined_date"
-    last_login = "last_login"
-    dates_with_typo = "dates_with_typo"
-    is_active = "is_active"
-    age = "age"
-    department = "attributes.department"
-    position = "attributes.position"
-    skills = "attributes.skills"
-
-    def _defined_datatypes(self) -> Dict[str, DataType]:
-        return {
-            EmployeeDataSchema.ID: DataType.STRING,
-            EmployeeDataSchema.name: DataType.STRING,
-            EmployeeDataSchema.email: DataType.STRING,
-            EmployeeDataSchema.hire_date: DataType.DATETIME,
-            EmployeeDataSchema.last_login: DataType.DATETIME,
-            EmployeeDataSchema.dates_with_typo: DataType.DATETIME,
-            EmployeeDataSchema.is_active: DataType.BOOLEAN,
-            EmployeeDataSchema.age: DataType.INTEGER,
-            EmployeeDataSchema.department: DataType.STRING,
-            EmployeeDataSchema.position: DataType.STRING,
-            EmployeeDataSchema.skills: DataType.STRING,
-        }
+    ID = Column("id", dtype=DataType.STRING, primary_key=True)
+    NAME = Column("name", dtype=DataType.STRING)
+    EMAIL = Column("email", dtype=DataType.STRING, unique=True)
+    HIRE_DATE = Column("joined_date", dtype=DataType.DATETIME)
+    LAST_LOGIN = Column("last_login", dtype=DataType.DATETIME, nullable=True)
+    DATES_WITH_TYPO = Column("dates_with_typo", dtype=DataType.DATETIME, optional=True)
+    IS_ACTIVE = Column("is_active", dtype=DataType.BOOLEAN)
+    AGE = Column("age", dtype=DataType.INTEGER)
+    DEPARTMENT = Column("attributes.department", dtype=DataType.STRING)
+    POSITION = Column("attributes.position", dtype=DataType.STRING)
+    SKILLS = Column("attributes.skills", dtype=DataType.STRING)
 
 
 class InventorySchema(Schema):
-    """Schema class that holds column names for inventory data from inventory.xlsx"""
+    """Schema for inventory data (inventory.xlsx)."""
 
     _FILENAME = "inventory"
     _EXTENSION = FileExtension.XLSX
     _SCHEMA_TYPE = SchemaType.SINGLE
 
-    BRANCH = "Branch"
-    LOCATION_TYPE = "Location \nType P/S"
-    LOCATION = "Location"
-    ITEM_NUMBER = "Item\nNumber"
-    ITEM_DESCRIPTION = "Item\nDescription"
-    ITEM_DESCRIPTION_2 = "Item\nDescription\n2"
-    LOT_SERIAL_NUMBER = "Lot\nSerial\nNumber"
-    IB_SETUP_STATUS = "IB\nSetup\nStatus"
-    TECHNICAL_STATUS = "Technical\nStatus"
-    STOCKING_TYPE = "Stocking\nType"
-    LINE_TYPE = "Line\nType"
-    MASTER_PLANNING_FAMILY = "Master\nPlannings\nFamily"
-    INVENTORY_COST_SELECTOR = "Inventory\nCost\nSelector"
-    GL_CATEGORY = "GL\nCategory"
-    UOM_PRIMARY = "UOM\nPrimary"
-    UNIT_COST = "Unit\nCost"
-    QUANTITY_ON_HAND = "Quantity\non Hand"
-    INVENTORY_VALUE = "Inventory\nValue"
-    SAFETY_STOCK = "Safety\nStock"
-    VALUE_BASED_ON_SAFETY_STOCK = "Value \nBased on \nSafety Stock"
-
-    def _defined_datatypes(self) -> Dict[str, DataType]:
-        return {
-            InventorySchema.BRANCH: DataType.STRING,
-            InventorySchema.LOCATION_TYPE: DataType.STRING,
-            InventorySchema.LOCATION: DataType.STRING,
-            InventorySchema.ITEM_NUMBER: DataType.STRING,
-            InventorySchema.ITEM_DESCRIPTION: DataType.STRING,
-            InventorySchema.ITEM_DESCRIPTION_2: DataType.STRING,
-            InventorySchema.LOT_SERIAL_NUMBER: DataType.STRING,
-            InventorySchema.IB_SETUP_STATUS: DataType.STRING,
-            InventorySchema.TECHNICAL_STATUS: DataType.STRING,
-            InventorySchema.STOCKING_TYPE: DataType.STRING,
-            InventorySchema.LINE_TYPE: DataType.STRING,
-            InventorySchema.MASTER_PLANNING_FAMILY: DataType.STRING,
-            InventorySchema.INVENTORY_COST_SELECTOR: DataType.STRING,
-            InventorySchema.GL_CATEGORY: DataType.STRING,
-            InventorySchema.UOM_PRIMARY: DataType.STRING,
-            InventorySchema.UNIT_COST: DataType.FLOAT,
-            InventorySchema.QUANTITY_ON_HAND: DataType.FLOAT,
-            InventorySchema.INVENTORY_VALUE: DataType.FLOAT,
-            InventorySchema.SAFETY_STOCK: DataType.FLOAT,
-            InventorySchema.VALUE_BASED_ON_SAFETY_STOCK: DataType.FLOAT,
-        }
+    BRANCH = Column("Branch", dtype=DataType.STRING, primary_key=True)
+    LOCATION_TYPE = Column("Location \nType P/S", dtype=DataType.STRING)
+    LOCATION = Column("Location", dtype=DataType.STRING, primary_key=True)
+    ITEM_NUMBER = Column("Item\nNumber", dtype=DataType.STRING, primary_key=True)
+    ITEM_DESCRIPTION = Column("Item\nDescription", dtype=DataType.STRING)
+    ITEM_DESCRIPTION_2 = Column(
+        "Item\nDescription\n2", dtype=DataType.STRING, optional=True
+    )
+    LOT_SERIAL_NUMBER = Column(
+        "Lot\nSerial\nNumber", dtype=DataType.STRING, optional=True
+    )
+    IB_SETUP_STATUS = Column("IB\nSetup\nStatus", dtype=DataType.STRING)
+    TECHNICAL_STATUS = Column("Technical\nStatus", dtype=DataType.STRING)
+    STOCKING_TYPE = Column("Stocking\nType", dtype=DataType.STRING)
+    LINE_TYPE = Column("Line\nType", dtype=DataType.STRING)
+    MASTER_PLANNING_FAMILY = Column("Master\nPlannings\nFamily", dtype=DataType.STRING)
+    INVENTORY_COST_SELECTOR = Column("Inventory\nCost\nSelector", dtype=DataType.STRING)
+    GL_CATEGORY = Column("GL\nCategory", dtype=DataType.STRING)
+    UOM_PRIMARY = Column("UOM\nPrimary", dtype=DataType.STRING)
+    UNIT_COST = Column("Unit\nCost", dtype=DataType.FLOAT)
+    QUANTITY_ON_HAND = Column("Quantity\non Hand", dtype=DataType.FLOAT)
+    INVENTORY_VALUE = Column("Inventory\nValue", dtype=DataType.FLOAT)
+    SAFETY_STOCK = Column("Safety\nStock", dtype=DataType.FLOAT, nullable=True)
+    VALUE_BASED_ON_SAFETY_STOCK = Column(
+        "Value \nBased on \nSafety Stock", dtype=DataType.FLOAT, optional=True
+    )
 
 
 class LocationSchema(Schema):
+    """Multi-sheet schema for location data (multisheet.xlsx)."""
+
     _FILENAME = "multisheet"
     _EXTENSION = FileExtension.XLSX
     _SCHEMA_TYPE = SchemaType.MULTI
 
-    # steden
-    COUNTRY = "Country"
-    CITY = "City"
+    STEDEN = ColumnGroup(
+        "Steden",
+        [
+            Column("Country", dtype=DataType.STRING),
+            Column("City", dtype=DataType.STRING),
+        ],
+    )
+    KLANTEN = ColumnGroup(
+        "Klanten",
+        [
+            Column("ID", dtype=DataType.INTEGER, primary_key=True),
+            Column("Naam", dtype=DataType.STRING),
+        ],
+    )
 
-    # klanten
-    ID = "ID"
-    Name = "Naam"
 
-    def _defined_datatypes(self) -> Dict[str, Dict[str, DataType]]:
-        return {
-            "Steden": {
-                LocationSchema.COUNTRY: DataType.STRING,
-                LocationSchema.CITY: DataType.STRING,
-            },
-            "Klanten": {
-                LocationSchema.ID: DataType.INTEGER,
-                LocationSchema.Name: DataType.STRING,
-            },
-        }
+class CategorySchema(Schema):
+    """Top-level parent table for the cascade-drop demo."""
+
+    _FILENAME = "categories"
+    _EXTENSION = FileExtension.CSV
+    _SCHEMA_TYPE = SchemaType.SINGLE
+
+    ID = Column("category_id", dtype=DataType.STRING, primary_key=True)
+    NAME = Column("name", dtype=DataType.STRING)
+    DEPARTMENT = Column("department", dtype=DataType.STRING)
+
+
+class ProductSchema(Schema):
+    """Middle table: child of ``categories``, parent of ``order_items``.
+
+    ``category_id`` references ``categories.category_id``. The relation is
+    ``parent_requires_child=True`` so categories with zero products are
+    dropped by ``CascadeDropTransformer``.
+    """
+
+    _FILENAME = "products"
+    _EXTENSION = FileExtension.CSV
+    _SCHEMA_TYPE = SchemaType.SINGLE
+
+    ID = Column("product_id", dtype=DataType.STRING, primary_key=True)
+    CATEGORY_ID = Column(
+        "category_id",
+        dtype=DataType.STRING,
+        foreign_key=("categories", "category_id"),
+        parent_requires_child=True,
+    )
+    NAME = Column("name", dtype=DataType.STRING)
+    PRICE = Column("price", dtype=DataType.FLOAT)
+
+
+class OrderItemSchema(Schema):
+    """Leaf table: child of ``products``.
+
+    ``product_id`` references ``products.product_id``. Orphan rows are
+    dropped on the first cascade pass; rows whose parent product itself gets
+    dropped are removed on a subsequent pass (transitive cascade).
+    """
+
+    _FILENAME = "order_items"
+    _EXTENSION = FileExtension.CSV
+    _SCHEMA_TYPE = SchemaType.SINGLE
+
+    ID = Column("order_item_id", dtype=DataType.STRING, primary_key=True)
+    PRODUCT_ID = Column(
+        "product_id",
+        dtype=DataType.STRING,
+        foreign_key=("products", "product_id"),
+    )
+    QUANTITY = Column("quantity", dtype=DataType.INTEGER)
 
 
 example_schemas = [
     WarehouseLayoutSchema(),
     ItemDataSchema(),
-    InventorySchema(),
-    EmployeeDataSchema(),
-    LocationSchema(),
+    InventorySchema,
+    EmployeeDataSchema,
+    LocationSchema,
+    CategorySchema,
+    ProductSchema,
+    OrderItemSchema,
 ]

@@ -14,7 +14,7 @@ Or point to your own configuration factory:
 uv run algomancy-cli --config-callback myproject.config:make_config
 ```
 
-Where `make_config` returns an `AppConfiguration` instance.
+Where `make_config` returns an `AppConfig` instance.
 
 Commands
 
@@ -36,4 +36,4 @@ create-scenario test1 "Master data" Fast "{\"duration\": 0.5}"
 
 How it works
 
-The CLI wraps `ScenarioManager` created via `AppConfiguration` just like the GUI launcher. See `src/algomancy/cli_launcher.py` for details.
+The CLI wraps `ScenarioManager` created via `AppConfig` just like the GUI launcher. See `src/algomancy/cli_launcher.py` for details.

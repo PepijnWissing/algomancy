@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from io import StringIO
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import pandas as pd
 import json
@@ -14,21 +14,55 @@ class DateFormatError(Exception):
     pass
 
 
+class ConversionIssue:
+    """Single dtype-conversion failure surfaced by ``DataTypeConverter``."""
+
+    __slots__ = ("table", "column", "target_type", "reason")
+
+    def __init__(
+        self, table: str, column: str, target_type: DataType, reason: str
+    ) -> None:
+        #: Logical table/file name where the failure occurred.
+        self.table = table
+        #: Column whose conversion failed.
+        self.column = column
+        #: The schema-declared target ``DataType``.
+        self.target_type = target_type
+        #: Short description of the failure.
+        self.reason = reason
+
+    def __repr__(self) -> str:
+        return (
+            f"ConversionIssue(table={self.table!r}, column={self.column!r}, "
+            f"target_type={self.target_type!r}, reason={self.reason!r})"
+        )
+
+
 class DataTypeConverter:
     @staticmethod
     def convert_dtypes(
-        df: pd.DataFrame, schema_types: dict[str, DataType]
+        df: pd.DataFrame,
+        schema_types: dict[str, DataType],
+        issues: Optional[List[ConversionIssue]] = None,
+        table_name: Optional[str] = None,
     ) -> pd.DataFrame:
         """
         Converts DataFrame columns to the specified data types in the schema.
         Attempts different localization options for numeric columns and date formats if the initial conversion fails.
 
         Args:
-            schema_types: dictionary containing target_types for data, obtained from schema
-            df: The pandas DataFrame to convert
+            df: The pandas DataFrame to convert.
+            schema_types: dictionary containing target_types for data, obtained
+                from schema.
+            issues: Optional list that receives ``ConversionIssue`` entries for
+                any column that fails to convert. The caller (typically an
+                extractor) is expected to surface these via the validation
+                step rather than silently corrupting data.
+            table_name: Optional logical table name used to attach context to
+                ``ConversionIssue`` entries.
 
         Returns:
-            DataFrame with converted data types where possible
+            DataFrame with converted data types where possible.
         """
 
         result_df = df.copy()
@@ -39,16 +73,20 @@ class DataTypeConverter:
 
             if target_type in (DataType.FLOAT, DataType.INTEGER):
                 result_df = DataTypeConverter._convert_numeric_column(
-                    result_df, column, target_type
+                    result_df, column, target_type, issues, table_name
                 )
             elif target_type == DataType.DATETIME:
                 result_df = DataTypeConverter._convert_datetime_column(
-                    result_df, column
+                    result_df, column, issues, table_name
                 )
             elif target_type == DataType.BOOLEAN:
-                result_df = DataTypeConverter._convert_boolean_column(result_df, column)
+                result_df = DataTypeConverter._convert_boolean_column(
+                    result_df, column, issues, table_name
+                )
             elif target_type == DataType.STRING:
-                result_df = DataTypeConverter._convert_string_column(result_df, column)
+                result_df = DataTypeConverter._convert_string_column(
+                    result_df, column, issues, table_name
+                )
             else:
                 raise NotImplementedError(f"Unsupported data type: {target_type}")
 
@@ -56,7 +94,11 @@ class DataTypeConverter:
 
     @staticmethod
     def _convert_numeric_column(
-        df: pd.DataFrame, column: str, target_type: DataType
+        df: pd.DataFrame,
+        column: str,
+        target_type: DataType,
+        issues: Optional[List[ConversionIssue]] = None,
+        table_name: Optional[str] = None,
     ) -> pd.DataFrame:
         """Convert a column to a numeric type, handling different number formats."""
         try:
@@ -95,10 +137,16 @@ class DataTypeConverter:
                                 df[column].str.replace(",", "").astype(DataType.INTEGER)
                             )
                             df[column] = temp_values
-                except (ValueError, TypeError, AttributeError, IndexError) as e:
-                    print(e)
-                    # skip and wait for validation
-                    pass
+                except (ValueError, TypeError, AttributeError, IndexError) as exc:
+                    if issues is not None:
+                        issues.append(
+                            ConversionIssue(
+                                table=table_name or "",
+                                column=column,
+                                target_type=target_type,
+                                reason=f"Numeric conversion failed: {exc}",
+                            )
+                        )
         return df
 
     @staticmethod
@@ -132,7 +180,12 @@ class DataTypeConverter:
         return df
 
     @staticmethod
-    def _convert_datetime_column(df: pd.DataFrame, column: str) -> pd.DataFrame:
+    def _convert_datetime_column(
+        df: pd.DataFrame,
+        column: str,
+        issues: Optional[List[ConversionIssue]] = None,
+        table_name: Optional[str] = None,
+    ) -> pd.DataFrame:
         """Convert a column to datetime type, trying multiple formats."""
         try:
             DataTypeConverter._convert_date_column(df, column)
@@ -144,6 +197,7 @@ class DataTypeConverter:
             # Standard conversion using pandas to_datetime
             temp = pd.to_datetime(df[column])
             df[column] = temp
+            return df
         except (ValueError, TypeError):
             # Try different datetime formats
             for datetime_format in [
@@ -156,13 +210,27 @@ class DataTypeConverter:
                 try:
                     temp = pd.to_datetime(df[column], format=datetime_format)
                     df[column] = temp
-                    break  # Break the loop if conversion succeeds
+                    return df
                 except (ValueError, TypeError, AttributeError):
                     continue  # Try next format
+            if issues is not None:
+                issues.append(
+                    ConversionIssue(
+                        table=table_name or "",
+                        column=column,
+                        target_type=DataType.DATETIME,
+                        reason="Could not parse column as datetime in any known format.",
+                    )
+                )
         return df
 
     @staticmethod
-    def _convert_boolean_column(df: pd.DataFrame, column: str) -> pd.DataFrame:
+    def _convert_boolean_column(
+        df: pd.DataFrame,
+        column: str,
+        issues: Optional[List[ConversionIssue]] = None,
+        table_name: Optional[str] = None,
+    ) -> pd.DataFrame:
         """Convert a column to boolean type, handling various representations."""
         try:
             df[column] = df[column].astype(DataType.BOOLEAN)
@@ -191,22 +259,39 @@ class DataTypeConverter:
                         # Try to convert the whole column to bool if all values were mapped
                         if mask.all():
                             df[column] = df[column].astype(DataType.BOOLEAN)
-            except (ValueError, TypeError, AttributeError) as e:
-                print(e)
-                # Skip if conversion fails
-                pass
+            except (ValueError, TypeError, AttributeError) as exc:
+                if issues is not None:
+                    issues.append(
+                        ConversionIssue(
+                            table=table_name or "",
+                            column=column,
+                            target_type=DataType.BOOLEAN,
+                            reason=f"Boolean conversion failed: {exc}",
+                        )
+                    )
         return df
 
     @staticmethod
-    def _convert_string_column(df: pd.DataFrame, column: str) -> pd.DataFrame:
+    def _convert_string_column(
+        df: pd.DataFrame,
+        column: str,
+        issues: Optional[List[ConversionIssue]] = None,
+        table_name: Optional[str] = None,
+    ) -> pd.DataFrame:
         """Convert a column to other non-specialized types."""
         try:
             # Update the column in the original dataframe with the target type
             df[column] = df[column].astype(DataType.STRING)
-        except (ValueError, TypeError) as e:
-            print(e)
-            # skip and wait for validation
-            pass
+        except (ValueError, TypeError) as exc:
+            if issues is not None:
+                issues.append(
+                    ConversionIssue(
+                        table=table_name or "",
+                        column=column,
+                        target_type=DataType.STRING,
+                        reason=f"String conversion failed: {exc}",
+                    )
+                )
         return df
 
 
@@ -214,6 +299,10 @@ class Extractor(ABC):
     def __init__(self, file: File, logger: Logger = None) -> None:
         self.file = file
         self.logger = logger
+        # Buffer for dtype conversion failures detected during extract().
+        # The owning ExtractionSequence drains this list after each extractor
+        # runs so the validation step can surface them as messages.
+        self.conversion_issues: List[ConversionIssue] = []
 
     def _extraction_message(self):
         if self.logger:
@@ -238,7 +327,12 @@ class SingleExtractor(Extractor):
 
         self._extraction_message()
         df = self._extract_file()
-        df = DataTypeConverter.convert_dtypes(df, self.schema.datatypes)
+        df = DataTypeConverter.convert_dtypes(
+            df,
+            self.schema.datatypes(),
+            issues=self.conversion_issues,
+            table_name=self.file.name,
+        )
         self._extraction_success_message()
 
         return {self.file.name: df}
@@ -257,7 +351,7 @@ class MultiExtractor(Extractor):
     def __init__(self, files: File, schema: Schema, logger: Logger = None) -> None:
         super().__init__(files, logger)
         assert schema.is_multi(), (
-            f"MultiExtractor for {schema.file_name} requires a multi-schema"
+            f"MultiExtractor for {schema.file_name()} requires a multi-schema"
         )
         self.schema = schema
 
@@ -265,13 +359,13 @@ class MultiExtractor(Extractor):
         missing_keys = set(dfs.keys()) - set(
             [
                 self.get_extraction_key(name)
-                for name in self.schema.datatype_groups.keys()
+                for name in self.schema.datatype_groups().keys()
             ]
         )
         assert len(missing_keys) == 0, f"Missing schemas for keys: {missing_keys}"
 
     def _get_schema_types(self, key) -> Dict[str, DataType]:
-        return self.schema.datatype_groups[key]
+        return self.schema.datatype_groups()[key]
 
     def extract(self) -> Dict[str, pd.DataFrame]:
         """Returns Dict[name, dataframe], so each dataset is identifiable"""
@@ -285,7 +379,10 @@ class MultiExtractor(Extractor):
         self._check_schemas(dfs)
         dfs = {
             key: DataTypeConverter.convert_dtypes(
-                df, self._get_schema_types(self.get_schema_name(key))
+                df,
+                self._get_schema_types(self.get_schema_name(key)),
+                issues=self.conversion_issues,
+                table_name=key,
             )
             for key, df in dfs.items()
         }
@@ -356,7 +453,7 @@ class JSONSingleExtractor(SingleExtractor):
     uses similar initialization parameters such as a file path and an
     optional logger.
 
-    JSONExtractor expects the JSON file to be formatted such that the root level is
+    JSONSingleExtractor expects the JSON file to be formatted such that the root level is
     a list. Each item in the list represents a single record, and each record has
     some properties. The properties are represented as key-value pairs. If the value
     is a dictionary, it is treated as a nested object. Each nested object is converted
@@ -480,19 +577,68 @@ class XLSXMultiExtractor(MultiExtractor):
         logger: Logger = None,
     ) -> None:
         super().__init__(file, schema, logger)
-        self._sheet_names = list(self.schema.sub_names)
-        self._single_sheet_extractors = {
-            sheet_name: XLSXSingleExtractor(
-                file, schema.generate_subschema(sheet_name), sheet_name
+        self._sheet_names = list(self.schema.sub_names())
+        self._single_sheet_extractors = {}
+        for sheet_name in self._sheet_names:
+            subschema = self.schema.get_subschema(sheet_name)
+            self._single_sheet_extractors[sheet_name] = XLSXSingleExtractor(
+                file, subschema, sheet_name
             )
-            for sheet_name in self._sheet_names
-        }
 
     def _extract_files(self) -> Dict[str, pd.DataFrame]:
         dfs = {}
         for name, extractor in self._single_sheet_extractors.items():
             dfs[self.get_extraction_key(name)] = list(extractor.extract().values())[0]
         return dfs
+
+
+class DataFrameExtractor(Extractor):
+    """Extractor that wraps a pre-built ``pandas.DataFrame``.
+
+    Useful for tests and notebook workflows where the input data is
+    already in memory and no file IO is needed.
+
+    Attributes:
+        name: Logical table/file name under which the DataFrame is exposed.
+        df: The DataFrame to expose.
+        schema: ``Schema`` (SINGLE) whose ``datatypes()`` are applied via
+            ``DataTypeConverter``. ``MULTI`` schemas are not supported.
+    """
+
+    def __init__(
+        self,
+        name: str,
+        df: pd.DataFrame,
+        schema: Schema,
+        logger: Logger = None,
+    ) -> None:
+        # Construct a minimal pseudo-File so the base class plumbing
+        # (extraction messages, etc.) keeps working without on-disk IO.
+        class _MemoryFile:
+            __slots__ = ("name",)
+
+            def __init__(self, n: str) -> None:
+                self.name = n
+
+        super().__init__(_MemoryFile(name), logger)
+        if not schema.is_single():
+            raise ValueError(
+                "DataFrameExtractor only supports SINGLE schemas; "
+                f"got {schema.schema_type()}."
+            )
+        self._df = df
+        self.schema = schema
+
+    def extract(self) -> Dict[str, pd.DataFrame]:
+        self._extraction_message()
+        df = DataTypeConverter.convert_dtypes(
+            self._df.copy(),
+            self.schema.datatypes(),
+            issues=self.conversion_issues,
+            table_name=self.file.name,
+        )
+        self._extraction_success_message()
+        return {self.file.name: df}
 
 
 class ExtractionSequence:
@@ -503,16 +649,21 @@ class ExtractionSequence:
         self._completed: bool = False
         self.logger = logger
         self._data = None
+        self._conversion_issues: List[ConversionIssue] = []
 
     def run_extraction(self) -> Dict[str, pd.DataFrame]:
         data: Dict[str, pd.DataFrame] = {}
+        all_issues: List[ConversionIssue] = []
 
         for extractor in self._extractors:
+            extractor.conversion_issues = []  # reset before each run
             dfs: Dict[str, pd.DataFrame] = extractor.extract()
             data.update(dfs)
+            all_issues.extend(extractor.conversion_issues)
 
         self._completed = True
         self._data = data
+        self._conversion_issues = all_issues
         return data
 
     @property
@@ -524,6 +675,15 @@ class ExtractionSequence:
         if not self.completed:
             self.run_extraction()
         return self._data
+
+    @property
+    def conversion_issues(self) -> List[ConversionIssue]:
+        """Return dtype-conversion failures collected during extraction.
+
+        The ETL pipeline drains these and surfaces them as validation
+        messages instead of letting them silently corrupt the data.
+        """
+        return list(self._conversion_issues)
 
     def add_extractor(self, extractor: Extractor) -> None:
         self._extractors.append(extractor)

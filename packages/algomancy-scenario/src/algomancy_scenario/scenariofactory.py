@@ -32,6 +32,10 @@ class ScenarioFactory:
         return self._algorithm_factory.available_algorithms
 
     @property
+    def available_kpis(self) -> List[str]:
+        return self._kpi_factory.available_kpis
+
+    @property
     def algo_templates(self) -> Dict[str, Type[ALGORITHM]]:
         return self._algorithm_factory.templates
 
@@ -49,12 +53,12 @@ class ScenarioFactory:
         if algo_params is None:
             algo_params = {}
 
-        assert (
-            algo_name in self.available_algorithms
-        ), f"Algorithm '{algo_name}' not found."
-        assert (
-            dataset_key in self._data_manager.get_data_keys()
-        ), f"Data '{dataset_key}' not found."
+        assert algo_name in self.available_algorithms, (
+            f"Algorithm '{algo_name}' not found."
+        )
+        assert dataset_key in self._data_manager.get_data_keys(), (
+            f"Data '{dataset_key}' not found."
+        )
 
         algorithm = self._algorithm_factory.create(
             input_name=algo_name,

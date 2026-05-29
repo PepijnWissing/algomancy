@@ -11,7 +11,7 @@ from enum import StrEnum, auto
 from typing import Dict, Generic
 
 from algomancy_utils.logger import Logger
-from algomancy_data import BASE_DATA_BOUND
+from algomancy_data import BASEDATASOURCE
 from .basealgorithm import ALGORITHM
 from .keyperformanceindicator import BASE_KPI
 
@@ -39,7 +39,7 @@ class Scenario(Generic[BASE_KPI]):
     def __init__(
         self,
         tag: str,
-        input_data: BASE_DATA_BOUND,
+        input_data: BASEDATASOURCE,
         kpis: Dict[str, BASE_KPI],
         algorithm: ALGORITHM,
         provided_id: str = None,
@@ -49,7 +49,7 @@ class Scenario(Generic[BASE_KPI]):
 
         Args:
             tag (str): A user-defined label for the scenario
-            input_data (BASE_DATA_BOUND): The data source to use for the scenario. Derived from BaseDataSource.
+            input_data (BASEDATASOURCE): The data source to use for the scenario. Derived from BaseDataSource.
             kpis: (Dict[str, KPI]): A dictionary of KPIs to compute for the scenario
             algorithm (str): The algorithm to use for processing
             provided_id (str): An optional unique identifier for the scenario. If not provided, a UUID will be generated.
@@ -71,7 +71,7 @@ class Scenario(Generic[BASE_KPI]):
         return self._input_data.name
 
     @property
-    def data_source(self) -> BASE_DATA_BOUND:
+    def data_source(self) -> BASEDATASOURCE:
         return self._input_data
 
     @property

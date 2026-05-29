@@ -10,4 +10,6 @@ scenario
 gui
 content
 utils
+cli
+api
 ```

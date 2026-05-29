@@ -1,88 +1,76 @@
+(tutorial-etl-ref)=
 # Data intake
-An Algomancy app expects to read data by way of an {ref}`ETL<etl-ref>` process.
-The steps of this process always follow the same pattern, but we need to configure the app such that the needs of our
-project are met. 
+An Algomancy app reads data through an {ref}`ETL<etl-ref>` pipeline.
+The quickstart wizard has already generated the folder structure, schemas, and ETL factory for us.
+In this section we review the generated files, then write the custom transformation and loading logic for the TSP model.
 
-We need to write the following steps
-1. Declare the configurations of the input files
-2. Create the skeleton of our own {ref}`ETL factory<fundamentals-etl-factory-ref>`, which will create a pipeline whenever we wish to run the data intake.  
-3. Fill in `create_extraction_sequence(..)`
-4. Fill in `create_validation_sequence(..)`
-5. Fill in `create_transformation_sequence(..)`
-6. Define the {ref}`data container<fundamentals-data-container-ref>` to house our loaded data
-7. Fill in `create_loader(..)`
+## Review the generated schemas
 
+Open `src/data_handling/generated_schemas.py`. The wizard scanned the three input files and created a {ref}`Schema<fundamentals-schema-ref>` subclass for each one, with inferred column names and types:
 
-## Define the input files
-We start by defining the structure of the input files. 
-The [Schema](backend-schema-ref) class contains information regarding the location and extension of the corresponding source file,
-as well as the table structure of said data file. 
-```{note}
-The fields `_FILENAME`, `_EXTENSION` and `_SCHEMA_TYPE` must be provided. If not, an exception will be raised on construction. 
-```
-1. Create a file `schemas.py `in the directory `src/data_handling/`
-2. For each table in an input file (could be multiple in an Excel), create a `Schema` subclass in `schemas.py`. 
-This field `_defined_datatypes` defines the table structure, and must be implemented by the subclass:
 :::{dropdown} {octicon}`code` Code
 :color: info
 
 ```{code-block} python
-:caption: `schemas.py`
+:caption: `generated_schemas.py` (as generated)
 :linenos:
 from typing import Dict
-from algomancy_data import (Schema,
-                            DataType,
-                            FileExtension,
-                            SchemaType)
+from algomancy_data import Schema, DataType, FileExtension
+from algomancy_data.schema import SchemaType
 
 
-class DCSchema(Schema):
-   _FILENAME = "dc"
-   _EXTENSION = FileExtension.XLSX
-   _SCHEMA_TYPE = SchemaType.SINGLE
-   
+class DcSchema(Schema):
+    _FILENAME = "dc"
+    _EXTENSION = FileExtension.XLSX
+    _SCHEMA_TYPE = SchemaType.SINGLE
+
     ID = "ID"
     X = "x"
     Y = "y"
 
     def _defined_datatypes(self) -> Dict[str, DataType]:
         return {
-            DCSchema.ID: DataType.STRING,
-            DCSchema.X: DataType.INTEGER,
-            DCSchema.Y: DataType.INTEGER,
+            DcSchema.ID: DataType.STRING,
+            DcSchema.X: DataType.INTEGER,
+            DcSchema.Y: DataType.INTEGER,
         }
 
 
-class LocationSchema(Schema):
-   _FILENAME = "otherlocations"
-   _EXTENSION = FileExtension.XLSX
-   _SCHEMA_TYPE = SchemaType.MULTI
-   
+dc_schema = DcSchema()
+
+
+class OtherlocationsSchema(Schema):
+    _FILENAME = "otherlocations"
+    _EXTENSION = FileExtension.XLSX
+    _SCHEMA_TYPE = SchemaType.MULTI
+
     ID = "ID"
     X = "x"
     Y = "y"
 
     def _defined_datatypes(self) -> Dict[str, Dict[str, DataType]]:
         return {
-           "customer": {
-               LocationSchema.ID: DataType.STRING,
-               LocationSchema.X: DataType.INTEGER,
-               LocationSchema.Y: DataType.INTEGER,
+            "customer": {
+                OtherlocationsSchema.ID: DataType.STRING,
+                OtherlocationsSchema.X: DataType.INTEGER,
+                OtherlocationsSchema.Y: DataType.INTEGER,
             },
-           "xdock": {
-               LocationSchema.ID: DataType.STRING,
-               LocationSchema.X: DataType.INTEGER,
-               LocationSchema.Y: DataType.INTEGER,
+            "xdock": {
+                OtherlocationsSchema.ID: DataType.STRING,
+                OtherlocationsSchema.X: DataType.INTEGER,
+                OtherlocationsSchema.Y: DataType.INTEGER,
             },
         }
 
 
+otherlocations_schema = OtherlocationsSchema()
+
 
 class StoresSchema(Schema):
-   _FILENAME = "stores"
-   _EXTENSION = FileExtension.CSV
-   _SCHEMA_TYPE = SchemaType.SINGLE
-   
+    _FILENAME = "stores"
+    _EXTENSION = FileExtension.CSV
+    _SCHEMA_TYPE = SchemaType.SINGLE
+
     ID = "ID"
     X = "x"
     Y = "y"
@@ -93,218 +81,143 @@ class StoresSchema(Schema):
             StoresSchema.X: DataType.INTEGER,
             StoresSchema.Y: DataType.INTEGER,
         }
+
+
+stores_schema = StoresSchema()
+
+
+all_schemas = [
+    dc_schema,
+    otherlocations_schema,
+    stores_schema,
+]
 ```
 :::
 
-```{important}
-A single `Schema` is associated with a single file. 
-In case a single file contains more than one data table (e.g., multiple Excel tabs), we should take care that:
-- the `_SCHEMA_TYPE` is set to `MULTI`,
-- `_defined_datatypes` returns a nested dictionary, such as on lines 34-46 of the code block above, and
-- the keys of the outer dictionary corresponds to the identifyers of the input tables (e.g., each sheet name of an xlsx)
+```{note}
+The fields `_FILENAME`, `_EXTENSION`, and `_SCHEMA_TYPE` are required — an exception is raised at construction if any are missing.
 ```
 
-3. At the end of `schemas.py`, we collect a list of schemas, for later use. 
-Make sure to collect an _instance_ of each schema by invoking the constructor. 
+```{important}
+A single `Schema` corresponds to a single file.
+When a file contains more than one data table (e.g., multiple Excel sheets), set `_SCHEMA_TYPE` to `MULTI` and return a nested dictionary from `_defined_datatypes`, as done for `OtherlocationsSchema` above.
+The outer-dictionary keys must match the table identifiers (e.g., the sheet names of an xlsx).
+```
+
+```{tip}
+Defining column names as class variables (e.g., `ID = "ID"`) is not strictly necessary, but it makes the code more readable, prevents typos, and lets your IDE assist with autocompletion — especially when column names are long or appear in many places.
+```
+
+## Review the generated ETL factory
+
+Open `src/data_handling/etl_factory.py`. The wizard created a `TSPETLFactory` with extractors already configured for each input file:
 
 :::{dropdown} {octicon}`code` Code
 :color: info
 
 ```{code-block} python
-:caption: `schemas.py` (continued)
+:caption: `etl_factory.py` (as generated)
 :linenos:
-:lineno-start: 66
-schemas = [
-    DCSchema(),
-    LocationSchema(),
-    StoresSchema(),
-]
-```
-:::
+from typing import Dict
 
-```{tip}
-Defining the column names in class variables, such as on lines 13-15 of `schemas.py` is not strictly necessary.
-Nevertheless, we recommend this way of working as makes the code more readable and maintainable, especially when your column names are long or complex. 
-Moreover, **this allows your IDE to help you** and prevents typos. 
-```
-
-## ETL Factory
-Before we can use the input file configuration that we have just created, 
-we need to create an ETLFactory that can extract the input files.
-
-Create a case specific ETLFactory in the directory src/data_handling, i.e., a subclass of ETLFactory.
-An ETLFactory is a container class with four different types of main functions
-   1. An extract function: extracts the files as configured in `schemas.py`
-   2. A validation function: validates the extracted files against user-defined validations.
-   3. A transformation function: transforms the extracted files (represented in pandas DataFrames). To 
-   other pandas Dataframes that can be used for loading.
-   4. A loader function: loads the transformed data into the system.
-An example implementation of the TSPETLFactory is given below:
-:::{dropdown} {octicon}`code` Code
-:color: info
-
-```python
-from typing import Dict, TypeVar, cast
-
-from algomancy_data import (
-   File,
-   CSVFile,
-   XLSXFile,
-   ETLFactory,
-   ValidationSequence,
-   ExtractionSuccessVerification,
-   SchemaValidator,
-   ValidationSeverity,
-   Loader,
-   DataSourceLoader,
-)
+import algomancy_data as de
+from algomancy_data import File
 from algomancy_data.extractor import (
-   ExtractionSequence,
-   CSVSingleExtractor,
-   XLSXSingleExtractor,
-   XLSXMultiExtractor,
+    ExtractionSequence,
+    CSVSingleExtractor,
+    XLSXMultiExtractor,
+    XLSXSingleExtractor,
 )
-from algomancy_data.transformer import TransformationSequence, CleanTransformer
+from algomancy_data.transformer import TransformationSequence
+from algomancy_utils import Logger
 
-F = TypeVar("F", bound=File)
+from src.data_handling.generated_schemas import all_schemas
+from src.data_handling.generated_schemas import dc_schema, otherlocations_schema, stores_schema
 
 
-class TSPETLFactory(ETLFactory):
-   def __init__(self, configs, logger=None):
-      super().__init__(configs, logger)
+class TSPETLFactory(de.ETLFactory):
 
-   def create_extraction_sequence(
-           self,
-           files: Dict[str, F],  # name to path format
-   ) -> ExtractionSequence:
-      """
-      Input:
-          files: A dictionary mapping file names to file paths.
+    def __init__(self, schemas, logger: Logger = None):
+        super().__init__(schemas, logger)
 
-      Output:
-          An extraction sequence object
+    def create_extraction_sequence(self, files: Dict[str, File]) -> ExtractionSequence:
+        sequence = ExtractionSequence(logger=self.logger)
 
-      raises:
-          ETLConstructionError: If any of the expected files or configurations are missing.
-      """
-      sequence = ExtractionSequence()
-      return sequence
+        # Extract dc
+        sequence.add_extractor(
+            XLSXSingleExtractor(
+                file=files["dc"],
+                schema=dc_schema,
+                sheet_name="Sheet1",
+                logger=self.logger,
+            )
+        )
 
-   def create_validation_sequence(self) -> ValidationSequence:
-      vs = ValidationSequence(logger=self.logger)
+        # Extract otherlocations
+        sequence.add_extractor(
+            XLSXMultiExtractor(
+                file=files["otherlocations"],
+                schema=otherlocations_schema,
+                logger=self.logger,
+            )
+        )
 
-      vs.add_validator(ExtractionSuccessVerification())
+        # Extract stores
+        sequence.add_extractor(
+            CSVSingleExtractor(
+                file=files["stores"],
+                schema=stores_schema,
+                logger=self.logger,
+                separator=",",
+            )
+        )
 
-      vs.add_validator(
-         SchemaValidator(
-            schemas=self.schemas,
-            severity=ValidationSeverity.CRITICAL,
-         )
-      )
+        return sequence
 
-      return vs
+    def create_transformation_sequence(self) -> TransformationSequence:
+        # TODO: Add transformers to process your data.
+        return TransformationSequence(logger=self.logger)
 
-   def create_transformation_sequence(self) -> TransformationSequence:
-      sequence = TransformationSequence()
-      sequence.add_transformer(CleanTransformer(self.logger))
-      return sequence
+    def create_validation_sequence(self) -> de.ValidationSequence:
+        vs = de.ValidationSequence(logger=self.logger)
+        vs.add_validator(de.ExtractionSuccessVerification())
+        vs.add_validator(
+            de.SchemaValidator(
+                schemas=self.schemas,
+                severity=de.ValidationSeverity.CRITICAL,
+            )
+        )
+        return vs
 
-   def create_loader(self) -> Loader:
-      return DataSourceLoader(self.logger)
+    def create_loader(self) -> de.Loader:
+        # TODO: Customize if you need a custom data container.
+        return de.DataSourceLoader(self.logger)
 ```
 :::
 
-## Extract
-1. Add an extractor in the function `create_extraction_sequence` for each file in `schemas.py.` 
-Simply fill the `sequence.add_extractor` function with the appropriate extractor and its arguments:
-:::{dropdown} {octicon}`code` Code
-:color: info
+An ETL factory has four responsibilities:
 
-```python
-def create_extraction_sequence(
-        self,
-        files: Dict[str, F],  # name to path format
-) -> ExtractionSequence:
-    """
-    Input:
-        files: A dictionary mapping file names to file paths.
+1. **Extract** — read the input files as configured by the schemas.
+2. **Validate** — run validations on the extracted data.
+3. **Transform** — reshape the extracted DataFrames into the form needed for loading.
+4. **Load** — build the application data model from the transformed data.
 
-    Output:
-        An extraction sequence object
+Extraction and validation are already complete. We now need to replace the placeholder `create_transformation_sequence` and `create_loader` with TSP-specific implementations.
 
-    raises:
-        ETLConstructionError: If any of the expected files or configurations are missing.
-    """
-    sequence = ExtractionSequence()
-
-    sequence.add_extractor(
-        CSVSingleExtractor(
-            file=cast(CSVFile, files["stores"]),
-            schema=self.get_schema("stores"),
-            logger=self.logger,
-            separator=",",
-        )
-    )
-    sequence.add_extractor(
-        XLSXSingleExtractor(
-            file=cast(XLSXFile, files["dc"]),
-            schema=self.get_schema("dc"),
-            sheet_name=0,
-            logger=self.logger,
-        )
-    )
-    sequence.add_extractor(
-        XLSXMultiExtractor(
-            file=cast(XLSXFile, files["otherlocations"]),
-            schemas=self.get_schema("otherlocations"),
-            logger=self.logger,
-        )
-    )
-
-    return sequence
-```
-:::
-
-2. Update main.py such that it uses the `schemas.py` and the newly created TSPETLFactory:
-   1. Import the `schemas.py` file:
-   ```python
-   from data_handling.schemas import schemas
-    ```
-   2. Import the TSPETLFactory class:
-   ```python
-   from data_handling.TSPETLFactory import TSPETLFactory
-   ```
-   3. Modify the arguments of AppConfiguration to use TSPETLFactory and schemas
-   ```python
-   app_cfg = AppConfiguration(
-        etl_factory=TSPETLFactory,
-        kpi_templates={'placeholder': PlaceholderKPI},
-        algo_templates={'placeholder': PlaceholderAlgorithm},
-        schemas=schemas,
-        data_object_type=DataSource,
-        autocreate=False, #this will be the default in next release
-        autorun=False, #this will be the default in next release
-        host=host,
-        port=port,
-        data_page="standard",#this will be the default in next release
-    )
-   ```
-3. Run main.py in IDE
-4. Open dashboard in browser 127.0.0.1
-5. Go to Data page and click Import
-6. Import all necessary input files from the data dir
-7. Verify that all the information is read.
+At this point you can verify that extraction works:
+1. Run `main.py`.
+2. Open the dashboard at `http://127.0.0.1:8050`.
+3. Go to the Data page and import the files from `data/setup/`.
+4. Verify that all three files are loaded without errors.
 
 ## Transform
-We transform all input data into a single pandas dataframe that describes the locations.
-:::{warning}
-To do: add context to explain why we are taking the steps below
-::: 
 
-1. Create the Transformers directory, `src/data_handling/transformers`
-2. We start by creating an empty location dataframe with certain column names. 
-Create the file `transform_create_location_df.py` in the directory `src/data_handling/transformers` with
-the following code:
+We transform all input data into a single pandas DataFrame that lists the locations, then derive a routes DataFrame from it.
+
+1. Create the directory `src/data_handling/transformers/`.
+
+2. Create `transform_create_location_df.py` — initialise an empty locations DataFrame:
+
 :::{dropdown} {octicon}`code` Code
 :color: info
 
@@ -312,56 +225,40 @@ the following code:
 import pandas as pd
 from algomancy_data import Transformer
 
+
 class TransformCreateLocations(Transformer):
-    def __init__(
-            self,
-            location_df_name: str,
-            logger=None
-    ) -> None:
+    def __init__(self, location_df_name: str, logger=None) -> None:
         super().__init__(name="Create location df transformer", logger=logger)
         self.location_df_name = location_df_name
 
     def transform(self, data: dict[str, pd.DataFrame]) -> None:
-        if self._logger:
-            self._logger.log(f"Create location df in transform")
-
         if data.get(self.location_df_name, None) is None:
-            data[self.location_df_name] = pd.DataFrame(
-                columns=['id', 'x', 'y']
-            )
-
+            data[self.location_df_name] = pd.DataFrame(columns=['id', 'x', 'y'])
 ```
 :::
-3. Create a transformer to transform the customer data into a location dataframe. 
-That is, create a file `transform_customer_to_location.py` in the directory `src/data_handling/transformers` and fill like below:
-:::{dropdown} {octicon}`code` Code
+
+3. Create one transformer per input source that appends its rows to the locations DataFrame.
+   Each follows the same pattern — rename columns and concatenate:
+
+:::{dropdown} {octicon}`code` Code — customer transformer
 :color: info
 
 ```python
+# transform_customer_to_location.py
 import pandas as pd
 from algomancy_data import Transformer
+
 
 class TransformCustomerToLocation(Transformer):
-    def __init__(
-            self,
-            location_df_name: str,
-            logger=None,
-    ) -> None:
+    def __init__(self, location_df_name: str, logger=None) -> None:
         super().__init__(name="Location Transformer", logger=logger)
         self.location_df_name = location_df_name
-        self.df_name: str = 'otherlocations.customer'
-        self.column_mapping = {
-            'ID': 'id',
-            'x': 'x',
-            'y': 'y',
-        }
+        self.df_name = 'otherlocations.customer'
+        self.column_mapping = {'ID': 'id', 'x': 'x', 'y': 'y'}
 
     def transform(self, data: dict[str, pd.DataFrame]) -> None:
-        if self._logger:
-            self._logger.log(f"Transforming customers to locations")
-
         data_df = data.get(self.df_name, None)
-        data_df_locations = data.get(self.location_df_name,None)
+        data_df_locations = data.get(self.location_df_name, None)
 
         if (data_df is not None) and (data_df_locations is not None):
             normalized = (
@@ -371,243 +268,162 @@ class TransformCustomerToLocation(Transformer):
                 .astype(data_df_locations.dtypes.to_dict())
             )
             data[self.location_df_name] = pd.concat(
-                [data_df_locations, normalized],
-                ignore_index=True
+                [data_df_locations, normalized], ignore_index=True
             )
 ```
 :::
-4. Create a transformer to transform the xdock data into a location dataframe. 
-That is, create a file `transform_xdock_to_location.py` in the directory `src/data_handling/transformers` and fill like below:
-:::{dropdown} {octicon}`code` Code
+
+   Create `TransformXDockToLocation`, `TransformDCToLocation`, and `TransformStoresToLocation` in the same way,
+   changing `df_name` to `'otherlocations.xdock'`, `'dc'`, and `'stores'` respectively:
+
+:::{dropdown} {octicon}`code` Code — remaining source transformers
 :color: info
 
 ```python
-import pandas as pd
-from algomancy_data import Transformer
-
+# transform_xdock_to_location.py
 class TransformXDockToLocation(Transformer):
-    def __init__(
-            self,
-            location_df_name: str,
-            logger=None,
-    ) -> None:
+    def __init__(self, location_df_name: str, logger=None) -> None:
         super().__init__(name="Location Transformer", logger=logger)
         self.location_df_name = location_df_name
-        self.df_name: str = 'otherlocations.xdock'
-        self.column_mapping = {
-            'ID': 'id',
-            'x': 'x',
-            'y': 'y',
-        }
+        self.df_name = 'otherlocations.xdock'
+        self.column_mapping = {'ID': 'id', 'x': 'x', 'y': 'y'}
 
     def transform(self, data: dict[str, pd.DataFrame]) -> None:
-        if self._logger:
-            self._logger.log(f"Transforming xdock to locations")
-
         data_df = data.get(self.df_name, None)
-        data_df_locations = data.get(self.location_df_name,None)
-
+        data_df_locations = data.get(self.location_df_name, None)
         if (data_df is not None) and (data_df_locations is not None):
             normalized = (
-                data_df
-                .rename(columns=self.column_mapping)
+                data_df.rename(columns=self.column_mapping)
                 .reindex(columns=data_df_locations.columns)
                 .astype(data_df_locations.dtypes.to_dict())
             )
             data[self.location_df_name] = pd.concat(
-                [data_df_locations, normalized],
-                ignore_index=True
+                [data_df_locations, normalized], ignore_index=True
             )
-```
-:::
-5. Create a transformer to transform the dc data into a location dataframe. 
-That is, create a file `transform_dc_to_location.py` in the directory `src/data_handling/transformers` and fill like below:
-:::{dropdown} {octicon}`code` Code
-:color: info
 
-```python
-import pandas as pd
-from algomancy_data import Transformer
 
+# transform_dc_to_location.py
 class TransformDCToLocation(Transformer):
-    def __init__(
-            self,
-            location_df_name: str,
-            logger=None,
-    ) -> None:
+    def __init__(self, location_df_name: str, logger=None) -> None:
         super().__init__(name="Location Transformer", logger=logger)
         self.location_df_name = location_df_name
-        self.df_name: str = 'dc'
-        self.column_mapping = {
-            'ID': 'id',
-            'x': 'x',
-            'y': 'y',
-        }
+        self.df_name = 'dc'
+        self.column_mapping = {'ID': 'id', 'x': 'x', 'y': 'y'}
 
     def transform(self, data: dict[str, pd.DataFrame]) -> None:
-        if self._logger:
-            self._logger.log(f"Transforming dc to locations")
-
         data_df = data.get(self.df_name, None)
-        data_df_locations = data.get(self.location_df_name,None)
-
+        data_df_locations = data.get(self.location_df_name, None)
         if (data_df is not None) and (data_df_locations is not None):
             normalized = (
-                data_df
-                .rename(columns=self.column_mapping)
+                data_df.rename(columns=self.column_mapping)
                 .reindex(columns=data_df_locations.columns)
                 .astype(data_df_locations.dtypes.to_dict())
             )
             data[self.location_df_name] = pd.concat(
-                [data_df_locations, normalized],
-                ignore_index=True
+                [data_df_locations, normalized], ignore_index=True
             )
-```
-:::
-6. Create a transformer to transform the stores data into a location dataframe. 
-That is, create a file `transform_stores_to_location.py` in the directory `src/data_handling/transformers` and fill like below:
-:::{dropdown} {octicon}`code` Code
-:color: info
 
-```python
-import pandas as pd
-from algomancy_data import Transformer
 
+# transform_stores_to_location.py
 class TransformStoresToLocation(Transformer):
-    def __init__(
-            self,
-            location_df_name: str,
-            logger=None,
-    ) -> None:
+    def __init__(self, location_df_name: str, logger=None) -> None:
         super().__init__(name="Location Transformer", logger=logger)
         self.location_df_name = location_df_name
-        self.df_name: str = 'stores'
-        self.column_mapping = {
-            'ID': 'id',
-            'x': 'x',
-            'y': 'y',
-        }
+        self.df_name = 'stores'
+        self.column_mapping = {'ID': 'id', 'x': 'x', 'y': 'y'}
 
     def transform(self, data: dict[str, pd.DataFrame]) -> None:
-        if self._logger:
-            self._logger.log(f"Transforming stores to locations")
-
         data_df = data.get(self.df_name, None)
-        data_df_locations = data.get(self.location_df_name,None)
-
+        data_df_locations = data.get(self.location_df_name, None)
         if (data_df is not None) and (data_df_locations is not None):
             normalized = (
-                data_df
-                .rename(columns=self.column_mapping)
+                data_df.rename(columns=self.column_mapping)
                 .reindex(columns=data_df_locations.columns)
                 .astype(data_df_locations.dtypes.to_dict())
             )
             data[self.location_df_name] = pd.concat(
-                [data_df_locations, normalized],
-                ignore_index=True
+                [data_df_locations, normalized], ignore_index=True
             )
 ```
 :::
-7. Create a transformer to transform the locations into routes. A route is an edge between two locations.
-That is, create a file `transform_location_to_routes.py` in the directory `src/data_handling/transformers` and fill like below
+
+4. Create `transform_location_to_routes.py` — derive a routes DataFrame as the Cartesian product of all locations, with Euclidean distance as cost:
+
 :::{dropdown} {octicon}`code` Code
 :color: info
 
 ```python
 import pandas as pd
 from algomancy_data import Transformer
+
 
 class TransformLocationToRoutes(Transformer):
-    def __init__(
-            self,
-            location_df_name: str,
-            routes_df_name: str,
-            logger=None,
-    ) -> None:
+    def __init__(self, location_df_name: str, routes_df_name: str, logger=None) -> None:
         super().__init__(name="Transform location to routes", logger=logger)
         self._location_df_name = location_df_name
         self._routes_df_name = routes_df_name
 
     def transform(self, data: dict[str, pd.DataFrame]) -> None:
-        if self._logger:
-            self._logger.log(f"Transforming locations to routes")
-
-        locations = data.get(self._location_df_name,None)
+        locations = data.get(self._location_df_name, None)
 
         # Cartesian product with itself
         routes = locations.merge(locations, how='cross', suffixes=('_from', '_to'))
-
-        # Optionally, remove routes where start and end are the same
         routes = routes[routes['id_from'] != routes['id_to']]
 
-        # calculate the euclidean distance between from and to coordinates
-        routes['distance'] = routes.apply(lambda row: ((row['x_from'] - row['x_to']) ** 2 + (row['y_from'] - row['y_to']) ** 2) ** 0.5, axis=1)
-
-        # calculate the route cost
+        routes['distance'] = routes.apply(
+            lambda row: (
+                (row['x_from'] - row['x_to']) ** 2 + (row['y_from'] - row['y_to']) ** 2
+            ) ** 0.5,
+            axis=1
+        )
         routes['cost'] = routes['distance'] * 1.0
 
-        # register routes on data dict
         data[self._routes_df_name] = routes
 ```
 :::
-8. Call the transformers in the ETL Factory (TSPETLFactory.py):
+
+5. Register all transformers in `etl_factory.py` by replacing the placeholder `create_transformation_sequence`:
+
 :::{dropdown} {octicon}`code` Code
 :color: info
 
 ```python
-    def create_transformation_sequence(self) -> TransformationSequence:
-        sequence = TransformationSequence()
-        location_df_name = 'transform_locations'
-        routes_df_name = 'transform_routes'
-        sequence.add_transformer(TransformCreateLocations(location_df_name=location_df_name, logger=self.logger))
-        sequence.add_transformer(TransformCustomerToLocation(location_df_name=location_df_name, logger=self.logger))
-        sequence.add_transformer(TransformXDockToLocation(location_df_name=location_df_name, logger=self.logger))
-        sequence.add_transformer(TransformStoresToLocation(location_df_name=location_df_name, logger=self.logger))
-        sequence.add_transformer(TransformDCToLocation(location_df_name=location_df_name, logger=self.logger))
-        sequence.add_transformer(TransformLocationToRoutes(
-            location_df_name=location_df_name,
-            routes_df_name=routes_df_name,
-            logger=self.logger
-        ))
-        return sequence
+def create_transformation_sequence(self) -> TransformationSequence:
+    sequence = TransformationSequence()
+    location_df_name = 'transform_locations'
+    routes_df_name = 'transform_routes'
+    sequence.add_transformer(TransformCreateLocations(location_df_name=location_df_name, logger=self.logger))
+    sequence.add_transformer(TransformCustomerToLocation(location_df_name=location_df_name, logger=self.logger))
+    sequence.add_transformer(TransformXDockToLocation(location_df_name=location_df_name, logger=self.logger))
+    sequence.add_transformer(TransformStoresToLocation(location_df_name=location_df_name, logger=self.logger))
+    sequence.add_transformer(TransformDCToLocation(location_df_name=location_df_name, logger=self.logger))
+    sequence.add_transformer(TransformLocationToRoutes(
+        location_df_name=location_df_name,
+        routes_df_name=routes_df_name,
+        logger=self.logger
+    ))
+    return sequence
 ```
 :::
-9. Run main.py in IDE
-10. Open dashboard in browser 127.0.0.1
-11. Go to Data page and click Import
-12. Import all necessary input files from the data dir
-13. Verify that all the information is read and that the data is transformed by inspecting transform_locations
+
+6. Run `main.py`, import the data, and verify that `transform_locations` appears as a combined table.
 
 ## Load
-Create a directory data_model under src/data_handling/ such that you get:
-```text
-root/
-|── assets/
-├── data/
-└── src/
-    ├── data_handling/
-    │   ├── data_model/
-    │   └── transformers/
-    ├── pages/
-    └── templates/
-        ├── kpi/
-        └── algorithm/
-```
-### Locations
-We will use locations in the visualization part of this tutorial. Therefore, we create a class Location.
 
-Create a file location.py in the directory src/data_handling/data_model: 
+We build a domain-specific data model from the transformed DataFrames — a network of `Location` and `Route` objects managed by a `NetworkManager`.
+
+Create the directory `src/data_handling/data_model/`.
+
+### Locations
+
+We will use locations in the visualisation part of this tutorial. Create `location.py`:
+
 :::{dropdown} {octicon}`code` Code
 :color: info
 
 ```python
 class Location:
-    def __init__(
-            self,
-            id: str,
-            x: float,
-            y: float,
-    ):
+    def __init__(self, id: str, x: float, y: float):
         self._id = id
         self._x = x
         self._y = y
@@ -625,23 +441,20 @@ class Location:
         return self._y
 ```
 :::
-### Routes
-We will use routes in the optimization part of this tutorial.
 
-Create a file route.py in the directory src/data_handling/data_model:
+### Routes
+
+We will use routes in the optimisation part of this tutorial. Create `route.py`:
+
 :::{dropdown} {octicon}`code` Code
 :color: info
 
 ```python
 from data_handling.data_model.location import Location
 
+
 class Route:
-    def __init__(
-            self,
-            from_id: str,
-            to_id: str,
-            cost: float,
-    ):
+    def __init__(self, from_id: str, to_id: str, cost: float):
         self.route_id = from_id + '_' + to_id
         self._from_id = from_id
         self._to_id = to_id
@@ -660,16 +473,11 @@ class Route:
         return self._to_id
 ```
 :::
-### Network Manager
-We create a NetworkManager class in this tutorial to manage the network of locations and routes.
-This class offers the following functionalities:
-- Add a location to the network
-- Add a route to the network
-- Get all locations in the network
-- Get all routes in the network
-- Get all reachable locations from a location
 
-1. Create the file network_manager.py in the directory src/data_handling/data_model.
+### Network Manager
+
+Create `network_manager.py` to manage the set of locations and routes:
+
 :::{dropdown} {octicon}`code` Code
 :color: info
 
@@ -692,17 +500,10 @@ class NetworkManager:
         from_location, to_location = self.get_route_locations(route)
         if from_location is not None and to_location is not None:
             self._routes[(from_location.id, to_location.id)] = route
-            if (
-                self._reachable_locations_from_location.get(from_location.id, None)
-                is None
-            ):
-                self._reachable_locations_from_location[from_location.id] = [
-                    to_location
-                ]
+            if self._reachable_locations_from_location.get(from_location.id, None) is None:
+                self._reachable_locations_from_location[from_location.id] = [to_location]
             else:
-                self._reachable_locations_from_location[from_location.id] += [
-                    to_location
-                ]
+                self._reachable_locations_from_location[from_location.id] += [to_location]
 
     def get_locations(self) -> list[Location]:
         return list(self._locations.values())
@@ -721,17 +522,13 @@ class NetworkManager:
 
     def get_reachable_locations(self, location_id: str) -> List[Location]:
         return self._reachable_locations_from_location[location_id]
-
 ```
 :::
+
 ### Data Model
-We create a DataModel class in this tutorial, that is a subclass of DataSource.
-We create this subclass because this enables us to save (list of) objects on the object.
-This will prove convenient later when we want to run algorithms on the data. 
 
-Note that we maintain the tables field on the class to keep track of the tables that were loaded.
+Create `data_model.py` as a `DataSource` subclass so we can attach domain objects to the loaded data:
 
-Create a file data_model.py in the directory src/data_handling/data_model.
 :::{dropdown} {octicon}`code` Code
 :color: info
 
@@ -742,6 +539,7 @@ from typing import List
 import pandas as pd
 from algomancy_data import DataSource, DataClassification, ValidationMessage
 from data_handling.data_model.network_manager import NetworkManager
+
 
 class DataModel(DataSource):
     def __init__(
@@ -772,12 +570,12 @@ class DataModel(DataSource):
     @property
     def network_manager(self):
         return self._network_manager
-``` 
+```
 :::
-### Load the objects
-We use the transformed pandas dataframes to create the objects in this part of the tutorial.
-1. Create the directory loaders in src/data_handling/
-2. Create the file loader.py in the directory src/data_handling/loaders.
+
+### Loader
+
+Create the directory `src/data_handling/loaders/` and add `loader.py`:
 
 :::{dropdown} {octicon}`code` Code
 :color: info
@@ -785,11 +583,12 @@ We use the transformed pandas dataframes to create the objects in this part of t
 ```python
 from typing import List
 from algomancy_data import Loader, ValidationMessage, DataClassification
-from data_handling.data_model.data_model import DataModel
 import pandas as pd
+from data_handling.data_model.data_model import DataModel
 from data_handling.data_model.location import Location
 from data_handling.data_model.network_manager import NetworkManager
 from data_handling.data_model.route import Route
+
 
 class DataModelLoader(Loader):
     def load(
@@ -805,13 +604,9 @@ class DataModelLoader(Loader):
             name=name,
             validation_messages=validation_messages,
         )
-        if self.logger:
-            self.logger.log("Loading data into DataModel")
-
         self.load_network_manager(dm=datamodel)
         self.load_locations(dm=datamodel)
         self.load_routes(dm=datamodel)
-
         return datamodel
 
     @staticmethod
@@ -823,39 +618,33 @@ class DataModelLoader(Loader):
         data_locations = dm.get_table("transform_locations")
         nm = dm.network_manager
         for _, row in data_locations.iterrows():
-            nm.add_location(
-                location = Location(
-                    id=row["id"],
-                    x=row["x"],
-                    y=row["y"],
-                )
-            )
+            nm.add_location(Location(id=row["id"], x=row["x"], y=row["y"]))
 
     @staticmethod
     def load_routes(dm: DataModel):
         data_routes = dm.get_table("transform_routes")
         nm = dm.network_manager
         for _, row in data_routes.iterrows():
-            route = Route(
-                from_id=row["id_from"],
-                to_id=row["id_to"],
-                cost=row["cost"],
-            )
-
+            route = Route(from_id=row["id_from"], to_id=row["id_to"], cost=row["cost"])
             from_location, to_location = nm.get_route_locations(route=route)
-
             if from_location is None or to_location is None:
                 continue
-
             nm.add_route(route=route)
 ```
 :::
-3. Register the loader to the ETL Factory (TSPETLFactory.py). That is, replace DataSourceLoad by the newly
-created DataModelLoader.
+
+Register the loader in `etl_factory.py` by replacing `DataSourceLoader` with `DataModelLoader`:
+
 ```python
-    def create_loader(self) -> Loader:
-        return DataModelLoader(self.logger)
+def create_loader(self) -> Loader:
+    return DataModelLoader(self.logger)
+```
+
+Also update `main.py` to use `DataModel` as the data object type:
+
+```python
+data_object_type=DataModel,
 ```
 
 ## Next step
-All right. The information is loaded in Algomancy. Now it is time to define the {ref}`algorithm(s)<tutorial-algorithm-ref>`.
+All right. The information is loaded in Algomancy. Now it is time to define the {ref}`algorithm(s)<tutorial-algorithms-ref>`.

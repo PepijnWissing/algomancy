@@ -7,7 +7,7 @@ It creates a collapsible section that displays additional results for the select
 
 from dash import html
 
-from .page import BaseComparePage
+from algomancy_gui.page import BaseComparePage
 from algomancy_scenario import Scenario
 
 
@@ -16,11 +16,10 @@ class PlaceholderComparePage(BaseComparePage):
     Placeholder content for the Compare page - Secondary Results Component
 
     USAGE:
-        >>> config = AppConfiguration(
-        ...             ...
-        ...             compare_page="placeholder",
-        ...             ...
-        ...          )
+        >>> config = AppConfig(
+        ...     page_config=PageConfig(compare_page="placeholder"),
+        ...     ...
+        ... )
     """
 
     @staticmethod

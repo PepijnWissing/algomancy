@@ -10,7 +10,7 @@ from ..componentids import (
     DM_LIST_UPDATER_STORE,
     ACTIVE_SESSION,
 )
-from algomancy_gui.managergetters import get_scenario_manager
+from algomancy_gui.managers.managergetters import get_scenario_manager
 
 """
 Callback functions for data management dialogs in the dashboard application.

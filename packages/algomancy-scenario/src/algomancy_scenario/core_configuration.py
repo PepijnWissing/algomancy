@@ -3,11 +3,13 @@ from __future__ import annotations
 import os
 from typing import Any, Dict, List, Type
 
-from algomancy_data import Schema, BASE_DATA_BOUND
-from algomancy_scenario import AlgorithmFactory, ALGORITHM, BASE_KPI
+from algomancy_data import Schema, BASEDATASOURCE
+from .algorithmfactory import AlgorithmFactory
+from .basealgorithm import ALGORITHM
+from .keyperformanceindicator import BASE_KPI
 
 
-class CoreConfiguration:
+class CoreConfig:
     """
     Core configuration shared by GUI and CLI.
 
@@ -18,13 +20,13 @@ class CoreConfiguration:
     Validation is performed automatically upon instantiation to ensure all
     required fields are present and correctly typed.
 
-    Attributes:
+    Args:
         use_sessions: Whether to enable multi-session support.
         data_path: Path to the directory where session and persistent data is stored.
         has_persistent_state: If True, data is persisted to disk using `save_type`.
         save_type: Format for persistent data storage ('json' or 'parquet').
         data_object_type: The class used to represent the data source (must inherit
-            from BASE_DATA_BOUND).
+            from `BaseDataSource`).
         etl_factory: An instance responsible for creating ETL processes.
         kpi_templates: A mapping of KPI names to their corresponding class
             implementations.
@@ -49,12 +51,12 @@ class CoreConfiguration:
         # === data manager configuration ===
         has_persistent_state: bool = False,
         save_type: str | None = "json",
-        data_object_type: type[BASE_DATA_BOUND] | None = None,
+        data_object_type: type[BASEDATASOURCE] | None = None,
         # === scenario manager configuration ===
         etl_factory: Any | None = None,
         kpi_templates: Dict[str, Type[BASE_KPI]] | None = None,
         algo_templates: Dict[str, Type[ALGORITHM]] | None = None,
-        schemas: List[Schema] | None = None,
+        schemas: List[Type[Schema]] | None = None,
         # === auto start/create features ===
         autocreate: bool | None = None,
         default_algo: str | None = None,

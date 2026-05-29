@@ -11,7 +11,9 @@ from .keyperformanceindicator import KpiError, BaseKPI, BASE_KPI, ImprovementDir
 from .result import BaseScenarioResult, BASE_RESULT_BOUND, ScenarioResult
 from .scenario import Scenario, ScenarioStatus
 from .scenariomanager import ScenarioManager
+from .sessionmanager import SessionManager
 from .basealgorithm import ALGORITHM, BaseAlgorithm
+from .core_configuration import CoreConfig
 
 __all__ = [
     "BaseParameterSet",
@@ -33,4 +35,6 @@ __all__ = [
     "ScenarioResult",
     "Scenario",
     "ScenarioManager",
+    "SessionManager",
+    "CoreConfig",
 ]

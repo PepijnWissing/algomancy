@@ -1,0 +1,9 @@
+product_id;category_id;name;price
+P-001;CAT-01;Laptop;999.00
+P-002;CAT-01;Phone;499.00
+P-003;CAT-02;Novel;19.99
+P-004;CAT-02;Cookbook;25.00
+P-005;CAT-03;T-shirt;15.00
+P-006;CAT-99;Mystery item;9.99
+P-007;CAT-XX;Bogus item;0.50
+P-008;CAT-03;Hat;12.00

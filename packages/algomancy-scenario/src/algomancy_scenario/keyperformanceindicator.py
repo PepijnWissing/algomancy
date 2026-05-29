@@ -64,11 +64,12 @@ class ImprovementDirection(StrEnum):
     """
     Defines the direction of improvement or success criteria for a KPI.
 
-    Attributes:
-        HIGHER: The KPI is better when its value is higher (e.g., Accuracy).
-        LOWER: The KPI is better when its value is lower (e.g., Latency).
-        AT_LEAST: A binary success criterion; successful if value >= threshold.
-        AT_MOST: A binary success criterion; successful if value <= threshold.
+    Members:
+
+    - ``HIGHER``: The KPI is better when its value is higher (e.g., Accuracy).
+    - ``LOWER``: The KPI is better when its value is lower (e.g., Latency).
+    - ``AT_LEAST``: A binary success criterion; successful if value >= threshold.
+    - ``AT_MOST``: A binary success criterion; successful if value <= threshold.
     """
 
     HIGHER = auto()
@@ -293,14 +294,18 @@ class BaseKPI(ABC):
 
     def to_dict(self):
         """
-        Returns a dictionary representation of the KPI for serialization.
+        Returns a JSON-serializable dictionary representation of the KPI.
+
+        ``unit`` is the symbol of the KPI's base unit (e.g. ``"s"`` for seconds);
+        ``threshold`` is the raw numeric threshold (or ``None`` for non-binary
+        KPIs). For pretty-printed values use :meth:`pretty` / :meth:`details`.
         """
         return {
             "name": self.name,
             "better_when": self.better_when.name,
-            "basis": self._measurement.base_measurement,
+            "unit": self._measurement.base_measurement.unit.symbol,
             "value": self.value,
-            "threshold": self._threshold,
+            "threshold": self._threshold.value if self._threshold is not None else None,
         }
 
 

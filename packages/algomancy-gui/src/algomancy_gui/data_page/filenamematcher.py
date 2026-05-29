@@ -43,7 +43,7 @@ def find_closest_match(file_names: List[str], schema: Schema) -> str:
     return min(
         file_names,
         key=lambda x: hamming_distance(
-            x.lower(), schema.file_name_with_extension.lower()
+            x.lower(), schema.file_name_with_extension().lower()
         ),
     )
 
@@ -97,7 +97,7 @@ def match_file_names(schemas: List[Schema], file_names: List[str]) -> Dict[str, 
     assert len(file_names) <= len(schemas), "Too many input files"
 
     initial_guess = {
-        schema.file_name: find_closest_match(file_names, schema) for schema in schemas
+        schema.file_name(): find_closest_match(file_names, schema) for schema in schemas
     }
     if is_bijective_mapping(initial_guess):
         return initial_guess

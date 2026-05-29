@@ -19,6 +19,14 @@ class KpiFactory(Generic[BASE_KPI]):
     def __init__(self, templates: Dict[str, Type[BASE_KPI]]):
         self._templates = templates
 
+    @property
+    def templates(self) -> Dict[str, Type[BASE_KPI]]:
+        return self._templates
+
+    @property
+    def available_kpis(self) -> List[str]:
+        return list(self._templates.keys())
+
     def create_all(self):
         """
         Creates a dictionary of KPIs using predefined templates.

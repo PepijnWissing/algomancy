@@ -1,4 +1,3 @@
-from typing import Dict
 from algomancy_data import Schema, DataType, FileExtension, SchemaType
 
 
@@ -11,12 +10,11 @@ class DCSchema(Schema):
     X = "x"
     Y = "y"
 
-    def _defined_datatypes(self) -> Dict[str, DataType]:
-        return {
-            DCSchema.ID: DataType.STRING,
-            DCSchema.X: DataType.INTEGER,
-            DCSchema.Y: DataType.INTEGER,
-        }
+    _DATATYPES = {
+        ID: DataType.STRING,
+        X: DataType.INTEGER,
+        Y: DataType.INTEGER,
+    }
 
 
 class LocationSchema(Schema):
@@ -28,19 +26,18 @@ class LocationSchema(Schema):
     X = "x"
     Y = "y"
 
-    def _defined_datatypes(self) -> Dict[str, Dict[str, DataType]]:
-        return {
-            "customer": {
-                LocationSchema.ID: DataType.STRING,
-                LocationSchema.X: DataType.INTEGER,
-                LocationSchema.Y: DataType.INTEGER,
-            },
-            "xdock": {
-                LocationSchema.ID: DataType.STRING,
-                LocationSchema.X: DataType.INTEGER,
-                LocationSchema.Y: DataType.INTEGER,
-            },
-        }
+    _DATATYPES = {
+        "customer": {
+            ID: DataType.STRING,
+            X: DataType.INTEGER,
+            Y: DataType.INTEGER,
+        },
+        "xdock": {
+            ID: DataType.STRING,
+            X: DataType.INTEGER,
+            Y: DataType.INTEGER,
+        },
+    }
 
 
 class StoresSchema(Schema):
@@ -52,12 +49,11 @@ class StoresSchema(Schema):
     X = "x"
     Y = "y"
 
-    def _defined_datatypes(self) -> Dict[str, DataType]:
-        return {
-            StoresSchema.ID: DataType.STRING,
-            StoresSchema.X: DataType.INTEGER,
-            StoresSchema.Y: DataType.INTEGER,
-        }
+    _DATATYPES = {
+        ID: DataType.STRING,
+        X: DataType.INTEGER,
+        Y: DataType.INTEGER,
+    }
 
 
 schemas = [

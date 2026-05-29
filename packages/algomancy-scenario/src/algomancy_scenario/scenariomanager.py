@@ -4,13 +4,15 @@ from algomancy_data import (
     ETLFactory,
     StatefulDataManager,
     StatelessDataManager,
-    BASE_DATA_BOUND,
+    BASEDATASOURCE,
     Schema,
 )
+
 from algomancy_utils.logger import Logger, MessageStatus
 from .basealgorithm import ALGORITHM
 from algomancy_utils.baseparameterset import BASE_PARAMS_BOUND
 
+from .core_configuration import CoreConfig
 from .keyperformanceindicator import BASE_KPI
 from .scenario import Scenario
 from .scenarioregistry import ScenarioRegistry
@@ -27,19 +29,31 @@ class ScenarioManager:
 
     @classmethod
     def from_config(cls, cfg) -> "ScenarioManager":
+        """Build from either a CoreConfig (or subclass like CliConfiguration,
+        ApiConfiguration) or any wrapper exposing a `.core` CoreConfig (e.g. AppConfig).
+        """
+        if isinstance(cfg, CoreConfig):
+            core = cfg
+        else:
+            core = getattr(cfg, "core", None)
+            if not isinstance(core, CoreConfig):
+                raise TypeError(
+                    "from_config expects a CoreConfig (or subclass) or an object "
+                    f"with a `.core` CoreConfig attribute; got {type(cfg).__name__}"
+                )
         return cls(
-            etl_factory=cfg.etl_factory,
-            kpi_templates=cfg.kpi_templates,
-            algo_templates=cfg.algo_templates,
-            schemas=cfg.schemas,
-            data_object_type=cfg.data_object_type,
-            data_folder=cfg.data_path,
-            has_persistent_state=cfg.has_persistent_state,
-            save_type=cfg.save_type,
-            autocreate=cfg.autocreate,
-            default_algo_name=cfg.default_algo,
-            default_param_values=cfg.default_algo_params_values,
-            autorun=cfg.autorun,
+            etl_factory=core.etl_factory,
+            kpi_templates=core.kpi_templates,
+            algo_templates=core.algo_templates,
+            schemas=core.schemas,
+            data_object_type=core.data_object_type,
+            data_folder=core.data_path,
+            has_persistent_state=core.has_persistent_state,
+            save_type=core.save_type,
+            autocreate=core.autocreate,
+            default_algo_name=core.default_algo,
+            default_param_values=core.default_algo_params_values,
+            autorun=core.autorun,
         )
 
     def __init__(
@@ -48,7 +62,7 @@ class ScenarioManager:
         kpi_templates: Dict[str, Type[BASE_KPI]],
         algo_templates: Dict[str, Type[ALGORITHM]],
         schemas: List[Schema],
-        data_object_type: type[BASE_DATA_BOUND],  # for extensions of datasource
+        data_object_type: type[BASEDATASOURCE],  # for extensions of datasource
         data_folder: str = None,
         logger: Logger = None,
         scenario_save_location: str = "scenarios.json",
@@ -136,6 +150,10 @@ class ScenarioManager:
     @property
     def available_algorithms(self):
         return self._factory.available_algorithms
+
+    @property
+    def available_kpis(self):
+        return self._factory.available_kpis
 
     @property
     def auto_run_scenarios(self):
@@ -241,6 +259,12 @@ class ScenarioManager:
     def list_ids(self):
         return self._registry.list_ids()
 
+    def list_tags(self) -> List[str]:
+        """
+        Returns a list of all registered scenario tag strings for the current session, by delegating to the underlying ScenarioRegistry
+        """
+        return self._registry.list_tags()
+
     def toggle_autocreate(
         self, value: bool = None, default_algo_name: str = ""
     ) -> None:
@@ -267,13 +291,17 @@ class ScenarioManager:
         if self._auto_create_scenario:
             self.auto_create_scenarios([datasource.name])
 
-    def etl_data(self, files, dataset_name: str) -> None:
-        # Process the files
-        self._dm.etl_data(files, dataset_name)
+    def etl_data(self, files, dataset_name: str):
+        """Run ETL for ``dataset_name``; returns the underlying ETLResult.
 
-        # create scenario if auto-create is enabled
-        if self._auto_create_scenario:
+        Auto-creates a scenario only on successful loads.
+        """
+        result = self._dm.etl_data(files, dataset_name)
+
+        # create scenario if auto-create is enabled and ETL succeeded
+        if result.is_success and self._auto_create_scenario:
             self.auto_create_scenarios([dataset_name])
+        return result
 
     def auto_create_scenarios(self, keys: List[str] = None):
         for key in keys:

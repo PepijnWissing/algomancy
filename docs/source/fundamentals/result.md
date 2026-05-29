@@ -1,11 +1,11 @@
 (fundamentals-result-ref)=
-## Scenario Result
+# Scenario Result
 
 A `ScenarioResult` is the direct output of an `Algorithm`. It represents the "solution" to the problem defined by a `DataSource` and serves as a detailed record of the algorithm's execution.
 
 While a `DataSource` describes the world and its constraints, the `ScenarioResult` describes what happened within that world once the algorithm was applied.
 
-### The Role of ScenarioResult
+## The Role of ScenarioResult
 
 The `ScenarioResult` serves several critical functions in the framework:
 
@@ -21,7 +21,7 @@ Imagine you are using an algorithm to solve a delivery routing problem.
 *   The **ScenarioResult** is the resulting schedule: which truck goes where, in what order, and at what time.
 *   The **Scenario** ties all of these together, providing an access point for the front-end.
 
-### Extension and Customization
+## Extension and Customization
 
 The base `ScenarioResult` class is purposely minimal. In most applications, you will extend it to include fields that are specific to your domain. This allows you to store structured data that is easy for your KPIs to access and for your front-end to visualize.
 

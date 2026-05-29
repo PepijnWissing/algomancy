@@ -1,7 +1,7 @@
 from typing import Dict, Any, Union
 
 from algomancy_scenario.scenariomanager import ScenarioManager
-from algomancy_scenario.core_configuration import CoreConfiguration
+from algomancy_scenario.core_configuration import CoreConfig
 
 from .cli_shell import CliShell
 from .cli_configuration import CliConfiguration
@@ -10,14 +10,14 @@ from .cli_configuration import CliConfiguration
 class CliLauncher:
     @staticmethod
     def build(
-        cfg: Union[CliConfiguration, CoreConfiguration, Dict[str, Any]],
+        cfg: Union[CliConfiguration, CoreConfig, Dict[str, Any]],
     ) -> CliShell:
         """Create a CLI shell from a CliConfiguration/CoreConfiguration or equivalent dict."""
         if isinstance(cfg, dict):
             cfg_obj = CliConfiguration(**cfg)
         elif isinstance(cfg, CliConfiguration):
             cfg_obj = cfg
-        elif isinstance(cfg, CoreConfiguration):
+        elif isinstance(cfg, CoreConfig):
             # allow passing a CoreConfiguration; wrap minimally
             cfg_obj = CliConfiguration(**cfg.as_dict())
         else:

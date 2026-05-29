@@ -1,0 +1,108 @@
+"""
+ETL (Extract, Transform, Load) Factory for {{ project_name }}.
+
+This module wires the data-processing pipeline:
+
+1. **Extract** — read data from files (defaults are picked from the schema
+   registry based on ``(extension, schema_type)``; hand-wire only when a
+   file needs non-default arguments, e.g. a custom CSV separator).
+2. **Validate** — schema, required-columns, and primary-key checks are
+   included by default. Override and call ``super()`` to add extras.
+3. **Transform** — clean / join / cascade-drop as needed.
+4. **Load** — :class:`DataSourceLoader` is the inherited default; only
+   override if you need a custom container.
+"""
+
+from typing import Dict
+
+from algomancy_data import ETLFactory, File, ValidationSequence
+from algomancy_data.extractor import ExtractionSequence
+
+# Uncomment the imports you actually use below.
+# from algomancy_data import (
+#     MissingValueValidator,
+#     UniqueValueValidator,
+#     ValidationSeverity,
+# )
+# from algomancy_data.extractor import CSVSingleExtractor
+# from algomancy_data.transformer import (
+#     CascadeDropTransformer,
+#     CleanTransformer,
+#     TransformationSequence,
+# )
+
+
+class {{ class_name }}ETLFactory(ETLFactory):
+    """
+    Factory for the {{ project_name }} ETL pipeline.
+
+    Demonstrates the post-M4 minimal pattern: call ``super()`` for each
+    stage to inherit the framework defaults, and only customise the bits
+    that are specific to this project.
+
+    TODO: Adapt each stage to your data.
+    """
+
+    def create_extraction_sequence(
+        self, files: Dict[str, File]
+    ) -> ExtractionSequence:
+        """
+        Default extraction defers to the schema registry: each registered
+        ``(extension, schema_type)`` pair maps to an extractor class, and
+        ``super()`` builds them straight from your schemas.
+
+        Override only for files that need non-default extractor parameters
+        (custom CSV separator, explicit XLSX sheet, …):
+
+            sequence = super().create_extraction_sequence(default_files)
+            sequence.add_extractor(
+                CSVSingleExtractor(
+                    file=files["my_file"],
+                    schema=self.get_schema("my_file"),
+                    separator=";",
+                    logger=self.logger,
+                )
+            )
+            return sequence
+        """
+        return super().create_extraction_sequence(files)
+
+    def create_validation_sequence(self) -> ValidationSequence:
+        """
+        ``super()`` already adds ``RequiredColumnsValidator`` +
+        ``SchemaValidator`` (+ ``PrimaryKeyValidator`` when any schema
+        declares a primary key). Add project-specific validators here.
+
+        Example:
+
+            sequence = super().create_validation_sequence()
+            sequence.add_validator(
+                MissingValueValidator(
+                    table="my_table",
+                    columns=["name", "email"],
+                    severity=ValidationSeverity.ERROR,
+                )
+            )
+            return sequence
+        """
+        return super().create_validation_sequence()
+
+    # def create_transformation_sequence(self) -> TransformationSequence:
+    #     """Default is a single ``NoopTransformer``. Override to add
+    #     project-specific transformations.
+    #
+    #     Example with the M7 cascade-drop transformer (use together with
+    #     ``foreign_key=("parent", "id")`` on the child schema column —
+    #     orphan child rows and, with ``parent_requires_child=True``,
+    #     childless parent rows are dropped):
+    #
+    #         sequence = TransformationSequence(logger=self.logger)
+    #         sequence.add_transformer(CleanTransformer(self.logger))
+    #         sequence.add_transformer(
+    #             CascadeDropTransformer(
+    #                 schemas=self.schemas, logger=self.logger
+    #             )
+    #         )
+    #         return sequence
+    #     """
+    #     return super().create_transformation_sequence()

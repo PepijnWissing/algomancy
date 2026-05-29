@@ -1,0 +1,77 @@
+"""
+Custom scenario page template for {{ project_name }}.
+
+This module defines a custom scenario page for managing and comparing scenarios.
+"""
+
+from dash import html
+from algomancy_content import BaseScenarioPage
+from algomancy_scenario import Scenario
+
+
+class {{ class_name }}ScenarioPage(BaseScenarioPage):
+    """
+    Custom scenario page implementation for {{ project_name }}.
+
+    TODO: Customize the scenario page layout and behavior.
+    """
+
+    @staticmethod
+    def create_content(scenario: Scenario) -> html.Div:
+        """
+        Define the layout and content of the scenario page for the given scenario.
+
+        Args:
+            scenario: The Scenario object to display.
+
+        Returns:
+            A Dash html.Div containing the page content.
+
+        TODO: Implement your custom scenario page layout.
+        """
+        return html.Div(
+            [
+                html.H1("{{ project_name }} Scenario Details"),
+                html.Hr(),
+                html.Div(
+                    [
+                        html.H3("Scenario Information"),
+                        html.P(f"Tag: {scenario.tag}"),
+                        html.P(f"ID: {scenario.id}"),
+                        html.P(f"Status: {scenario.status}"),
+                        html.P(f"Algorithm: {scenario.algorithm_description}"),
+                        html.P(f"Dataset: {scenario.input_data_key}"),
+                    ],
+                    style={"marginBottom": "20px"},
+                ),
+                html.Hr(),
+                html.Div(
+                    [
+                        html.H3("Scenario Features"),
+                        html.Ul(
+                            [
+                                html.Li("View scenario configuration and parameters"),
+                                html.Li("Display scenario execution results"),
+                                html.Li("Visualize scenario outcomes and KPIs"),
+                                html.Li("Customize this page in src/pages/scenario_page.py"),
+                            ]
+                        ),
+                    ]
+                ),
+                # TODO: Add scenario-specific visualizations, results tables, charts
+            ],
+            style={"padding": "20px"},
+        )
+
+    @staticmethod
+    def register_callbacks() -> None:
+        """
+        Register Dash callbacks for this page if needed.
+
+        TODO: Add any interactive behavior for the scenario page.
+        """
+        # Example:
+        # @app.callback(...)
+        # def update_scenario_view(...):
+        #     pass
+        pass

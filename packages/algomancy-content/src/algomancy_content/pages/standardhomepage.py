@@ -2,9 +2,9 @@ from dash import html, get_app
 import dash
 import dash_bootstrap_components as dbc
 
-from .page import BaseHomePage
+from algomancy_gui.page import BaseHomePage
 from algomancy_scenario import ScenarioStatus
-from algomancy_gui.managergetters import get_scenario_manager
+from algomancy_gui.managers.managergetters import get_scenario_manager
 
 
 class StandardHomePage(BaseHomePage):
@@ -13,11 +13,10 @@ class StandardHomePage(BaseHomePage):
     It includes a logo, status indicators for scenario processing, and a summary of scenario counts.
 
     USAGE:
-        >>> config = AppConfiguration(
-        ...             ...
-        ...             home_page="standard",
-        ...             ...
-        ...          )
+        >>> config = AppConfig(
+        ...     page_config=PageConfig(home_page="standard"),
+        ...     ...
+        ... )
 
     """
 

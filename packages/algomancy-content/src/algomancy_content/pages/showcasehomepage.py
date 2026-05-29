@@ -4,7 +4,7 @@ from dash import html, dcc
 import dash_bootstrap_components as dbc
 import dash_daq as daq
 
-from .page import BaseHomePage
+from algomancy_gui.page import BaseHomePage
 
 
 class ShowcaseHomePage(BaseHomePage):
@@ -12,11 +12,10 @@ class ShowcaseHomePage(BaseHomePage):
     ShowcaseHomePage is a subclass of BaseHomePage that provides a showcase of various HTML elements and their styling.
 
     USAGE:
-        >>> config = AppConfiguration(
-        ...             ...
-        ...             home_page="showcase",
-        ...             ...
-        ...          )
+        >>> config = AppConfig(
+        ...     page_config=PageConfig(home_page="showcase"),
+        ...     ...
+        ... )
     """
 
     @staticmethod

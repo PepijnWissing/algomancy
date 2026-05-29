@@ -1,0 +1,58 @@
+"""
+Schema definition for {{ project_name }} data.
+
+This module defines the data structure and types for your application's data.
+"""
+
+from algomancy_data import (
+    Column,
+    ColumnGroup,  # noqa: F401  # used for MULTI (multi-sheet) schemas
+    DataType,
+    FileExtension,
+    Schema,
+)
+from algomancy_data.schema import SchemaType
+
+
+class {{ class_name }}Schema(Schema):
+    """
+    Schema for {{ project_name }} data.
+
+    Declare each column as a class-level :class:`Column` attribute. Useful
+    keyword arguments:
+
+    * ``dtype``               — required, one of :class:`DataType`.
+    * ``primary_key=True``    — marks the column as part of the PK.
+    * ``optional=True``       — column may be absent in the source file.
+    * ``nullable=True``       — column may contain null values.
+    * ``unique=True``         — values must be unique across rows.
+    * ``foreign_key=("table", "col")`` — relate to another schema's column.
+    * ``parent_requires_child=True``   — drop parent rows that have no
+      matching child (used together with ``foreign_key``).
+
+    For multi-sheet workbooks set ``_SCHEMA_TYPE = SchemaType.MULTI`` and
+    declare one :class:`ColumnGroup` per sheet instead of bare ``Column``s.
+
+    TODO: Customize the schema according to your data structure.
+    """
+
+    # TODO: Set the base filename (without extension) for your data files
+    _FILENAME = "{{ filename }}"
+
+    # TODO: Set the file extension (CSV, XLSX, JSON)
+    _EXTENSION = FileExtension.CSV
+
+    # TODO: Set schema type (SINGLE for one file/sheet, MULTI for multi-sheet)
+    _SCHEMA_TYPE = SchemaType.SINGLE
+
+    # TODO: Replace these example columns with your own.
+    ID = Column("id", dtype=DataType.INTEGER, primary_key=True)
+    NAME = Column("name", dtype=DataType.STRING)
+    # Add more columns here, e.g.:
+    # CREATED_AT = Column("created_at", dtype=DataType.DATETIME, nullable=True)
+
+
+# Collect all schemas exported by this module — imported by main.py.
+all_schemas = [
+    {{ class_name }}Schema,
+]

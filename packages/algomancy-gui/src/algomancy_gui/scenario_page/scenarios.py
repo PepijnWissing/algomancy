@@ -18,6 +18,7 @@ from ..componentids import (
     SCENARIO_PROCESS_BUTTON,
     SCENARIO_CREATOR_MODAL,
     SCENARIO_TAG_INPUT,
+    SCENARIO_TAG_FEEDBACK,
     SCENARIO_DATA_INPUT,
     SCENARIO_ALGO_INPUT,
     ALGO_PARAMS_WINDOW_ID,
@@ -47,10 +48,11 @@ from .new_scenario_parameters_window import (
     create_algo_parameters_entry_card_body,
 )
 from .scenario_cards import scenario_cards
-from ..contentregistry import ContentRegistry
-from algomancy_gui.managergetters import get_scenario_manager, get_manager
+from algomancy_gui.managers.contentregistry import ContentRegistry
+from algomancy_gui.managers.managergetters import get_scenario_manager, get_manager
+from algomancy_gui.inputchecker import InputChecker
 
-from ..layouthelpers import create_wrapped_content_div
+from algomancy_gui.loaders.contentwrapper import create_wrapped_content_div
 from .delete_confirmation import (
     delete_confirmation_modal,
 )
@@ -60,7 +62,7 @@ import dash_bootstrap_components as dbc
 
 from .scenario_cards import hidden_card
 from algomancy_scenario import ScenarioManager
-from ..settingsmanager import SettingsManager
+from algomancy_gui.managers.settingsmanager import SettingsManager
 
 
 def scenario_page():
@@ -338,13 +340,15 @@ def toggle_scenario_creator_modal(open_click, cancel_click, is_open):
     Output(SCENARIO_TAG_INPUT, "value"),
     Output(SCENARIO_DATA_INPUT, "value"),
     Output(SCENARIO_ALGO_INPUT, "value"),
+    Output(SCENARIO_NEW_BUTTON, "disabled", allow_duplicate=True),
+    Output(SCENARIO_NEW_BUTTON, "color", allow_duplicate=True),
     Input(SCENARIO_CREATOR_MODAL, "is_open"),
     prevent_initial_call=True,
 )
 def refresh_on_close(is_open):
     if not is_open:
-        return "", "", ""
-    return no_update, no_update, no_update
+        return "", "", "", True, "secondary"
+    return no_update, no_update, no_update, no_update, no_update
 
 
 @callback(
@@ -361,6 +365,15 @@ def open_algo_params_window(algo_name, session_id):
         except AssertionError:
             return False, ""
     return False, ""
+
+
+InputChecker.register_name_callback(
+    SCENARIO_TAG_INPUT,
+    SCENARIO_TAG_FEEDBACK,
+    SCENARIO_NEW_BUTTON,
+    ACTIVE_SESSION,
+    "scenario",
+)
 
 
 # --- Scenario Creation Callback ---

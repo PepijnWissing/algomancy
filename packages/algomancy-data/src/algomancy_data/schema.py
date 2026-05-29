@@ -1,15 +1,17 @@
 """Schema primitives for defining structured tabular data.
 
-This module provides a simple ``Schema`` abstraction that declares column
-names and their expected dtypes via the ``datatypes`` mapping. It also
-contains helper utilities to introspect schema "data members" and validate
-that all declared fields have a specified ``DataType``.
+This module provides a ``Schema`` abstraction that declares columns via
+``Column`` instances as class attributes.  The legacy ``_DATATYPES`` dict is
+still accepted but emits a ``DeprecationWarning``; migrate to ``Column``
+declarations to silence it.
 """
 
 import inspect
-from abc import ABC, abstractmethod
+import warnings
+from abc import ABC
+from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import Dict, List
+from typing import Any, Dict, List, Tuple, Type
 
 
 class DataType(StrEnum):
@@ -39,170 +41,468 @@ class SchemaType(StrEnum):
     MULTI = "multi"
 
 
+@dataclass
+class Column:
+    """Metadata for a single schema column.
+
+    Args:
+        name: Actual column name as it appears in the source data.
+        dtype: The expected ``DataType`` of this column.
+        optional: If ``True`` the column may be absent in the source data.
+        primary_key: If ``True`` this column is part of the (joint) primary key.
+        default: Value used when the column is absent and ``optional=True``.
+        nullable: If ``True`` the column may contain null/NaN values.
+        unique: If ``True`` all values in the column must be distinct.
+        description: Human-readable description of the column.
+        foreign_key: Optional ``(parent_table, parent_column)`` tuple declaring
+            that this column references a column on another table. Used by
+            :class:`ForeignKeyValidator` (for reporting violations) and by
+            :class:`CascadeDropTransformer` (for cascade cleanup).
+        parent_requires_child: If ``True``, the referenced parent row requires
+            at least one referencing child on this relation; parents with zero
+            children get dropped by ``CascadeDropTransformer``. Only meaningful
+            when ``foreign_key`` is set.
+        track_partial_loss: If ``True``, enables partial-loss cascade for this
+            relation: parents that lose *some* (but not all) of their children
+            mid-pipeline are dropped. Requires a ``CascadeSnapshot`` paired
+            with the cascade transformer. Only meaningful when ``foreign_key``
+            is set.
+    """
+
+    name: str
+    dtype: DataType
+    optional: bool = False
+    primary_key: bool = False
+    default: Any = None
+    nullable: bool = False
+    unique: bool = False
+    description: str = field(default="")
+    foreign_key: Tuple[str, str] | None = None
+    parent_requires_child: bool = False
+    track_partial_loss: bool = False
+
+    def __post_init__(self) -> None:
+        if self.foreign_key is None:
+            if self.parent_requires_child:
+                raise ValueError(
+                    f"Column '{self.name}': parent_requires_child=True requires "
+                    "foreign_key to be set."
+                )
+            if self.track_partial_loss:
+                raise ValueError(
+                    f"Column '{self.name}': track_partial_loss=True requires "
+                    "foreign_key to be set."
+                )
+
+
+@dataclass
+class ColumnGroup:
+    """Metadata for one sheet (sub-schema) of a MULTI schema.
+
+    Declare ``ColumnGroup`` instances as class attributes on a ``Schema``
+    subclass with ``_SCHEMA_TYPE = SchemaType.MULTI``::
+
+        class LocationSchema(Schema):
+            _FILENAME = "multisheet"
+            _EXTENSION = FileExtension.XLSX
+            _SCHEMA_TYPE = SchemaType.MULTI
+
+            STEDEN = ColumnGroup("Steden", [
+                Column("Country", dtype=DataType.STRING),
+                Column("City",    dtype=DataType.STRING),
+            ])
+            KLANTEN = ColumnGroup("Klanten", [
+                Column("ID",   dtype=DataType.INTEGER, primary_key=True),
+                Column("Naam", dtype=DataType.STRING),
+            ])
+
+    Args:
+        name:    Actual sheet / sub-schema name as it appears in the source
+                 file (may contain spaces and mixed case).
+        columns: Ordered list of ``Column`` objects for this sub-schema.
+    """
+
+    name: str
+    columns: List[Column]
+
+
 class Schema(ABC):
     """Abstract base class for table schemas.
 
-    Implementations typically declare attributes for the expected columns and
-    provide a ``datatypes`` mapping that assigns a ``DataType`` to each field.
+    Declare columns as class attributes using ``Column`` instances::
+
+        class MySchema(Schema):
+            _FILENAME = "my_file"
+            _EXTENSION = FileExtension.CSV
+            _SCHEMA_TYPE = SchemaType.SINGLE
+
+            ID = Column("id", dtype=DataType.STRING, primary_key=True)
+            NAME = Column("name", dtype=DataType.STRING)
+            VALUE = Column("value", dtype=DataType.FLOAT, optional=True)
+
+    The legacy ``_DATATYPES`` dict is still supported but deprecated.
     """
 
-    _FILENAME: str = "default_filename"  # expected to be overridden by subclasses
-    _EXTENSION: FileExtension | str = (
-        "default_extension"  # expected to be overridden by subclasses
-    )
-    _SCHEMA_TYPE: SchemaType | str = (
-        "default_schema_type"  # expected to be overridden by subclasses
+    _FILENAME: str = "default_filename"
+    _EXTENSION: FileExtension | str = "default_extension"
+    _SCHEMA_TYPE: SchemaType | str = "default_schema_type"
+    _DATATYPES: Dict[str, DataType] | Dict[str, Dict[str, DataType]] | str = (
+        "default_datatypes"
     )
 
-    def __init__(self, subschema_key: str | None = None) -> None:
-        self._subschema_key = subschema_key
+    # ------------------------------------------------------------------ #
+    # Identity
+    # ------------------------------------------------------------------ #
 
-    @property
-    def file_name(self) -> str:
-        """Return the file name of the schema."""
-        if self._FILENAME == "default_filename":
+    @classmethod
+    def file_name(cls) -> str:
+        """Return the base file name (without extension)."""
+        if cls._FILENAME == "default_filename":
             raise NotImplementedError("_FILENAME must be overridden by subclasses")
+        return cls._FILENAME
 
-        return self._FILENAME
+    @classmethod
+    def extension(cls) -> FileExtension:
+        """Return the file extension.
 
-    @property
-    def extension(self) -> FileExtension:
-        """Return the file extension of the schema."""
-        if self._EXTENSION == "default_extension":
+        Accepts any ``StrEnum``-derived value (including user-defined
+        ``FileExtension`` subclasses created for custom file formats —
+        see :ref:`extending-ref`). A plain ``str`` is upcast to the
+        built-in ``FileExtension`` for compatibility, or returned as-is
+        when it does not match a built-in value.
+        """
+        if cls._EXTENSION == "default_extension":
             raise NotImplementedError("_EXTENSION must be overridden by subclasses")
+        if isinstance(cls._EXTENSION, FileExtension):
+            return cls._EXTENSION
+        if isinstance(cls._EXTENSION, StrEnum):
+            # Custom extension StrEnum from a user project — pass through.
+            return cls._EXTENSION
+        if isinstance(cls._EXTENSION, str):
+            try:
+                return FileExtension(cls._EXTENSION)
+            except ValueError:
+                # Unknown string extension — return raw so registry lookups
+                # can still resolve by string equality.
+                return cls._EXTENSION
+        raise TypeError(f"Invalid extension type: {type(cls._EXTENSION)}")
 
-        if isinstance(self._EXTENSION, FileExtension):
-            return self._EXTENSION
-        elif isinstance(self._EXTENSION, str):
-            return FileExtension(self._EXTENSION)
-        else:
-            raise TypeError(f"Invalid extension type: {type(self._EXTENSION)}")
-
-    @property
-    def schema_type(self) -> SchemaType:
-        """Return the schema type of the schema."""
-        if self._SCHEMA_TYPE == "default_schema_type":
+    @classmethod
+    def schema_type(cls) -> SchemaType:
+        """Return the schema type (SINGLE or MULTI)."""
+        if cls._SCHEMA_TYPE == "default_schema_type":
             raise NotImplementedError("_SCHEMA_TYPE must be overridden by subclasses")
+        if isinstance(cls._SCHEMA_TYPE, SchemaType):
+            return cls._SCHEMA_TYPE
+        if isinstance(cls._SCHEMA_TYPE, str):
+            return SchemaType(cls._SCHEMA_TYPE)
+        raise TypeError(f"Invalid schema type: {type(cls._SCHEMA_TYPE)}")
 
-        if isinstance(self._SCHEMA_TYPE, SchemaType):
-            return self._SCHEMA_TYPE
-        elif isinstance(self._SCHEMA_TYPE, str):
-            return SchemaType(self._SCHEMA_TYPE)
-        else:
-            raise TypeError(f"Invalid schema type: {type(self._SCHEMA_TYPE)}")
+    @classmethod
+    def file_name_with_extension(cls) -> str:
+        """Return ``<file_name>.<extension>``."""
+        return cls._FILENAME + "." + cls._EXTENSION
 
-    @property
-    def file_name_with_extension(self) -> str:
-        return self._FILENAME + "." + self._EXTENSION
+    # ------------------------------------------------------------------ #
+    # Column accessors (new API — issues #73–75)
+    # ------------------------------------------------------------------ #
 
-    @abstractmethod
-    def _defined_datatypes(
-        self,
-    ) -> Dict[str, DataType] | Dict[str, Dict[str, DataType]]:
-        raise NotImplementedError("Abstract method")
+    @classmethod
+    def columns(cls) -> Dict[str, Column]:
+        """Return an ordered mapping of column name → ``Column``.
 
-    @property
-    def datatypes(self) -> Dict[str, DataType]:
-        if self.is_multi() and self._subschema_key is not None:
-            dtypes = self._defined_datatypes()[self._subschema_key]  # noqa
-        elif self.is_single():
-            dtypes = self._defined_datatypes()
-        else:
-            raise ValueError("Method is only available for single schemas")
+        For schemas that declare ``Column`` class attributes the mapping is
+        built from those attributes (in class-definition order).
 
-        # for single schema type: the return value must be Dict[str,DataType]
-        dtypes: Dict[str, DataType]
-        for field, dtype in dtypes.items():
-            assert isinstance(field, str), (
-                f"Field name must be a string, got {type(field)}"
+        For schemas that still use the legacy ``_DATATYPES`` dict a
+        ``DeprecationWarning`` is emitted and ``Column`` objects are built
+        automatically with ``optional=False``, ``primary_key=False``, and
+        ``default=None``.
+
+        Raises:
+            NotImplementedError: If neither Column attributes nor ``_DATATYPES``
+                are defined.
+            TypeError: If called on a MULTI schema (use ``datatype_groups()``).
+        """
+        col_attrs = [attr for attr in vars(cls).values() if isinstance(attr, Column)]
+        if col_attrs:
+            return {col.name: col for col in col_attrs}
+
+        if cls._DATATYPES == "default_datatypes":
+            raise NotImplementedError(
+                f"{cls.__name__} must declare Column attributes or override _DATATYPES"
+            )
+
+        if not cls.is_single():
+            raise TypeError(
+                f"{cls.__name__} is a MULTI schema. "
+                "Use datatype_groups() to inspect its column groups."
+            )
+
+        return cls.get_legacy_columns_with_warning()
+
+    @classmethod
+    def get_legacy_columns_with_warning(cls) -> dict[str, Column]:
+        warnings.warn(
+            f"{cls.__name__} uses the legacy _DATATYPES dict. "
+            "Declare Column instances as class attributes instead "
+            "(e.g. ID = Column('id', dtype=DataType.STRING)).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        legacy_columns = {
+            col_name: Column(name=col_name, dtype=dtype)
+            for col_name, dtype in cls._DATATYPES.items()
+        }
+        return legacy_columns
+
+    @classmethod
+    def column_groups(cls) -> Dict[str, Dict[str, Column]]:
+        """Return ``{group_name: {col_name: Column}}`` for MULTI schemas.
+
+        Scans ``vars(cls)`` for ``ColumnGroup`` attributes first (new API).
+        Falls back to ``_DATATYPES`` for legacy schemas, emitting a
+        ``DeprecationWarning`` and constructing bare ``Column`` objects
+        (``optional=False``, ``primary_key=False``, ``default=None``).
+
+        Raises:
+            ValueError:          If called on a SINGLE schema.
+            NotImplementedError: If neither ColumnGroup attrs nor ``_DATATYPES``
+                                 are defined.
+        """
+        if not cls.is_multi():
+            raise ValueError(
+                "column_groups() is only available for MULTI schemas. "
+                "Use columns() for SINGLE schemas."
+            )
+
+        group_attrs = [
+            attr for attr in vars(cls).values() if isinstance(attr, ColumnGroup)
+        ]
+        if group_attrs:
+            return {
+                grp.name: {col.name: col for col in grp.columns} for grp in group_attrs
+            }
+
+        if cls._DATATYPES == "default_datatypes":
+            raise NotImplementedError(
+                f"{cls.__name__} must declare ColumnGroup attributes or override _DATATYPES"
+            )
+
+        warnings.warn(
+            f"{cls.__name__} uses the legacy _DATATYPES dict for a MULTI schema. "
+            "Declare ColumnGroup instances as class attributes instead "
+            "(e.g. STEDEN = ColumnGroup('Steden', [Column('Country', dtype=DataType.STRING)])).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return {
+            group_name: {
+                col_name: Column(name=col_name, dtype=dtype)
+                for col_name, dtype in sub_dict.items()
+            }
+            for group_name, sub_dict in cls._DATATYPES.items()
+        }
+
+    @classmethod
+    def required_columns(cls) -> List[str]:
+        """Return names of non-optional columns."""
+        return [name for name, col in cls.columns().items() if not col.optional]
+
+    @classmethod
+    def optional_columns(cls) -> List[str]:
+        """Return names of optional columns."""
+        return [name for name, col in cls.columns().items() if col.optional]
+
+    @classmethod
+    def primary_key(cls) -> Tuple[str, ...]:
+        """Return tuple of column names that form the (joint) primary key."""
+        return tuple(name for name, col in cls.columns().items() if col.primary_key)
+
+    # ------------------------------------------------------------------ #
+    # Legacy dtype accessors (kept for internal ETL compatibility)
+    # ------------------------------------------------------------------ #
+
+    @classmethod
+    def datatypes(cls) -> Dict[str, DataType]:
+        """Return ``{column_name: DataType}`` for SINGLE schemas.
+
+        Derived from ``Column`` attributes when present; falls back to the
+        legacy ``_DATATYPES`` dict otherwise.
+
+        Raises:
+            ValueError: If called on a MULTI schema (use ``datatype_groups()``).
+        """
+        if not cls.is_single():
+            raise ValueError(
+                "datatypes() is only available for SINGLE schemas. "
+                "Use datatype_groups() for MULTI schemas."
+            )
+
+        col_attrs = [attr for attr in vars(cls).values() if isinstance(attr, Column)]
+        if col_attrs:
+            return {col.name: col.dtype for col in col_attrs}
+
+        if cls._DATATYPES == "default_datatypes":
+            raise NotImplementedError("_DATATYPES or Column attributes must be defined")
+
+        return cls._DATATYPES
+
+    @classmethod
+    def _validate_datatypes(cls, dtypes: Dict[str, DataType]) -> None:
+        for col_name, dtype in dtypes.items():
+            assert isinstance(col_name, str), (
+                f"Field name must be a string, got {type(col_name)}"
             )
             assert isinstance(dtype, DataType), (
-                f"Datatype for field '{field}' must be a DataType, got {type(dtype)}"
+                f"Datatype for field '{col_name}' must be a DataType, got {type(dtype)}"
             )
 
-        # return
-        return dtypes
+    @classmethod
+    def datatype_groups(cls) -> Dict[str, Dict[str, DataType]]:
+        """Return ``{sub_name: {column_name: DataType}}`` for MULTI schemas.
 
-    @property
-    def datatype_groups(self) -> Dict[str, Dict[str, DataType]]:
-        if not self.is_multi():
-            raise ValueError("Method is only available for multi schemas")
+        Derived from ``ColumnGroup`` class attributes when present; falls back
+        to the legacy ``_DATATYPES`` nested dict otherwise.
 
-        # grab from implementation
-        dtypes = self._defined_datatypes()
+        Raises:
+            ValueError:          If called on a SINGLE schema.
+            NotImplementedError: If neither ColumnGroup attrs nor ``_DATATYPES``
+                                 are defined.
+        """
+        if not cls.is_multi():
+            raise ValueError("datatype_groups() is only available for MULTI schemas")
 
-        # for multi-schema type: the return value must be Dict[str,Dict[str,DataType]]
-        dtypes: Dict[str, Dict[str, DataType]]
+        group_attrs = [
+            attr for attr in vars(cls).values() if isinstance(attr, ColumnGroup)
+        ]
+        if group_attrs:
+            return {
+                grp.name: {col.name: col.dtype for col in grp.columns}
+                for grp in group_attrs
+            }
+
+        if cls._DATATYPES == "default_datatypes":
+            raise NotImplementedError("_DATATYPES must be overridden by subclasses")
+
+        dtypes = cls._DATATYPES
         for schema_name, schema_datatypes in dtypes.items():
             assert isinstance(schema_name, str), (
                 f"Schema name must be a string, got {type(schema_name)}"
             )
-            for field, dtype in schema_datatypes.items():
-                assert isinstance(field, str), (
-                    f"Field name must be a string, got {type(field)}"
-                )
-                assert isinstance(dtype, DataType), (
-                    f"Datatype for field '{field}' must be a DataType, "
-                    f"got {type(dtype)}"
-                )
+            cls._validate_datatypes(schema_datatypes)
 
-        # return
         return dtypes
 
-    @property
-    def sub_names(self) -> List[str]:
-        """Return the names of sub-schemas for multi-schema types."""
-        if self.schema_type == SchemaType.SINGLE:
+    @classmethod
+    def sub_names(cls) -> List[str]:
+        """Return sub-schema names for MULTI schemas."""
+        if cls.schema_type() == SchemaType.SINGLE:
             raise ValueError("Single-schema types do not have sub-schemas")
-        elif self.schema_type == SchemaType.MULTI:
-            return list(self.datatype_groups.keys())
-
+        if cls.schema_type() == SchemaType.MULTI:
+            return list(cls.datatype_groups().keys())
         raise ValueError("Invalid schema type")
 
+    # ------------------------------------------------------------------ #
+    # Type checks
+    # ------------------------------------------------------------------ #
+
     @classmethod
-    def validate(cls):
-        """
-        Validate that each declared field has an associated data type.
+    def is_multi(cls) -> bool:
+        """Return ``True`` if this is a MULTI schema."""
+        return cls.schema_type() == SchemaType.MULTI
+
+    @classmethod
+    def is_single(cls) -> bool:
+        """Return ``True`` if this is a SINGLE schema."""
+        return cls.schema_type() == SchemaType.SINGLE
+
+    # ------------------------------------------------------------------ #
+    # Sub-schema access
+    # ------------------------------------------------------------------ #
+
+    @classmethod
+    def get_subschema(cls, key: str) -> Type["Schema"]:
+        """Return a synthetic SINGLE schema class for one sheet of a MULTI schema.
+
+        The returned class behaves as a normal ``Schema`` subclass and exposes
+        ``datatypes()`` for the requested sub-name.
+
+        Args:
+            key: Sub-schema name (e.g. sheet name in an XLSX file).
 
         Raises:
-            AssertionError: If a field is missing from the ``datatypes`` mapping.
+            ValueError: If called on a SINGLE schema or if ``key`` is invalid.
         """
-        fields = Schema.get_data_members()
-        for field in fields:
-            assert field in cls.datatypes.keys()
+        if not cls.is_multi():
+            raise ValueError("get_subschema() is only available for MULTI schemas")
+
+        if key not in cls.sub_names():
+            raise ValueError(
+                f"Key '{key}' does not define a subschema. Available: {cls.sub_names()}"
+            )
+
+        group_attrs = [
+            attr for attr in vars(cls).values() if isinstance(attr, ColumnGroup)
+        ]
+        if group_attrs:
+            matching = next(grp for grp in group_attrs if grp.name == key)
+            ns: Dict[str, Any] = {
+                "_FILENAME": cls._FILENAME,
+                "_EXTENSION": cls._EXTENSION,
+                "_SCHEMA_TYPE": SchemaType.SINGLE,
+            }
+            for col in matching.columns:
+                safe_key = "_SYNTH_" + col.name.upper().replace(" ", "_").replace(
+                    ".", "_"
+                )
+                ns[safe_key] = col
+            return type(f"{cls.__name__}_{key}", (Schema,), ns)
+
+        sub_datatypes = cls.datatype_groups()[key]
+        return type(
+            f"{cls.__name__}_{key}",
+            (Schema,),
+            {
+                "_FILENAME": cls._FILENAME,
+                "_EXTENSION": cls._EXTENSION,
+                "_SCHEMA_TYPE": SchemaType.SINGLE,
+                "_DATATYPES": sub_datatypes,
+            },
+        )
+
+    # ------------------------------------------------------------------ #
+    # Validation / introspection helpers
+    # ------------------------------------------------------------------ #
 
     @classmethod
-    def get_data_members(cls):
-        """Return only the data attributes of the class.
+    def validate(cls) -> None:
+        """Validate that every declared field name appears in the column mapping.
 
-        Excludes built-ins, methods/functions, classes, dunder names and
-        known non-field attributes like ``datatypes``.
+        Raises:
+            AssertionError: If a field name is missing from the column mapping.
+        """
+        col_names = set(cls.columns().keys())
+        for field_name in cls.get_data_members():
+            assert field_name in col_names, (
+                f"Field '{field_name}' has no corresponding Column definition"
+            )
+
+    @classmethod
+    def get_data_members(cls) -> List[str]:
+        """Return string-valued class attributes that represent column aliases.
+
+        Excludes dunder names, methods, classes, built-ins, descriptors, and
+        ``Column`` instances (which are the new-style declaration).
         """
         return [
             name
             for name, attr in vars(cls).items()
             if not (name.startswith("__") and name.endswith("__"))
-            and not name == "datatypes"
+            and not isinstance(attr, (Column, ColumnGroup))
             and not inspect.isroutine(attr)
             and not inspect.isclass(attr)
             and not inspect.isbuiltin(attr)
-            # Optioneel: filter properties/descriptors indien gewenst
             and not inspect.isdatadescriptor(attr)
+            and not name.startswith("_")
         ]
-
-    def is_multi(self) -> bool:
-        """Check if the schema is a multi-schema type."""
-        return self.schema_type == SchemaType.MULTI
-
-    def is_single(self) -> bool:
-        """Check if the schema is a single-schema type."""
-        return self.schema_type == SchemaType.SINGLE
-
-    def generate_subschema(self, key):
-        """Retrieve the subschema for the current schema type."""
-        if not self.is_multi():
-            raise ValueError("Cannot retrieve subschema for non-multi schema")
-
-        assert key in self.sub_names, f"Key {key} does not define a subschema"
-
-        return type(self)(subschema_key=key)

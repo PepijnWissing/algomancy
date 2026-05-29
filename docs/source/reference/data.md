@@ -1,3 +1,4 @@
+(data-ref)=
 # Data
 
 Below you will find API reference pages for each module in the `algomancy_data` package.
@@ -13,5 +14,6 @@ data/schema
 data/file
 data/validator
 data/transformer
+data/relations
 data/loader
 ```

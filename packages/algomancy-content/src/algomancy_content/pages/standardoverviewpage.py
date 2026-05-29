@@ -3,7 +3,7 @@ from typing import Any
 from dash import html, dash_table
 
 from algomancy_scenario import Scenario
-from .page import BaseOverviewPage
+from algomancy_gui.page import BaseOverviewPage
 
 OVERVIEW_TABLE = "overview-table"
 
@@ -15,11 +15,10 @@ class StandardOverviewPage(BaseOverviewPage):
     view of the scenarios and their KPIs.
 
     USAGE:
-        >>> config = AppConfiguration(
-        ...             ...
-        ...             overview_page="standard",
-        ...             ...
-        ...          )
+        >>> config = AppConfig(
+        ...     page_config=PageConfig(overview_page="standard"),
+        ...     ...
+        ... )
     """
 
     @staticmethod

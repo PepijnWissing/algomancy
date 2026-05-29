@@ -1,6 +1,6 @@
 from dash import html
 
-from .page import BaseDataPage
+from algomancy_gui.page import BaseDataPage
 from algomancy_data import DataSource
 
 
@@ -9,11 +9,10 @@ class PlaceholderDataPage(BaseDataPage):
     PlaceholderDataPage is a subclass of BaseDataPage which provides placeholder data.
 
     USAGE:
-        >>> config = AppConfiguration(
-        ...             ...
-        ...             data_page="placeholder",
-        ...             ...
-        ...          )
+        >>> config = AppConfig(
+        ...     page_config=PageConfig(data_page="placeholder"),
+        ...     ...
+        ... )
     """
 
     @staticmethod
