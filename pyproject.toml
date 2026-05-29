@@ -51,6 +51,7 @@ requires-python = ">=3.14"
 version = "0.6.0"
 
 [project.scripts]
+algomancy-api = "algomancy_api.main:main"
 algomancy-cli = "algomancy_cli.main:main"
 algomancy-quickstart = "algomancy_quickstart.main:main"
 
