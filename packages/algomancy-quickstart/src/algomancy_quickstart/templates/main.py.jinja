@@ -1,6 +1,10 @@
 from algomancy_data import DataSource
 from algomancy_gui.configuration.appconfig import AppConfig
+from algomancy_gui.configuration.comparepageconfig import ComparePageConfig
+from algomancy_gui.configuration.featureconfig import FeatureConfig
+from algomancy_gui.configuration.pageconfig import PageConfig
 from algomancy_gui.configuration.serverconfig import ServerConfig
+from algomancy_gui.configuration.stylingconfig import StylingConfig
 from algomancy_gui.gui_launcher import GuiLauncher
 from algomancy_scenario.core_configuration import CoreConfig
 from algomancy_content import (
@@ -24,6 +28,10 @@ def main() -> None:
             title="{{ title }}",
         ),
         server_config=ServerConfig(host="{{ host }}", port={{ port }}),
+        page_config=PageConfig(),
+        compare_page_config=ComparePageConfig(),
+        styling_config=StylingConfig(assets_path="assets"),
+        feature_config=FeatureConfig(),
     )
 
     app = GuiLauncher.build(app_cfg)

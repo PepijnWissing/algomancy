@@ -1,115 +1,108 @@
 """
 ETL (Extract, Transform, Load) Factory for {{ project_name }}.
 
-This module defines how data is extracted from files, transformed, validated,
-and loaded into the application.
+This module wires the data-processing pipeline:
+
+1. **Extract** — read data from files (defaults are picked from the schema
+   registry based on ``(extension, schema_type)``; hand-wire only when a
+   file needs non-default arguments, e.g. a custom CSV separator).
+2. **Validate** — schema, required-columns, and primary-key checks are
+   included by default. Override and call ``super()`` to add extras.
+3. **Transform** — clean / join / cascade-drop as needed.
+4. **Load** — :class:`DataSourceLoader` is the inherited default; only
+   override if you need a custom container.
 """
 
 from typing import Dict
 
-import algomancy_data as de
-from algomancy_data import File
+from algomancy_data import ETLFactory, File, ValidationSequence
 from algomancy_data.extractor import ExtractionSequence
-from algomancy_data.transformer import TransformationSequence
-from algomancy_utils import Logger
+
+# Uncomment the imports you actually use below.
+# from algomancy_data import (
+#     MissingValueValidator,
+#     UniqueValueValidator,
+#     ValidationSeverity,
+# )
+# from algomancy_data.extractor import CSVSingleExtractor
+# from algomancy_data.transformer import (
+#     CascadeDropTransformer,
+#     CleanTransformer,
+#     TransformationSequence,
+# )
 
 
-class {{ class_name }}ETLFactory(de.ETLFactory):
+class {{ class_name }}ETLFactory(ETLFactory):
     """
-    Factory for creating ETL pipeline components.
+    Factory for the {{ project_name }} ETL pipeline.
 
-    This class orchestrates the data processing pipeline:
-    1. Extraction: Read data from files
-    2. Transformation: Clean and process the data
-    3. Validation: Check data quality
-    4. Loading: Store data in the application
+    Demonstrates the post-M4 minimal pattern: call ``super()`` for each
+    stage to inherit the framework defaults, and only customise the bits
+    that are specific to this project.
 
-    TODO: Implement each pipeline stage according to your needs.
+    TODO: Adapt each stage to your data.
     """
 
-    def __init__(self, configs, logger: Logger = None):
-        super().__init__(configs, logger)
-
-    def create_extraction_sequence(self, files: Dict[str, File]) -> ExtractionSequence:
+    def create_extraction_sequence(
+        self, files: Dict[str, File]
+    ) -> ExtractionSequence:
         """
-        Create the extraction sequence to read data from files.
+        Default extraction defers to the schema registry: each registered
+        ``(extension, schema_type)`` pair maps to an extractor class, and
+        ``super()`` builds them straight from your schemas.
 
-        Args:
-            files: Dictionary mapping file identifiers to File objects.
+        Override only for files that need non-default extractor parameters
+        (custom CSV separator, explicit XLSX sheet, …):
 
-        Returns:
-            ExtractionSequence with extraction operations.
-
-        TODO: Add extractors to read your data files.
-
-        Example:
-            sequence = ExtractionSequence(logger=self.logger)
+            sequence = super().create_extraction_sequence(default_files)
             sequence.add_extractor(
-                YourExtractor(
-                    file=files['your_file_key'],
-                    target='destination_name'
+                CSVSingleExtractor(
+                    file=files["my_file"],
+                    schema=self.get_schema("my_file"),
+                    separator=";",
+                    logger=self.logger,
                 )
             )
             return sequence
         """
-        # TODO: Implement extraction logic
-        # For now, return empty sequence:
-        return ExtractionSequence(logger=self.logger)
+        return super().create_extraction_sequence(files)
 
-    def create_transformation_sequence(self) -> TransformationSequence:
+    def create_validation_sequence(self) -> ValidationSequence:
         """
-        Create the transformation sequence to process extracted data.
-
-        Returns:
-            TransformationSequence with transformation operations.
-
-        TODO: Add transformers to clean and process your data.
+        ``super()`` already adds ``RequiredColumnsValidator`` +
+        ``SchemaValidator`` (+ ``PrimaryKeyValidator`` when any schema
+        declares a primary key). Add project-specific validators here.
 
         Example:
-            sequence = TransformationSequence(logger=self.logger)
-            sequence.add_transformer(
-                YourTransformer(
-                    source='source_name',
-                    target='target_name'
-                )
-            )
-            return sequence
-        """
-        # TODO: Implement transformation logic
-        # For now, return empty sequence:
-        return TransformationSequence(logger=self.logger)
 
-    def create_validation_sequence(self) -> de.ValidationSequence:
-        """
-        Create the validation sequence to check data quality.
-
-        Returns:
-            ValidationSequence with validation checks.
-
-        TODO: Add validators to ensure data quality.
-
-        Example:
-            sequence = de.ValidationSequence(logger=self.logger)
+            sequence = super().create_validation_sequence()
             sequence.add_validator(
-                YourValidator(
-                    data='data_to_validate',
-                    rules=[...]
+                MissingValueValidator(
+                    table="my_table",
+                    columns=["name", "email"],
+                    severity=ValidationSeverity.ERROR,
                 )
             )
             return sequence
         """
-        # TODO: Implement validation logic
-        # For now, return empty sequence:
-        return de.ValidationSequence(logger=self.logger)
+        return super().create_validation_sequence()
 
-    def create_loader(self) -> de.Loader:
-        """
-        Create the loader to store processed data.
-
-        Returns:
-            Loader instance.
-
-        TODO: Customize if you need special loading logic.
-        For most cases, the default DataSourceLoader is sufficient.
-        """
-        return de.DataSourceLoader(self.logger)
+    # def create_transformation_sequence(self) -> TransformationSequence:
+    #     """Default is a single ``NoopTransformer``. Override to add
+    #     project-specific transformations.
+    #
+    #     Example with the M7 cascade-drop transformer (use together with
+    #     ``foreign_key=("parent", "id")`` on the child schema column —
+    #     orphan child rows and, with ``parent_requires_child=True``,
+    #     childless parent rows are dropped):
+    #
+    #         sequence = TransformationSequence(logger=self.logger)
+    #         sequence.add_transformer(CleanTransformer(self.logger))
+    #         sequence.add_transformer(
+    #             CascadeDropTransformer(
+    #                 schemas=self.schemas, logger=self.logger
+    #             )
+    #         )
+    #         return sequence
+    #     """
+    #     return super().create_transformation_sequence()

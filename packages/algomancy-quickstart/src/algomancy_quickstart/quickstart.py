@@ -549,27 +549,48 @@ class QuickstartWizard:
         schemas_path.write_text(content, encoding="utf-8")
 
     def _generate_etl_factory_file(self):
-        """Generate the ETL factory file with extractors."""
+        """Generate the ETL factory file with extractors.
+
+        Files are partitioned into registry-default (handled by
+        ``super().create_extraction_sequence``) vs custom (hand-wired with
+        an explicit extractor) based on whether they need non-default
+        constructor arguments — CSV with a non-comma separator, or a
+        single-sheet XLSX where the sheet must be specified by name.
+        """
         template = self.jinja_env.get_template("etl_factory_generated.py.jinja")
 
-        # Determine which extractor types are needed
-        extractor_types = set()
+        default_files: list = []
+        custom_files: list = []
+        needs_csv_extractor = False
+        needs_xlsx_single_extractor = False
+
         for file_info in self.detected_files:
-            if file_info.is_multi_sheet:
-                extractor_types.add("XLSXMultiExtractor")
-            elif file_info.extension.name == "CSV":
-                extractor_types.add("CSVSingleExtractor")
-            elif file_info.extension.name == "XLSX":
-                extractor_types.add("XLSXSingleExtractor")
-            elif file_info.extension.name == "JSON":
-                extractor_types.add("JSONSingleExtractor")
+            ext = file_info.extension.name
+            if file_info.is_multi_sheet or ext == "JSON":
+                default_files.append(file_info)
+            elif ext == "CSV":
+                if (file_info.csv_separator or ",") == ",":
+                    default_files.append(file_info)
+                else:
+                    custom_files.append(file_info)
+                    needs_csv_extractor = True
+            elif ext == "XLSX":
+                # Single-sheet XLSX: pin the sheet by name explicitly so we
+                # don't depend on the registry default's sheet selection.
+                custom_files.append(file_info)
+                needs_xlsx_single_extractor = True
+            else:
+                default_files.append(file_info)
 
         content = template.render(
             project_name=self.project_name or "Project",
             class_name=self.class_name or "Custom",
             files=self.detected_files,
             file_count=len(self.detected_files),
-            extractor_types=sorted(extractor_types),
+            default_files=default_files,
+            custom_files=custom_files,
+            needs_csv_extractor=needs_csv_extractor,
+            needs_xlsx_single_extractor=needs_xlsx_single_extractor,
         )
 
         etl_path = self.current_dir / "src" / "data_handling" / "etl_factory.py"
