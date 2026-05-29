@@ -1,3 +1,4 @@
+(scenario-package-ref)=
 # Scenario Engine
 
 Below you will find API reference pages for each module in the `algomancy_scenario` package.
