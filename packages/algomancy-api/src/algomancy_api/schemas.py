@@ -75,3 +75,24 @@ class ScenarioStatusResponse(BaseModel):
     tag: str
     status: str
     progress: float
+
+
+# ---- Data management -------------------------------------------------------
+
+
+class DataKeysResponse(BaseModel):
+    keys: List[str]
+
+
+class DeriveDataRequest(BaseModel):
+    new_key: str = Field(
+        ..., min_length=1, description="Identifier for the derived dataset"
+    )
+
+
+class EtlResponse(BaseModel):
+    """Outcome of an ETL run."""
+
+    dataset_name: str
+    success: bool
+    keys: List[str]
