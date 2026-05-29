@@ -1,1 +1,2 @@
+(cli-ref)=
 # Algomancy-CLI

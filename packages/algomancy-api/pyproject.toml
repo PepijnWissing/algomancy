@@ -1,0 +1,24 @@
+[project]
+name = "algomancy-api"
+version = "0.7.0"
+description = "FastAPI HTTP interface exposing Algomancy scenario/data management to remote frontends."
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+  "algomancy-utils",
+  "algomancy-scenario",
+  "algomancy-data",
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.32",
+  "python-multipart>=0.0.20",
+]
+
+[dependency-groups]
+dev = [
+  "httpx>=0.28",
+  "pytest>=9.0.3",
+]
+
+[build-system]
+requires = ["uv_build>=0.9.6,<0.10.0"]
+build-backend = "uv_build"

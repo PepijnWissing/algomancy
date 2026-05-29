@@ -32,6 +32,10 @@ class ScenarioFactory:
         return self._algorithm_factory.available_algorithms
 
     @property
+    def available_kpis(self) -> List[str]:
+        return self._kpi_factory.available_kpis
+
+    @property
     def algo_templates(self) -> Dict[str, Type[ALGORITHM]]:
         return self._algorithm_factory.templates
 

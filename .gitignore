@@ -143,3 +143,4 @@ cython_debug/
 # algomancy test app
 test-algomancy-app/
 /.design-tmp/
+/test.ipynb
