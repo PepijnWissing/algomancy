@@ -26,6 +26,10 @@ class DataFileInfo:
         self.extension = extension
         self.sheet_names = sheet_names or []
         self.inferred_schemas: Dict[str, Dict[str, DataType]] = {}
+        # Per-schema (per-sheet for MULTI, "default" for SINGLE) primary-key
+        # candidates inferred from sample data. Consumed by the schema
+        # template to emit ``primary_key=True`` on the right columns.
+        self.primary_key_columns: Dict[str, List[str]] = {}
 
         # User configuration
         self.csv_separator: str = ","  # Default separator
@@ -321,6 +325,7 @@ class SchemaInferenceEngine:
                     sep=file_info.csv_separator,
                 )
                 file_info.inferred_schemas["default"] = self._infer_from_dataframe(df)
+                file_info.primary_key_columns["default"] = self._infer_primary_keys(df)
                 click.echo(f"  ✓ Inferred schema with {len(df.columns)} columns")
 
             elif file_info.extension == FileExtension.XLSX:
@@ -333,6 +338,9 @@ class SchemaInferenceEngine:
                     )
                     file_info.inferred_schemas[sheet_name] = self._infer_from_dataframe(
                         df
+                    )
+                    file_info.primary_key_columns[sheet_name] = (
+                        self._infer_primary_keys(df)
                     )
                     click.echo(f"  ✓ Sheet '{sheet_name}': {len(df.columns)} columns")
 
@@ -350,6 +358,7 @@ class SchemaInferenceEngine:
                     df = df.head(self.sample_rows)
 
                 file_info.inferred_schemas["default"] = self._infer_from_dataframe(df)
+                file_info.primary_key_columns["default"] = self._infer_primary_keys(df)
                 click.echo(f"  ✓ Inferred schema with {len(df.columns)} columns")
 
             return True
@@ -400,6 +409,30 @@ class SchemaInferenceEngine:
                 schema[column] = DataType.STRING
 
         return schema
+
+    def _infer_primary_keys(self, df: pd.DataFrame) -> List[str]:
+        """Heuristically pick primary-key columns from sample data.
+
+        A column is treated as PK-like when it is all-unique, all-non-null,
+        and either named ``id`` / ``*_id`` or is the single best unique
+        column in the sample. Returns at most one column to avoid emitting
+        compound PKs that the user didn't actually ask for.
+        """
+        if df.empty:
+            return []
+
+        candidates: List[str] = []
+        for column in df.columns:
+            series = df[column]
+            if series.isna().any():
+                continue
+            if series.nunique() != len(series):
+                continue
+            lowered = str(column).lower()
+            if lowered == "id" or lowered.endswith("_id") or lowered.endswith("id"):
+                candidates.append(column)
+
+        return candidates[:1]
 
     def _contains_nested_structures(self, series: pd.Series) -> bool:
         """

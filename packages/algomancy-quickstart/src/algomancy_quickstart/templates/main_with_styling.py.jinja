@@ -1,5 +1,7 @@
 from algomancy_data import DataSource
 from algomancy_gui.configuration.appconfig import AppConfig
+from algomancy_gui.configuration.comparepageconfig import ComparePageConfig
+from algomancy_gui.configuration.featureconfig import FeatureConfig
 from algomancy_gui.configuration.pageconfig import PageConfig
 from algomancy_gui.configuration.serverconfig import ServerConfig
 from algomancy_gui.gui_launcher import GuiLauncher
@@ -65,8 +67,12 @@ def main() -> None:
             compare_page={{ class_name }}ComparePage(),
 #           overview_page={{ class_name }}OverviewPage(),  # uncomment to use {{ class_name }}OverviewPage
         ),
+        {% else %}
+        page_config=PageConfig(),
         {% endif %}
+        compare_page_config=ComparePageConfig(),
         styling_config=app_styling,
+        feature_config=FeatureConfig(),
     )
 
     app = GuiLauncher.build(app_cfg)

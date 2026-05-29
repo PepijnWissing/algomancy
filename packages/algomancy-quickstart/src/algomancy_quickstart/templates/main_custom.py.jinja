@@ -1,13 +1,16 @@
 from algomancy_data import DataSource
 from algomancy_gui.configuration.appconfig import AppConfig
+from algomancy_gui.configuration.comparepageconfig import ComparePageConfig
+from algomancy_gui.configuration.featureconfig import FeatureConfig
 from algomancy_gui.configuration.pageconfig import PageConfig
 from algomancy_gui.configuration.serverconfig import ServerConfig
+from algomancy_gui.configuration.stylingconfig import StylingConfig
 from algomancy_gui.gui_launcher import GuiLauncher
 from algomancy_scenario.core_configuration import CoreConfig
 
 # Import custom implementations
 from src.data_handling.etl_factory import {{ class_name }}ETLFactory
-from src.data_handling.schemas import {{ filename }}_schema
+from src.data_handling.schemas import all_schemas
 from src.templates.algorithm.{{ filename }}_algorithm import {{ class_name }}Algorithm
 from src.templates.kpi.{{ filename }}_kpi import {{ class_name }}KPI
 from src.pages.home_page import {{ class_name }}HomePage
@@ -25,7 +28,7 @@ def main() -> None:
             etl_factory={{ class_name }}ETLFactory,
             kpi_templates={"{{ filename }}": {{ class_name }}KPI},
             algo_templates={"{{ class_name }}": {{ class_name }}Algorithm},
-            schemas=[{{ filename }}_schema],
+            schemas=all_schemas,
             data_object_type=DataSource,
             autocreate=False,
             autorun=False,
@@ -39,6 +42,9 @@ def main() -> None:
             compare_page={{ class_name }}ComparePage(),
 #           overview_page={{ class_name }}OverviewPage(),  # uncomment to use {{ class_name }}OverviewPage
         ),
+        compare_page_config=ComparePageConfig(),
+        styling_config=StylingConfig(assets_path="assets"),
+        feature_config=FeatureConfig(),
     )
 
     app = GuiLauncher.build(app_cfg)
