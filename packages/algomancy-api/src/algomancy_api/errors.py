@@ -6,13 +6,16 @@ handlers stay terse.
 
 Concrete situations that drive the mapping:
 
-* ``KeyError`` — unknown session, unknown algorithm template, unknown data key.
-  These are always "not found" situations → 404.
 * ``AssertionError`` — defensive guard in the manager (e.g. deleting data that
   is referenced by a scenario). These are precondition failures → 409.
 * ``ValueError`` — bad input. The one ambiguous case is ``create_scenario``
   raising ``ValueError`` when a tag already exists; the scenarios router handles
   that explicitly and raises ``HTTPException(409)``. The fallback here is 400.
+
+Lookup misses (unknown session, unknown algorithm template, unknown data key)
+are NOT translated globally — every framework lookup that raises ``KeyError``
+is wrapped in the route or dependency that called it, so we don't accidentally
+turn an unrelated KeyError deep in user code into a misleading 404.
 """
 
 from __future__ import annotations
@@ -28,12 +31,6 @@ _log = logging.getLogger("algomancy_api")
 
 
 def install_exception_handlers(app: FastAPI) -> None:
-    @app.exception_handler(KeyError)
-    async def _handle_key_error(_: Request, exc: KeyError) -> JSONResponse:
-        # KeyError's str() includes quotes around the key; .args[0] is cleaner.
-        msg = exc.args[0] if exc.args else "Not found"
-        return JSONResponse(status_code=404, content={"detail": str(msg)})
-
     @app.exception_handler(AssertionError)
     async def _handle_assertion_error(_: Request, exc: AssertionError) -> JSONResponse:
         return JSONResponse(status_code=409, content={"detail": str(exc) or "Conflict"})

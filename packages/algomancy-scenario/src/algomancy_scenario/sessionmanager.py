@@ -24,6 +24,23 @@ def _unwrap_core_config(cfg) -> CoreConfig:
     )
 
 
+def _validate_session_name(name: str) -> None:
+    """Reject session names that would escape the data folder or break path joining.
+
+    Sessions become subdirectories of ``data_path`` when persistent state is enabled,
+    so the name must be a single safe directory segment.
+    """
+    if not isinstance(name, str) or not name:
+        raise ValueError("Session name must be a non-empty string.")
+    if any(sep in name for sep in ("/", "\\", "\x00")):
+        raise ValueError(f"Session name {name!r} must not contain path separators.")
+    if name in (".", "..") or name.startswith(".."):
+        raise ValueError(f"Session name {name!r} must not refer to a parent directory.")
+    # Drive prefix on Windows ("C:") or relative-drive references.
+    if len(name) >= 2 and name[1] == ":":
+        raise ValueError(f"Session name {name!r} must not contain a drive prefix.")
+
+
 class SessionManager:
     """
     Container for multiple ScenarioManagers, one per session.
@@ -51,6 +68,7 @@ class SessionManager:
             default_algo_name=core.default_algo,
             default_param_values=core.default_algo_params_values,
             autorun=core.autorun,
+            discover_sessions=core.use_sessions,
         )
 
     def __init__(
@@ -69,6 +87,7 @@ class SessionManager:
         default_algo_name: str = None,
         default_param_values: Dict[str, any] = None,
         autorun: bool = False,
+        discover_sessions: bool = True,
     ) -> None:
         self.logger = logger if logger else Logger()
         self._etl_factory = etl_factory
@@ -83,6 +102,7 @@ class SessionManager:
         self._auto_create_scenario = auto_create
         self._default_algo_name = default_algo_name
         self._default_param_values = default_param_values
+        self._discover_sessions = discover_sessions
 
         assert save_type in ["json"], "Save type must be parquet or json."
         self._save_type = save_type
@@ -98,9 +118,10 @@ class SessionManager:
             assert self._data_folder, (
                 "Data folder must be specified if a persistent state is used."
             )
-            sessions = self._determine_sessions_from_folder(self._data_folder)
-            for session_name, session_path in sessions.items():
-                self._create_default_scenario_manager(session_name, session_path)
+            if self._discover_sessions:
+                sessions = self._determine_sessions_from_folder(self._data_folder)
+                for session_name, session_path in sessions.items():
+                    self._create_default_scenario_manager(session_name, session_path)
         if len(self._sessions) == 0:
             self._create_default_scenario_manager("main")
 
@@ -122,7 +143,8 @@ class SessionManager:
         return session_id in self._sessions
 
     def _create_folder(self, name: str) -> str:
-        session_folder = self._data_folder + "/" + name
+        _validate_session_name(name)
+        session_folder = os.path.join(self._data_folder, name)
         os.makedirs(session_folder, exist_ok=True)
         return session_folder
 
@@ -165,11 +187,13 @@ class SessionManager:
         return template.initialize_parameters()
 
     def create_new_session(self, session_name: str) -> None:
+        _validate_session_name(session_name)
         if session_name in self._sessions:
             raise ValueError(f"Session '{session_name}' already exists.")
         self._create_default_scenario_manager(session_name)
 
     def copy_session(self, session_name: str, new_session_name: str):
+        _validate_session_name(new_session_name)
         if new_session_name in self._sessions:
             raise ValueError(f"Session '{new_session_name}' already exists.")
         self._create_default_scenario_manager(new_session_name)

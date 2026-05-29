@@ -53,10 +53,13 @@ def test_value_error_maps_to_400(client):
     assert r.json()["detail"] == "bad input"
 
 
-def test_key_error_maps_to_404(client):
+def test_key_error_not_globally_translated(client):
+    """A KeyError raised in route code should NOT be silently turned into 404 —
+    only explicit lookups translate it (see dependencies.get_scenario_manager).
+    A stray KeyError surfaces as 500 so real bugs are not hidden behind a 404."""
     r = client.get("/probe/key")
-    assert r.status_code == 404
-    assert r.json()["detail"] == "missing thing"
+    assert r.status_code == 500
+    assert r.json()["detail"] == "Internal server error"
 
 
 def test_assertion_error_maps_to_409(client):

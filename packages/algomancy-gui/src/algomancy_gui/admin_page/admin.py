@@ -351,10 +351,16 @@ def toggle_session_creator_modal(
         return True, "", True, no_update
     if triggered_id == NEW_SESSION_BUTTON and is_open:
         session_manager: SessionManager = get_app().server.session_manager
-        if copy_session:
-            session_manager.copy_session(session_id, new_session_name)
-        else:
-            session_manager.create_new_session(new_session_name)
+        try:
+            if copy_session:
+                session_manager.copy_session(session_id, new_session_name)
+            else:
+                session_manager.create_new_session(new_session_name)
+        except ValueError as e:
+            # Duplicate name or invalid characters; keep the modal open with the
+            # entered value visible so the user can correct it.
+            session_manager.log(str(e), MessageStatus.WARNING)
+            return no_update, no_update, no_update, no_update
 
         return False, "", no_update, new_session_name
     if triggered_id == f"{NEW_SESSION_BUTTON}-cancel":

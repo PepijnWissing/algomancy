@@ -72,8 +72,12 @@ def test_session_manager_get_unknown_session_raises(mock_configs):
         sm.get_scenario_manager("does-not-exist")
 
 
-def test_session_manager_create_and_copy(mock_configs):
-    sm = SessionManager.from_config(_make_core_config(mock_configs))
+def test_session_manager_create_and_copy(mock_configs, tmp_path):
+    # Use tmp_path so persistent state from this test doesn't leak into the
+    # checked-in test data folder.
+    isolated = dict(mock_configs)
+    isolated["data_path"] = str(tmp_path)
+    sm = SessionManager.from_config(_make_core_config(isolated))
     start = sm.start_session_name
 
     sm.create_new_session("brand-new")
