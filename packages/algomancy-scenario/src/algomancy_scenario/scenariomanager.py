@@ -152,6 +152,10 @@ class ScenarioManager:
         return self._factory.available_algorithms
 
     @property
+    def available_kpis(self):
+        return self._factory.available_kpis
+
+    @property
     def auto_run_scenarios(self):
         return self._processor.auto_run_scenarios
 
