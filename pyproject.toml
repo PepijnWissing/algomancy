@@ -18,14 +18,14 @@ classifiers = [
   "Programming Language :: Python"
 ]
 dependencies = [
-  "algomancy-api >= 0.6.0",
-  "algomancy-cli >= 0.6.0",
-  "algomancy-content >= 0.6.0",
-  "algomancy-data >= 0.6.0",
-  "algomancy-gui >= 0.6.0",
-  "algomancy-scenario >= 0.6.0",
-  "algomancy-utils >= 0.6.0",
-  "algomancy-quickstart >= 0.6.0",
+  "algomancy-api >= 0.7.0",
+  "algomancy-cli >= 0.7.0",
+  "algomancy-content >= 0.7.0",
+  "algomancy-data >= 0.7.0",
+  "algomancy-gui >= 0.7.0",
+  "algomancy-scenario >= 0.7.0",
+  "algomancy-utils >= 0.7.0",
+  "algomancy-quickstart >= 0.7.0",
   "furo>=2025.12.19",
   "ipykernel>=7.2.0",
   "myst-parser>=5.0.0",
@@ -48,7 +48,7 @@ maintainers = [
 name = "Algomancy"
 readme = "README.md"
 requires-python = ">=3.14"
-version = "0.6.0"
+version = "0.7.0"
 
 [project.scripts]
 algomancy-api = "algomancy_api.main:main"

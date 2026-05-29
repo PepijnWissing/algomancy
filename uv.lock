@@ -38,7 +38,7 @@ wheels = [
 
 [[package]]
 name = "algomancy"
-version = "0.6.0"
+version = "0.7.0"
 source = { editable = "." }
 dependencies = [
     { name = "algomancy-api" },
@@ -101,7 +101,7 @@ dev = [
 
 [[package]]
 name = "algomancy-api"
-version = "0.6.0"
+version = "0.7.0"
 source = { editable = "packages/algomancy-api" }
 dependencies = [
     { name = "algomancy-data" },
@@ -136,7 +136,7 @@ dev = [
 
 [[package]]
 name = "algomancy-cli"
-version = "0.6.0"
+version = "0.7.0"
 source = { editable = "packages/algomancy-cli" }
 dependencies = [
     { name = "algomancy-data" },
@@ -153,7 +153,7 @@ requires-dist = [
 
 [[package]]
 name = "algomancy-content"
-version = "0.6.0"
+version = "0.7.0"
 source = { editable = "packages/algomancy-content" }
 dependencies = [
     { name = "algomancy-data" },
@@ -176,7 +176,7 @@ requires-dist = [
 
 [[package]]
 name = "algomancy-data"
-version = "0.6.0"
+version = "0.7.0"
 source = { editable = "packages/algomancy-data" }
 dependencies = [
     { name = "algomancy-utils" },
@@ -195,7 +195,7 @@ requires-dist = [
 
 [[package]]
 name = "algomancy-gui"
-version = "0.6.0"
+version = "0.7.0"
 source = { editable = "packages/algomancy-gui" }
 dependencies = [
     { name = "algomancy-content" },
@@ -224,7 +224,7 @@ requires-dist = [
 
 [[package]]
 name = "algomancy-quickstart"
-version = "0.6.0"
+version = "0.7.0"
 source = { editable = "packages/algomancy-quickstart" }
 dependencies = [
     { name = "algomancy-content" },
@@ -249,7 +249,7 @@ requires-dist = [
 
 [[package]]
 name = "algomancy-scenario"
-version = "0.6.0"
+version = "0.7.0"
 source = { editable = "packages/algomancy-scenario" }
 dependencies = [
     { name = "algomancy-data" },
@@ -266,7 +266,7 @@ requires-dist = [
 
 [[package]]
 name = "algomancy-utils"
-version = "0.6.0"
+version = "0.7.0"
 source = { editable = "packages/algomancy-utils" }
 dependencies = [
     { name = "strenum" },
