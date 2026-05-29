@@ -4,6 +4,7 @@ requires = ["uv_build>=0.9.22,<0.10.0"]
 
 [dependency-groups]
 dev = [
+  "httpx>=0.28",
   "pytest>=9.0.3",
   "pytest-cov>=7.1.0"
 ]
@@ -17,6 +18,7 @@ classifiers = [
   "Programming Language :: Python"
 ]
 dependencies = [
+  "algomancy-api >= 0.6.0",
   "algomancy-cli >= 0.6.0",
   "algomancy-content >= 0.6.0",
   "algomancy-data >= 0.6.0",
@@ -49,6 +51,7 @@ requires-python = ">=3.14"
 version = "0.6.0"
 
 [project.scripts]
+algomancy-api = "algomancy_api.main:main"
 algomancy-cli = "algomancy_cli.main:main"
 algomancy-quickstart = "algomancy_quickstart.main:main"
 
@@ -60,6 +63,7 @@ Repository = "https://github.com/PepijnWissing/algomancy"
 pythonpath = ["."]
 
 [tool.uv.sources]
+algomancy-api = {workspace = true}
 algomancy-cli = {workspace = true}
 algomancy-content = {workspace = true}
 algomancy-data = {workspace = true}
@@ -70,6 +74,7 @@ algomancy-utils = {workspace = true}
 
 [tool.uv.workspace]
 members = [
+  "packages/algomancy-api",
   "packages/algomancy-content",
   "packages/algomancy-gui",
   "packages/algomancy-utils",

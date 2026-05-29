@@ -4,7 +4,9 @@ import os
 from typing import Any, Dict, List, Type
 
 from algomancy_data import Schema, BASEDATASOURCE
-from algomancy_scenario import AlgorithmFactory, ALGORITHM, BASE_KPI
+from .algorithmfactory import AlgorithmFactory
+from .basealgorithm import ALGORITHM
+from .keyperformanceindicator import BASE_KPI
 
 
 class CoreConfig:

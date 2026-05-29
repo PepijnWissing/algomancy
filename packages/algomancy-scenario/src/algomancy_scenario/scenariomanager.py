@@ -8,11 +8,11 @@ from algomancy_data import (
     Schema,
 )
 
-# from algomancy_gui.configuration.appconfiguration import AppConfiguration
 from algomancy_utils.logger import Logger, MessageStatus
 from .basealgorithm import ALGORITHM
 from algomancy_utils.baseparameterset import BASE_PARAMS_BOUND
 
+from .core_configuration import CoreConfig
 from .keyperformanceindicator import BASE_KPI
 from .scenario import Scenario
 from .scenarioregistry import ScenarioRegistry
@@ -29,24 +29,31 @@ class ScenarioManager:
 
     @classmethod
     def from_config(cls, cfg) -> "ScenarioManager":
-        # Local import to avoid heavy top-level coupling
-        from algomancy_gui.configuration.appconfig import AppConfig  # type: ignore
-
-        if not isinstance(cfg, AppConfig):
-            raise TypeError("from_config expects an AppConfig instance")
+        """Build from either a CoreConfig (or subclass like CliConfiguration,
+        ApiConfiguration) or any wrapper exposing a `.core` CoreConfig (e.g. AppConfig).
+        """
+        if isinstance(cfg, CoreConfig):
+            core = cfg
+        else:
+            core = getattr(cfg, "core", None)
+            if not isinstance(core, CoreConfig):
+                raise TypeError(
+                    "from_config expects a CoreConfig (or subclass) or an object "
+                    f"with a `.core` CoreConfig attribute; got {type(cfg).__name__}"
+                )
         return cls(
-            etl_factory=cfg.core.etl_factory,
-            kpi_templates=cfg.core.kpi_templates,
-            algo_templates=cfg.core.algo_templates,
-            schemas=cfg.core.schemas,
-            data_object_type=cfg.core.data_object_type,
-            data_folder=cfg.core.data_path,
-            has_persistent_state=cfg.core.has_persistent_state,
-            save_type=cfg.core.save_type,
-            autocreate=cfg.core.autocreate,
-            default_algo_name=cfg.core.default_algo,
-            default_param_values=cfg.core.default_algo_params_values,
-            autorun=cfg.core.autorun,
+            etl_factory=core.etl_factory,
+            kpi_templates=core.kpi_templates,
+            algo_templates=core.algo_templates,
+            schemas=core.schemas,
+            data_object_type=core.data_object_type,
+            data_folder=core.data_path,
+            has_persistent_state=core.has_persistent_state,
+            save_type=core.save_type,
+            autocreate=core.autocreate,
+            default_algo_name=core.default_algo,
+            default_param_values=core.default_algo_params_values,
+            autorun=core.autorun,
         )
 
     def __init__(
