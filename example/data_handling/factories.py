@@ -58,7 +58,9 @@ class ExampleETLFactory(ETLFactory):
         # ``super()`` builds them straight from each schema's
         # ``(extension, schema_type)`` pair.
         default_files = {
-            name: files[name] for name in ("employees", "multisheet") if name in files
+            name: files[name]
+            for name in ("employees", "multisheet", "picks")
+            if name in files
         }
         sequence = super().create_extraction_sequence(default_files)
 

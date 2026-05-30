@@ -167,6 +167,60 @@ class OrderItemSchema(Schema):
     QUANTITY = Column("quantity", dtype=DataType.INTEGER)
 
 
+class PickLoadCarrierSchema(Schema):
+    """Nested-JSON schema: pick load carriers with a child ``PickOrderLines`` list.
+
+    Demonstrates :class:`~algomancy_data.extractor.JSONMultiExtractor`. The
+    schema declares two ``ColumnGroup``s on a single JSON file:
+
+    - the **parent** group ``PickLoadCarriers`` (``source_path=()``) flattens
+      each top-level object;
+    - the **child** group ``PickOrderLines`` (``source_path=("PickOrderLines",)``)
+      explodes the nested list of dicts into its own table. The
+      ``foreign_key=("PickLoadCarriers", "Identity")`` declaration on
+      ``PickLoadCarrierIdentity`` makes the extractor inject the parent's
+      ``Identity`` into each child row at extraction time, and it is the same
+      declaration that drives ``ForeignKeyValidator`` and
+      ``CascadeDropTransformer``.
+    """
+
+    _FILENAME = "picks"
+    _EXTENSION = FileExtension.JSON
+    _SCHEMA_TYPE = SchemaType.MULTI
+
+    PICK_LOAD_CARRIERS = ColumnGroup(
+        "PickLoadCarriers",
+        [
+            Column("Identity", dtype=DataType.STRING, primary_key=True),
+            Column("PickOrderIdentity", dtype=DataType.STRING),
+            Column("ClientIdentity", dtype=DataType.STRING),
+            Column("NumberOfPackages", dtype=DataType.INTEGER),
+            Column("Priority", dtype=DataType.INTEGER),
+            Column("EstimatedPickingTime", dtype=DataType.INTEGER),
+            Column("NumberOfPickOrderLines", dtype=DataType.INTEGER),
+        ],
+        source_path=(),
+    )
+
+    PICK_ORDER_LINES = ColumnGroup(
+        "PickOrderLines",
+        [
+            Column("Identity", dtype=DataType.STRING, primary_key=True),
+            Column(
+                "PickLoadCarrierIdentity",
+                dtype=DataType.STRING,
+                foreign_key=("PickLoadCarriers", "Identity"),
+            ),
+            Column("PickSequence", dtype=DataType.INTEGER),
+            Column("AreaIdentity", dtype=DataType.STRING),
+            Column("OrderedQuantity", dtype=DataType.INTEGER),
+            Column("LocationXCoordinate", dtype=DataType.FLOAT),
+            Column("LocationYCoordinate", dtype=DataType.FLOAT),
+        ],
+        source_path=("PickOrderLines",),
+    )
+
+
 example_schemas = [
     WarehouseLayoutSchema(),
     ItemDataSchema(),
@@ -176,4 +230,5 @@ example_schemas = [
     CategorySchema,
     ProductSchema,
     OrderItemSchema,
+    PickLoadCarrierSchema,
 ]
