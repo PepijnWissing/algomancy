@@ -208,13 +208,17 @@ def test_etl_factory_generated_with_custom_xlsx_single(
 
 
 def test_main_custom_uses_all_schemas(jinja_env: Environment) -> None:
-    tmpl = jinja_env.get_template("main_custom.py.jinja")
+    tmpl = jinja_env.get_template("main.py.jinja")
     rendered = tmpl.render(
         title="Demo",
         host="127.0.0.1",
         port=8050,
+        interfaces=["gui"],
         class_name="Demo",
         filename="demo",
+        has_custom_implementations=True,
+        has_generated_etl=False,
+        has_styling=False,
     )
     _assert_parses(rendered)
 
@@ -275,80 +279,94 @@ def test_generated_schemas_emits_unique_class_names_for_multiple_files(
     assert "class Schema(Schema)" not in rendered
 
 
+def _gui_ctx(**overrides: object) -> dict:
+    base = dict(
+        title="Demo",
+        host="127.0.0.1",
+        port=8050,
+        interfaces=["gui"],
+        class_name="Demo",
+        filename="demo",
+        has_custom_implementations=False,
+        has_generated_etl=False,
+        has_styling=False,
+    )
+    base.update(overrides)
+    return base
+
+
 @pytest.mark.parametrize(
-    "template_name, ctx",
+    "ctx",
     [
-        ("main.py.jinja", dict(title="Demo", host="127.0.0.1", port=8050)),
-        (
-            "main_custom.py.jinja",
-            dict(
-                title="Demo",
-                host="127.0.0.1",
-                port=8050,
-                class_name="Demo",
-                filename="demo",
-            ),
-        ),
-        (
-            "main_generated_etl.py.jinja",
-            dict(
-                title="Demo",
-                host="127.0.0.1",
-                port=8050,
-                class_name="Demo",
-                filename="demo",
-                has_custom_implementations=False,
-            ),
-        ),
-        (
-            "main_generated_etl.py.jinja",
-            dict(
-                title="Demo",
-                host="127.0.0.1",
-                port=8050,
-                class_name="Demo",
-                filename="demo",
-                has_custom_implementations=True,
-            ),
-        ),
-        (
-            "main_with_styling.py.jinja",
-            dict(
-                title="Demo",
-                host="127.0.0.1",
-                port=8050,
-                class_name="Demo",
-                filename="demo",
-                has_custom_implementations=False,
-                has_generated_etl=False,
-            ),
-        ),
-        (
-            "main_with_styling.py.jinja",
-            dict(
-                title="Demo",
-                host="127.0.0.1",
-                port=8050,
-                class_name="Demo",
-                filename="demo",
-                has_custom_implementations=True,
-                has_generated_etl=True,
-            ),
+        _gui_ctx(),
+        _gui_ctx(has_custom_implementations=True),
+        _gui_ctx(has_generated_etl=True),
+        _gui_ctx(has_generated_etl=True, has_custom_implementations=True),
+        _gui_ctx(has_styling=True),
+        _gui_ctx(
+            has_styling=True,
+            has_custom_implementations=True,
+            has_generated_etl=True,
         ),
     ],
 )
-def test_main_templates_pass_all_subconfigs(
-    jinja_env: Environment, template_name: str, ctx: dict
-) -> None:
-    """Every main template must instantiate ComparePageConfig + FeatureConfig
-    (and PageConfig + StylingConfig) so AppConfig never falls back to the
-    deprecated keyword path."""
-    tmpl = jinja_env.get_template(template_name)
+def test_main_template_pass_all_subconfigs(jinja_env: Environment, ctx: dict) -> None:
+    """The unified main template must instantiate ComparePageConfig +
+    FeatureConfig (and PageConfig + StylingConfig) for GUI builds so
+    AppConfig never falls back to the deprecated keyword path."""
+    tmpl = jinja_env.get_template("main.py.jinja")
     rendered = tmpl.render(**ctx)
     _assert_parses(rendered)
 
-    assert "ComparePageConfig(" in rendered, template_name
-    assert "FeatureConfig(" in rendered, template_name
-    assert "PageConfig(" in rendered, template_name
-    # styling_config either explicit (StylingConfig() or app_styling) — at minimum present
-    assert "styling_config=" in rendered, template_name
+    assert "ComparePageConfig(" in rendered, ctx
+    assert "FeatureConfig(" in rendered, ctx
+    assert "PageConfig(" in rendered, ctx
+    # styling_config either explicit (StylingConfig() or app_styling)
+    assert "styling_config=" in rendered, ctx
+
+
+@pytest.mark.parametrize(
+    "interfaces",
+    [
+        ["gui"],
+        ["cli"],
+        ["api"],
+        ["gui", "cli"],
+        ["gui", "api"],
+        ["cli", "api"],
+        ["gui", "cli", "api"],
+    ],
+)
+def test_main_template_supports_interface_combinations(
+    jinja_env: Environment, interfaces: list
+) -> None:
+    """Regression for #128 — the generated main.py must include only the
+    launchers for the interfaces the user chose."""
+    tmpl = jinja_env.get_template("main.py.jinja")
+    rendered = tmpl.render(**_gui_ctx(interfaces=interfaces))
+    _assert_parses(rendered)
+
+    if "gui" in interfaces:
+        assert "GuiLauncher" in rendered
+        assert "run_gui" in rendered
+    else:
+        assert "GuiLauncher" not in rendered
+
+    if "cli" in interfaces:
+        assert "CliLauncher" in rendered
+        assert "run_cli" in rendered
+    else:
+        assert "CliLauncher" not in rendered
+
+    if "api" in interfaces:
+        assert "ApiLauncher" in rendered
+        assert "run_api" in rendered
+    else:
+        assert "ApiLauncher" not in rendered
+
+    if len(interfaces) > 1:
+        # Multi-interface mains must dispatch on --interface.
+        assert "--interface" in rendered
+    else:
+        # Single-interface mains skip argparse and just call the launcher.
+        assert "--interface" not in rendered

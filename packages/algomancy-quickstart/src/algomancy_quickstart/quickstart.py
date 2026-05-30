@@ -34,6 +34,10 @@ class QuickstartWizard:
         # Track what was generated
         self.has_custom_implementations = False
         self.has_generated_etl = False
+        self.has_styling = False
+        # Interfaces baked into the generated main.py. GUI is the historical
+        # default; the wizard's step_1 prompt may narrow / widen this.
+        self.interfaces: list[str] = ["gui"]
         self.host = "127.0.0.1"
         self.port = 8050
 
@@ -97,8 +101,25 @@ class QuickstartWizard:
         click.echo()
         click.echo("Next steps:")
         click.echo("  1. Review and customize the generated files")
-        click.echo("  2. Run: python main.py")
-        click.echo(f"  3. Open your browser at http://{self.host}:{self.port}")
+        extra_pkgs = []
+        if "cli" in self.interfaces:
+            extra_pkgs.append("algomancy-cli")
+        if "api" in self.interfaces:
+            extra_pkgs.append("algomancy-api")
+        if extra_pkgs:
+            click.echo(
+                f"  2. Install required interface packages: pip install {' '.join(extra_pkgs)}"
+            )
+        if len(self.interfaces) == 1:
+            click.echo("  3. Run: python main.py")
+        else:
+            click.echo(
+                f"  3. Run: python main.py --interface {{{','.join(self.interfaces)}}}"
+            )
+        if "gui" in self.interfaces:
+            click.echo(
+                f"  4. (GUI) Open your browser at http://{self.host}:{self.port}"
+            )
 
     def step_1_create_structure(self):
         """Step 1: Create folder structure and generate basic main.py"""
@@ -118,6 +139,11 @@ class QuickstartWizard:
         # Get host and port
         self.host = click.prompt("Host address", default="127.0.0.1", type=str)
         self.port = click.prompt("Port number", default=8050, type=int)
+
+        # Ask which interface(s) to expose. The generated ``main.py`` will
+        # only wire up the launchers the user picked here; if more than one
+        # is selected, it dispatches on ``--interface``.
+        self.interfaces = self._prompt_interfaces()
 
         # Define folder structure - include data/setup and src/styling
         folders = [
@@ -473,20 +499,8 @@ class QuickstartWizard:
 
     def _update_main_py_with_styling(self):
         """Update main.py to import and use styling configuration."""
-        template = self.jinja_env.get_template("main_with_styling.py.jinja")
-
-        content = template.render(
-            title=self.title,
-            host=self.host,
-            port=self.port,
-            class_name=self.class_name or "Custom",
-            filename=self.filename or "custom",
-            has_custom_implementations=self.has_custom_implementations,
-            has_generated_etl=self.has_generated_etl,
-        )
-
-        main_py_path = self.current_dir / "main.py"
-        main_py_path.write_text(content, encoding="utf-8")
+        self.has_styling = True
+        self._render_main_py()
 
     def _display_inferred_schemas_summary(self):
         """Display a summary of all inferred schemas."""
@@ -615,28 +629,71 @@ class QuickstartWizard:
 
     def _update_main_py_with_generated_etl(self):
         """Update main.py to use generated ETL and schemas."""
-        template = self.jinja_env.get_template("main_generated_etl.py.jinja")
-
-        content = template.render(
-            title=self.title,
-            host="127.0.0.1",
-            port=8050,
-            filename=self.filename or "custom",
-            class_name=self.class_name or "Custom",
-            has_custom_implementations=self.has_custom_implementations,
-        )
-
-        main_py_path = self.current_dir / "main.py"
-        main_py_path.write_text(content, encoding="utf-8")
+        self._render_main_py()
 
     def _generate_main_py(self, title: str, host: str, port: int):
-        """Generate main.py from Jinja2 template."""
+        """Generate the initial main.py (called from step 1).
+
+        Later steps re-render ``main.py`` via :meth:`_render_main_py` with
+        richer context (custom implementations, generated ETL, styling) — they
+        all share the same unified template.
+        """
+        self._render_main_py()
+
+    def _render_main_py(self) -> None:
+        """Render ``main.py`` using the current wizard state.
+
+        Idempotent — every step that wants to refresh the wiring just calls
+        this, and the template's flags (``interfaces``, ``has_styling``,
+        ``has_custom_implementations``, ``has_generated_etl``) take care of
+        emitting the right launchers and imports.
+        """
         template = self.jinja_env.get_template("main.py.jinja")
-
-        content = template.render(title=title, host=host, port=port)
-
+        content = template.render(
+            title=self.title,
+            host=self.host,
+            port=self.port,
+            interfaces=self.interfaces,
+            class_name=self.class_name or "Custom",
+            filename=self.filename or "custom",
+            has_custom_implementations=self.has_custom_implementations,
+            has_generated_etl=self.has_generated_etl,
+            has_styling=self.has_styling,
+        )
         main_py_path = self.current_dir / "main.py"
         main_py_path.write_text(content, encoding="utf-8")
+
+    @staticmethod
+    def _prompt_interfaces() -> list[str]:
+        """Ask the user which interface(s) to bake into ``main.py``.
+
+        Accepts a comma-separated list of ``gui``, ``cli``, ``api`` (any
+        non-empty subset). The wizard's default is GUI for backwards
+        compatibility with pre-#128 quickstart runs.
+        """
+        click.echo()
+        click.echo("Which interface(s) should the generated main.py expose?")
+        click.echo("  Options: gui, cli, api (comma-separated, e.g. 'gui,api')")
+        valid = {"gui", "cli", "api"}
+        while True:
+            raw = click.prompt("Interfaces", default="gui", type=str, show_default=True)
+            parts = [p.strip().lower() for p in raw.split(",") if p.strip()]
+            unique: list[str] = []
+            for p in parts:
+                if p not in valid:
+                    click.echo(
+                        click.style(
+                            f"  Unknown interface '{p}' — choose from {sorted(valid)}",
+                            fg="yellow",
+                        )
+                    )
+                    break
+                if p not in unique:
+                    unique.append(p)
+            else:
+                if unique:
+                    return unique
+                click.echo(click.style("  Pick at least one interface.", fg="yellow"))
 
     def _generate_implementation_file(
         self, template_name: str, target_dir: str, target_file: str
@@ -664,18 +721,7 @@ class QuickstartWizard:
 
     def _update_main_py_with_custom_implementations(self):
         """Update main.py to import and use custom implementations."""
-        template = self.jinja_env.get_template("main_custom.py.jinja")
-
-        content = template.render(
-            title=self.title,
-            host="127.0.0.1",
-            port=8050,
-            class_name=self.class_name,
-            filename=self.filename,
-        )
-
-        main_py_path = self.current_dir / "main.py"
-        main_py_path.write_text(content, encoding="utf-8")
+        self._render_main_py()
 
     @staticmethod
     def _to_pascal_case(text: str) -> str:
