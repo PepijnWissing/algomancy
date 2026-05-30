@@ -98,6 +98,15 @@ class QuickstartWizard:
             self.step_5_configure_styling()
 
         click.echo()
+
+        # Step 6: Generate pytest skeletons (optional)
+        if click.confirm(
+            "Do you want to generate pytest skeletons for the generated code?",
+            default=True,
+        ):
+            self.step_6_generate_tests()
+
+        click.echo()
         click.echo(click.style(" Setup complete!", fg="green", bold=True))
         click.echo(
             f"Your Algomancy application has been created in: {self.current_dir}"
@@ -484,6 +493,86 @@ class QuickstartWizard:
         except Exception as e:
             click.echo()
             click.echo(click.style(f" Error in Step 5: {e}", fg="red"))
+
+    def step_6_generate_tests(self):
+        """Step 6: Generate pytest skeletons for the generated code.
+
+        Always emits a ``conftest.py`` (so the ``src`` package is importable
+        from ``tests/``). Algorithm + KPI skeletons land when
+        ``has_custom_implementations`` is true; the ETL-factory skeleton
+        lands when either custom implementations or a generated ETL exists.
+        """
+        click.echo(
+            click.style(" Step 6: Generating pytest skeletons", fg="blue", bold=True)
+        )
+        click.echo()
+
+        tests_dir = self.current_dir / "tests"
+        tests_dir.mkdir(parents=True, exist_ok=True)
+
+        # tests/__init__.py keeps editors / type-checkers happy even though
+        # pytest itself does not require it.
+        init_file = tests_dir / "__init__.py"
+        if not init_file.exists():
+            init_file.touch()
+
+        # conftest.py ensures the project root is on sys.path so the
+        # generated ``from src... import ...`` statements resolve.
+        self._write_test_file("conftest.py.jinja", tests_dir / "conftest.py")
+        click.echo("  ✓ tests/conftest.py")
+
+        if self.has_custom_implementations:
+            self._write_test_file(
+                "test_algorithm.py.jinja",
+                tests_dir / f"test_{self.filename}_algorithm.py",
+            )
+            click.echo(f"  ✓ tests/test_{self.filename}_algorithm.py")
+
+            self._write_test_file(
+                "test_kpi.py.jinja",
+                tests_dir / f"test_{self.filename}_kpi.py",
+            )
+            click.echo(f"  ✓ tests/test_{self.filename}_kpi.py")
+
+        if self.has_custom_implementations or self.has_generated_etl:
+            self._write_test_file(
+                "test_etl_factory.py.jinja",
+                tests_dir / "test_etl_factory.py",
+            )
+            click.echo("  ✓ tests/test_etl_factory.py")
+
+        click.echo()
+        click.echo(click.style(" Step 6 complete!", fg="green"))
+        click.echo()
+        click.echo(
+            click.style(
+                " Run the tests with: pytest tests/",
+                fg="cyan",
+            )
+        )
+
+    def _write_test_file(self, template_name: str, target_path: Path) -> None:
+        """Render a pytest-skeleton template and write it to ``target_path``.
+
+        Skips files that already exist unless ``--skip-confirmation`` is set
+        and the user opted in to overwrite — mirrors the convention used
+        elsewhere in the wizard.
+        """
+        template = self.jinja_env.get_template(template_name)
+        content = template.render(
+            project_name=self.project_name or "Project",
+            class_name=self.class_name or "Custom",
+            filename=self.filename or "custom",
+            has_custom_implementations=self.has_custom_implementations,
+            has_generated_etl=self.has_generated_etl,
+        )
+
+        if target_path.exists() and not self.skip_confirmation:
+            if not click.confirm(f"File tests/{target_path.name} exists. Overwrite?"):
+                return
+
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+        target_path.write_text(content, encoding="utf-8")
 
     def _generate_styling_config(self, config: dict):
         """Generate styling_config.py file."""

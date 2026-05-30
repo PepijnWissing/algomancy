@@ -325,6 +325,49 @@ def test_main_template_json_backend_omits_database_url(
     assert "database_url=" not in rendered
 
 
+@pytest.mark.parametrize(
+    "template_name",
+    [
+        "test_algorithm.py.jinja",
+        "test_kpi.py.jinja",
+    ],
+)
+def test_pytest_skeletons_parse(jinja_env: Environment, template_name: str) -> None:
+    """Regression for #59 — every generated pytest skeleton must parse as
+    valid Python so users can run ``pytest`` straight after the wizard."""
+    tmpl = jinja_env.get_template(template_name)
+    rendered = tmpl.render(project_name="Demo", class_name="Demo", filename="demo")
+    _assert_parses(rendered)
+    assert "import pytest" in rendered
+    assert "def test_" in rendered
+
+
+@pytest.mark.parametrize("has_generated_etl", [True, False])
+def test_pytest_etl_skeleton_parses(
+    jinja_env: Environment, has_generated_etl: bool
+) -> None:
+    tmpl = jinja_env.get_template("test_etl_factory.py.jinja")
+    rendered = tmpl.render(
+        project_name="Demo",
+        class_name="Demo",
+        filename="demo",
+        has_generated_etl=has_generated_etl,
+        has_custom_implementations=not has_generated_etl,
+    )
+    _assert_parses(rendered)
+    if has_generated_etl:
+        assert "generated_schemas" in rendered
+    else:
+        assert "from src.data_handling.schemas import all_schemas" in rendered
+
+
+def test_pytest_conftest_parses(jinja_env: Environment) -> None:
+    tmpl = jinja_env.get_template("conftest.py.jinja")
+    rendered = tmpl.render(project_name="Demo")
+    _assert_parses(rendered)
+    assert "sys.path.insert" in rendered
+
+
 def test_main_template_no_persistence(jinja_env: Environment) -> None:
     tmpl = jinja_env.get_template("main.py.jinja")
     rendered = tmpl.render(**_gui_ctx(persistence_backend="none"))
