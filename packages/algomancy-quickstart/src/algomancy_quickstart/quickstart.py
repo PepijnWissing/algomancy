@@ -34,6 +34,14 @@ class QuickstartWizard:
         # Track what was generated
         self.has_custom_implementations = False
         self.has_generated_etl = False
+        self.has_styling = False
+        # Interfaces baked into the generated main.py. GUI is the historical
+        # default; the wizard's step_1 prompt may narrow / widen this.
+        self.interfaces: list[str] = ["gui"]
+        # Persistence backend: "none" | "json" | "database". The wizard's
+        # step_1 prompt selects this; the template wires it into CoreConfig.
+        self.persistence_backend: str = "json"
+        self.database_url: str | None = None
         self.host = "127.0.0.1"
         self.port = 8050
 
@@ -90,6 +98,15 @@ class QuickstartWizard:
             self.step_5_configure_styling()
 
         click.echo()
+
+        # Step 6: Generate pytest skeletons (optional)
+        if click.confirm(
+            "Do you want to generate pytest skeletons for the generated code?",
+            default=True,
+        ):
+            self.step_6_generate_tests()
+
+        click.echo()
         click.echo(click.style(" Setup complete!", fg="green", bold=True))
         click.echo(
             f"Your Algomancy application has been created in: {self.current_dir}"
@@ -97,8 +114,27 @@ class QuickstartWizard:
         click.echo()
         click.echo("Next steps:")
         click.echo("  1. Review and customize the generated files")
-        click.echo("  2. Run: python main.py")
-        click.echo(f"  3. Open your browser at http://{self.host}:{self.port}")
+        extra_pkgs = []
+        if "cli" in self.interfaces:
+            extra_pkgs.append("algomancy-cli")
+        if "api" in self.interfaces:
+            extra_pkgs.append("algomancy-api")
+        if self.persistence_backend == "database":
+            extra_pkgs.append("algomancy-data[database]")
+        if extra_pkgs:
+            click.echo(
+                f"  2. Install required packages: pip install {' '.join(extra_pkgs)}"
+            )
+        if len(self.interfaces) == 1:
+            click.echo("  3. Run: python main.py")
+        else:
+            click.echo(
+                f"  3. Run: python main.py --interface {{{','.join(self.interfaces)}}}"
+            )
+        if "gui" in self.interfaces:
+            click.echo(
+                f"  4. (GUI) Open your browser at http://{self.host}:{self.port}"
+            )
 
     def step_1_create_structure(self):
         """Step 1: Create folder structure and generate basic main.py"""
@@ -118,6 +154,14 @@ class QuickstartWizard:
         # Get host and port
         self.host = click.prompt("Host address", default="127.0.0.1", type=str)
         self.port = click.prompt("Port number", default=8050, type=int)
+
+        # Ask which interface(s) to expose. The generated ``main.py`` will
+        # only wire up the launchers the user picked here; if more than one
+        # is selected, it dispatches on ``--interface``.
+        self.interfaces = self._prompt_interfaces()
+
+        # Ask which persistence backend to bake into CoreConfig.
+        self.persistence_backend, self.database_url = self._prompt_persistence()
 
         # Define folder structure - include data/setup and src/styling
         folders = [
@@ -318,15 +362,26 @@ class QuickstartWizard:
             success = self.inference_engine.infer_schema_interactive(file_info)
 
             if success and not file_info.skip_file:
-                # Add metadata for template rendering
-                file_info.class_name = self._to_pascal_case(file_info.file_name)
-                file_info.snake_name = self._to_snake_case(file_info.file_name)
+                # Refresh total_columns now that inference is done — the
+                # ``class_name`` / ``snake_name`` defaults from DataFileInfo
+                # are already in place, and we let any per-project rename
+                # logic stay there so failed-inference files still render.
                 file_info.total_columns = sum(
                     len(cols) for cols in file_info.inferred_schemas.values()
                 )
+            elif not success and not file_info.skip_file:
+                # Inference failed (e.g., pandas raised on a malformed file).
+                # Drop the file rather than emit an empty schema class that
+                # collides with the imported ``Schema`` symbol.
+                file_info.skip_file = True
 
         # Filter out skipped files
         self.detected_files = [f for f in detected_files if not f.skip_file]
+
+        # Disambiguate class names across files that share a stem (e.g.
+        # ``orders.csv`` + ``orders.xlsx``) so the generated schema classes
+        # remain unique.
+        self._disambiguate_class_names(self.detected_files)
 
         if not self.detected_files:
             click.echo()
@@ -439,6 +494,86 @@ class QuickstartWizard:
             click.echo()
             click.echo(click.style(f" Error in Step 5: {e}", fg="red"))
 
+    def step_6_generate_tests(self):
+        """Step 6: Generate pytest skeletons for the generated code.
+
+        Always emits a ``conftest.py`` (so the ``src`` package is importable
+        from ``tests/``). Algorithm + KPI skeletons land when
+        ``has_custom_implementations`` is true; the ETL-factory skeleton
+        lands when either custom implementations or a generated ETL exists.
+        """
+        click.echo(
+            click.style(" Step 6: Generating pytest skeletons", fg="blue", bold=True)
+        )
+        click.echo()
+
+        tests_dir = self.current_dir / "tests"
+        tests_dir.mkdir(parents=True, exist_ok=True)
+
+        # tests/__init__.py keeps editors / type-checkers happy even though
+        # pytest itself does not require it.
+        init_file = tests_dir / "__init__.py"
+        if not init_file.exists():
+            init_file.touch()
+
+        # conftest.py ensures the project root is on sys.path so the
+        # generated ``from src... import ...`` statements resolve.
+        self._write_test_file("conftest.py.jinja", tests_dir / "conftest.py")
+        click.echo("  ✓ tests/conftest.py")
+
+        if self.has_custom_implementations:
+            self._write_test_file(
+                "test_algorithm.py.jinja",
+                tests_dir / f"test_{self.filename}_algorithm.py",
+            )
+            click.echo(f"  ✓ tests/test_{self.filename}_algorithm.py")
+
+            self._write_test_file(
+                "test_kpi.py.jinja",
+                tests_dir / f"test_{self.filename}_kpi.py",
+            )
+            click.echo(f"  ✓ tests/test_{self.filename}_kpi.py")
+
+        if self.has_custom_implementations or self.has_generated_etl:
+            self._write_test_file(
+                "test_etl_factory.py.jinja",
+                tests_dir / "test_etl_factory.py",
+            )
+            click.echo("  ✓ tests/test_etl_factory.py")
+
+        click.echo()
+        click.echo(click.style(" Step 6 complete!", fg="green"))
+        click.echo()
+        click.echo(
+            click.style(
+                " Run the tests with: pytest tests/",
+                fg="cyan",
+            )
+        )
+
+    def _write_test_file(self, template_name: str, target_path: Path) -> None:
+        """Render a pytest-skeleton template and write it to ``target_path``.
+
+        Skips files that already exist unless ``--skip-confirmation`` is set
+        and the user opted in to overwrite — mirrors the convention used
+        elsewhere in the wizard.
+        """
+        template = self.jinja_env.get_template(template_name)
+        content = template.render(
+            project_name=self.project_name or "Project",
+            class_name=self.class_name or "Custom",
+            filename=self.filename or "custom",
+            has_custom_implementations=self.has_custom_implementations,
+            has_generated_etl=self.has_generated_etl,
+        )
+
+        if target_path.exists() and not self.skip_confirmation:
+            if not click.confirm(f"File tests/{target_path.name} exists. Overwrite?"):
+                return
+
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+        target_path.write_text(content, encoding="utf-8")
+
     def _generate_styling_config(self, config: dict):
         """Generate styling_config.py file."""
         template = self.jinja_env.get_template("styling_config.py.jinja")
@@ -462,20 +597,8 @@ class QuickstartWizard:
 
     def _update_main_py_with_styling(self):
         """Update main.py to import and use styling configuration."""
-        template = self.jinja_env.get_template("main_with_styling.py.jinja")
-
-        content = template.render(
-            title=self.title,
-            host=self.host,
-            port=self.port,
-            class_name=self.class_name or "Custom",
-            filename=self.filename or "custom",
-            has_custom_implementations=self.has_custom_implementations,
-            has_generated_etl=self.has_generated_etl,
-        )
-
-        main_py_path = self.current_dir / "main.py"
-        main_py_path.write_text(content, encoding="utf-8")
+        self.has_styling = True
+        self._render_main_py()
 
     def _display_inferred_schemas_summary(self):
         """Display a summary of all inferred schemas."""
@@ -604,28 +727,108 @@ class QuickstartWizard:
 
     def _update_main_py_with_generated_etl(self):
         """Update main.py to use generated ETL and schemas."""
-        template = self.jinja_env.get_template("main_generated_etl.py.jinja")
-
-        content = template.render(
-            title=self.title,
-            host="127.0.0.1",
-            port=8050,
-            filename=self.filename or "custom",
-            class_name=self.class_name or "Custom",
-            has_custom_implementations=self.has_custom_implementations,
-        )
-
-        main_py_path = self.current_dir / "main.py"
-        main_py_path.write_text(content, encoding="utf-8")
+        self._render_main_py()
 
     def _generate_main_py(self, title: str, host: str, port: int):
-        """Generate main.py from Jinja2 template."""
+        """Generate the initial main.py (called from step 1).
+
+        Later steps re-render ``main.py`` via :meth:`_render_main_py` with
+        richer context (custom implementations, generated ETL, styling) — they
+        all share the same unified template.
+        """
+        self._render_main_py()
+
+    def _render_main_py(self) -> None:
+        """Render ``main.py`` using the current wizard state.
+
+        Idempotent — every step that wants to refresh the wiring just calls
+        this, and the template's flags (``interfaces``, ``has_styling``,
+        ``has_custom_implementations``, ``has_generated_etl``) take care of
+        emitting the right launchers and imports.
+        """
         template = self.jinja_env.get_template("main.py.jinja")
-
-        content = template.render(title=title, host=host, port=port)
-
+        content = template.render(
+            title=self.title,
+            host=self.host,
+            port=self.port,
+            interfaces=self.interfaces,
+            class_name=self.class_name or "Custom",
+            filename=self.filename or "custom",
+            has_custom_implementations=self.has_custom_implementations,
+            has_generated_etl=self.has_generated_etl,
+            has_styling=self.has_styling,
+            persistence_backend=self.persistence_backend,
+            database_url=self.database_url,
+        )
         main_py_path = self.current_dir / "main.py"
         main_py_path.write_text(content, encoding="utf-8")
+
+    @staticmethod
+    def _prompt_persistence() -> tuple[str, str | None]:
+        """Ask the user which persistence backend the generated app should use.
+
+        Returns ``(backend, database_url)`` where ``backend`` is one of
+        ``"none"`` / ``"json"`` / ``"database"`` and ``database_url`` is
+        only meaningful when ``backend == "database"`` (otherwise ``None``).
+        """
+        click.echo()
+        click.echo("Which persistence backend should the generated app use?")
+        click.echo("  none     — in-memory only, nothing is persisted")
+        click.echo("  json     — persistent JSON-on-disk (the historical default)")
+        click.echo("  database — SQL-backed via DatabaseDataManager")
+        backend = click.prompt(
+            "Backend",
+            type=click.Choice(["none", "json", "database"], case_sensitive=False),
+            default="json",
+            show_default=True,
+        ).lower()
+
+        if backend == "database":
+            click.echo()
+            click.echo(
+                "  Tip: install the database extras via "
+                "'pip install algomancy-data[database]'"
+            )
+            database_url = click.prompt(
+                "Database URL (SQLAlchemy)",
+                default="sqlite:///myapp.db",
+                type=str,
+                show_default=True,
+            )
+            return backend, database_url
+        return backend, None
+
+    @staticmethod
+    def _prompt_interfaces() -> list[str]:
+        """Ask the user which interface(s) to bake into ``main.py``.
+
+        Accepts a comma-separated list of ``gui``, ``cli``, ``api`` (any
+        non-empty subset). The wizard's default is GUI for backwards
+        compatibility with pre-#128 quickstart runs.
+        """
+        click.echo()
+        click.echo("Which interface(s) should the generated main.py expose?")
+        click.echo("  Options: gui, cli, api (comma-separated, e.g. 'gui,api')")
+        valid = {"gui", "cli", "api"}
+        while True:
+            raw = click.prompt("Interfaces", default="gui", type=str, show_default=True)
+            parts = [p.strip().lower() for p in raw.split(",") if p.strip()]
+            unique: list[str] = []
+            for p in parts:
+                if p not in valid:
+                    click.echo(
+                        click.style(
+                            f"  Unknown interface '{p}' — choose from {sorted(valid)}",
+                            fg="yellow",
+                        )
+                    )
+                    break
+                if p not in unique:
+                    unique.append(p)
+            else:
+                if unique:
+                    return unique
+                click.echo(click.style("  Pick at least one interface.", fg="yellow"))
 
     def _generate_implementation_file(
         self, template_name: str, target_dir: str, target_file: str
@@ -653,28 +856,45 @@ class QuickstartWizard:
 
     def _update_main_py_with_custom_implementations(self):
         """Update main.py to import and use custom implementations."""
-        template = self.jinja_env.get_template("main_custom.py.jinja")
-
-        content = template.render(
-            title=self.title,
-            host="127.0.0.1",
-            port=8050,
-            class_name=self.class_name,
-            filename=self.filename,
-        )
-
-        main_py_path = self.current_dir / "main.py"
-        main_py_path.write_text(content, encoding="utf-8")
+        self._render_main_py()
 
     @staticmethod
     def _to_pascal_case(text: str) -> str:
         """Convert text to PascalCase."""
-        return "".join(word.capitalize() for word in text.split())
+        from .data_inference import _to_pascal_case as _impl
+
+        return _impl(text)
 
     @staticmethod
     def _to_snake_case(text: str) -> str:
         """Convert text to snake_case."""
-        return "_".join(text.lower().split())
+        from .data_inference import _to_snake_case as _impl
+
+        return _impl(text)
+
+    @staticmethod
+    def _disambiguate_class_names(files: list) -> None:
+        """Ensure ``file_info.class_name`` is unique across ``files``.
+
+        When two files have the same stem (e.g. ``orders.csv`` and
+        ``orders.xlsx``), suffix the class name with the file extension so
+        the generated schema classes remain distinct.
+        """
+        seen: dict[str, int] = {}
+        for file_info in files:
+            name = file_info.class_name
+            count = seen.get(name, 0)
+            if count > 0:
+                ext_suffix = file_info.extension.name.title()
+                candidate = f"{name}{ext_suffix}"
+                # If even the ext-suffixed name collides, append a counter.
+                bumped = candidate
+                n = 2
+                while bumped in seen:
+                    bumped = f"{candidate}{n}"
+                    n += 1
+                file_info.class_name = bumped
+            seen[file_info.class_name] = seen.get(file_info.class_name, 0) + 1
 
 
 def run_quickstart(skip_confirmation: bool = False, title: str | None = None):

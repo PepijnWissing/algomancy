@@ -1,6 +1,6 @@
 import queue
 import threading
-from typing import Optional
+from typing import Callable, Optional
 
 from algomancy_utils.logger import Logger
 
@@ -12,8 +12,13 @@ class ScenarioProcessor:
     Manages the processing queue, runs scenarios asynchronously, and tracks status.
     """
 
-    def __init__(self, logger: Logger | None = None):
+    def __init__(
+        self,
+        logger: Logger | None = None,
+        on_processed: Callable[[Scenario], None] | None = None,
+    ):
         self.logger = logger
+        self._on_processed = on_processed
         self._process_queue: queue.Queue[Scenario | None] = queue.Queue()
         self._worker_thread = threading.Thread(
             target=self._process_scenarios_worker, daemon=True
@@ -47,6 +52,15 @@ class ScenarioProcessor:
             self._currently_processing = scenario
 
             scenario.process(logger=self.logger)
+
+            if self._on_processed:
+                try:
+                    self._on_processed(scenario)
+                except Exception as exc:
+                    if self.logger:
+                        self.logger.error(
+                            f"on_processed callback failed for '{scenario.tag}': {exc}"
+                        )
 
             if self.logger:
                 self.logger.log(f"Scenario '{scenario.tag}' completed.")

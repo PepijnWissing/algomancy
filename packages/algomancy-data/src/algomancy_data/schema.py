@@ -120,10 +120,18 @@ class ColumnGroup:
         name:    Actual sheet / sub-schema name as it appears in the source
                  file (may contain spaces and mixed case).
         columns: Ordered list of ``Column`` objects for this sub-schema.
+        source_path: For nested sources (e.g. JSON), the path of keys from
+            the root record to the list of dicts that populates this group.
+            ``()`` (the default) means the group is built from the root
+            record itself; a tuple like ``("PickOrderLines",)`` means each
+            root record has a nested list at that key whose elements form
+            the rows of this group. Ignored by extractors that do not
+            support nesting (e.g. ``XLSXMultiExtractor``).
     """
 
     name: str
     columns: List[Column]
+    source_path: Tuple[str, ...] = field(default_factory=tuple)
 
 
 class Schema(ABC):

@@ -13,6 +13,10 @@ from algomancy_data.schema import SchemaType
 
 {% for file_info in files %}
 
+{% set is_multi_table = file_info.is_multi_table if file_info.is_multi_table is defined else file_info.is_multi_sheet %}
+{% set is_nested_json = file_info.is_nested_json if file_info.is_nested_json is defined else False %}
+{% set nested_source_paths = file_info.nested_source_paths if file_info.nested_source_paths is defined else {} %}
+{% set nested_foreign_keys = file_info.nested_foreign_keys if file_info.nested_foreign_keys is defined else {} %}
 class {{ file_info.class_name }}Schema(Schema):
     """
     Schema for {{ file_info.file_name }} data file.
@@ -20,23 +24,27 @@ class {{ file_info.class_name }}Schema(Schema):
     File: {{ file_info.file_path.name }}
     Type: {{ file_info.extension.value }}
     {% if file_info.is_multi_sheet %}Sheets: {{ file_info.sheet_names|join(', ') }}{% endif %}
+    {% if is_nested_json %}Nested groups: {{ file_info.inferred_schemas.keys()|join(', ') }}{% endif %}
 
     Detected {{ file_info.total_columns }} column(s).
     """
 
     _FILENAME = "{{ file_info.file_name }}"
     _EXTENSION = FileExtension.{{ file_info.extension.name }}
-    _SCHEMA_TYPE = SchemaType.{{ 'MULTI' if file_info.is_multi_sheet else 'SINGLE' }}
+    _SCHEMA_TYPE = SchemaType.{{ 'MULTI' if is_multi_table else 'SINGLE' }}
 
-    {% if file_info.is_multi_sheet %}
-    {% for sheet_name, columns in file_info.inferred_schemas.items() %}
-    {{ sheet_name|upper|replace(' ', '_')|replace('-', '_')|replace('.', '_') }} = ColumnGroup(
-        "{{ sheet_name }}",
+    {% if is_multi_table %}
+    {% for group_name, columns in file_info.inferred_schemas.items() %}
+    {% set group_fks = nested_foreign_keys.get(group_name, {}) %}
+    {{ group_name|upper|replace(' ', '_')|replace('-', '_')|replace('.', '_') }} = ColumnGroup(
+        "{{ group_name }}",
         [
             {% for column_name, data_type in columns.items() %}
-            Column("{{ column_name }}", dtype=DataType.{{ data_type.name }}{% if column_name in file_info.primary_key_columns.get(sheet_name, []) %}, primary_key=True{% endif %}),
+            {% set fk = group_fks.get(column_name) %}
+            Column("{{ column_name }}", dtype=DataType.{{ data_type.name }}{% if column_name in file_info.primary_key_columns.get(group_name, []) %}, primary_key=True{% endif %}{% if fk %}, foreign_key=("{{ fk[0] }}", "{{ fk[1] }}"){% endif %}),
             {% endfor %}
-        ],
+        ]{% if is_nested_json %},
+        source_path=({% for segment in nested_source_paths.get(group_name, ()) %}"{{ segment }}",{% endfor %}){% endif %},
     )
     {% endfor %}
     {% else %}
