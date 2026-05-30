@@ -208,13 +208,17 @@ def test_etl_factory_generated_with_custom_xlsx_single(
 
 
 def test_main_custom_uses_all_schemas(jinja_env: Environment) -> None:
-    tmpl = jinja_env.get_template("main_custom.py.jinja")
+    tmpl = jinja_env.get_template("main.py.jinja")
     rendered = tmpl.render(
         title="Demo",
         host="127.0.0.1",
         port=8050,
+        interfaces=["gui"],
         class_name="Demo",
         filename="demo",
+        has_custom_implementations=True,
+        has_generated_etl=False,
+        has_styling=False,
     )
     _assert_parses(rendered)
 
@@ -223,80 +227,229 @@ def test_main_custom_uses_all_schemas(jinja_env: Environment) -> None:
     assert "demo_schema" not in rendered
 
 
+def test_data_file_info_seeds_class_name_from_filename() -> None:
+    """``DataFileInfo`` defaults ``class_name`` from the file stem so the
+    schema template never renders an empty (and thus colliding) class name
+    when downstream metadata enrichment is skipped."""
+    from algomancy_quickstart.data_inference import DataFileInfo
+
+    info = DataFileInfo(
+        file_path=Path("data/setup/case.json"),
+        file_name="case",
+        extension=FileExtension.JSON,
+    )
+
+    assert info.class_name == "Case"
+    assert info.snake_name == "case"
+
+
+def test_generated_schemas_emits_unique_class_names_for_multiple_files(
+    jinja_env: Environment,
+) -> None:
+    """Regression for #129 — two files in the same project must render two
+    distinctly named schema classes, not two ``class Schema(Schema)`` lines
+    that shadow the imported ``Schema`` symbol."""
+    from algomancy_quickstart.data_inference import DataFileInfo
+
+    case_info = DataFileInfo(
+        file_path=Path("data/setup/case.json"),
+        file_name="case",
+        extension=FileExtension.JSON,
+    )
+    case_info.inferred_schemas["default"] = {"CallbackURL": DataType.STRING}
+    case_info.primary_key_columns["default"] = []
+    case_info.total_columns = 1
+
+    results_info = DataFileInfo(
+        file_path=Path("data/setup/results.json"),
+        file_name="results",
+        extension=FileExtension.JSON,
+    )
+    results_info.inferred_schemas["default"] = {"PickOrders": DataType.STRING}
+    results_info.primary_key_columns["default"] = []
+    results_info.total_columns = 1
+
+    tmpl = jinja_env.get_template("generated_schemas.py.jinja")
+    rendered = tmpl.render(project_name="SWS", files=[case_info, results_info])
+    _assert_parses(rendered)
+
+    assert "class CaseSchema(Schema)" in rendered
+    assert "class ResultsSchema(Schema)" in rendered
+    # No bare ``class Schema(Schema)`` line (that would shadow the import).
+    assert "class Schema(Schema)" not in rendered
+
+
+def _gui_ctx(**overrides: object) -> dict:
+    base = dict(
+        title="Demo",
+        host="127.0.0.1",
+        port=8050,
+        interfaces=["gui"],
+        class_name="Demo",
+        filename="demo",
+        has_custom_implementations=False,
+        has_generated_etl=False,
+        has_styling=False,
+        persistence_backend="json",
+        database_url=None,
+    )
+    base.update(overrides)
+    return base
+
+
+def test_main_template_database_backend_passes_url(jinja_env: Environment) -> None:
+    """Regression for #132 — when ``persistence_backend='database'`` is
+    selected, the generated main.py must pass the URL into CoreConfig."""
+    tmpl = jinja_env.get_template("main.py.jinja")
+    rendered = tmpl.render(
+        **_gui_ctx(
+            persistence_backend="database",
+            database_url="sqlite:///myapp.db",
+        )
+    )
+    _assert_parses(rendered)
+
+    assert 'persistence_backend="database"' in rendered
+    assert 'database_url="sqlite:///myapp.db"' in rendered
+    assert "has_persistent_state=True" in rendered
+
+
+def test_main_template_json_backend_omits_database_url(
+    jinja_env: Environment,
+) -> None:
+    tmpl = jinja_env.get_template("main.py.jinja")
+    rendered = tmpl.render(**_gui_ctx(persistence_backend="json"))
+    _assert_parses(rendered)
+
+    assert 'persistence_backend="json"' in rendered
+    assert "database_url=" not in rendered
+
+
 @pytest.mark.parametrize(
-    "template_name, ctx",
+    "template_name",
     [
-        ("main.py.jinja", dict(title="Demo", host="127.0.0.1", port=8050)),
-        (
-            "main_custom.py.jinja",
-            dict(
-                title="Demo",
-                host="127.0.0.1",
-                port=8050,
-                class_name="Demo",
-                filename="demo",
-            ),
-        ),
-        (
-            "main_generated_etl.py.jinja",
-            dict(
-                title="Demo",
-                host="127.0.0.1",
-                port=8050,
-                class_name="Demo",
-                filename="demo",
-                has_custom_implementations=False,
-            ),
-        ),
-        (
-            "main_generated_etl.py.jinja",
-            dict(
-                title="Demo",
-                host="127.0.0.1",
-                port=8050,
-                class_name="Demo",
-                filename="demo",
-                has_custom_implementations=True,
-            ),
-        ),
-        (
-            "main_with_styling.py.jinja",
-            dict(
-                title="Demo",
-                host="127.0.0.1",
-                port=8050,
-                class_name="Demo",
-                filename="demo",
-                has_custom_implementations=False,
-                has_generated_etl=False,
-            ),
-        ),
-        (
-            "main_with_styling.py.jinja",
-            dict(
-                title="Demo",
-                host="127.0.0.1",
-                port=8050,
-                class_name="Demo",
-                filename="demo",
-                has_custom_implementations=True,
-                has_generated_etl=True,
-            ),
+        "test_algorithm.py.jinja",
+        "test_kpi.py.jinja",
+    ],
+)
+def test_pytest_skeletons_parse(jinja_env: Environment, template_name: str) -> None:
+    """Regression for #59 — every generated pytest skeleton must parse as
+    valid Python so users can run ``pytest`` straight after the wizard."""
+    tmpl = jinja_env.get_template(template_name)
+    rendered = tmpl.render(project_name="Demo", class_name="Demo", filename="demo")
+    _assert_parses(rendered)
+    assert "import pytest" in rendered
+    assert "def test_" in rendered
+
+
+@pytest.mark.parametrize("has_generated_etl", [True, False])
+def test_pytest_etl_skeleton_parses(
+    jinja_env: Environment, has_generated_etl: bool
+) -> None:
+    tmpl = jinja_env.get_template("test_etl_factory.py.jinja")
+    rendered = tmpl.render(
+        project_name="Demo",
+        class_name="Demo",
+        filename="demo",
+        has_generated_etl=has_generated_etl,
+        has_custom_implementations=not has_generated_etl,
+    )
+    _assert_parses(rendered)
+    if has_generated_etl:
+        assert "generated_schemas" in rendered
+    else:
+        assert "from src.data_handling.schemas import all_schemas" in rendered
+
+
+def test_pytest_conftest_parses(jinja_env: Environment) -> None:
+    tmpl = jinja_env.get_template("conftest.py.jinja")
+    rendered = tmpl.render(project_name="Demo")
+    _assert_parses(rendered)
+    assert "sys.path.insert" in rendered
+
+
+def test_main_template_no_persistence(jinja_env: Environment) -> None:
+    tmpl = jinja_env.get_template("main.py.jinja")
+    rendered = tmpl.render(**_gui_ctx(persistence_backend="none"))
+    _assert_parses(rendered)
+
+    assert 'persistence_backend="none"' in rendered
+    assert "has_persistent_state=False" in rendered
+    assert "database_url=" not in rendered
+
+
+@pytest.mark.parametrize(
+    "ctx",
+    [
+        _gui_ctx(),
+        _gui_ctx(has_custom_implementations=True),
+        _gui_ctx(has_generated_etl=True),
+        _gui_ctx(has_generated_etl=True, has_custom_implementations=True),
+        _gui_ctx(has_styling=True),
+        _gui_ctx(
+            has_styling=True,
+            has_custom_implementations=True,
+            has_generated_etl=True,
         ),
     ],
 )
-def test_main_templates_pass_all_subconfigs(
-    jinja_env: Environment, template_name: str, ctx: dict
-) -> None:
-    """Every main template must instantiate ComparePageConfig + FeatureConfig
-    (and PageConfig + StylingConfig) so AppConfig never falls back to the
-    deprecated keyword path."""
-    tmpl = jinja_env.get_template(template_name)
+def test_main_template_pass_all_subconfigs(jinja_env: Environment, ctx: dict) -> None:
+    """The unified main template must instantiate ComparePageConfig +
+    FeatureConfig (and PageConfig + StylingConfig) for GUI builds so
+    AppConfig never falls back to the deprecated keyword path."""
+    tmpl = jinja_env.get_template("main.py.jinja")
     rendered = tmpl.render(**ctx)
     _assert_parses(rendered)
 
-    assert "ComparePageConfig(" in rendered, template_name
-    assert "FeatureConfig(" in rendered, template_name
-    assert "PageConfig(" in rendered, template_name
-    # styling_config either explicit (StylingConfig() or app_styling) — at minimum present
-    assert "styling_config=" in rendered, template_name
+    assert "ComparePageConfig(" in rendered, ctx
+    assert "FeatureConfig(" in rendered, ctx
+    assert "PageConfig(" in rendered, ctx
+    # styling_config either explicit (StylingConfig() or app_styling)
+    assert "styling_config=" in rendered, ctx
+
+
+@pytest.mark.parametrize(
+    "interfaces",
+    [
+        ["gui"],
+        ["cli"],
+        ["api"],
+        ["gui", "cli"],
+        ["gui", "api"],
+        ["cli", "api"],
+        ["gui", "cli", "api"],
+    ],
+)
+def test_main_template_supports_interface_combinations(
+    jinja_env: Environment, interfaces: list
+) -> None:
+    """Regression for #128 — the generated main.py must include only the
+    launchers for the interfaces the user chose."""
+    tmpl = jinja_env.get_template("main.py.jinja")
+    rendered = tmpl.render(**_gui_ctx(interfaces=interfaces))
+    _assert_parses(rendered)
+
+    if "gui" in interfaces:
+        assert "GuiLauncher" in rendered
+        assert "run_gui" in rendered
+    else:
+        assert "GuiLauncher" not in rendered
+
+    if "cli" in interfaces:
+        assert "CliLauncher" in rendered
+        assert "run_cli" in rendered
+    else:
+        assert "CliLauncher" not in rendered
+
+    if "api" in interfaces:
+        assert "ApiLauncher" in rendered
+        assert "run_api" in rendered
+    else:
+        assert "ApiLauncher" not in rendered
+
+    if len(interfaces) > 1:
+        # Multi-interface mains must dispatch on --interface.
+        assert "--interface" in rendered
+    else:
+        # Single-interface mains skip argparse and just call the launcher.
+        assert "--interface" not in rendered

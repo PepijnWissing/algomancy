@@ -1,41 +1,183 @@
+{# Unified main.py template — handles every wizard combination:
+   * interfaces: subset of {"gui", "cli", "api"} (at least one)
+   * has_custom_implementations: bool
+   * has_generated_etl: bool
+   * has_styling: bool
+#}
+{% set interfaces = interfaces or ["gui"] %}
+{% set persistence_backend = persistence_backend or "json" %}
+import argparse
+
 from algomancy_data import DataSource
+from algomancy_scenario.core_configuration import CoreConfig
+{% if "gui" in interfaces %}
 from algomancy_gui.configuration.appconfig import AppConfig
 from algomancy_gui.configuration.comparepageconfig import ComparePageConfig
 from algomancy_gui.configuration.featureconfig import FeatureConfig
 from algomancy_gui.configuration.pageconfig import PageConfig
 from algomancy_gui.configuration.serverconfig import ServerConfig
+{% if not has_styling %}
 from algomancy_gui.configuration.stylingconfig import StylingConfig
+{% endif %}
 from algomancy_gui.gui_launcher import GuiLauncher
-from algomancy_scenario.core_configuration import CoreConfig
-from algomancy_content import (
-    PlaceholderETLFactory,
-    PlaceholderAlgorithm,
-    PlaceholderKPI,
-    PlaceholderSchema,
-)
+{% endif %}
+{% if "cli" in interfaces %}
+from algomancy_cli.cli_configuration import CliConfiguration
+from algomancy_cli.cli_launcher import CliLauncher
+{% endif %}
+{% if "api" in interfaces %}
+from algomancy_api.api_configuration import ApiConfiguration
+from algomancy_api.api_launcher import ApiLauncher
+{% endif %}
+
+{% if has_generated_etl %}
+# Generated ETL factory and schemas
+from src.data_handling.etl_factory import {{ class_name }}ETLFactory
+from src.data_handling.generated_schemas import all_schemas
+{% elif has_custom_implementations %}
+# Custom ETL factory and schemas
+from src.data_handling.etl_factory import {{ class_name }}ETLFactory
+from src.data_handling.schemas import all_schemas
+{% else %}
+# Placeholder ETL factory and schemas
+from algomancy_content import PlaceholderETLFactory, PlaceholderSchema
+{% endif %}
+
+{% if has_custom_implementations %}
+# Custom implementations
+from src.templates.algorithm.{{ filename }}_algorithm import {{ class_name }}Algorithm
+from src.templates.kpi.{{ filename }}_kpi import {{ class_name }}KPI
+{% if "gui" in interfaces %}
+from src.pages.home_page import {{ class_name }}HomePage
+from src.pages.data_page import {{ class_name }}DataPage
+from src.pages.scenario_page import {{ class_name }}ScenarioPage
+from src.pages.compare_page import {{ class_name }}ComparePage
+from src.pages.overview_page import {{ class_name }}OverviewPage
+{% endif %}
+{% else %}
+# Placeholder KPI and Algorithm
+from algomancy_content import PlaceholderKPI, PlaceholderAlgorithm
+{% endif %}
+
+{% if "gui" in interfaces and has_styling %}
+# Styling configuration
+from src.styling_config import app_styling
+{% endif %}
 
 
-def main() -> None:
-    app_cfg = AppConfig(
-        core_config=CoreConfig(
-            etl_factory=PlaceholderETLFactory,
-            schemas=[PlaceholderSchema()],
-            kpi_templates={"placeholder": PlaceholderKPI},
-            algo_templates={"placeholder": PlaceholderAlgorithm},
-            data_object_type=DataSource,
-            autocreate=False,
-            autorun=False,
-            title="{{ title }}",
+HOST = "{{ host }}"
+PORT = {{ port }}
+
+
+def _core_kwargs() -> dict:
+    """Shared CoreConfig keyword arguments used by every interface."""
+    return dict(
+        {% if has_generated_etl or has_custom_implementations %}
+        etl_factory={{ class_name }}ETLFactory,
+        schemas=all_schemas,
+        {% else %}
+        etl_factory=PlaceholderETLFactory,
+        schemas=[PlaceholderSchema()],
+        {% endif %}
+        {% if has_custom_implementations %}
+        kpi_templates={"{{ filename }}": {{ class_name }}KPI},
+        algo_templates={"{{ class_name }}": {{ class_name }}Algorithm},
+        {% else %}
+        kpi_templates={"placeholder": PlaceholderKPI},
+        algo_templates={"placeholder": PlaceholderAlgorithm},
+        {% endif %}
+        data_object_type=DataSource,
+        autocreate=False,
+        autorun=False,
+        title="{{ title }}",
+        {% if persistence_backend == "database" %}
+        has_persistent_state=True,
+        persistence_backend="database",
+        database_url="{{ database_url }}",
+        {% elif persistence_backend == "json" %}
+        has_persistent_state=True,
+        persistence_backend="json",
+        {% else %}
+        has_persistent_state=False,
+        persistence_backend="none",
+        {% endif %}
+    )
+
+{% if "gui" in interfaces %}
+
+def build_gui_config() -> AppConfig:
+    return AppConfig(
+        core_config=CoreConfig(**_core_kwargs()),
+        server_config=ServerConfig(host=HOST, port=PORT),
+        {% if has_custom_implementations %}
+        page_config=PageConfig(
+            home_page={{ class_name }}HomePage(),
+            data_page={{ class_name }}DataPage(),
+            scenario_page={{ class_name }}ScenarioPage(),
+            compare_page={{ class_name }}ComparePage(),
+#           overview_page={{ class_name }}OverviewPage(),  # uncomment to use {{ class_name }}OverviewPage
         ),
-        server_config=ServerConfig(host="{{ host }}", port={{ port }}),
+        {% else %}
         page_config=PageConfig(),
+        {% endif %}
         compare_page_config=ComparePageConfig(),
+        {% if has_styling %}
+        styling_config=app_styling,
+        {% else %}
         styling_config=StylingConfig(assets_path="assets"),
+        {% endif %}
         feature_config=FeatureConfig(),
     )
 
-    app = GuiLauncher.build(app_cfg)
-    GuiLauncher.run(app=app, host=app_cfg.server.host, port=app_cfg.server.port)
+
+def run_gui() -> None:
+    cfg = build_gui_config()
+    app = GuiLauncher.build(cfg)
+    GuiLauncher.run(app=app, host=cfg.server.host, port=cfg.server.port)
+{% endif %}
+{% if "cli" in interfaces %}
+
+def build_cli_config() -> CliConfiguration:
+    return CliConfiguration(**_core_kwargs())
+
+
+def run_cli() -> None:
+    shell = CliLauncher.build(build_cli_config())
+    CliLauncher.run(shell)
+{% endif %}
+{% if "api" in interfaces %}
+
+def build_api_config() -> ApiConfiguration:
+    return ApiConfiguration(host=HOST, port=PORT, **_core_kwargs())
+
+
+def run_api() -> None:
+    cfg = build_api_config()
+    app = ApiLauncher.build(cfg)
+    ApiLauncher.run(app, host=cfg.host, port=cfg.port)
+{% endif %}
+
+
+def main() -> None:
+    """Entry point for the {{ title }} application."""
+    {% if interfaces|length == 1 %}
+    {% set only = interfaces[0] %}
+    run_{{ only }}()
+    {% else %}
+    parser = argparse.ArgumentParser(description="{{ title }}")
+    parser.add_argument(
+        "--interface",
+        choices=[{% for i in interfaces %}"{{ i }}"{% if not loop.last %}, {% endif %}{% endfor %}],
+        default="{{ interfaces[0] }}",
+        help="Which interface to launch.",
+    )
+    args = parser.parse_args()
+
+    {% for iface in interfaces %}
+    {% if loop.first %}if{% else %}elif{% endif %} args.interface == "{{ iface }}":
+        run_{{ iface }}()
+    {% endfor %}
+    {% endif %}
 
 
 if __name__ == "__main__":
