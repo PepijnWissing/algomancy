@@ -14,6 +14,7 @@ from .scenariomanager import ScenarioManager
 from .sessionmanager import SessionManager
 from .basealgorithm import ALGORITHM, BaseAlgorithm
 from .core_configuration import CoreConfig
+from .persistence import ScenarioRepository, SqlScenarioRepository
 
 __all__ = [
     "BaseParameterSet",
@@ -37,4 +38,6 @@ __all__ = [
     "ScenarioManager",
     "SessionManager",
     "CoreConfig",
+    "ScenarioRepository",
+    "SqlScenarioRepository",
 ]

@@ -1,5 +1,5 @@
 import os
-from typing import Dict, List, TypeVar, Type
+from typing import Dict, List, Optional, TypeVar, Type
 
 from algomancy_utils.logger import Logger, MessageStatus
 from algomancy_data import ETLFactory, Schema, BASEDATASOURCE
@@ -48,6 +48,9 @@ class SessionManager:
     Used when ``CoreConfig.use_sessions`` is True. When persistent state is enabled,
     sessions are discovered as subdirectories of ``data_path``; otherwise a single
     default ``"main"`` session is created.
+
+    When ``persistence_backend="database"``, sessions are stored in a
+    ``algomancy_sessions`` DB table rather than as filesystem directories.
     """
 
     E = TypeVar("E", bound=ETLFactory)
@@ -69,6 +72,8 @@ class SessionManager:
             default_param_values=core.default_algo_params_values,
             autorun=core.autorun,
             discover_sessions=core.use_sessions,
+            persistence_backend=core.persistence_backend,
+            database_url=core.database_url,
         )
 
     def __init__(
@@ -88,6 +93,8 @@ class SessionManager:
         default_param_values: Dict[str, any] = None,
         autorun: bool = False,
         discover_sessions: bool = True,
+        persistence_backend: str = "none",
+        database_url: str | None = None,
     ) -> None:
         self.logger = logger if logger else Logger()
         self._etl_factory = etl_factory
@@ -103,9 +110,17 @@ class SessionManager:
         self._default_algo_name = default_algo_name
         self._default_param_values = default_param_values
         self._discover_sessions = discover_sessions
+        self._persistence_backend = persistence_backend
+        self._database_url = database_url
 
         assert save_type in ["json"], "Save type must be parquet or json."
         self._save_type = save_type
+
+        # Build shared DB engine when using the database backend
+        self._db_engine = None
+        if self._persistence_backend == "database":
+            self._db_engine = self._build_engine(database_url)
+            self._init_db_schema()
 
         self._sessions: Dict[str, ScenarioManager] = {}
         self._create_default_scenario_managers()
@@ -113,8 +128,38 @@ class SessionManager:
 
         self.log("SessionManager initialized.")
 
+    # ------------------------------------------------------------------
+    # Database engine helpers
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _build_engine(database_url: str):
+        try:
+            import sqlalchemy as sa
+        except ImportError as exc:
+            raise ImportError(
+                "SQLAlchemy is required for persistence_backend='database'. "
+                "Install it with: pip install algomancy-scenario[database]"
+            ) from exc
+        return sa.create_engine(database_url)
+
+    def _init_db_schema(self) -> None:
+        """Create all fixed framework tables if they don't exist yet."""
+        from algomancy_data.database.models import metadata as data_meta
+        from .persistence.models import metadata as scenario_meta
+
+        data_meta.create_all(self._db_engine, checkfirst=True)
+        scenario_meta.create_all(self._db_engine, checkfirst=True)
+
+    # ------------------------------------------------------------------
+    # Session discovery / construction
+    # ------------------------------------------------------------------
+
     def _create_default_scenario_managers(self) -> None:
-        if self._has_persistent_state:
+        if self._persistence_backend == "database":
+            for session_name in self._determine_sessions_from_db():
+                self._create_default_scenario_manager(session_name)
+        elif self._has_persistent_state:
             assert self._data_folder, (
                 "Data folder must be specified if a persistent state is used."
             )
@@ -124,6 +169,22 @@ class SessionManager:
                     self._create_default_scenario_manager(session_name, session_path)
         if len(self._sessions) == 0:
             self._create_default_scenario_manager("main")
+
+    def _determine_sessions_from_db(self) -> List[str]:
+        from .persistence.models import sessions_table
+
+        with self._db_engine.connect() as conn:
+            rows = conn.execute(sessions_table.select()).fetchall()
+        return [row.name for row in rows]
+
+    def _persist_session_to_db(self, name: str) -> None:
+        from datetime import datetime
+        from .persistence.models import sessions_table
+
+        with self._db_engine.begin() as conn:
+            conn.execute(
+                sessions_table.insert().values(name=name, created_at=datetime.now())
+            )
 
     def log(self, message: str, status: MessageStatus = MessageStatus.INFO) -> None:
         if self.logger:
@@ -149,8 +210,12 @@ class SessionManager:
         return session_folder
 
     def _create_default_scenario_manager(
-        self, name: str, session_path: str = None
+        self, name: str, session_path: Optional[str] = None
     ) -> None:
+        if self._persistence_backend == "database":
+            self._sessions[name] = self._build_db_scenario_manager(name)
+            return
+
         if not self._has_persistent_state:
             session_path = None
         elif self._has_persistent_state and session_path is None:
@@ -172,6 +237,48 @@ class SessionManager:
             autorun=self._autorun,
         )
 
+    def _build_db_scenario_manager(self, session_id: str) -> ScenarioManager:
+        from algomancy_data.database.database_manager import DatabaseDataManager
+        from .persistence.sql_repository import SqlScenarioRepository
+
+        dm = DatabaseDataManager(
+            etl_factory=self._etl_factory,
+            schemas=self._schemas,
+            engine=self._db_engine,
+            session_id=session_id,
+            data_object_type=self._data_object_type,
+            logger=self.logger,
+        )
+        repo = SqlScenarioRepository(
+            engine=self._db_engine,
+            session_id=session_id,
+            algo_templates=self._algo_templates,
+            kpi_templates=self._kpi_templates,
+            data_manager=dm,
+            logger=self.logger,
+        )
+        return ScenarioManager(
+            etl_factory=self._etl_factory,
+            kpi_templates=self._kpi_templates,
+            algo_templates=self._algo_templates,
+            schemas=self._schemas,
+            data_object_type=self._data_object_type,
+            data_folder=None,
+            logger=self.logger,
+            has_persistent_state=False,
+            save_type=self._save_type,
+            autocreate=self._auto_create_scenario,
+            default_algo_name=self._default_algo_name,
+            default_param_values=self._default_param_values,
+            autorun=self._autorun,
+            data_manager=dm,
+            scenario_repository=repo,
+        )
+
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
+
     @property
     def sessions_names(self) -> List[str]:
         return list(self._sessions.keys())
@@ -190,12 +297,16 @@ class SessionManager:
         _validate_session_name(session_name)
         if session_name in self._sessions:
             raise ValueError(f"Session '{session_name}' already exists.")
+        if self._persistence_backend == "database":
+            self._persist_session_to_db(session_name)
         self._create_default_scenario_manager(session_name)
 
     def copy_session(self, session_name: str, new_session_name: str):
         _validate_session_name(new_session_name)
         if new_session_name in self._sessions:
             raise ValueError(f"Session '{new_session_name}' already exists.")
+        if self._persistence_backend == "database":
+            self._persist_session_to_db(new_session_name)
         self._create_default_scenario_manager(new_session_name)
         src = self.get_scenario_manager(session_name)
         dst = self.get_scenario_manager(new_session_name)

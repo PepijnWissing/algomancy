@@ -52,6 +52,9 @@ class CoreConfig:
         has_persistent_state: bool = False,
         save_type: str | None = "json",
         data_object_type: type[BASEDATASOURCE] | None = None,
+        # === persistence backend ===
+        persistence_backend: str | None = None,
+        database_url: str | None = None,
         # === scenario manager configuration ===
         etl_factory: Any | None = None,
         kpi_templates: Dict[str, Type[BASE_KPI]] | None = None,
@@ -108,6 +111,13 @@ class CoreConfig:
         self.default_algo_params_values = default_algo_params_values
         self.autorun = autorun
 
+        # persistence backend — derives from has_persistent_state when not set explicitly
+        if persistence_backend is None:
+            self.persistence_backend = "json" if has_persistent_state else "none"
+        else:
+            self.persistence_backend = persistence_backend
+        self.database_url = database_url
+
         # misc
         self.title = title
 
@@ -130,6 +140,8 @@ class CoreConfig:
             "default_algo_params_values": self.default_algo_params_values,
             "autorun": self.autorun,
             "title": self.title,
+            "persistence_backend": self.persistence_backend,
+            "database_url": self.database_url,
         }
 
     # ----- validation -----
@@ -139,6 +151,8 @@ class CoreConfig:
         self._validate_algorithm_parameters_core()
 
     def _validate_paths_core(self) -> None:
+        if self.persistence_backend == "database":
+            return  # database_url is validated in _validate_values_core
         if self.has_persistent_state:
             if self.data_path is None or self.data_path == "":
                 raise ValueError("data_path must be provided")
@@ -172,6 +186,18 @@ class CoreConfig:
                 raise ValueError(
                     f"Boolean configuration '{name}' must be set to True or False, not None"
                 )
+
+        # persistence backend
+        valid_backends = {"none", "json", "database"}
+        if self.persistence_backend not in valid_backends:
+            raise ValueError(
+                f"persistence_backend must be one of {valid_backends}; "
+                f"got {self.persistence_backend!r}"
+            )
+        if self.persistence_backend == "database" and not self.database_url:
+            raise ValueError(
+                "database_url must be provided when persistence_backend='database'"
+            )
 
         # save type
         if self.save_type is None:
