@@ -58,6 +58,7 @@ def _populate_defaults() -> None:
     # and registry.py.
     from .extractor import (
         CSVSingleExtractor,
+        JSONMultiExtractor,
         JSONSingleExtractor,
         XLSXMultiExtractor,
         XLSXSingleExtractor,
@@ -65,5 +66,6 @@ def _populate_defaults() -> None:
 
     register_extractor(FileExtension.CSV, SchemaType.SINGLE, CSVSingleExtractor)
     register_extractor(FileExtension.JSON, SchemaType.SINGLE, JSONSingleExtractor)
+    register_extractor(FileExtension.JSON, SchemaType.MULTI, JSONMultiExtractor)
     register_extractor(FileExtension.XLSX, SchemaType.SINGLE, XLSXSingleExtractor)
     register_extractor(FileExtension.XLSX, SchemaType.MULTI, XLSXMultiExtractor)
