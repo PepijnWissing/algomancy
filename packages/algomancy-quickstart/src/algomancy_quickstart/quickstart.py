@@ -318,15 +318,26 @@ class QuickstartWizard:
             success = self.inference_engine.infer_schema_interactive(file_info)
 
             if success and not file_info.skip_file:
-                # Add metadata for template rendering
-                file_info.class_name = self._to_pascal_case(file_info.file_name)
-                file_info.snake_name = self._to_snake_case(file_info.file_name)
+                # Refresh total_columns now that inference is done — the
+                # ``class_name`` / ``snake_name`` defaults from DataFileInfo
+                # are already in place, and we let any per-project rename
+                # logic stay there so failed-inference files still render.
                 file_info.total_columns = sum(
                     len(cols) for cols in file_info.inferred_schemas.values()
                 )
+            elif not success and not file_info.skip_file:
+                # Inference failed (e.g., pandas raised on a malformed file).
+                # Drop the file rather than emit an empty schema class that
+                # collides with the imported ``Schema`` symbol.
+                file_info.skip_file = True
 
         # Filter out skipped files
         self.detected_files = [f for f in detected_files if not f.skip_file]
+
+        # Disambiguate class names across files that share a stem (e.g.
+        # ``orders.csv`` + ``orders.xlsx``) so the generated schema classes
+        # remain unique.
+        self._disambiguate_class_names(self.detected_files)
 
         if not self.detected_files:
             click.echo()
@@ -669,12 +680,40 @@ class QuickstartWizard:
     @staticmethod
     def _to_pascal_case(text: str) -> str:
         """Convert text to PascalCase."""
-        return "".join(word.capitalize() for word in text.split())
+        from .data_inference import _to_pascal_case as _impl
+
+        return _impl(text)
 
     @staticmethod
     def _to_snake_case(text: str) -> str:
         """Convert text to snake_case."""
-        return "_".join(text.lower().split())
+        from .data_inference import _to_snake_case as _impl
+
+        return _impl(text)
+
+    @staticmethod
+    def _disambiguate_class_names(files: list) -> None:
+        """Ensure ``file_info.class_name`` is unique across ``files``.
+
+        When two files have the same stem (e.g. ``orders.csv`` and
+        ``orders.xlsx``), suffix the class name with the file extension so
+        the generated schema classes remain distinct.
+        """
+        seen: dict[str, int] = {}
+        for file_info in files:
+            name = file_info.class_name
+            count = seen.get(name, 0)
+            if count > 0:
+                ext_suffix = file_info.extension.name.title()
+                candidate = f"{name}{ext_suffix}"
+                # If even the ext-suffixed name collides, append a counter.
+                bumped = candidate
+                n = 2
+                while bumped in seen:
+                    bumped = f"{candidate}{n}"
+                    n += 1
+                file_info.class_name = bumped
+            seen[file_info.class_name] = seen.get(file_info.class_name, 0) + 1
 
 
 def run_quickstart(skip_confirmation: bool = False, title: str | None = None):

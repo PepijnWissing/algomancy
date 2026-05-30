@@ -223,6 +223,58 @@ def test_main_custom_uses_all_schemas(jinja_env: Environment) -> None:
     assert "demo_schema" not in rendered
 
 
+def test_data_file_info_seeds_class_name_from_filename() -> None:
+    """``DataFileInfo`` defaults ``class_name`` from the file stem so the
+    schema template never renders an empty (and thus colliding) class name
+    when downstream metadata enrichment is skipped."""
+    from algomancy_quickstart.data_inference import DataFileInfo
+
+    info = DataFileInfo(
+        file_path=Path("data/setup/case.json"),
+        file_name="case",
+        extension=FileExtension.JSON,
+    )
+
+    assert info.class_name == "Case"
+    assert info.snake_name == "case"
+
+
+def test_generated_schemas_emits_unique_class_names_for_multiple_files(
+    jinja_env: Environment,
+) -> None:
+    """Regression for #129 — two files in the same project must render two
+    distinctly named schema classes, not two ``class Schema(Schema)`` lines
+    that shadow the imported ``Schema`` symbol."""
+    from algomancy_quickstart.data_inference import DataFileInfo
+
+    case_info = DataFileInfo(
+        file_path=Path("data/setup/case.json"),
+        file_name="case",
+        extension=FileExtension.JSON,
+    )
+    case_info.inferred_schemas["default"] = {"CallbackURL": DataType.STRING}
+    case_info.primary_key_columns["default"] = []
+    case_info.total_columns = 1
+
+    results_info = DataFileInfo(
+        file_path=Path("data/setup/results.json"),
+        file_name="results",
+        extension=FileExtension.JSON,
+    )
+    results_info.inferred_schemas["default"] = {"PickOrders": DataType.STRING}
+    results_info.primary_key_columns["default"] = []
+    results_info.total_columns = 1
+
+    tmpl = jinja_env.get_template("generated_schemas.py.jinja")
+    rendered = tmpl.render(project_name="SWS", files=[case_info, results_info])
+    _assert_parses(rendered)
+
+    assert "class CaseSchema(Schema)" in rendered
+    assert "class ResultsSchema(Schema)" in rendered
+    # No bare ``class Schema(Schema)`` line (that would shadow the import).
+    assert "class Schema(Schema)" not in rendered
+
+
 @pytest.mark.parametrize(
     "template_name, ctx",
     [

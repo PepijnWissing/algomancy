@@ -3,12 +3,25 @@ Data inference utilities for detecting file types and inferring schemas.
 """
 
 import pandas as pd
+import re
 from pathlib import Path
 from typing import Dict, List
 import warnings
 import click
 
 from algomancy_data import DataType, FileExtension
+
+
+def _to_pascal_case(text: str) -> str:
+    """Convert ``text`` to PascalCase, splitting on whitespace and non-alphanumerics."""
+    parts = [p for p in re.split(r"[^0-9a-zA-Z]+", text) if p]
+    return "".join(p[:1].upper() + p[1:] for p in parts)
+
+
+def _to_snake_case(text: str) -> str:
+    """Convert ``text`` to snake_case."""
+    parts = [p for p in re.split(r"[^0-9a-zA-Z]+", text) if p]
+    return "_".join(p.lower() for p in parts)
 
 
 class DataFileInfo:
@@ -35,6 +48,13 @@ class DataFileInfo:
         self.csv_separator: str = ","  # Default separator
         self.selected_sheets: List[str] = []  # For Excel files
         self.skip_file: bool = False  # User can choose to skip a file
+
+        # Template-rendering metadata derived from file_name. Set here so the
+        # schema template always renders a distinct class name even if later
+        # steps (inference, metadata enrichment) are skipped or fail.
+        self.class_name: str = _to_pascal_case(file_name) or "Data"
+        self.snake_name: str = _to_snake_case(file_name) or "data"
+        self.total_columns: int = 0
 
     @property
     def is_multi_sheet(self) -> bool:
