@@ -5,6 +5,7 @@
    * has_styling: bool
 #}
 {% set interfaces = interfaces or ["gui"] %}
+{% set persistence_backend = persistence_backend or "json" %}
 import argparse
 
 from algomancy_data import DataSource
@@ -89,6 +90,17 @@ def _core_kwargs() -> dict:
         autocreate=False,
         autorun=False,
         title="{{ title }}",
+        {% if persistence_backend == "database" %}
+        has_persistent_state=True,
+        persistence_backend="database",
+        database_url="{{ database_url }}",
+        {% elif persistence_backend == "json" %}
+        has_persistent_state=True,
+        persistence_backend="json",
+        {% else %}
+        has_persistent_state=False,
+        persistence_backend="none",
+        {% endif %}
     )
 
 {% if "gui" in interfaces %}

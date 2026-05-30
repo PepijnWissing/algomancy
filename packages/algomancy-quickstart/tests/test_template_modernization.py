@@ -290,9 +290,49 @@ def _gui_ctx(**overrides: object) -> dict:
         has_custom_implementations=False,
         has_generated_etl=False,
         has_styling=False,
+        persistence_backend="json",
+        database_url=None,
     )
     base.update(overrides)
     return base
+
+
+def test_main_template_database_backend_passes_url(jinja_env: Environment) -> None:
+    """Regression for #132 — when ``persistence_backend='database'`` is
+    selected, the generated main.py must pass the URL into CoreConfig."""
+    tmpl = jinja_env.get_template("main.py.jinja")
+    rendered = tmpl.render(
+        **_gui_ctx(
+            persistence_backend="database",
+            database_url="sqlite:///myapp.db",
+        )
+    )
+    _assert_parses(rendered)
+
+    assert 'persistence_backend="database"' in rendered
+    assert 'database_url="sqlite:///myapp.db"' in rendered
+    assert "has_persistent_state=True" in rendered
+
+
+def test_main_template_json_backend_omits_database_url(
+    jinja_env: Environment,
+) -> None:
+    tmpl = jinja_env.get_template("main.py.jinja")
+    rendered = tmpl.render(**_gui_ctx(persistence_backend="json"))
+    _assert_parses(rendered)
+
+    assert 'persistence_backend="json"' in rendered
+    assert "database_url=" not in rendered
+
+
+def test_main_template_no_persistence(jinja_env: Environment) -> None:
+    tmpl = jinja_env.get_template("main.py.jinja")
+    rendered = tmpl.render(**_gui_ctx(persistence_backend="none"))
+    _assert_parses(rendered)
+
+    assert 'persistence_backend="none"' in rendered
+    assert "has_persistent_state=False" in rendered
+    assert "database_url=" not in rendered
 
 
 @pytest.mark.parametrize(

@@ -38,6 +38,10 @@ class QuickstartWizard:
         # Interfaces baked into the generated main.py. GUI is the historical
         # default; the wizard's step_1 prompt may narrow / widen this.
         self.interfaces: list[str] = ["gui"]
+        # Persistence backend: "none" | "json" | "database". The wizard's
+        # step_1 prompt selects this; the template wires it into CoreConfig.
+        self.persistence_backend: str = "json"
+        self.database_url: str | None = None
         self.host = "127.0.0.1"
         self.port = 8050
 
@@ -106,9 +110,11 @@ class QuickstartWizard:
             extra_pkgs.append("algomancy-cli")
         if "api" in self.interfaces:
             extra_pkgs.append("algomancy-api")
+        if self.persistence_backend == "database":
+            extra_pkgs.append("algomancy-data[database]")
         if extra_pkgs:
             click.echo(
-                f"  2. Install required interface packages: pip install {' '.join(extra_pkgs)}"
+                f"  2. Install required packages: pip install {' '.join(extra_pkgs)}"
             )
         if len(self.interfaces) == 1:
             click.echo("  3. Run: python main.py")
@@ -144,6 +150,9 @@ class QuickstartWizard:
         # only wire up the launchers the user picked here; if more than one
         # is selected, it dispatches on ``--interface``.
         self.interfaces = self._prompt_interfaces()
+
+        # Ask which persistence backend to bake into CoreConfig.
+        self.persistence_backend, self.database_url = self._prompt_persistence()
 
         # Define folder structure - include data/setup and src/styling
         folders = [
@@ -659,9 +668,46 @@ class QuickstartWizard:
             has_custom_implementations=self.has_custom_implementations,
             has_generated_etl=self.has_generated_etl,
             has_styling=self.has_styling,
+            persistence_backend=self.persistence_backend,
+            database_url=self.database_url,
         )
         main_py_path = self.current_dir / "main.py"
         main_py_path.write_text(content, encoding="utf-8")
+
+    @staticmethod
+    def _prompt_persistence() -> tuple[str, str | None]:
+        """Ask the user which persistence backend the generated app should use.
+
+        Returns ``(backend, database_url)`` where ``backend`` is one of
+        ``"none"`` / ``"json"`` / ``"database"`` and ``database_url`` is
+        only meaningful when ``backend == "database"`` (otherwise ``None``).
+        """
+        click.echo()
+        click.echo("Which persistence backend should the generated app use?")
+        click.echo("  none     — in-memory only, nothing is persisted")
+        click.echo("  json     — persistent JSON-on-disk (the historical default)")
+        click.echo("  database — SQL-backed via DatabaseDataManager")
+        backend = click.prompt(
+            "Backend",
+            type=click.Choice(["none", "json", "database"], case_sensitive=False),
+            default="json",
+            show_default=True,
+        ).lower()
+
+        if backend == "database":
+            click.echo()
+            click.echo(
+                "  Tip: install the database extras via "
+                "'pip install algomancy-data[database]'"
+            )
+            database_url = click.prompt(
+                "Database URL (SQLAlchemy)",
+                default="sqlite:///myapp.db",
+                type=str,
+                show_default=True,
+            )
+            return backend, database_url
+        return backend, None
 
     @staticmethod
     def _prompt_interfaces() -> list[str]:
