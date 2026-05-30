@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import pytest
+
+pytest.importorskip("sqlalchemy", reason="requires algomancy-data[database]")
+
 import pandas as pd
 import sqlalchemy as sa
 

@@ -6,6 +6,10 @@ against a SqlScenarioRepository backed by an in-memory SQLite database.
 
 from __future__ import annotations
 
+import pytest
+
+pytest.importorskip("sqlalchemy", reason="requires algomancy-scenario[database]")
+
 import importlib.util
 import pathlib
 
