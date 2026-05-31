@@ -60,6 +60,10 @@ Documentation = "https://algomancy.readthedocs.io/en/latest/"
 Repository = "https://github.com/PepijnWissing/algomancy"
 
 [tool.pytest.ini_options]
+markers = [
+  "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+  "gui: marks tests that require a running GUI and Playwright (deselect with '-m \"not gui\"')"
+]
 pythonpath = ["."]
 
 [tool.uv.sources]
