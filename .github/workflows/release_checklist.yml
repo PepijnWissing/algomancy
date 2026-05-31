@@ -1,0 +1,81 @@
+name: Open release-checklist issue
+
+# Triggers after publish.yml completes successfully, OR on a tag push for
+# manual dry-runs during development (e.g. push a tag like v0.7.0-rc1).
+on:
+  workflow_run:
+    workflows: ["Build and publish to PyPI"]
+    types: [completed]
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+
+jobs:
+  open-checklist:
+    name: Open release-checklist issue
+    runs-on: ubuntu-latest
+    # Only run when triggered by a successful publish (or directly via tag push).
+    if: >
+      github.event_name == 'push' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+
+    permissions:
+      issues: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Resolve version
+        id: version
+        run: |
+          if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            # Tag-push: version comes from the tag name (strip leading "v")
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            # workflow_run: extract from the tag that triggered the publish run.
+            # publish.yml fires on push to main; the version is in pyproject.toml.
+            VERSION=$(python -c "
+          import tomllib, pathlib
+          data = tomllib.loads(pathlib.Path('pyproject.toml').read_text())
+          print(data['project']['version'])
+          ")
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Template RELEASE_CHECKLIST.md
+        id: body
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          sed "s/{VERSION}/$VERSION/g" RELEASE_CHECKLIST.md > /tmp/checklist_body.md
+          echo "body_path=/tmp/checklist_body.md" >> "$GITHUB_OUTPUT"
+
+      - name: Create or update milestone
+        id: milestone
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          TITLE="v$VERSION"
+          # Check if milestone exists
+          MILESTONE_NUMBER=$(gh api repos/:owner/:repo/milestones \
+            --jq ".[] | select(.title == \"$TITLE\") | .number" || true)
+          if [ -z "$MILESTONE_NUMBER" ]; then
+            MILESTONE_NUMBER=$(gh api repos/:owner/:repo/milestones \
+              --method POST \
+              --field title="$TITLE" \
+              --jq '.number')
+          fi
+          echo "milestone=$MILESTONE_NUMBER" >> "$GITHUB_OUTPUT"
+
+      - name: Open release-checklist issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          MILESTONE="${{ steps.milestone.outputs.milestone }}"
+          gh issue create \
+            --title "Release v$VERSION verification" \
+            --body-file /tmp/checklist_body.md \
+            --label "release-checklist" \
+            --milestone "$MILESTONE"

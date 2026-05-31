@@ -23,6 +23,14 @@ def parse_args():
     group.add_argument("--major", action="store_true", help="Bump major version")
     group.add_argument("--minor", action="store_true", help="Bump minor version")
     group.add_argument("--patch", action="store_true", help="Bump patch version")
+    group.add_argument(
+        "--check",
+        action="store_true",
+        help=(
+            "Check that all packages share the same version; "
+            "exit 0 if consistent, 1 if any differ."
+        ),
+    )
 
     return parser.parse_args()
 
@@ -35,6 +43,43 @@ def get_bump_type(args):
         return "minor"
     elif args.patch:
         return "patch"
+
+
+def check_version_consistency() -> int:
+    """Verify that every pyproject.toml in the workspace shares the same version.
+
+    Prints a summary and returns 0 if consistent, 1 if any file disagrees.
+    """
+    root_pyproject = Path("pyproject.toml")
+    packages_dir = Path("packages")
+
+    targets: list[Path] = [root_pyproject]
+    if packages_dir.exists():
+        targets += sorted(
+            p / "pyproject.toml"
+            for p in packages_dir.iterdir()
+            if p.is_dir() and not p.name.startswith("__")
+        )
+
+    versions: dict[str, str] = {}
+    for path in targets:
+        if not path.exists():
+            continue
+        try:
+            versions[str(path)] = get_version_from_pyproject(path)
+        except (KeyError, Exception):
+            versions[str(path)] = "<unreadable>"
+
+    unique = set(versions.values())
+    if len(unique) == 1:
+        (v,) = unique
+        print(f"[OK] All {len(versions)} pyproject.toml files agree on version {v}")
+        return 0
+
+    print("[FAIL] Version mismatch detected:")
+    for path, ver in versions.items():
+        print(f"  {path}: {ver}")
+    return 1
 
 
 def get_version_from_pyproject(pyproject_path: Path) -> str:
@@ -188,6 +233,10 @@ def update_lockfile():
 def main():
     """Main entry point."""
     args = parse_args()
+
+    if args.check:
+        sys.exit(check_version_consistency())
+
     bump_type = get_bump_type(args)
 
     print(f"Starting version bump: {bump_type}")
