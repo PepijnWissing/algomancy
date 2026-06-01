@@ -1,11 +1,16 @@
 """Tests for M8 — Reference algorithms & KPIs."""
 
 import math
+from pathlib import Path
 
 import pandas as pd
 import pytest
 
+from algomancy_data import StatelessDataManager, DataSource
+
+from example.data_handling.factories import ExampleETLFactory
 from example.data_handling.results import WarehouseAllocationResult
+from example.data_handling.schemas import example_schemas
 from example.templates.algorithm.warehouse_slotting import (
     AsIsSlotting,
     GreedySlotting,
@@ -18,6 +23,10 @@ from example.templates.kpi.warehouse_kpis import (
 )
 
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+EXAMPLE_DATA_DIR = REPO_ROOT / "example" / "data" / "default_session" / "example_data"
+
+
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -25,16 +34,12 @@ from example.templates.kpi.warehouse_kpis import (
 
 @pytest.fixture()
 def sku_df() -> pd.DataFrame:
-    return pd.read_csv(
-        "example/data/default_session/example_data/sku_data.csv", sep=";"
-    )
+    return pd.read_csv(EXAMPLE_DATA_DIR / "sku_data.csv", sep=";")
 
 
 @pytest.fixture()
 def layout_df() -> pd.DataFrame:
-    return pd.read_csv(
-        "example/data/default_session/example_data/warehouse_layout.csv", sep=";"
-    )
+    return pd.read_csv(EXAMPLE_DATA_DIR / "warehouse_layout.csv", sep=";")
 
 
 class _FakeDataSource:
@@ -181,3 +186,71 @@ class TestWarehouseReslotCostKPI:
         kpi = WarehouseReslotCostKPI()
         kpi.compute_and_check(result)
         assert kpi.value >= 0.0
+
+
+# ---------------------------------------------------------------------------
+# End-to-end: ExampleETLFactory + StatelessDataManager + GreedySlotting
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(scope="module")
+def etl_datasource() -> DataSource:
+    """Run the real ExampleETLFactory pipeline against the example data dir."""
+    dm = StatelessDataManager(
+        etl_factory=ExampleETLFactory,
+        schemas=example_schemas,
+        save_type="json",
+        data_object_type=DataSource,
+    )
+
+    # Logical name → filename on disk; the manager dispatches by schema extension.
+    file_items = [
+        ("sku_data", str(EXAMPLE_DATA_DIR / "sku_data.csv")),
+        ("warehouse_layout", str(EXAMPLE_DATA_DIR / "warehouse_layout.csv")),
+        ("inventory", str(EXAMPLE_DATA_DIR / "inventory.xlsx")),
+        ("employees", str(EXAMPLE_DATA_DIR / "employees.json")),
+        ("multisheet", str(EXAMPLE_DATA_DIR / "multisheet.xlsx")),
+        ("categories", str(EXAMPLE_DATA_DIR / "categories.csv")),
+        ("products", str(EXAMPLE_DATA_DIR / "products.csv")),
+        ("order_items", str(EXAMPLE_DATA_DIR / "order_items.csv")),
+        ("picks", str(EXAMPLE_DATA_DIR / "picks.json")),
+    ]
+    files = dm.prepare_files(file_items_with_path=file_items)
+    result = dm.etl_data(files, dataset_name="example_data")
+    assert result.is_success, (
+        "ETL pipeline failed: "
+        f"{result.validation_result.counts_by_severity if result.validation_result else 'unknown'}"
+    )
+    return dm.get_data("example_data")
+
+
+class TestExampleETLPipelineIntegration:
+    """Drive the warehouse algorithms through the real ETL pipeline.
+
+    Guards against silent drift between schemas / transformers and the
+    columns the algorithms assume — the fast unit tests above bypass the
+    factory by reading CSVs directly.
+    """
+
+    def test_etl_produces_warehouse_tables(self, etl_datasource):
+        assert "sku_data" in etl_datasource.tables
+        assert "warehouse_layout" in etl_datasource.tables
+
+        sku = etl_datasource.tables["sku_data"]
+        for col in ("itemid", "daily_picks", "currentslot"):
+            assert col in sku.columns
+
+        layout = etl_datasource.tables["warehouse_layout"]
+        for col in ("slotid", "x", "y", "zone"):
+            assert col in layout.columns
+
+    def test_greedy_runs_on_etl_output(self, etl_datasource):
+        algo = GreedySlotting(GreedySlotting.initialize_parameters())
+        result = algo.run(etl_datasource)
+        assert isinstance(result, WarehouseAllocationResult)
+        assert len(result.allocation) == len(etl_datasource.tables["sku_data"])
+
+        kpi = WarehouseTravelKPI()
+        kpi.compute_and_check(result)
+        assert math.isfinite(kpi.value)
+        assert kpi.value > 0.0

@@ -36,9 +36,13 @@ def debug_create_example_scenarios(sm: ScenarioManager):
 def seed_warehouse_scenarios(
     sm: ScenarioManager, dataset_key: str = "example_data"
 ) -> None:
-    """Seed five realistic warehouse slotting scenarios on first boot."""
-    sm.toggle_autorun(True)
+    """Seed five realistic warehouse slotting scenarios on first boot.
 
+    Idempotent by ``tag``: re-running the seed is safe, but it also means
+    that changes to the parameters below will NOT take effect on sessions
+    where the corresponding tag already exists. Delete the scenario in the
+    GUI (or wipe the session) to pick up new defaults.
+    """
     _tags_and_params = [
         (
             "realistic-asis-baseline",
