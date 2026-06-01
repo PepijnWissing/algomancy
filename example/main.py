@@ -31,7 +31,13 @@ from algomancy_gui.gui_launcher import GuiLauncher
 from example.data_handling.schemas import example_schemas
 from example.data_handling.factories import ExampleETLFactory
 from example.pages.exampledatapage import ExampleDataPage
-from example.templates import kpi_templates, algorithm_templates
+from example.pages.warehouse_overview_page import WarehouseOverviewPage
+from example.pages.allocation_compare_page import AllocationComparePage
+from example.templates import (
+    kpi_templates,
+    algorithm_templates,
+    seed_warehouse_scenarios,
+)
 
 # Ensure project root is on sys.path so sibling packages (like `src`) can be imported
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -58,6 +64,9 @@ def main(
 
     # Build the app with AppConfiguration object directly
     app = GuiLauncher.build(app_cfg)
+
+    # Seed realistic warehouse scenarios on first boot
+    _seed_warehouse_scenarios(app)
 
     # Run the app
     GuiLauncher.run(
@@ -105,6 +114,19 @@ def configure_app() -> AppConfig:
         styling_config=styling,
     )
     return app_cfg
+
+
+def _seed_warehouse_scenarios(app) -> None:
+    """Seed the default session with realistic warehouse scenarios on first boot."""
+    from algomancy_scenario import SessionManager
+
+    server = app.server
+    if not hasattr(server, "session_manager"):
+        return
+    sm: SessionManager = server.session_manager
+    default_session = sm.start_session_name
+    scenario_manager = sm.get_scenario_manager(default_session)
+    seed_warehouse_scenarios(scenario_manager)
 
 
 def configure_server() -> ServerConfig:
@@ -175,6 +197,8 @@ def configure_pages() -> PageConfig:
     pages = PageConfig(
         home_page="showcase",
         data_page=ExampleDataPage(),
+        overview_page=WarehouseOverviewPage(),
+        compare_page=AllocationComparePage(),
     )
     return pages
 
@@ -190,8 +214,12 @@ def configure_core(data_path: str, use_sessions: bool) -> CoreConfig:
         schemas=example_schemas,
         data_object_type=DataSource,
         autocreate=True,
-        default_algo="Slow",
-        default_algo_params_values={"duration": 1},
+        default_algo="Greedy Slotting",
+        default_algo_params_values={
+            "depot_x": 0.0,
+            "depot_y": 0.0,
+            "respect_zones": False,
+        },
         autorun=True,
         title="Example implementation of an Algomancy Dashboard",
     )
