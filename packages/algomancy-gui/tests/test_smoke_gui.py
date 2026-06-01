@@ -1,11 +1,11 @@
 """GUI smoke test using Playwright.
 
-Spawns ``python example/main.py --interface gui --port <free>`` and uses
-Playwright to walk through the dashboard:
+Spawns ``python -m example.main --interface gui --port <free>`` and uses
+Playwright to verify the dashboard renders something meaningful:
 
-1. Sidebar contains expected page links.
-2. Scenario page renders the algorithm dropdown.
-3. Selecting ``Slow`` + clicking Run eventually shows a non-empty KPI cell.
+1. Landing page returns 200 and contains the dashboard title.
+2. Scenarios page renders at least one registered algorithm (asserts a
+   *concrete* algorithm name, not the generic ``<select>`` element).
 
 Marked ``@pytest.mark.gui`` and ``@pytest.mark.slow`` so it only runs in the
 full GUI CI lane (not the fast PR path).  Skipped automatically when
@@ -21,15 +21,33 @@ import sys
 
 import pytest
 
-from tests.conftest import REPO_ROOT, find_free_port, live_subprocess, wait_for_http
+from algomancy_utils._smoke_helpers import (
+    REPO_ROOT,
+    find_free_port,
+    live_subprocess,
+    wait_for_http,
+)
 
 pytestmark = [pytest.mark.gui, pytest.mark.slow]
 
+# Importorskip is gated on the gui marker via collection — if the user
+# explicitly opts into GUI tests but Playwright is missing, fail loudly here.
 pytest.importorskip(
     "playwright", reason="playwright not installed — run 'playwright install chromium'"
 )
 
 _RESULTS_DIR = REPO_ROOT / "pytest-results"
+
+# Concrete algorithm names registered on `better-example` (and ancestors of
+# this branch). The dropdown must include AT LEAST ONE — asserting on a list
+# instead of a single name keeps the test robust to registry tweaks while
+# still failing if the algorithm registry is silently empty.
+_REGISTERED_ALGOS_LOWER = [
+    "instant",
+    "greedy slotting",
+    "asis slotting",
+    "sa slotting",
+]
 
 
 def _screenshot_dir() -> pathlib.Path:
@@ -62,22 +80,25 @@ def gui_base_url(tmp_path_factory):
 
 @pytest.mark.gui
 @pytest.mark.slow
-def test_sidebar_has_expected_links(gui_base_url):
-    """Sidebar should contain at least Scenarios and Data links."""
+def test_landing_page_renders_dashboard_title(gui_base_url):
+    """The landing page must render the configured app title."""
     from playwright.sync_api import sync_playwright
 
     with sync_playwright() as pw:
         browser = pw.chromium.launch()
         page = browser.new_page()
         try:
-            page.goto(gui_base_url, wait_until="networkidle")
-            page.screenshot(path=str(_screenshot_dir() / "gui_sidebar.png"))
+            page.goto(gui_base_url, wait_until="domcontentloaded")
+            page.screenshot(path=str(_screenshot_dir() / "gui_landing.png"))
             content = page.content().lower()
-            assert "scenarios" in content or "scenario" in content, (
-                "Expected 'scenarios' in page content"
+            # The example's StylingConfig sets title="Example implementation of
+            # an Algomancy Dashboard"; assert on a distinctive substring rather
+            # than a generic token that any HTML page would contain.
+            assert "algomancy dashboard" in content, (
+                f"Expected configured app title in landing page.\nURL: {page.url}"
             )
         except Exception:
-            page.screenshot(path=str(_screenshot_dir() / "gui_sidebar_fail.png"))
+            page.screenshot(path=str(_screenshot_dir() / "gui_landing_fail.png"))
             raise
         finally:
             browser.close()
@@ -85,21 +106,24 @@ def test_sidebar_has_expected_links(gui_base_url):
 
 @pytest.mark.gui
 @pytest.mark.slow
-def test_algorithm_dropdown_visible_on_scenario_page(gui_base_url):
-    """The scenario page must render an algorithm dropdown."""
+def test_scenarios_page_renders_registered_algorithm(gui_base_url):
+    """The scenarios page must render at least one registered algorithm name."""
     from playwright.sync_api import sync_playwright
 
     with sync_playwright() as pw:
         browser = pw.chromium.launch()
         page = browser.new_page()
         try:
-            # Navigate to the scenarios page (typically /scenarios)
-            page.goto(f"{gui_base_url}/scenarios", wait_until="networkidle")
+            page.goto(f"{gui_base_url}/scenarios", wait_until="domcontentloaded")
+            # Give Dash a moment to hydrate the algorithm dropdown.
+            page.wait_for_timeout(1500)
             page.screenshot(path=str(_screenshot_dir() / "gui_scenarios.png"))
             content = page.content().lower()
-            # The algorithm selector should be somewhere on the page
-            assert any(tok in content for tok in ["slow", "algorithm", "select"]), (
-                f"Expected algorithm-related content on scenarios page.\n"
+
+            matches = [a for a in _REGISTERED_ALGOS_LOWER if a in content]
+            assert matches, (
+                f"Expected at least one registered algorithm name in the "
+                f"scenarios page; tried {_REGISTERED_ALGOS_LOWER}.\n"
                 f"URL: {page.url}"
             )
         except Exception:

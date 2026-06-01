@@ -105,7 +105,7 @@ def _core_kwargs() -> dict:
 
 {% if "gui" in interfaces %}
 
-def build_gui_config() -> AppConfig:
+def build_gui() -> AppConfig:
     return AppConfig(
         core_config=CoreConfig(**_core_kwargs()),
         server_config=ServerConfig(host=HOST, port=PORT),
@@ -131,28 +131,28 @@ def build_gui_config() -> AppConfig:
 
 
 def run_gui() -> None:
-    cfg = build_gui_config()
+    cfg = build_gui()
     app = GuiLauncher.build(cfg)
     GuiLauncher.run(app=app, host=cfg.server.host, port=cfg.server.port)
 {% endif %}
 {% if "cli" in interfaces %}
 
-def build_cli_config() -> CliConfiguration:
+def build_cli() -> CliConfiguration:
     return CliConfiguration(**_core_kwargs())
 
 
 def run_cli() -> None:
-    shell = CliLauncher.build(build_cli_config())
+    shell = CliLauncher.build(build_cli())
     CliLauncher.run(shell)
 {% endif %}
 {% if "api" in interfaces %}
 
-def build_api_config() -> ApiConfiguration:
+def build_api() -> ApiConfiguration:
     return ApiConfiguration(host=HOST, port=PORT, **_core_kwargs())
 
 
 def run_api() -> None:
-    cfg = build_api_config()
+    cfg = build_api()
     app = ApiLauncher.build(cfg)
     ApiLauncher.run(app, host=cfg.host, port=cfg.port)
 {% endif %}
@@ -174,7 +174,7 @@ def main() -> None:
 
     if args.validate:
         try:
-            build_{{ only }}_config()
+            build_{{ only }}()
             print("[validate] {{ only }} wiring OK")
             sys.exit(0)
         except Exception as exc:
@@ -199,7 +199,7 @@ def main() -> None:
 
     _builders = {
         {% for iface in interfaces %}
-        "{{ iface }}": build_{{ iface }}_config,
+        "{{ iface }}": build_{{ iface }},
         {% endfor %}
     }
     _runners = {
