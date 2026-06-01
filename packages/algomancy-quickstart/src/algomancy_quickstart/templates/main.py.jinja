@@ -105,7 +105,7 @@ def _core_kwargs() -> dict:
 
 {% if "gui" in interfaces %}
 
-def build_gui_config() -> AppConfig:
+def build_gui() -> AppConfig:
     return AppConfig(
         core_config=CoreConfig(**_core_kwargs()),
         server_config=ServerConfig(host=HOST, port=PORT),
@@ -131,28 +131,28 @@ def build_gui_config() -> AppConfig:
 
 
 def run_gui() -> None:
-    cfg = build_gui_config()
+    cfg = build_gui()
     app = GuiLauncher.build(cfg)
     GuiLauncher.run(app=app, host=cfg.server.host, port=cfg.server.port)
 {% endif %}
 {% if "cli" in interfaces %}
 
-def build_cli_config() -> CliConfiguration:
+def build_cli() -> CliConfiguration:
     return CliConfiguration(**_core_kwargs())
 
 
 def run_cli() -> None:
-    shell = CliLauncher.build(build_cli_config())
+    shell = CliLauncher.build(build_cli())
     CliLauncher.run(shell)
 {% endif %}
 {% if "api" in interfaces %}
 
-def build_api_config() -> ApiConfiguration:
+def build_api() -> ApiConfiguration:
     return ApiConfiguration(host=HOST, port=PORT, **_core_kwargs())
 
 
 def run_api() -> None:
-    cfg = build_api_config()
+    cfg = build_api()
     app = ApiLauncher.build(cfg)
     ApiLauncher.run(app, host=cfg.host, port=cfg.port)
 {% endif %}
@@ -160,8 +160,27 @@ def run_api() -> None:
 
 def main() -> None:
     """Entry point for the {{ title }} application."""
+    import sys
+
     {% if interfaces|length == 1 %}
     {% set only = interfaces[0] %}
+    parser = argparse.ArgumentParser(description="{{ title }}")
+    parser.add_argument(
+        "--validate",
+        action="store_true",
+        help="Build the launcher and exit 0 without binding any port.",
+    )
+    args = parser.parse_args()
+
+    if args.validate:
+        try:
+            build_{{ only }}()
+            print("[validate] {{ only }} wiring OK")
+            sys.exit(0)
+        except Exception as exc:
+            print(f"[validate] ERROR: {exc}", file=sys.stderr)
+            sys.exit(1)
+
     run_{{ only }}()
     {% else %}
     parser = argparse.ArgumentParser(description="{{ title }}")
@@ -171,12 +190,34 @@ def main() -> None:
         default="{{ interfaces[0] }}",
         help="Which interface to launch.",
     )
+    parser.add_argument(
+        "--validate",
+        action="store_true",
+        help="Build the chosen launcher and exit 0 without binding any port.",
+    )
     args = parser.parse_args()
 
-    {% for iface in interfaces %}
-    {% if loop.first %}if{% else %}elif{% endif %} args.interface == "{{ iface }}":
-        run_{{ iface }}()
-    {% endfor %}
+    _builders = {
+        {% for iface in interfaces %}
+        "{{ iface }}": build_{{ iface }},
+        {% endfor %}
+    }
+    _runners = {
+        {% for iface in interfaces %}
+        "{{ iface }}": run_{{ iface }},
+        {% endfor %}
+    }
+
+    if args.validate:
+        try:
+            _builders[args.interface]()
+            print(f"[validate] {args.interface} wiring OK")
+            sys.exit(0)
+        except Exception as exc:
+            print(f"[validate] ERROR: {exc}", file=sys.stderr)
+            sys.exit(1)
+
+    _runners[args.interface]()
     {% endif %}
 
 
