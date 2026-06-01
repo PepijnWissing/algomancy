@@ -52,15 +52,19 @@ jobs:
           # Both triggers (workflow_run and push:tags) can fire for the same
           # release; bail out cleanly if an issue for this milestone already
           # exists rather than opening duplicates.
-          EXISTING=$(gh issue list \
+          # `.[0] // empty` emits the first match if any, or nothing at all
+          # when the array is empty — without this jq prints the literal
+          # string "null", which would slip past `[ -n "$EXISTING" ]` and
+          # crash the python parser. `2>/dev/null || true` swallows the
+          # "milestone not found" error gh emits on the very first release.
+          EXISTING_URL=$(gh issue list \
             --label release-checklist \
             --milestone "$TITLE" \
             --state all \
-            --json number,url \
-            --jq '.[0]' || echo '')
-          if [ -n "$EXISTING" ]; then
-            URL=$(echo "$EXISTING" | python -c "import json,sys;print(json.load(sys.stdin)['url'])")
-            echo "release-checklist issue already exists for $TITLE: $URL"
+            --json url \
+            --jq '.[0].url // empty' 2>/dev/null || true)
+          if [ -n "$EXISTING_URL" ]; then
+            echo "release-checklist issue already exists for $TITLE: $EXISTING_URL"
             echo "skip=true" >> "$GITHUB_OUTPUT"
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
@@ -82,7 +86,10 @@ jobs:
           TITLE="${{ steps.version.outputs.title }}"
           # `state=all` so a previously-closed milestone with the same name
           # is reused instead of triggering a duplicate-create 422.
-          EXISTING=$(gh api 'repos/:owner/:repo/milestones?state=all' \
+          # `--paginate` so we still find older milestones once the repo has
+          # more than the default page (30) of them.
+          EXISTING=$(gh api --paginate \
+            'repos/:owner/:repo/milestones?state=all&per_page=100' \
             --jq ".[] | select(.title == \"$TITLE\") | .number" | head -n1)
           if [ -z "$EXISTING" ]; then
             gh api repos/:owner/:repo/milestones \

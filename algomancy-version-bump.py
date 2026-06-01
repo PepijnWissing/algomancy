@@ -52,8 +52,6 @@ def check_version_consistency() -> int:
     1 if any file is unreadable, missing, or disagrees — failures are listed
     individually so the CI log points at the file to fix.
     """
-    import tomllib
-
     root_pyproject = Path("pyproject.toml")
     packages_dir = Path("packages")
 

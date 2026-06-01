@@ -78,9 +78,13 @@
 
 For at least the combos `(backend=json, interface=gui)` and `(backend=database, interface=api)`:
 
-- [ ] From `<tmp>`: `uv run --from <repo> algomancy-quickstart` (or `python -m algomancy_quickstart` if invoked from inside the repo) — run the wizard and answer prompts
-- [ ] `python main.py --validate` exits 0 from inside the generated project directory (`<tmp>/<project-name>/`)
-- [ ] `uv run pytest tests/` from inside the generated project exits 0
+- [ ] From `<tmp>`, invoke the wizard using the console script installed in `<repo>`'s venv. Pick the form that fits your shell:
+      - POSIX: `<repo>/.venv/bin/algomancy-quickstart`
+      - Windows: `<repo>\.venv\Scripts\algomancy-quickstart.exe`
+      - Or activate the venv first (`source <repo>/.venv/bin/activate`) and run `algomancy-quickstart` directly.
+- [ ] Answer the wizard prompts; it writes the generated project into `<tmp>/<project-name>/`.
+- [ ] `cd <tmp>/<project-name> && python main.py --validate` exits 0.
+- [ ] `cd <tmp>/<project-name> && uv run pytest tests/` exits 0.
 
 ## 7 Docs
 
