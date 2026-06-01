@@ -103,6 +103,7 @@ def build_gui(args: argparse.Namespace):
 
     try:
         from example.pages.allocation_compare_page import AllocationComparePage
+        from example.pages.warehouse_home_page import WarehouseHomePage
         from example.pages.warehouse_overview_page import WarehouseOverviewPage
 
         _warehouse_pages = True
@@ -126,15 +127,15 @@ def build_gui(args: argparse.Namespace):
         ),
         feature_config=FeatureConfig(use_authentication=False),
         page_config=PageConfig(
-            home_page="showcase",
             data_page=ExampleDataPage(),
             **(
                 {
+                    "home_page": WarehouseHomePage(),
                     "overview_page": WarehouseOverviewPage(),
                     "compare_page": AllocationComparePage(),
                 }
                 if _warehouse_pages
-                else {}
+                else {"home_page": "showcase"}
             ),
         ),
         server_config=ServerConfig(host=host, port=port),
