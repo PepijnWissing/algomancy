@@ -23,8 +23,11 @@ import time
 import httpx
 import pytest
 
-# Shared smoke-test helpers (repo root tests/conftest.py)
-from tests.conftest import find_free_port, live_subprocess, wait_for_http
+from algomancy_utils._smoke_helpers import (
+    find_free_port,
+    live_subprocess,
+    wait_for_http,
+)
 
 
 @pytest.fixture(scope="module")
@@ -82,8 +85,8 @@ def test_algorithms_endpoint_exposes_example_algorithms(live_server):
     sid = sessions["default"]
     r = httpx.get(f"{live_server}/api/v1/sessions/{sid}/algorithms")
     assert r.status_code == 200
-    # The example wiring registers Slow, AsIs, Batching, Random.
-    assert "Slow" in r.json()["algorithms"]
+    # The example registry must expose the warehouse-slotting algorithms.
+    assert "Instant" in r.json()["algorithms"]
 
 
 def test_openapi_docs_and_schema_available(live_server):
@@ -115,7 +118,7 @@ def test_end_to_end_create_run_complete(live_server):
     algorithms = httpx.get(f"{live_server}/api/v1/sessions/{sid}/algorithms").json()[
         "algorithms"
     ]
-    assert "Slow" in algorithms
+    assert "Instant" in algorithms
 
     data_keys = httpx.get(f"{live_server}/api/v1/sessions/{sid}/data").json()["keys"]
     assert data_keys, "example default_session is expected to ship with data"
@@ -127,8 +130,8 @@ def test_end_to_end_create_run_complete(live_server):
         json={
             "tag": "smoke-e2e",
             "dataset_key": dataset_key,
-            "algo_name": "Slow",
-            "algo_params": {"duration": 1},
+            "algo_name": "Instant",
+            "algo_params": {},
         },
     )
     assert create.status_code == 201, create.text
@@ -160,8 +163,12 @@ def test_end_to_end_create_run_complete(live_server):
     ).json()
     assert full["status"] == "complete"
     assert full["kpis"], "expected at least one KPI in completed scenario"
-    any_kpi = next(iter(full["kpis"].values()))
-    assert any_kpi["value"] is not None
+    # Some registered KPIs intentionally return NaN/Inf (which serialise to
+    # null) or are type-guarded against non-warehouse results. Require AT
+    # LEAST one KPI to have produced a usable numeric value.
+    assert any(k["value"] is not None for k in full["kpis"].values()), (
+        f"No KPI produced a numeric value: {full['kpis']}"
+    )
 
     # Cleanup.
     delete = httpx.delete(

@@ -26,8 +26,6 @@ import pytest
 
 from algomancy_quickstart.quickstart import QuickstartWizard
 
-REPO_ROOT = Path(__file__).resolve().parents[4]
-
 _INTERFACE_BACKEND_MATRIX = [
     ("gui", "json"),
     ("cli", "json"),
@@ -116,7 +114,9 @@ def test_generated_main_py_validate_exits_zero(tmp_path, interface, backend):
     assert main_py.exists(), "main.py was not created"
 
     interfaces = [i.strip() for i in interface.split(",")]
-    # Test each interface in the combo
+    # The generated main.py uses a relative ``data_path``, so the subprocess
+    # MUST run with cwd=tmp_path — running from REPO_ROOT would point the
+    # launcher at a non-existent directory under the repo root.
     for iface in interfaces:
         result = subprocess.run(
             [
@@ -130,7 +130,7 @@ def test_generated_main_py_validate_exits_zero(tmp_path, interface, backend):
             else [sys.executable, str(main_py), "--validate"],
             capture_output=True,
             text=True,
-            cwd=str(REPO_ROOT),
+            cwd=str(tmp_path),
             timeout=30,
         )
         assert result.returncode == 0, (
