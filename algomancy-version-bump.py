@@ -48,8 +48,12 @@ def get_bump_type(args):
 def check_version_consistency() -> int:
     """Verify that every pyproject.toml in the workspace shares the same version.
 
-    Prints a summary and returns 0 if consistent, 1 if any file disagrees.
+    Returns 0 if all files are readable and agree on a single version. Returns
+    1 if any file is unreadable, missing, or disagrees — failures are listed
+    individually so the CI log points at the file to fix.
     """
+    import tomllib
+
     root_pyproject = Path("pyproject.toml")
     packages_dir = Path("packages")
 
@@ -62,13 +66,21 @@ def check_version_consistency() -> int:
         )
 
     versions: dict[str, str] = {}
+    failures: list[tuple[str, str]] = []
     for path in targets:
         if not path.exists():
+            failures.append((str(path), "file does not exist"))
             continue
         try:
             versions[str(path)] = get_version_from_pyproject(path)
-        except (KeyError, Exception):
-            versions[str(path)] = "<unreadable>"
+        except (tomllib.TOMLDecodeError, KeyError, OSError) as exc:
+            failures.append((str(path), f"{type(exc).__name__}: {exc}"))
+
+    if failures:
+        print("[FAIL] Unreadable or malformed pyproject.toml files:")
+        for path, reason in failures:
+            print(f"  {path}: {reason}")
+        return 1
 
     unique = set(versions.values())
     if len(unique) == 1:

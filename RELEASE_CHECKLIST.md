@@ -6,58 +6,85 @@
 > After one or two release cycles, the policy will be re-evaluated and may
 > move to a label-gated model.
 
+> **Conventions used below**
+> - **CWD** = the working directory each command must be run from.
+> - `<repo>` = the cloned Algomancy repository root.
+> - `<tmp>` = a scratch directory (e.g. `mktemp -d`) used by the quickstart walk.
+> - `<fresh-venv>` = a brand-new virtual environment outside `<repo>` (e.g.
+>   `python -m venv /tmp/algomancy-smoke && source /tmp/algomancy-smoke/bin/activate`).
+
 ## 1 Build sanity
 
+**CWD: `<repo>`**
+
 - [ ] `uv lock --check` exits 0 (lockfile is up to date)
-- [ ] `uv run python algomancy-version-bump.py --check` exits 0 (all packages at `{VERSION}`)
-- [ ] `uv build --all-packages --wheel` succeeds for all 8 packages
+- [ ] `uv run python algomancy-version-bump.py --check` exits 0 (all 9 `pyproject.toml` files at `{VERSION}`)
+- [ ] `uv build --all-packages --wheel` succeeds for all 8 packages (artifacts land in `<repo>/dist/`)
 - [ ] `pre-commit run --all-files` passes (ruff, sort-pyproject)
 
 ## 2 Automated test gate
+
+**CWD: `<repo>`** (pytest discovers tests via `pyproject.toml` from here)
 
 - [ ] `uv run pytest tests packages/algomancy-data/tests packages/algomancy-scenario/tests -v` — all green
 - [ ] `uv run pytest packages/algomancy-api/tests -v` — all green, including `test_smoke_live.py`
 - [ ] `uv run pytest packages/algomancy-quickstart/tests -v` — all green
 - [ ] Slow smoke matrix (`-m slow`) green on CI or local:
-  - [ ] CLI smoke (`test_smoke_cli.py`)
-  - [ ] Quickstart validate matrix (`test_smoke_quickstart.py`)
-  - [ ] Persistence backend matrix (`tests/smoke/test_persistence_matrix.py`)
+  - [ ] CLI smoke (`uv run pytest -m slow packages/algomancy-cli/tests/test_smoke_cli.py`)
+  - [ ] Quickstart validate matrix (`uv run pytest -m slow packages/algomancy-quickstart/tests/test_smoke_quickstart.py`)
+  - [ ] Persistence backend matrix (`uv run pytest -m slow tests/smoke/test_persistence_matrix.py`).
+        The `database` case is `importorskip`-skipped unless `uv sync --extra database` is installed; install the extra and re-run if you want the SQLite leg green.
 
 ## 3 GUI manual walk
 
-- [ ] `uv run python example/main.py` boots, sidebar shows: Home, Data, Scenarios, Compare, Overview
+**CWD: `<repo>`** (the example wiring uses a relative `data_path="example/data"`)
+
+- [ ] `uv run python -m example.main --interface gui` boots; browser at `http://127.0.0.1:8050` opens, sidebar shows: Home, Data, Scenarios, Compare, Overview
 - [ ] Data accordion shows all tables without console errors
-- [ ] Run **GreedySlotting** scenario → completes with non-NaN KPI values
-- [ ] Run **SimulatedAnnealingSlotting** → progress bar increments during run
-- [ ] Compare page shows side-by-side warehouse scatter for two completed scenarios
+- [ ] Run **Greedy Slotting** scenario → completes with non-NaN KPI values for the warehouse KPIs (Travel Distance, Zone Balance, Reslot Cost)
+- [ ] Run **SA Slotting** → progress bar increments during run
+- [ ] Compare page shows side-by-side warehouse scatter for two completed slotting scenarios
 - [ ] Overview page renders slot scatter coloured by zone
-- [ ] Run **LongProgressAlgorithm** (10 s) → progress bar advances → DELETE cancels within 2 s
-- [ ] Run **FailureModesAlgorithm** `raise_value_error` → scenario shows failed state with error message
+- [ ] Run **Long Progress** (10 s) → progress bar advances → DELETE cancels within 2 s
+- [ ] Run **Failure Modes** with `mode=raise_value_error` → scenario shows failed state with error message
 - [ ] Switch session (e.g. `test_session`) → no crash
-- [ ] `uv run python example/main.py --backend database --database-url sqlite:///./tmp_test.db` boots end-to-end; delete `tmp_test.db` afterwards
+- [ ] **Database backend** (requires `uv sync --extra database`):
+      `uv run python -m example.main --interface gui --backend database --database-url sqlite:///./tmp_test.db`
+      boots end-to-end; delete `<repo>/tmp_test.db` afterwards
 
 ## 4 CLI manual walk
 
+**CWD: `<repo>`** (the CLI `--example` config reads `example/data/default_session` relative to here)
+
 - [ ] `uv run algomancy-cli --example` starts the shell
-- [ ] `list-data` → lists example sessions' datasets
-- [ ] `create-scenario smoke-cli default_session Slow {"duration":1}` + `run smoke-cli` → completes
-- [ ] `exit` terminates cleanly
+- [ ] `list-data` lists `example_data`, `critical_failure`, `nog een test` (and any auto-created scenarios appear under `list-scenarios`)
+- [ ] `create-scenario smoke-cli example_data Instant {}` then `run smoke-cli` → shell logs `Created scenario … smoke-cli` and `Scenario 'smoke-cli' completed.`
+- [ ] `exit` (or Ctrl-D) terminates the shell with exit code 0
 
 ## 5 API manual walk
 
-- [ ] `uv run algomancy-api --example` boots on port 8051
-- [ ] `GET /health` → `{"status": "ok"}`
-- [ ] `GET /docs` → Swagger UI renders
-- [ ] End-to-end: create scenario via API → run → poll until complete → verify KPIs
+**CWD: `<repo>`** (the API `--example` config also resolves `example/data` relative to here)
+
+- [ ] `uv run algomancy-api --example` boots on port 8051 (override with `--port` if 8051 is busy)
+- [ ] `curl http://127.0.0.1:8051/health` → `{"status": "ok", …, "use_sessions": true}`
+- [ ] `curl http://127.0.0.1:8051/docs` → Swagger UI renders
+- [ ] End-to-end: `POST /api/v1/sessions/default_session/scenarios` with body
+      `{"tag":"smoke-api","dataset_key":"example_data","algo_name":"Instant","algo_params":{}}`
+      then `POST .../scenarios/{id}/run` → poll `.../status` until `complete`; verify the full GET returns at least one KPI with a numeric value
 
 ## 6 Quickstart walk
 
-For each combo of `(backend=json, interface=gui)` and at least one of `(backend=database, interface=api)`:
-- [ ] Run quickstart wizard in a `tmp/` directory
-- [ ] `python main.py --validate` exits 0
-- [ ] `uv run pytest tests/` inside the generated project exits 0
+**CWD: `<tmp>`** — a scratch directory **outside** `<repo>` so the generator can write a brand-new project layout without colliding with the repo.
+
+For at least the combos `(backend=json, interface=gui)` and `(backend=database, interface=api)`:
+
+- [ ] From `<tmp>`: `uv run --from <repo> algomancy-quickstart` (or `python -m algomancy_quickstart` if invoked from inside the repo) — run the wizard and answer prompts
+- [ ] `python main.py --validate` exits 0 from inside the generated project directory (`<tmp>/<project-name>/`)
+- [ ] `uv run pytest tests/` from inside the generated project exits 0
 
 ## 7 Docs
+
+**CWD: `<repo>`**
 
 - [ ] `uv run sphinx-build -b html docs/source docs/build/html` builds without errors or warnings
 - [ ] CHANGELOG entry for `v{VERSION}` written
@@ -65,8 +92,11 @@ For each combo of `(backend=json, interface=gui)` and at least one of `(backend=
 
 ## 8 PyPI smoke
 
-- [ ] In a fresh virtual environment: `pip install algomancy=={VERSION}` succeeds
+**CWD: `<fresh-venv>`** — anywhere outside `<repo>`, in a clean venv so we exercise the published wheels, not the local workspace.
+
+- [ ] `pip install algomancy=={VERSION}` succeeds
 - [ ] `python -c "import algomancy; print(algomancy.__version__)"` prints `{VERSION}`
+      (`__version__` is sourced from `importlib.metadata`, so it tracks the installed wheel automatically)
 
 ## 9 Sign-off
 

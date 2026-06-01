@@ -33,8 +33,7 @@ jobs:
             # Tag-push: version comes from the tag name (strip leading "v")
             VERSION="${GITHUB_REF_NAME#v}"
           else
-            # workflow_run: extract from the tag that triggered the publish run.
-            # publish.yml fires on push to main; the version is in pyproject.toml.
+            # workflow_run: extract from pyproject.toml on the default branch.
             VERSION=$(python -c "
           import tomllib, pathlib
           data = tomllib.loads(pathlib.Path('pyproject.toml').read_text())
@@ -42,40 +41,67 @@ jobs:
           ")
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "title=v$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Skip if checklist issue already exists
+        id: dedupe
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TITLE="${{ steps.version.outputs.title }}"
+          # Both triggers (workflow_run and push:tags) can fire for the same
+          # release; bail out cleanly if an issue for this milestone already
+          # exists rather than opening duplicates.
+          EXISTING=$(gh issue list \
+            --label release-checklist \
+            --milestone "$TITLE" \
+            --state all \
+            --json number,url \
+            --jq '.[0]' || echo '')
+          if [ -n "$EXISTING" ]; then
+            URL=$(echo "$EXISTING" | python -c "import json,sys;print(json.load(sys.stdin)['url'])")
+            echo "release-checklist issue already exists for $TITLE: $URL"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Template RELEASE_CHECKLIST.md
+        if: steps.dedupe.outputs.skip != 'true'
         id: body
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           sed "s/{VERSION}/$VERSION/g" RELEASE_CHECKLIST.md > /tmp/checklist_body.md
           echo "body_path=/tmp/checklist_body.md" >> "$GITHUB_OUTPUT"
 
-      - name: Create or update milestone
-        id: milestone
+      - name: Create or reuse milestone
+        if: steps.dedupe.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          TITLE="v$VERSION"
-          # Check if milestone exists
-          MILESTONE_NUMBER=$(gh api repos/:owner/:repo/milestones \
-            --jq ".[] | select(.title == \"$TITLE\") | .number" || true)
-          if [ -z "$MILESTONE_NUMBER" ]; then
-            MILESTONE_NUMBER=$(gh api repos/:owner/:repo/milestones \
+          TITLE="${{ steps.version.outputs.title }}"
+          # `state=all` so a previously-closed milestone with the same name
+          # is reused instead of triggering a duplicate-create 422.
+          EXISTING=$(gh api 'repos/:owner/:repo/milestones?state=all' \
+            --jq ".[] | select(.title == \"$TITLE\") | .number" | head -n1)
+          if [ -z "$EXISTING" ]; then
+            gh api repos/:owner/:repo/milestones \
               --method POST \
-              --field title="$TITLE" \
-              --jq '.number')
+              --field title="$TITLE" >/dev/null
+            echo "Created milestone $TITLE"
+          else
+            echo "Reusing existing milestone $TITLE (#$EXISTING)"
           fi
-          echo "milestone=$MILESTONE_NUMBER" >> "$GITHUB_OUTPUT"
 
       - name: Open release-checklist issue
+        if: steps.dedupe.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          MILESTONE="${{ steps.milestone.outputs.milestone }}"
+          TITLE="${{ steps.version.outputs.title }}"
+          # `--milestone` takes the milestone NAME (gh resolves to the number).
           gh issue create \
-            --title "Release v$VERSION verification" \
+            --title "Release $TITLE verification" \
             --body-file /tmp/checklist_body.md \
             --label "release-checklist" \
-            --milestone "$MILESTONE"
+            --milestone "$TITLE"
