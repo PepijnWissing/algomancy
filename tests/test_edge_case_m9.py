@@ -2,19 +2,81 @@
 
 import pytest
 
-from algomancy_scenario import ScenarioResult
+from algomancy_scenario import BaseKPI, ImprovementDirection, KpiError, ScenarioResult
+from algomancy_utils import QUANTITIES, BaseMeasurement
 from example.templates.algorithm.edge_failure_modes import FailureModesAlgorithm
 from example.templates.algorithm.edge_instant import InstantAlgorithm
 from example.templates.algorithm.edge_parameter_matrix import ParameterMatrixAlgorithm
 from example.templates.algorithm.edge_progress_long import LongProgressAlgorithm
-from example.templates.kpi.edge_kpis import (
-    InfKPI,
-    NaNKPI,
-    NegativeKPI,
-    RaisingKPI,
-    ZeroAtThresholdKPI,
-)
-from algomancy_scenario import KpiError
+
+
+def _count() -> BaseMeasurement:
+    return BaseMeasurement(
+        QUANTITIES["count"][""], min_digits=1, max_digits=6, decimals=2
+    )
+
+
+class NaNKPI(BaseKPI):
+    def __init__(self) -> None:
+        super().__init__(
+            name="NaN KPI",
+            better_when=ImprovementDirection.LOWER,
+            base_measurement=_count(),
+        )
+
+    def compute(self, result: ScenarioResult) -> float:
+        return float("nan")
+
+
+class InfKPI(BaseKPI):
+    def __init__(self) -> None:
+        super().__init__(
+            name="Inf KPI",
+            better_when=ImprovementDirection.LOWER,
+            base_measurement=_count(),
+        )
+
+    def compute(self, result: ScenarioResult) -> float:
+        return float("inf")
+
+
+class NegativeKPI(BaseKPI):
+    def __init__(self) -> None:
+        super().__init__(
+            name="Negative KPI",
+            better_when=ImprovementDirection.HIGHER,
+            base_measurement=_count(),
+        )
+
+    def compute(self, result: ScenarioResult) -> float:
+        return -42.0
+
+
+class ZeroAtThresholdKPI(BaseKPI):
+    THRESHOLD = 1e-6
+
+    def __init__(self) -> None:
+        super().__init__(
+            name="Zero-at-threshold KPI",
+            better_when=ImprovementDirection.AT_MOST,
+            base_measurement=_count(),
+            threshold=ZeroAtThresholdKPI.THRESHOLD,
+        )
+
+    def compute(self, result: ScenarioResult) -> float:
+        return 0.0
+
+
+class RaisingKPI(BaseKPI):
+    def __init__(self) -> None:
+        super().__init__(
+            name="Raising KPI",
+            better_when=ImprovementDirection.LOWER,
+            base_measurement=_count(),
+        )
+
+    def compute(self, result: ScenarioResult) -> float:
+        raise RuntimeError("Intentional error from RaisingKPI")
 
 
 class _FakeData:
@@ -163,23 +225,6 @@ class TestParameterMatrixAlgorithm:
 
 
 class TestEdgeKpis:
-    def test_all_registered_in_templates(self):
-        from example.templates.kpi import kpi_templates
-
-        # "Raising KPI" is intentionally NOT registered: every registered
-        # KPI is attached to every scenario via KpiFactory.create_all(),
-        # so a KPI that always raises would mark every scenario "failed"
-        # end-to-end. The class is still importable for direct unit tests
-        # of the framework's KPI-failure handling.
-        for name in [
-            "NaN KPI",
-            "Inf KPI",
-            "Negative KPI",
-            "Zero-at-threshold KPI",
-        ]:
-            assert name in kpi_templates
-        assert "Raising KPI" not in kpi_templates
-
     def test_nan_kpi_value(self):
         import math
 
