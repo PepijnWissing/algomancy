@@ -1,3 +1,4 @@
+import math
 from typing import List, Tuple, Dict, Optional, Callable
 
 """
@@ -372,9 +373,11 @@ class Measurement:
         if self.value == Measurement.INITIAL_VALUE:
             return self
 
-        # Handle edge case of zero
+        # Handle edge cases of zero, nan, and inf
         if self.value == 0:
             return Measurement(self.base_measurement, 0)
+        if not math.isfinite(self.value):
+            return self
 
         # determine the number of digits (ignoring sign and decimal)
         n_digits = self._get_digits()

@@ -1,4 +1,0 @@
-itemid;sku;description;category;daily_picks;volume_cm3;weight_kg;currentslot;optimalslot
-1;SKU-001;Item A;Electronics;10;500.0;1.0;SLOT-001;SLOT-002
-2;SKU-002;Item B;Electronics;5;250.0;0.5;SLOT-002;SLOT-001
-3;SKU-003;Item C;Beverages;20;1000.0;2.0;SLOT-003;SLOT-003

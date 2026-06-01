@@ -1,22 +1,82 @@
 """Tests for M9 — Edge-case coverage."""
 
-import os
-
 import pytest
 
-from algomancy_scenario import ScenarioResult
+from algomancy_scenario import BaseKPI, ImprovementDirection, KpiError, ScenarioResult
+from algomancy_utils import QUANTITIES, BaseMeasurement
 from example.templates.algorithm.edge_failure_modes import FailureModesAlgorithm
 from example.templates.algorithm.edge_instant import InstantAlgorithm
 from example.templates.algorithm.edge_parameter_matrix import ParameterMatrixAlgorithm
 from example.templates.algorithm.edge_progress_long import LongProgressAlgorithm
-from example.templates.kpi.edge_kpis import (
-    InfKPI,
-    NaNKPI,
-    NegativeKPI,
-    RaisingKPI,
-    ZeroAtThresholdKPI,
-)
-from algomancy_scenario import KpiError
+
+
+def _count() -> BaseMeasurement:
+    return BaseMeasurement(
+        QUANTITIES["count"][""], min_digits=1, max_digits=6, decimals=2
+    )
+
+
+class NaNKPI(BaseKPI):
+    def __init__(self) -> None:
+        super().__init__(
+            name="NaN KPI",
+            better_when=ImprovementDirection.LOWER,
+            base_measurement=_count(),
+        )
+
+    def compute(self, result: ScenarioResult) -> float:
+        return float("nan")
+
+
+class InfKPI(BaseKPI):
+    def __init__(self) -> None:
+        super().__init__(
+            name="Inf KPI",
+            better_when=ImprovementDirection.LOWER,
+            base_measurement=_count(),
+        )
+
+    def compute(self, result: ScenarioResult) -> float:
+        return float("inf")
+
+
+class NegativeKPI(BaseKPI):
+    def __init__(self) -> None:
+        super().__init__(
+            name="Negative KPI",
+            better_when=ImprovementDirection.HIGHER,
+            base_measurement=_count(),
+        )
+
+    def compute(self, result: ScenarioResult) -> float:
+        return -42.0
+
+
+class ZeroAtThresholdKPI(BaseKPI):
+    THRESHOLD = 1e-6
+
+    def __init__(self) -> None:
+        super().__init__(
+            name="Zero-at-threshold KPI",
+            better_when=ImprovementDirection.AT_MOST,
+            base_measurement=_count(),
+            threshold=ZeroAtThresholdKPI.THRESHOLD,
+        )
+
+    def compute(self, result: ScenarioResult) -> float:
+        return 0.0
+
+
+class RaisingKPI(BaseKPI):
+    def __init__(self) -> None:
+        super().__init__(
+            name="Raising KPI",
+            better_when=ImprovementDirection.LOWER,
+            base_measurement=_count(),
+        )
+
+    def compute(self, result: ScenarioResult) -> float:
+        raise RuntimeError("Intentional error from RaisingKPI")
 
 
 class _FakeData:
@@ -165,23 +225,6 @@ class TestParameterMatrixAlgorithm:
 
 
 class TestEdgeKpis:
-    def test_all_registered_in_templates(self):
-        from example.templates.kpi import kpi_templates
-
-        # "Raising KPI" is intentionally NOT registered: every registered
-        # KPI is attached to every scenario via KpiFactory.create_all(),
-        # so a KPI that always raises would mark every scenario "failed"
-        # end-to-end. The class is still importable for direct unit tests
-        # of the framework's KPI-failure handling.
-        for name in [
-            "NaN KPI",
-            "Inf KPI",
-            "Negative KPI",
-            "Zero-at-threshold KPI",
-        ]:
-            assert name in kpi_templates
-        assert "Raising KPI" not in kpi_templates
-
     def test_nan_kpi_value(self):
         import math
 
@@ -221,13 +264,50 @@ class TestEdgeKpis:
 
 
 class TestDataDirectories:
-    def test_edge_session_exists(self):
-        assert os.path.isdir("example/data/edge_session")
+    """Behavior tests for tiny and empty session shapes.
 
-    def test_edge_session_tiny_data_has_files(self):
-        path = "example/data/edge_session/tiny_data"
-        assert os.path.isfile(os.path.join(path, "sku_data.csv"))
-        assert os.path.isfile(os.path.join(path, "warehouse_layout.csv"))
+    Previously asserted on bundled subfolders under ``example/data/``; now
+    constructed on ``tmp_path`` so the test exercises actual ETL/discovery
+    behavior rather than the presence of checked-in fixture directories.
+    """
 
-    def test_empty_session_exists(self):
-        assert os.path.isdir("example/data/empty_session")
+    def test_tiny_dataset_etls_through_example_factory(self, tmp_path):
+        from algomancy_data import CSVFile
+        from example.data_handling.factories import ExampleETLFactory
+        from example.data_handling.schemas import example_schemas
+
+        dataset_dir = tmp_path / "tiny_session" / "tiny_data"
+        dataset_dir.mkdir(parents=True)
+        (dataset_dir / "sku_data.csv").write_text(
+            "itemid;sku;description;category;daily_picks;volume_cm3;weight_kg;currentslot\n"
+            "I1;SKU-1;Item one;A;10;1.0;0.5;SLOT-1\n",
+            encoding="utf-8",
+        )
+        (dataset_dir / "warehouse_layout.csv").write_text(
+            "slotid;x;y;zone\nSLOT-1;0.0;0.0;Z1\n",
+            encoding="utf-8",
+        )
+
+        factory = ExampleETLFactory(schemas=example_schemas)
+        files = {
+            "sku_data": CSVFile(
+                name="sku_data", path=str(dataset_dir / "sku_data.csv")
+            ),
+            "warehouse_layout": CSVFile(
+                name="warehouse_layout",
+                path=str(dataset_dir / "warehouse_layout.csv"),
+            ),
+        }
+        result = factory.build_pipeline("tiny_data", files).run()
+
+        assert result.is_success
+        assert set(result.datasource.tables) == {"sku_data", "warehouse_layout"}
+        assert len(result.datasource.tables["sku_data"]) == 1
+        assert len(result.datasource.tables["warehouse_layout"]) == 1
+
+    def test_empty_session_folder_is_discoverable(self, tmp_path):
+        from algomancy_scenario.sessionmanager import SessionManager
+
+        (tmp_path / "empty_session").mkdir()
+        discovered = SessionManager._determine_sessions_from_folder(str(tmp_path))
+        assert "empty_session" in discovered

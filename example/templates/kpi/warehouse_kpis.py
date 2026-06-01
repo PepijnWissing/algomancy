@@ -21,7 +21,7 @@ class WarehouseTravelKPI(BaseKPI):
             name="Travel Distance",
             better_when=ImprovementDirection.LOWER,
             base_measurement=BaseMeasurement(
-                QUANTITIES["count"][""], min_digits=1, max_digits=6, decimals=0
+                QUANTITIES["length"]["m"], min_digits=1, max_digits=3, decimals=0
             ),
         )
 

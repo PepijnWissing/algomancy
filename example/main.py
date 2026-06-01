@@ -69,7 +69,7 @@ def _core_kwargs(args: argparse.Namespace) -> dict:
         algo_templates=algorithm_templates,
         schemas=example_schemas,
         data_object_type=DataSource,
-        autocreate=True,
+        autocreate=False,
         default_algo="Greedy Slotting",
         default_algo_params_values={
             "depot_x": 0.0,
