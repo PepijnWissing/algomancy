@@ -168,14 +168,19 @@ class TestEdgeKpis:
     def test_all_registered_in_templates(self):
         from example.templates.kpi import kpi_templates
 
+        # "Raising KPI" is intentionally NOT registered: every registered
+        # KPI is attached to every scenario via KpiFactory.create_all(),
+        # so a KPI that always raises would mark every scenario "failed"
+        # end-to-end. The class is still importable for direct unit tests
+        # of the framework's KPI-failure handling.
         for name in [
             "NaN KPI",
             "Inf KPI",
             "Negative KPI",
             "Zero-at-threshold KPI",
-            "Raising KPI",
         ]:
             assert name in kpi_templates
+        assert "Raising KPI" not in kpi_templates
 
     def test_nan_kpi_value(self):
         import math

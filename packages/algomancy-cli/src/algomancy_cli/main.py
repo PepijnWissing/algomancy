@@ -65,7 +65,7 @@ def _build_example_config() -> CliConfiguration:
     from algomancy_data import DataSource
 
     return CliConfiguration(
-        data_path="example/data",
+        data_path="example/data/default_session",
         has_persistent_state=True,
         etl_factory=ExampleETLFactory,
         kpi_templates=kpi_templates,
@@ -73,8 +73,8 @@ def _build_example_config() -> CliConfiguration:
         schemas=example_schemas,
         data_object_type=DataSource,
         autocreate=True,
-        default_algo="Slow",
-        default_algo_params_values={"duration": 1},
+        default_algo="Instant",
+        default_algo_params_values={},
         autorun=True,
         title="Algomancy CLI (Example)",
     )

@@ -20,12 +20,15 @@ __all__ = [
     "RaisingKPI",
 ]
 
+# RaisingKPI is kept importable for direct unit tests of the framework's
+# KPI-failure handling, but NOT registered here: every registered KPI is
+# attached to every scenario via KpiFactory.create_all(), so registering a
+# KPI that always raises would mark every scenario "failed" end-to-end.
 kpi_templates = {
     "NaN KPI": NaNKPI,
     "Inf KPI": InfKPI,
     "Negative KPI": NegativeKPI,
     "Zero-at-threshold KPI": ZeroAtThresholdKPI,
-    "Raising KPI": RaisingKPI,
     "Travel Distance": WarehouseTravelKPI,
     "Zone Balance": WarehouseZoneBalanceKPI,
     "Reslot Cost": WarehouseReslotCostKPI,

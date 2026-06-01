@@ -144,3 +144,6 @@ cython_debug/
 test-algomancy-app/
 /.design-tmp/
 /test.ipynb
+
+# Playwright/GUI smoke test screenshots
+pytest-results/
