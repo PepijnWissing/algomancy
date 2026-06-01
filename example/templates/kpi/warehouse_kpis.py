@@ -26,6 +26,8 @@ class WarehouseTravelKPI(BaseKPI):
         )
 
     def compute(self, result: WarehouseAllocationResult) -> float:
+        if not isinstance(result, WarehouseAllocationResult):
+            return float("nan")
         layout = result.layout_data.set_index("slotid")[["x", "y"]].to_dict("index")
         total = 0.0
         for _, row in result.sku_data.iterrows():
@@ -55,6 +57,8 @@ class WarehouseZoneBalanceKPI(BaseKPI):
         )
 
     def compute(self, result: WarehouseAllocationResult) -> float:
+        if not isinstance(result, WarehouseAllocationResult):
+            return float("nan")
         zone_map = result.layout_data.set_index("slotid")["zone"].to_dict()
         picks_by_zone: dict[str, float] = {}
 
@@ -94,6 +98,8 @@ class WarehouseReslotCostKPI(BaseKPI):
         )
 
     def compute(self, result: WarehouseAllocationResult) -> float:
+        if not isinstance(result, WarehouseAllocationResult):
+            return float("nan")
         moves = 0
         for _, row in result.sku_data.iterrows():
             iid = str(row["itemid"])
