@@ -207,13 +207,6 @@ def etl_datasource() -> DataSource:
     file_items = [
         ("sku_data", str(EXAMPLE_DATA_DIR / "sku_data.csv")),
         ("warehouse_layout", str(EXAMPLE_DATA_DIR / "warehouse_layout.csv")),
-        ("inventory", str(EXAMPLE_DATA_DIR / "inventory.xlsx")),
-        ("employees", str(EXAMPLE_DATA_DIR / "employees.json")),
-        ("multisheet", str(EXAMPLE_DATA_DIR / "multisheet.xlsx")),
-        ("categories", str(EXAMPLE_DATA_DIR / "categories.csv")),
-        ("products", str(EXAMPLE_DATA_DIR / "products.csv")),
-        ("order_items", str(EXAMPLE_DATA_DIR / "order_items.csv")),
-        ("picks", str(EXAMPLE_DATA_DIR / "picks.json")),
     ]
     files = dm.prepare_files(file_items_with_path=file_items)
     result = dm.etl_data(files, dataset_name="example_data")

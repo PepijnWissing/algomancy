@@ -47,7 +47,7 @@
 - [ ] Overview page renders slot scatter coloured by zone
 - [ ] Run **Long Progress** (10 s) → progress bar advances → DELETE cancels within 2 s
 - [ ] Run **Failure Modes** with `mode=raise_value_error` → scenario shows failed state with error message
-- [ ] Switch session (e.g. `test_session`) → no crash
+- [ ] Single-session wiring (`default_session`) loads without crash on the data page
 - [ ] **Database backend** (requires `uv sync --extra database`):
       `uv run python -m example.main --interface gui --backend database --database-url sqlite:///./tmp_test.db`
       boots end-to-end; delete `<repo>/tmp_test.db` afterwards
@@ -57,7 +57,7 @@
 **CWD: `<repo>`** (the CLI `--example` config reads `example/data/default_session` relative to here)
 
 - [ ] `uv run algomancy-cli --example` starts the shell
-- [ ] `list-data` lists `example_data`, `critical_failure`, `nog een test` (and any auto-created scenarios appear under `list-scenarios`)
+- [ ] `list-data` lists `example_data` and the serialised `nog een test` snapshot (and any auto-created scenarios appear under `list-scenarios`)
 - [ ] `create-scenario smoke-cli example_data Instant {}` then `run smoke-cli` → shell logs `Created scenario … smoke-cli` and `Scenario 'smoke-cli' completed.`
 - [ ] `exit` (or Ctrl-D) terminates the shell with exit code 0
 

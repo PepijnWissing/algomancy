@@ -1,7 +1,5 @@
 """Tests for M9 — Edge-case coverage."""
 
-import os
-
 import pytest
 
 from algomancy_scenario import ScenarioResult
@@ -221,13 +219,50 @@ class TestEdgeKpis:
 
 
 class TestDataDirectories:
-    def test_edge_session_exists(self):
-        assert os.path.isdir("example/data/edge_session")
+    """Behavior tests for tiny and empty session shapes.
 
-    def test_edge_session_tiny_data_has_files(self):
-        path = "example/data/edge_session/tiny_data"
-        assert os.path.isfile(os.path.join(path, "sku_data.csv"))
-        assert os.path.isfile(os.path.join(path, "warehouse_layout.csv"))
+    Previously asserted on bundled subfolders under ``example/data/``; now
+    constructed on ``tmp_path`` so the test exercises actual ETL/discovery
+    behavior rather than the presence of checked-in fixture directories.
+    """
 
-    def test_empty_session_exists(self):
-        assert os.path.isdir("example/data/empty_session")
+    def test_tiny_dataset_etls_through_example_factory(self, tmp_path):
+        from algomancy_data import CSVFile
+        from example.data_handling.factories import ExampleETLFactory
+        from example.data_handling.schemas import example_schemas
+
+        dataset_dir = tmp_path / "tiny_session" / "tiny_data"
+        dataset_dir.mkdir(parents=True)
+        (dataset_dir / "sku_data.csv").write_text(
+            "itemid;sku;description;category;daily_picks;volume_cm3;weight_kg;currentslot\n"
+            "I1;SKU-1;Item one;A;10;1.0;0.5;SLOT-1\n",
+            encoding="utf-8",
+        )
+        (dataset_dir / "warehouse_layout.csv").write_text(
+            "slotid;x;y;zone\nSLOT-1;0.0;0.0;Z1\n",
+            encoding="utf-8",
+        )
+
+        factory = ExampleETLFactory(schemas=example_schemas)
+        files = {
+            "sku_data": CSVFile(
+                name="sku_data", path=str(dataset_dir / "sku_data.csv")
+            ),
+            "warehouse_layout": CSVFile(
+                name="warehouse_layout",
+                path=str(dataset_dir / "warehouse_layout.csv"),
+            ),
+        }
+        result = factory.build_pipeline("tiny_data", files).run()
+
+        assert result.is_success
+        assert set(result.datasource.tables) == {"sku_data", "warehouse_layout"}
+        assert len(result.datasource.tables["sku_data"]) == 1
+        assert len(result.datasource.tables["warehouse_layout"]) == 1
+
+    def test_empty_session_folder_is_discoverable(self, tmp_path):
+        from algomancy_scenario.sessionmanager import SessionManager
+
+        (tmp_path / "empty_session").mkdir()
+        discovered = SessionManager._determine_sessions_from_folder(str(tmp_path))
+        assert "empty_session" in discovered
