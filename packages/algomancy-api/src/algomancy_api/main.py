@@ -110,8 +110,8 @@ def build_example_config() -> ApiConfiguration:
         schemas=example_schemas,
         data_object_type=DataSource,
         autocreate=True,
-        default_algo="Slow",
-        default_algo_params_values={"duration": 1},
+        default_algo="Instant",
+        default_algo_params_values={},
         autorun=False,
         title="Algomancy API (Example)",
     )
