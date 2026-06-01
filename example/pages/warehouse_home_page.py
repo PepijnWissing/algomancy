@@ -162,9 +162,17 @@ class WarehouseHomePage(BaseHomePage):
     @staticmethod
     def create_content() -> html.Div:
         server = get_app().server
-        # Pull data from the default session's scenario manager. With
-        # ``use_sessions=True`` this resolves to ``default_session``.
-        sm = get_scenario_manager(server)
+        # The home page is rendered before any URL state exists, so there's no
+        # active-session id to dispatch on. Resolve to the SessionManager's
+        # configured start session explicitly — otherwise
+        # ``get_scenario_manager(server)`` passes ``None`` and the session
+        # manager raises ``KeyError("Session 'None' not found.")``.
+        session_id = (
+            server.session_manager.start_session_name
+            if hasattr(server, "session_manager")
+            else None
+        )
+        sm = get_scenario_manager(server, active_session_name=session_id)
         chosen_key, tables = _safe_get_data(sm)
 
         if not tables:
