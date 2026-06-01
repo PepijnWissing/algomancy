@@ -24,11 +24,6 @@ class TestValidateFlag:
         assert result.returncode == 0, result.stderr
         assert "[validate] gui wiring OK" in result.stdout
 
-    def test_cli_validate_exits_zero(self):
-        result = _run_validate("cli")
-        assert result.returncode == 0, result.stderr
-        assert "[validate] cli wiring OK" in result.stdout
-
     def test_api_validate_exits_zero(self):
         result = _run_validate("api")
         assert result.returncode == 0, result.stderr

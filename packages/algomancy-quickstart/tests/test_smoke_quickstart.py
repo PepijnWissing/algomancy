@@ -28,12 +28,11 @@ from algomancy_quickstart.quickstart import QuickstartWizard
 
 _INTERFACE_BACKEND_MATRIX = [
     ("gui", "json"),
-    ("cli", "json"),
     ("api", "json"),
     ("gui", "none"),
     ("gui", "database"),
     # Multi-interface combo
-    ("gui,cli,api", "json"),
+    ("gui,api", "json"),
 ]
 
 

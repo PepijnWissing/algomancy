@@ -115,8 +115,6 @@ class QuickstartWizard:
         click.echo("Next steps:")
         click.echo("  1. Review and customize the generated files")
         extra_pkgs = []
-        if "cli" in self.interfaces:
-            extra_pkgs.append("algomancy-cli")
         if "api" in self.interfaces:
             extra_pkgs.append("algomancy-api")
         if self.persistence_backend == "database":
@@ -802,14 +800,14 @@ class QuickstartWizard:
     def _prompt_interfaces() -> list[str]:
         """Ask the user which interface(s) to bake into ``main.py``.
 
-        Accepts a comma-separated list of ``gui``, ``cli``, ``api`` (any
+        Accepts a comma-separated list of ``gui``, ``api`` (any
         non-empty subset). The wizard's default is GUI for backwards
         compatibility with pre-#128 quickstart runs.
         """
         click.echo()
         click.echo("Which interface(s) should the generated main.py expose?")
-        click.echo("  Options: gui, cli, api (comma-separated, e.g. 'gui,api')")
-        valid = {"gui", "cli", "api"}
+        click.echo("  Options: gui, api (comma-separated, e.g. 'gui,api')")
+        valid = {"gui", "api"}
         while True:
             raw = click.prompt("Interfaces", default="gui", type=str, show_default=True)
             parts = [p.strip().lower() for p in raw.split(",") if p.strip()]

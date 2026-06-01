@@ -5,7 +5,7 @@ Algomancy is a lightweight framework for building interactive dashboards that vi
 ## Highlights
 - Python 3.14+
 - Dash UI with modular pages and a production-ready server
-- Batteries-included packages: content, data, scenario, GUI, CLI
+- Batteries-included packages: content, data, scenario, GUI, API
 
 ## Installation
 - Using uv (recommended):
@@ -90,9 +90,6 @@ Examples
 Requirements
 - Python 3.14+
 - Windows, macOS, or Linux
-
-CLI
-- This package also exposes a CLI entry point `algomancy-cli`. Run `algomancy-cli --help` for usage.
 
 License
 - See the `LICENSE` file included with this distribution.

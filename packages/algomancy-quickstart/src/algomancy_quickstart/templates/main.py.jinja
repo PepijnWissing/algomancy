@@ -1,5 +1,5 @@
 {# Unified main.py template — handles every wizard combination:
-   * interfaces: subset of {"gui", "cli", "api"} (at least one)
+   * interfaces: subset of {"gui", "api"} (at least one)
    * has_custom_implementations: bool
    * has_generated_etl: bool
    * has_styling: bool
@@ -20,10 +20,6 @@ from algomancy_gui.configuration.serverconfig import ServerConfig
 from algomancy_gui.configuration.stylingconfig import StylingConfig
 {% endif %}
 from algomancy_gui.gui_launcher import GuiLauncher
-{% endif %}
-{% if "cli" in interfaces %}
-from algomancy_cli.cli_configuration import CliConfiguration
-from algomancy_cli.cli_launcher import CliLauncher
 {% endif %}
 {% if "api" in interfaces %}
 from algomancy_api.api_configuration import ApiConfiguration
@@ -134,16 +130,6 @@ def run_gui() -> None:
     cfg = build_gui()
     app = GuiLauncher.build(cfg)
     GuiLauncher.run(app=app, host=cfg.server.host, port=cfg.server.port)
-{% endif %}
-{% if "cli" in interfaces %}
-
-def build_cli() -> CliConfiguration:
-    return CliConfiguration(**_core_kwargs())
-
-
-def run_cli() -> None:
-    shell = CliLauncher.build(build_cli())
-    CliLauncher.run(shell)
 {% endif %}
 {% if "api" in interfaces %}
 

@@ -6,7 +6,6 @@ requires-python = ">=3.14"
 members = [
     "algomancy",
     "algomancy-api",
-    "algomancy-cli",
     "algomancy-content",
     "algomancy-data",
     "algomancy-gui",
@@ -56,7 +55,6 @@ version = "0.7.0"
 source = { editable = "." }
 dependencies = [
     { name = "algomancy-api" },
-    { name = "algomancy-cli" },
     { name = "algomancy-content" },
     { name = "algomancy-data" },
     { name = "algomancy-gui" },
@@ -86,7 +84,6 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "algomancy-api", editable = "packages/algomancy-api" },
-    { name = "algomancy-cli", editable = "packages/algomancy-cli" },
     { name = "algomancy-content", editable = "packages/algomancy-content" },
     { name = "algomancy-data", editable = "packages/algomancy-data" },
     { name = "algomancy-gui", editable = "packages/algomancy-gui" },
@@ -146,23 +143,6 @@ requires-dist = [
 dev = [
     { name = "httpx", specifier = ">=0.28" },
     { name = "pytest", specifier = ">=9.0.3" },
-]
-
-[[package]]
-name = "algomancy-cli"
-version = "0.7.0"
-source = { editable = "packages/algomancy-cli" }
-dependencies = [
-    { name = "algomancy-data" },
-    { name = "algomancy-scenario" },
-    { name = "algomancy-utils" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "algomancy-data", editable = "packages/algomancy-data" },
-    { name = "algomancy-scenario", editable = "packages/algomancy-scenario" },
-    { name = "algomancy-utils", editable = "packages/algomancy-utils" },
 ]
 
 [[package]]

@@ -1,8 +1,8 @@
 """Console entry point for the ``algomancy-api`` script.
 
-Mirrors :mod:`algomancy_cli.main`: load a user's :class:`ApiConfiguration` via
-a ``module:function`` callback (or use the bundled example config), then hand
-the resulting app to :class:`ApiLauncher` to serve with uvicorn.
+Load a user's :class:`ApiConfiguration` via a ``module:function`` callback
+(or use the bundled example config), then hand the resulting app to
+:class:`ApiLauncher` to serve with uvicorn.
 
 Usage
 -----

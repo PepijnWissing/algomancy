@@ -74,7 +74,6 @@ jobs:
       matrix:
         package:
           - algomancy-api
-          - algomancy-cli
           - algomancy-content
           - algomancy-data
           - algomancy-gui

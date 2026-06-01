@@ -1,7 +1,7 @@
 """main.py — Multi-interface dispatcher for the Algomancy example application.
 
 Usage:
-    python example/main.py [--interface {gui,cli,api}]
+    python example/main.py [--interface {gui,api}]
                            [--backend {none,json,database}]
                            [--database-url URL]
                            [--host HOST] [--port PORT]
@@ -197,26 +197,6 @@ def run_gui(args: argparse.Namespace) -> None:
 
 
 # ---------------------------------------------------------------------------
-# CLI
-# ---------------------------------------------------------------------------
-
-
-def build_cli(args: argparse.Namespace):
-    from algomancy_cli.cli_configuration import CliConfiguration
-    from algomancy_cli.cli_launcher import CliLauncher
-
-    cfg = CliConfiguration(**_core_kwargs(args))
-    return CliLauncher.build(cfg)
-
-
-def run_cli(args: argparse.Namespace) -> None:
-    from algomancy_cli.cli_launcher import CliLauncher
-
-    shell = build_cli(args)
-    CliLauncher.run(shell)
-
-
-# ---------------------------------------------------------------------------
 # API
 # ---------------------------------------------------------------------------
 
@@ -245,12 +225,10 @@ def run_api(args: argparse.Namespace) -> None:
 
 _BUILDERS = {
     "gui": build_gui,
-    "cli": build_cli,
     "api": build_api,
 }
 _RUNNERS = {
     "gui": run_gui,
-    "cli": run_cli,
     "api": run_api,
 }
 
@@ -261,7 +239,7 @@ def _parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--interface",
-        choices=["gui", "cli", "api"],
+        choices=["gui", "api"],
         default="gui",
         help="Which interface to launch (default: gui).",
     )

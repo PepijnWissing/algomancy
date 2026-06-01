@@ -2,20 +2,19 @@
 # HTTP API
 
 The `algomancy-api` package exposes the same scenario- and data-management
-surface used by the Dash GUI and the CLI shell as an HTTP service. A remote
-process — browser SPA, native desktop app, another Python client — can drive
-an Algomancy backend over JSON-over-HTTP instead of importing it in-process.
+surface used by the Dash GUI as an HTTP service. A remote process —
+browser SPA, native desktop app, another Python client — can drive an
+Algomancy backend over JSON-over-HTTP instead of importing it in-process.
 
-The shape mirrors the other frontends:
+The shape mirrors the GUI:
 
 - An [`ApiConfiguration`](#configuration) carries the same domain wiring
   (ETL factory, algorithm/KPI templates, schemas, data paths) as
-  `CliConfiguration` and `AppConfig.core`.
+  `AppConfig.core`.
 - An [`ApiLauncher`](#launching) turns that configuration into a
   [FastAPI](https://fastapi.tiangolo.com/) app and serves it with uvicorn.
 - A console script `algomancy-api` accepts a `--config-callback module:fn`
-  that returns an `ApiConfiguration`, identical to how `algomancy-cli` is
-  bootstrapped.
+  that returns an `ApiConfiguration`.
 
 ```{tip}
 Once a server is running, point your browser at `/docs` for the interactive
@@ -86,8 +85,7 @@ process manager instead of using `ApiLauncher.run`.
 {ref}`Scenario reference <scenario-package-ref>`) with HTTP-specific fields. Inherited
 fields like `etl_factory`, `kpi_templates`, `algo_templates`, `schemas`,
 `data_object_type`, `data_path`, `has_persistent_state`, `use_sessions`,
-`autocreate`, `autorun`, and `title` behave exactly as they do for the GUI
-and CLI.
+`autocreate`, `autorun`, and `title` behave exactly as they do for the GUI.
 
 | Field | Type | Default | Notes |
 |---|---|---|---|
@@ -261,4 +259,3 @@ humans and may change between versions.
 
 - {ref}`Scenario reference <scenario-package-ref>` — `CoreConfig`, `ScenarioManager`, `SessionManager`.
 - {ref}`Data reference <data-ref>` — `DataSource`, `ETLFactory`, `Schema`.
-- {ref}`CLI reference <cli-ref>` — the sibling headless frontend.

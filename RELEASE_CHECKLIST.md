@@ -18,8 +18,8 @@
 **CWD: `<repo>`**
 
 - [ ] `uv lock --check` exits 0 (lockfile is up to date)
-- [ ] `uv run python algomancy-version-bump.py --check` exits 0 (all 9 `pyproject.toml` files at `{VERSION}`)
-- [ ] `uv build --all-packages --wheel` succeeds for all 8 packages (artifacts land in `<repo>/dist/`)
+- [ ] `uv run python algomancy-version-bump.py --check` exits 0 (all 8 `pyproject.toml` files at `{VERSION}`)
+- [ ] `uv build --all-packages --wheel` succeeds for all 7 packages (artifacts land in `<repo>/dist/`)
 - [ ] `pre-commit run --all-files` passes (ruff, sort-pyproject)
 
 ## 2 Automated test gate
@@ -30,7 +30,6 @@
 - [ ] `uv run pytest packages/algomancy-api/tests -v` — all green, including `test_smoke_live.py`
 - [ ] `uv run pytest packages/algomancy-quickstart/tests -v` — all green
 - [ ] Slow smoke matrix (`-m slow`) green on CI or local:
-  - [ ] CLI smoke (`uv run pytest -m slow packages/algomancy-cli/tests/test_smoke_cli.py`)
   - [ ] Quickstart validate matrix (`uv run pytest -m slow packages/algomancy-quickstart/tests/test_smoke_quickstart.py`)
   - [ ] Persistence backend matrix (`uv run pytest -m slow tests/smoke/test_persistence_matrix.py`).
         The `database` case is `importorskip`-skipped unless `uv sync --extra database` is installed; install the extra and re-run if you want the SQLite leg green.
@@ -52,16 +51,7 @@
       `uv run python -m example.main --interface gui --backend database --database-url sqlite:///./tmp_test.db`
       boots end-to-end; delete `<repo>/tmp_test.db` afterwards
 
-## 4 CLI manual walk
-
-**CWD: `<repo>`** (the CLI `--example` config reads `example/data/default_session` relative to here)
-
-- [ ] `uv run algomancy-cli --example` starts the shell
-- [ ] `list-data` lists `example_data` and the serialised `nog een test` snapshot (and any auto-created scenarios appear under `list-scenarios`)
-- [ ] `create-scenario smoke-cli example_data Instant {}` then `run smoke-cli` → shell logs `Created scenario … smoke-cli` and `Scenario 'smoke-cli' completed.`
-- [ ] `exit` (or Ctrl-D) terminates the shell with exit code 0
-
-## 5 API manual walk
+## 4 API manual walk
 
 **CWD: `<repo>`** (the API `--example` config also resolves `example/data` relative to here)
 
@@ -72,7 +62,7 @@
       `{"tag":"smoke-api","dataset_key":"example_data","algo_name":"Instant","algo_params":{}}`
       then `POST .../scenarios/{id}/run` → poll `.../status` until `complete`; verify the full GET returns at least one KPI with a numeric value
 
-## 6 Quickstart walk
+## 5 Quickstart walk
 
 **CWD: `<tmp>`** — a scratch directory **outside** `<repo>` so the generator can write a brand-new project layout without colliding with the repo.
 
@@ -86,7 +76,7 @@ For at least the combos `(backend=json, interface=gui)` and `(backend=database, 
 - [ ] `cd <tmp>/<project-name> && python main.py --validate` exits 0.
 - [ ] `cd <tmp>/<project-name> && uv run pytest tests/` exits 0.
 
-## 7 Docs
+## 6 Docs
 
 **CWD: `<repo>`**
 
@@ -94,7 +84,7 @@ For at least the combos `(backend=json, interface=gui)` and `(backend=database, 
 - [ ] CHANGELOG entry for `v{VERSION}` written
 - [ ] README quickstart section reflects any new flags or interfaces
 
-## 8 PyPI smoke
+## 7 PyPI smoke
 
 **CWD: `<fresh-venv>`** — anywhere outside `<repo>`, in a clean venv so we exercise the published wheels, not the local workspace.
 
@@ -102,10 +92,10 @@ For at least the combos `(backend=json, interface=gui)` and `(backend=database, 
 - [ ] `python -c "import algomancy; print(algomancy.__version__)"` prints `{VERSION}`
       (`__version__` is sourced from `importlib.metadata`, so it tracks the installed wheel automatically)
 
-## 9 Sign-off
+## 8 Sign-off
 
-- [ ] Reviewer 1: @____________ confirms items 1–8 complete
-- [ ] Reviewer 2: @____________ confirms items 1–8 complete
+- [ ] Reviewer 1: @____________ confirms items 1–7 complete
+- [ ] Reviewer 2: @____________ confirms items 1–7 complete
 
 ---
 

@@ -30,7 +30,7 @@ uv run python algomancy-version-bump.py
 
 ## Architecture
 
-Algomancy is a **uv workspace** of 8 modular packages (`packages/algomancy-*/`) plus a thin root package (`src/algomancy/`). Users build dashboards by subclassing framework base classes and wiring them into `AppConfig`. The same backend (`ScenarioManager` / `SessionManager`) is reachable through three interchangeable frontends — Dash GUI, CLI shell, or HTTP API.
+Algomancy is a **uv workspace** of 7 modular packages (`packages/algomancy-*/`) plus a thin root package (`src/algomancy/`). Users build dashboards by subclassing framework base classes and wiring them into `AppConfig`. The same backend (`ScenarioManager` / `SessionManager`) is reachable through two interchangeable frontends — Dash GUI or HTTP API.
 
 ### Package responsibilities
 
@@ -40,7 +40,6 @@ Algomancy is a **uv workspace** of 8 modular packages (`packages/algomancy-*/`) 
 | `algomancy-scenario` | Scenario lifecycle, `BaseAlgorithm`, `BaseParameterSet`, `BaseKPI`, `SessionManager` |
 | `algomancy-gui` | Dash app assembly, `AppConfig`, `GuiLauncher`, styling/theming |
 | `algomancy-content` | Pre-built page templates, placeholder implementations |
-| `algomancy-cli` | Interactive terminal shell for headless backend testing |
 | `algomancy-api` | FastAPI HTTP service exposing scenario/data management for remote frontends |
 | `algomancy-utils` | Shared helpers |
 | `algomancy-quickstart` | Project scaffolding (`algomancy-quickstart` CLI) |
@@ -58,9 +57,7 @@ Data page → DataManager → ETLFactory → Extractor/Transformer/Loader → Da
 Scenario page → Scenario lifecycle → BaseAlgorithm.run() → BaseKPI.compute()
 ```
 
-The `algomancy-cli` entry point (`algomancy-cli --config-callback myapp:make_config`) gives direct backend access without the GUI — useful for testing ETL and algorithms.
-
-The `algomancy-api` entry point (`algomancy-api --config-callback myapp:make_config`, default port `8051`) serves the same backend as JSON over HTTP. Routes under `/api/v1/sessions/{session_id}/...` cover the full scenario lifecycle (CRUD + run + poll), data management, and algorithm/KPI discovery. OpenAPI schema at `/openapi.json`, Swagger UI at `/docs`.
+The `algomancy-api` entry point (`algomancy-api --config-callback myapp:make_config`, default port `8051`) serves the same backend as JSON over HTTP — useful for remote frontends and headless backend testing. Routes under `/api/v1/sessions/{session_id}/...` cover the full scenario lifecycle (CRUD + run + poll), data management, and algorithm/KPI discovery. OpenAPI schema at `/openapi.json`, Swagger UI at `/docs`.
 
 ### Extension points
 
@@ -80,4 +77,4 @@ API reference is auto-generated from Google-style docstrings via `sphinx.ext.aut
 
 ## Versioning
 
-All 8 packages share a single version number (currently `0.6.0`). Use `algomancy-version-bump.py` to update all `pyproject.toml` files at once — do not edit package versions manually.
+All 7 packages share a single version number (currently `0.7.0`). Use `algomancy-version-bump.py` to update all `pyproject.toml` files at once — do not edit package versions manually.

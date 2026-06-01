@@ -29,8 +29,8 @@ class ScenarioManager:
 
     @classmethod
     def from_config(cls, cfg) -> "ScenarioManager":
-        """Build from either a CoreConfig (or subclass like CliConfiguration,
-        ApiConfiguration) or any wrapper exposing a `.core` CoreConfig (e.g. AppConfig).
+        """Build from either a CoreConfig (or subclass like ApiConfiguration)
+        or any wrapper exposing a `.core` CoreConfig (e.g. AppConfig).
         """
         if isinstance(cfg, CoreConfig):
             core = cfg

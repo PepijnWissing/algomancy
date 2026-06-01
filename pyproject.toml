@@ -19,7 +19,6 @@ classifiers = [
 ]
 dependencies = [
   "algomancy-api >= 0.7.0",
-  "algomancy-cli >= 0.7.0",
   "algomancy-content >= 0.7.0",
   "algomancy-data >= 0.7.0",
   "algomancy-gui >= 0.7.0",
@@ -52,7 +51,6 @@ version = "0.7.0"
 
 [project.scripts]
 algomancy-api = "algomancy_api.main:main"
-algomancy-cli = "algomancy_cli.main:main"
 algomancy-quickstart = "algomancy_quickstart.main:main"
 
 [project.urls]
@@ -68,7 +66,6 @@ pythonpath = ["."]
 
 [tool.uv.sources]
 algomancy-api = {workspace = true}
-algomancy-cli = {workspace = true}
 algomancy-content = {workspace = true}
 algomancy-data = {workspace = true}
 algomancy-gui = {workspace = true}
@@ -84,6 +81,5 @@ members = [
   "packages/algomancy-utils",
   "packages/algomancy-data",
   "packages/algomancy-scenario",
-  "packages/algomancy-cli",
   "packages/algomancy-quickstart"
 ]

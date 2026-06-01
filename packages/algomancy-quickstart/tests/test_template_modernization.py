@@ -412,12 +412,8 @@ def test_main_template_pass_all_subconfigs(jinja_env: Environment, ctx: dict) ->
     "interfaces",
     [
         ["gui"],
-        ["cli"],
         ["api"],
-        ["gui", "cli"],
         ["gui", "api"],
-        ["cli", "api"],
-        ["gui", "cli", "api"],
     ],
 )
 def test_main_template_supports_interface_combinations(
@@ -434,12 +430,6 @@ def test_main_template_supports_interface_combinations(
         assert "run_gui" in rendered
     else:
         assert "GuiLauncher" not in rendered
-
-    if "cli" in interfaces:
-        assert "CliLauncher" in rendered
-        assert "run_cli" in rendered
-    else:
-        assert "CliLauncher" not in rendered
 
     if "api" in interfaces:
         assert "ApiLauncher" in rendered

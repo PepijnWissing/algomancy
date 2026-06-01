@@ -192,7 +192,7 @@ def update_root_dependencies(new_version: str, package_names: list[str]):
             lines = f.readlines()
 
         # Pattern to match dependency lines for workspace packages
-        # Matches lines like: "algomancy-cli >= 0.1.2",
+        # Matches lines like: "algomancy-api >= 0.1.2",
         dependency_pattern = re.compile(
             r'^(\s*)"('
             + "|".join(re.escape(name) for name in package_names)
