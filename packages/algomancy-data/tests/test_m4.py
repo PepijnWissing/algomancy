@@ -157,15 +157,23 @@ class TestDefaultValidationSequence:
         assert RequiredColumnsValidator in v_types
         assert SchemaValidator in v_types
 
-    def test_pk_validator_added_when_pk_declared(self):
-        factory = SimpleETLFactory([WidgetSchema])
-        seq = factory.create_validation_sequence()
-        assert PrimaryKeyValidator in [type(v) for v in seq._validators]
+    def test_pk_validator_always_present(self):
+        # Per issue #172: the validator is now appended unconditionally so
+        # MULTI schemas (whose primary_key() raises TypeError) don't break
+        # construction. PrimaryKeyValidator self-skips per-table when no
+        # PK is declared, so its presence is harmless for NoPK schemas.
+        for schema in (WidgetSchema, NoPKSchema):
+            seq = SimpleETLFactory([schema]).create_validation_sequence()
+            assert PrimaryKeyValidator in [type(v) for v in seq._validators]
 
-    def test_pk_validator_skipped_when_no_pk(self):
-        factory = SimpleETLFactory([NoPKSchema])
-        seq = factory.create_validation_sequence()
-        assert PrimaryKeyValidator not in [type(v) for v in seq._validators]
+    def test_pk_validator_self_skips_when_no_pk(self):
+        # NoPKSchema has no primary_key declared. Running validation against
+        # an empty data dict should produce no PK-related messages — the
+        # validator iterates _schema_table_map and short-circuits per table.
+        seq = SimpleETLFactory([NoPKSchema]).create_validation_sequence()
+        result = seq.run_validation({})
+        assert all(m.code != "MISSING_PK_COLUMN" for m in result.messages)
+        assert all(m.code != "PK_NULL" for m in result.messages)
 
 
 # ------------------------------------------------------------------ #

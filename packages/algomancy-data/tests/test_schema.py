@@ -236,6 +236,12 @@ class TestAccessors:
 
         assert NoPK.primary_key() == ()
 
+    def test_primary_key_multi_schema_raises(self):
+        # primary_key() delegates to columns(), which is SINGLE-only by
+        # design. The TypeError surfaces from the columns() guard.
+        with pytest.raises(TypeError, match="MULTI schema"):
+            ModernMultiSchema.primary_key()
+
 
 # ------------------------------------------------------------------ #
 # datatypes() classmethod (#76)

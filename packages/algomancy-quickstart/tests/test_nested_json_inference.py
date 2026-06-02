@@ -26,9 +26,11 @@ from algomancy_data import (
     JSONFile,
     JSONMultiExtractor,
     Schema,
+    SimpleETLFactory,
 )
 from algomancy_data.schema import SchemaType
 from algomancy_quickstart.data_inference import DataFileInfo, SchemaInferenceEngine
+from algomancy_quickstart.quickstart import QuickstartWizard
 
 
 SAMPLE_NESTED_JSON = {
@@ -187,6 +189,102 @@ class TestTemplate:
         child = out["picks.PickOrderLines"]
         by_id = dict(zip(child["Identity"], child["PickLoadCarriersIdentity"]))
         assert by_id == {"L1": "29036570", "L2": "29036570", "L3": "29036571"}
+
+    def test_rendered_schema_survives_full_etl_pipeline(self, tmp_path, jinja_env):
+        """Regression for issue #172: the rendered MULTI schema must also
+        survive ``SimpleETLFactory.build_pipeline().run()`` end-to-end, not
+        just direct extraction. The previous validator gate at
+        ``etl.py:339`` invoked ``primary_key()`` on the MULTI schema and
+        crashed via the SINGLE-only ``columns()`` path.
+        """
+        engine = SchemaInferenceEngine()
+        info = _write(tmp_path, SAMPLE_NESTED_JSON)
+        with patch("click.confirm", return_value=True):
+            engine._infer_schema_with_config(info)
+        info.total_columns = sum(len(c) for c in info.inferred_schemas.values())
+
+        tmpl = jinja_env.get_template("generated_schemas.py.jinja")
+        rendered = tmpl.render(project_name="Demo", files=[info])
+
+        ns: dict = {}
+        exec(  # noqa: S102 - controlled template output, no user code
+            compile(rendered, "<generated_schemas>", "exec"), ns, ns
+        )
+        SchemaCls = ns["PicksSchema"]
+
+        files = {"picks": JSONFile(name="picks", path=str(info.file_path))}
+        result = (
+            SimpleETLFactory(schemas=[SchemaCls]).build_pipeline("picks", files).run()
+        )
+
+        assert result.is_success, [m.message for m in result.messages]
+        parent = result.datasource.get_table("picks.PickLoadCarriers")
+        child = result.datasource.get_table("picks.PickOrderLines")
+        assert len(parent) == 2
+        assert len(child) == 3
+
+
+# --------------------------------------------------------------------- #
+# Summary rendering (issue #171)
+# --------------------------------------------------------------------- #
+
+
+class TestSummaryDisplay:
+    def _build_wizard_with_nested(self, tmp_path: Path) -> QuickstartWizard:
+        engine = SchemaInferenceEngine()
+        info = _write(tmp_path, SAMPLE_NESTED_JSON)
+        with patch("click.confirm", return_value=True):
+            engine._infer_schema_with_config(info)
+        info.total_columns = sum(len(c) for c in info.inferred_schemas.values())
+
+        wizard = QuickstartWizard(skip_confirmation=True)
+        wizard.current_dir = tmp_path
+        wizard.detected_files = [info]
+        return wizard
+
+    def test_multi_groups_render_with_source_path_and_fk(self, tmp_path):
+        wizard = self._build_wizard_with_nested(tmp_path)
+        captured: list[str] = []
+
+        def _capture(msg="", *a, **kw):  # match click.echo signature
+            captured.append(str(msg))
+
+        with patch("click.echo", side_effect=_capture):
+            wizard._display_inferred_schemas_summary()
+
+        text = "\n".join(captured)
+        assert "(MULTI)" in text
+        assert "Group: PickLoadCarriers" in text
+        assert "source_path: root" in text
+        assert "Group: PickOrderLines" in text
+        assert "source_path: PickOrderLines" in text
+        # Primary keys annotated.
+        assert "primary key" in text
+        # Foreign key annotation references the parent table + col.
+        assert "foreign key → PickLoadCarriers.Identity" in text
+
+    def test_flat_json_renders_as_single(self, tmp_path):
+        engine = SchemaInferenceEngine()
+        info = _write(tmp_path, [{"id": "a", "v": 1}], name="flat")
+        with patch("click.confirm") as confirm:
+            engine._infer_schema_with_config(info)
+            confirm.assert_not_called()
+        info.total_columns = len(info.inferred_schemas["default"])
+
+        wizard = QuickstartWizard(skip_confirmation=True)
+        wizard.current_dir = tmp_path
+        wizard.detected_files = [info]
+
+        captured: list[str] = []
+        with patch(
+            "click.echo", side_effect=lambda msg="", *a, **kw: captured.append(str(msg))
+        ):
+            wizard._display_inferred_schemas_summary()
+
+        text = "\n".join(captured)
+        assert "(SINGLE)" in text
+        assert "Group:" not in text
+        assert "source_path" not in text
 
 
 # --------------------------------------------------------------------- #
