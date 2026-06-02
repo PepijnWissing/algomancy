@@ -26,8 +26,11 @@ chosen at startup time:
 ```
 
 Both reuse the same `ScenarioManager` / `SessionManager`, the same
-algorithm and KPI templates, and the same configuration object. They differ
-only in how a user (or another program) reaches the framework:
+algorithm and KPI templates, and the same configuration object. The
+SessionManager scopes everything to a {ref}`session <fundamentals-sessions-ref>` —
+both frontends address scenarios and data via a session id in the URL or
+dropdown. They differ only in how a user (or another program) reaches
+the framework:
 
 | Frontend | Best for | Entry point |
 |---|---|---|
