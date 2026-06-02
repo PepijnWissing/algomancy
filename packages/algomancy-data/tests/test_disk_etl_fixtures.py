@@ -195,6 +195,47 @@ class TestPicksJSONMultiOnDisk:
         assert child["PickLoadCarrierIdentity"].notna().all()
 
 
+class TestPicksJSONMultiOnDiskFullETL:
+    """Regression for issue #172: a ColumnGroup-only MULTI schema must
+    survive the full ``SimpleETLFactory.build_pipeline().run()`` path,
+    not just direct ``JSONMultiExtractor`` extraction. The previous gate
+    in ``ETLFactory.create_validation_sequence`` called ``primary_key()``
+    on every schema before construction, which raises on MULTI schemas
+    because ``columns()`` is SINGLE-only.
+    """
+
+    def _files(self):
+        return {
+            "picks": JSONFile(
+                name="picks", path=str(FIXTURES / "picks_json_multi" / "picks.json")
+            )
+        }
+
+    def test_validation_sequence_constructs_for_multi_schema(self):
+        # Before the #172 fix, this call raised because the gate at
+        # ``etl.py:339`` invoked ``schema.primary_key()`` on a MULTI schema,
+        # which delegates to the SINGLE-only ``columns()`` accessor.
+        factory = SimpleETLFactory(schemas=[PickLoadCarrierSchema])
+        v_seq = factory.create_validation_sequence()
+        # Construction succeeded; PK validation should now run without error
+        # against an empty data dict (no tables → no per-row checks fire).
+        result = v_seq.run_validation({})
+        assert result.is_valid
+
+    def test_full_pipeline_run_succeeds(self):
+        factory = SimpleETLFactory(schemas=[PickLoadCarrierSchema])
+        result = factory.build_pipeline("picks", self._files()).run()
+
+        assert result.is_success, [m.message for m in result.messages]
+
+        parent = result.datasource.get_table("picks.PickLoadCarriers")
+        child = result.datasource.get_table("picks.PickOrderLines")
+
+        assert len(parent) == 3
+        assert len(child) == int(parent["NumberOfPickOrderLines"].sum())
+        assert child["PickLoadCarrierIdentity"].notna().all()
+
+
 # ====================================================================== #
 # Multisheet XLSX on disk — two ColumnGroups, two sheets
 # ====================================================================== #

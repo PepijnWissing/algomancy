@@ -329,15 +329,17 @@ class ETLFactory(ABC):
         """Default validation sequence using the new built-in validators.
 
         Includes (in order): ``RequiredColumnsValidator``, ``SchemaValidator``,
-        and — when any schema declares a primary key — ``PrimaryKeyValidator``.
-        Subclasses can override to add domain-specific validators.
+        and ``PrimaryKeyValidator``. The PK validator skips schemas with no
+        declared primary key internally (and decomposes MULTI schemas into
+        per-group synthetic SINGLE schemas via ``_schema_table_map``), so it
+        is safe to append unconditionally. Subclasses can override to add
+        domain-specific validators.
         """
         validators: List[Validator] = [
             RequiredColumnsValidator(self.schemas),
             SchemaValidator(self.schemas),
+            PrimaryKeyValidator(self.schemas),
         ]
-        if any(schema.primary_key() for schema in self.schemas):
-            validators.append(PrimaryKeyValidator(self.schemas))
         return ValidationSequence(validators, logger=self.logger)
 
     def create_transformation_sequence(self) -> TransformationSequence:

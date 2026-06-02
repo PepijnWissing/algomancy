@@ -26,6 +26,7 @@ from algomancy_data import (
     JSONFile,
     JSONMultiExtractor,
     Schema,
+    SimpleETLFactory,
 )
 from algomancy_data.schema import SchemaType
 from algomancy_quickstart.data_inference import DataFileInfo, SchemaInferenceEngine
@@ -187,6 +188,39 @@ class TestTemplate:
         child = out["picks.PickOrderLines"]
         by_id = dict(zip(child["Identity"], child["PickLoadCarriersIdentity"]))
         assert by_id == {"L1": "29036570", "L2": "29036570", "L3": "29036571"}
+
+    def test_rendered_schema_survives_full_etl_pipeline(self, tmp_path, jinja_env):
+        """Regression for issue #172: the rendered MULTI schema must also
+        survive ``SimpleETLFactory.build_pipeline().run()`` end-to-end, not
+        just direct extraction. The previous validator gate at
+        ``etl.py:339`` invoked ``primary_key()`` on the MULTI schema and
+        crashed via the SINGLE-only ``columns()`` path.
+        """
+        engine = SchemaInferenceEngine()
+        info = _write(tmp_path, SAMPLE_NESTED_JSON)
+        with patch("click.confirm", return_value=True):
+            engine._infer_schema_with_config(info)
+        info.total_columns = sum(len(c) for c in info.inferred_schemas.values())
+
+        tmpl = jinja_env.get_template("generated_schemas.py.jinja")
+        rendered = tmpl.render(project_name="Demo", files=[info])
+
+        ns: dict = {}
+        exec(  # noqa: S102 - controlled template output, no user code
+            compile(rendered, "<generated_schemas>", "exec"), ns, ns
+        )
+        SchemaCls = ns["PicksSchema"]
+
+        files = {"picks": JSONFile(name="picks", path=str(info.file_path))}
+        result = (
+            SimpleETLFactory(schemas=[SchemaCls]).build_pipeline("picks", files).run()
+        )
+
+        assert result.is_success, [m.message for m in result.messages]
+        parent = result.datasource.get_table("picks.PickLoadCarriers")
+        child = result.datasource.get_table("picks.PickOrderLines")
+        assert len(parent) == 2
+        assert len(child) == 3
 
 
 # --------------------------------------------------------------------- #
