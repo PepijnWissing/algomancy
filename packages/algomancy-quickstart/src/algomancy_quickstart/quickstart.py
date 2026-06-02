@@ -35,6 +35,13 @@ class QuickstartWizard:
         self.has_custom_implementations = False
         self.has_generated_etl = False
         self.has_styling = False
+        # When the user declines step 1's "overwrite existing main.py?"
+        # prompt, ``_render_main_py`` becomes a no-op for the rest of the
+        # run — otherwise steps 2/3/5 would silently clobber the file the
+        # user just asked us to leave alone. Only meaningful for re-runs
+        # against an existing project; on a fresh run the file doesn't
+        # exist yet and this stays False.
+        self._preserve_main_py = False
         # Interfaces baked into the generated main.py. GUI is the historical
         # default; the wizard's step_1 prompt may narrow / widen this.
         self.interfaces: list[str] = ["gui"]
@@ -78,15 +85,17 @@ class QuickstartWizard:
         click.echo()
 
         # Step 3: Scan data folder and generate ETL pipeline (optional).
-        # Same pre-set-the-flag pattern as step 2: render with the right
-        # ``has_generated_etl`` value the first time around.
+        # ``has_generated_etl`` is set inside step 3 itself, right before the
+        # main.py re-render, and only when the schemas/etl_factory files
+        # were actually written. Setting it here instead would leave the
+        # flag out of sync with disk (step 3's first main.py render would
+        # see ``has_generated_etl=False``) and would also wrongly mark the
+        # ETL as generated when the user declined the final confirm prompt.
         if click.confirm(
             "Do you want to scan your data folder and generate an ETL pipeline?",
             default=True,
         ):
             self.step_3_generate_etl_from_data()
-            if self.detected_files:  # Only set if files were actually processed
-                self.has_generated_etl = True
 
         click.echo()
 
@@ -232,6 +241,8 @@ class QuickstartWizard:
             if not self.skip_confirmation:
                 if not click.confirm("Do you want to overwrite it?"):
                     click.echo("Skipping main.py generation.")
+                    # Lock subsequent steps out of re-rendering main.py too.
+                    self._preserve_main_py = True
                     return
 
         # Generate main.py from template
@@ -438,6 +449,11 @@ class QuickstartWizard:
         self._generate_etl_factory_file()
         click.echo("  ✓ src/data_handling/etl_factory.py")
 
+        # Flip the flag BEFORE re-rendering main.py — otherwise the template
+        # would emit imports pointing at ``schemas.py`` (the step-2 stub)
+        # rather than ``generated_schemas.py`` that we just wrote.
+        self.has_generated_etl = True
+
         # Update main.py to use generated schemas
         click.echo()
         click.echo("Updating main.py to use generated schemas...")
@@ -596,7 +612,12 @@ class QuickstartWizard:
         target_path.write_text(content, encoding="utf-8")
 
     def _generate_styling_config(self, config: dict):
-        """Generate styling_config.py file."""
+        """Generate styling_config.py file.
+
+        Guarded by the same overwrite-confirm pattern as the schemas / ETL
+        factory writes so a wizard re-run can't silently clobber a
+        user-edited ``styling_config.py``.
+        """
         template = self.jinja_env.get_template("styling_config.py.jinja")
 
         content = template.render(
@@ -614,6 +635,11 @@ class QuickstartWizard:
         )
 
         config_path = self.current_dir / "src" / "styling_config.py"
+
+        if config_path.exists() and not self.skip_confirmation:
+            if not click.confirm(f"File {config_path.name} exists. Overwrite?"):
+                return
+
         config_path.write_text(content, encoding="utf-8")
 
     def _update_main_py_with_styling(self):
@@ -718,7 +744,12 @@ class QuickstartWizard:
         return color_map.get(data_type, "white")
 
     def _generate_schemas_file(self):
-        """Generate the schemas file from detected data."""
+        """Generate the schemas file from detected data.
+
+        Honors the same ``skip_confirmation`` / existing-file dance as
+        :meth:`_generate_etl_factory_file` so a wizard re-run can't silently
+        clobber a user-edited ``generated_schemas.py``.
+        """
         template = self.jinja_env.get_template("generated_schemas.py.jinja")
 
         content = template.render(
@@ -729,6 +760,11 @@ class QuickstartWizard:
         schemas_path = (
             self.current_dir / "src" / "data_handling" / "generated_schemas.py"
         )
+
+        if schemas_path.exists() and not self.skip_confirmation:
+            if not click.confirm(f"File {schemas_path.name} exists. Overwrite?"):
+                return
+
         schemas_path.write_text(content, encoding="utf-8")
 
     def _generate_etl_factory_file(self):
@@ -805,7 +841,13 @@ class QuickstartWizard:
         this, and the template's flags (``interfaces``, ``has_styling``,
         ``has_custom_implementations``, ``has_generated_etl``) take care of
         emitting the right launchers and imports.
+
+        No-op when ``_preserve_main_py`` is set — the user already declined
+        step 1's overwrite prompt, and a later step's re-render would
+        contradict that decision.
         """
+        if self._preserve_main_py:
+            return
         template = self.jinja_env.get_template("main.py.jinja")
         content = template.render(
             title=self.title,
