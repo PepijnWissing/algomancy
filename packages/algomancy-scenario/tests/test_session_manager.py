@@ -9,7 +9,6 @@ from algomancy_scenario import (
 
 def _make_core_config(mock_configs) -> CoreConfig:
     return CoreConfig(
-        use_sessions=True,
         data_path=mock_configs["data_path"],
         has_persistent_state=mock_configs["has_persistent_state"],
         save_type=mock_configs["save_type"],

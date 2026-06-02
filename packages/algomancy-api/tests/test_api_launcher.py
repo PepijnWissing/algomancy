@@ -7,7 +7,7 @@ from algomancy_api import ApiConfiguration, ApiLauncher
 
 @pytest.fixture
 def app(api_core_kwargs) -> FastAPI:
-    cfg = ApiConfiguration(use_sessions=False, **api_core_kwargs)
+    cfg = ApiConfiguration(**api_core_kwargs)
     return ApiLauncher.build(cfg)
 
 
@@ -28,14 +28,14 @@ def test_build_attaches_state(app):
 
 
 def test_build_accepts_dict(api_core_kwargs):
-    app = ApiLauncher.build({"use_sessions": False, **api_core_kwargs})
+    app = ApiLauncher.build({**api_core_kwargs})
     assert isinstance(app, FastAPI)
 
 
 def test_build_accepts_core_config(api_core_kwargs):
     from algomancy_scenario import CoreConfig
 
-    cfg = CoreConfig(use_sessions=False, **api_core_kwargs)
+    cfg = CoreConfig(**api_core_kwargs)
     app = ApiLauncher.build(cfg)
     assert isinstance(app, FastAPI)
 
@@ -52,7 +52,7 @@ def test_health_endpoint(client: TestClient):
     assert body["status"] == "ok"
     assert body["title"] == "Algomancy API"
     assert "main" in body["sessions"]
-    assert body["use_sessions"] is False
+    assert "use_sessions" not in body
 
 
 def test_openapi_docs_available(client: TestClient):
@@ -63,7 +63,6 @@ def test_openapi_docs_available(client: TestClient):
 
 def test_cors_middleware_active_when_origins_configured(api_core_kwargs):
     cfg = ApiConfiguration(
-        use_sessions=False,
         cors_origins=["http://example.com"],
         **api_core_kwargs,
     )

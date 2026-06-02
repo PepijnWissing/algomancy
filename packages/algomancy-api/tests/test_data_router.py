@@ -54,7 +54,7 @@ def client_with_data(api_core_kwargs, isolated_data_path) -> TestClient:
     _stage_example_data(isolated_data_path)
     kwargs = dict(api_core_kwargs)
     kwargs["data_path"] = str(isolated_data_path)
-    cfg = ApiConfiguration(use_sessions=False, **kwargs)
+    cfg = ApiConfiguration(**kwargs)
     app: FastAPI = ApiLauncher.build(cfg)
     sm = app.state.session_manager.get_scenario_manager("main")
     sm.debug_load_data(DATASET_KEY)
@@ -66,7 +66,7 @@ def client_empty(api_core_kwargs, isolated_data_path) -> TestClient:
     """Client with no data loaded — useful for ETL upload tests."""
     kwargs = dict(api_core_kwargs)
     kwargs["data_path"] = str(isolated_data_path)
-    cfg = ApiConfiguration(use_sessions=False, **kwargs)
+    cfg = ApiConfiguration(**kwargs)
     return TestClient(ApiLauncher.build(cfg))
 
 

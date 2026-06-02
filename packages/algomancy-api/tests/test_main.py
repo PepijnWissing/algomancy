@@ -95,7 +95,6 @@ def test_build_example_config_returns_api_configuration():
     cfg = build_example_config()
     assert isinstance(cfg, ApiConfiguration)
     assert cfg.title == "Algomancy API (Example)"
-    assert cfg.use_sessions is True
     assert cfg.autorun is False  # explicit choice — see main.py
 
 

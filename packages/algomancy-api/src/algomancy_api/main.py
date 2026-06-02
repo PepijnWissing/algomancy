@@ -101,7 +101,6 @@ def build_example_config() -> ApiConfiguration:
     from algomancy_data import DataSource
 
     return ApiConfiguration(
-        use_sessions=True,
         data_path="example/data",
         has_persistent_state=True,
         etl_factory=ExampleETLFactory,

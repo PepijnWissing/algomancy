@@ -65,7 +65,6 @@ def test_health_endpoint_responds(live_server):
     assert r.status_code == 200
     body = r.json()
     assert body["status"] == "ok"
-    assert body["use_sessions"] is True
     # The example wiring ships a single ``default_session`` on disk.
     # Multi-session discovery semantics are unit-tested in
     # packages/algomancy-scenario/tests/test_session_manager.py.

@@ -47,7 +47,7 @@ def client(api_core_kwargs, tmp_path) -> TestClient:
 
     kwargs = dict(api_core_kwargs)
     kwargs["data_path"] = str(tmp_path)
-    cfg = ApiConfiguration(use_sessions=False, **kwargs)
+    cfg = ApiConfiguration(**kwargs)
     app: FastAPI = ApiLauncher.build(cfg)
 
     sm = app.state.session_manager.get_scenario_manager("main")

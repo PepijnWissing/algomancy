@@ -41,7 +41,6 @@ cfg = ApiConfiguration(
     data_object_type=DataSource,
     has_persistent_state=True,
     data_path="data",
-    use_sessions=True,
     autocreate=False,
     autorun=False,
 )

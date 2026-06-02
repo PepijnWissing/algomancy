@@ -62,7 +62,6 @@ def _core_kwargs(args: argparse.Namespace) -> dict:
         )
 
     return dict(
-        use_sessions=True,
         data_path="example/data",
         etl_factory=ExampleETLFactory,
         kpi_templates=kpi_templates,

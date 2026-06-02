@@ -10,8 +10,11 @@ from algomancy_api import ApiConfiguration, ApiLauncher
 
 
 @pytest.fixture
-def app_no_sessions(api_core_kwargs) -> FastAPI:
-    cfg = ApiConfiguration(use_sessions=False, **api_core_kwargs)
+def app_empty_sessions(api_core_kwargs, tmp_path) -> FastAPI:
+    """SessionManager scoped to an empty data folder — auto-creates 'main'."""
+    kwargs = dict(api_core_kwargs)
+    kwargs["data_path"] = str(tmp_path)
+    cfg = ApiConfiguration(**kwargs)
     return ApiLauncher.build(cfg)
 
 
@@ -23,12 +26,12 @@ def app_sessions(api_core_kwargs, tmp_path) -> FastAPI:
     (tmp_path / "beta").mkdir(exist_ok=True)
     kwargs = dict(api_core_kwargs)
     kwargs["data_path"] = str(tmp_path)
-    cfg = ApiConfiguration(use_sessions=True, **kwargs)
+    cfg = ApiConfiguration(**kwargs)
     return ApiLauncher.build(cfg)
 
 
-def test_list_sessions_default_only(app_no_sessions):
-    client = TestClient(app_no_sessions)
+def test_list_sessions_default_only(app_empty_sessions):
+    client = TestClient(app_empty_sessions)
     r = client.get("/api/v1/sessions")
     assert r.status_code == 200
     body = r.json()

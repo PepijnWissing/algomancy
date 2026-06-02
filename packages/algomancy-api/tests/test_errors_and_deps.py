@@ -16,7 +16,7 @@ from algomancy_api.dependencies import get_scenario_manager
 
 @pytest.fixture
 def app(api_core_kwargs) -> FastAPI:
-    cfg = ApiConfiguration(use_sessions=False, **api_core_kwargs)
+    cfg = ApiConfiguration(**api_core_kwargs)
     app = ApiLauncher.build(cfg)
 
     @app.get("/probe/value")

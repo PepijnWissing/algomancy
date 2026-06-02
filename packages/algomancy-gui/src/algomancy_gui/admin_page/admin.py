@@ -50,7 +50,7 @@ def admin_header():
 def admin_sessions(session_id):
     """Creates a page-section where sessions can be selected and created."""
 
-    if not get_app().server.use_sessions:
+    if not get_app().server.show_session_picker:
         return []
 
     session_manager: SessionManager = get_app().server.session_manager
@@ -276,7 +276,7 @@ def validate_session_name(session_name: str):
     A name is considered invalid if it is empty or already exists.
     A tooltip is displayed if the session name is invalid with a short explanation.
     """
-    if not get_app().server.use_sessions:
+    if not get_app().server.show_session_picker:
         return no_update, no_update
     existing_names = get_app().server.session_manager.sessions_names
 

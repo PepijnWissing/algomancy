@@ -56,7 +56,6 @@ def make_config() -> ApiConfiguration:
         data_object_type=DataSource,
         has_persistent_state=True,
         data_path="data",
-        use_sessions=True,
         autocreate=False,
         autorun=False,
         host="127.0.0.1",
@@ -84,8 +83,8 @@ process manager instead of using `ApiLauncher.run`.
 `ApiConfiguration` extends `CoreConfig` (see the
 {ref}`Scenario reference <scenario-package-ref>`) with HTTP-specific fields. Inherited
 fields like `etl_factory`, `kpi_templates`, `algo_templates`, `schemas`,
-`data_object_type`, `data_path`, `has_persistent_state`, `use_sessions`,
-`autocreate`, `autorun`, and `title` behave exactly as they do for the GUI.
+`data_object_type`, `data_path`, `has_persistent_state`, `autocreate`,
+`autorun`, and `title` behave exactly as they do for the GUI.
 
 | Field | Type | Default | Notes |
 |---|---|---|---|
@@ -94,10 +93,9 @@ fields like `etl_factory`, `kpi_templates`, `algo_templates`, `schemas`,
 | `prefix` | `str` | `"/api/v1"` | URL prefix for all routes (must start with `/`) |
 | `cors_origins` | `list[str]` | `[]` | Allowed CORS origins; empty disables CORS middleware |
 
-When `use_sessions=False` the API still wraps the underlying manager in a
-`SessionManager`, but only the default `"main"` session is registered.
-This keeps the URL shape (`/sessions/{session_id}/...`) consistent across
-configurations.
+Routes are always scoped by session under `/sessions/{session_id}/...`. The
+SessionManager auto-creates a default `"main"` session when none exists yet,
+so single-tenant deployments still have a working URL shape.
 
 ## Sessions
 

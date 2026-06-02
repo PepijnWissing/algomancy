@@ -45,12 +45,11 @@ class SessionManager:
     """
     Container for multiple ScenarioManagers, one per session.
 
-    Used when ``CoreConfig.use_sessions`` is True. When persistent state is enabled,
-    sessions are discovered as subdirectories of ``data_path``; otherwise a single
-    default ``"main"`` session is created.
-
-    When ``persistence_backend="database"``, sessions are stored in a
-    ``algomancy_sessions`` DB table rather than as filesystem directories.
+    A SessionManager is always present in both GUI and API deployments. When
+    persistent state is enabled, sessions are discovered as subdirectories of
+    ``data_path`` (filesystem backend) or as rows of ``algomancy_sessions``
+    (database backend). If no sessions exist yet, a single default ``"main"``
+    session is created so the runtime always has somewhere to put scenarios.
     """
 
     E = TypeVar("E", bound=ETLFactory)
@@ -71,7 +70,6 @@ class SessionManager:
             default_algo_name=core.default_algo,
             default_param_values=core.default_algo_params_values,
             autorun=core.autorun,
-            discover_sessions=core.use_sessions,
             persistence_backend=core.persistence_backend,
             database_url=core.database_url,
         )

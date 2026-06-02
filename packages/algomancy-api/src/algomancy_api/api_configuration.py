@@ -15,7 +15,6 @@ class ApiConfiguration(CoreConfig):
     def __init__(
         self,
         # core parameters (see CoreConfig)
-        use_sessions: bool = False,
         data_path: str = "data",
         has_persistent_state: bool = False,
         save_type: str | None = "json",
@@ -37,7 +36,6 @@ class ApiConfiguration(CoreConfig):
         **kwargs: Any,
     ) -> None:
         super().__init__(
-            use_sessions=use_sessions,
             data_path=data_path,
             has_persistent_state=has_persistent_state,
             save_type=save_type,

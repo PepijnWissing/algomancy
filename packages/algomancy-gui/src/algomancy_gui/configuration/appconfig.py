@@ -221,7 +221,6 @@ class AppConfig:
             >>> config_dict = {
             ...     "title": "My Dashboard",
             ...     "port": 9000,
-            ...     "use_sessions": True,
             ... }
             >>> app_config = AppConfig.from_dict(config_dict)
             >>> app_config.server.port

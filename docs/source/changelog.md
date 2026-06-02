@@ -3,6 +3,22 @@
 > Migrating from v0.5 or earlier? See the [migration guide](migration-ref)
 > for before/after snippets covering every breaking change in v0.6–v0.7.
 
+## Prerelease (v0.8.0)
+### Breaking
+- **Removed `CoreConfig.use_sessions`** (and the same flag on `ApiConfiguration`).
+  `SessionManager` is now always constructed; single-tenant deployments simply
+  get a single auto-created `"main"` session. The `/health` endpoint no longer
+  reports `use_sessions`.
+  - **Migration:** delete `use_sessions=...` from your `CoreConfig` /
+    `ApiConfiguration` / `AppConfig` arguments. If you were using
+    `use_sessions=False` to hide the session picker from the GUI admin page,
+    set `FeatureConfig(show_session_picker=False)` instead — the runtime
+    keeps a session under the hood either way.
+  - The GUI server attribute `app.server.use_sessions` is gone. Code that
+    branched on it should use `app.server.session_manager` unconditionally;
+    code that gated picker visibility should use
+    `app.server.show_session_picker`.
+
 ## Prerelease (v0.7.0)
 ### Added
 - **`algomancy-api` package**: new FastAPI HTTP service that exposes the same
