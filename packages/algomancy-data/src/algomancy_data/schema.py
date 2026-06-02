@@ -293,6 +293,10 @@ class Schema(ABC):
                 grp.name: {col.name: col for col in grp.columns} for grp in group_attrs
             }
 
+        return cls._get_legacy_column_groups_with_warning()
+
+    @classmethod
+    def _get_legacy_column_groups_with_warning(cls) -> dict[str, dict[Any, Column]]:
         if cls._DATATYPES == "default_datatypes":
             raise NotImplementedError(
                 f"{cls.__name__} must declare ColumnGroup attributes or override _DATATYPES"
@@ -305,13 +309,14 @@ class Schema(ABC):
             DeprecationWarning,
             stacklevel=2,
         )
-        return {
+        cg = {
             group_name: {
                 col_name: Column(name=col_name, dtype=dtype)
                 for col_name, dtype in sub_dict.items()
             }
             for group_name, sub_dict in cls._DATATYPES.items()
         }
+        return cg
 
     @classmethod
     def required_columns(cls) -> List[str]:
