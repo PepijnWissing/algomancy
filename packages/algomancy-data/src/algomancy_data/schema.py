@@ -232,14 +232,6 @@ class Schema(ABC):
                 are defined.
             TypeError: If called on a MULTI schema (use ``datatype_groups()``).
         """
-        col_attrs = [attr for attr in vars(cls).values() if isinstance(attr, Column)]
-        if col_attrs:
-            return {col.name: col for col in col_attrs}
-
-        if cls._DATATYPES == "default_datatypes":
-            raise NotImplementedError(
-                f"{cls.__name__} must declare Column attributes or override _DATATYPES"
-            )
 
         if not cls.is_single():
             raise TypeError(
@@ -247,10 +239,19 @@ class Schema(ABC):
                 "Use datatype_groups() to inspect its column groups."
             )
 
+        col_attrs = [attr for attr in vars(cls).values() if isinstance(attr, Column)]
+        if col_attrs:
+            return {col.name: col for col in col_attrs}
+
         return cls.get_legacy_columns_with_warning()
 
     @classmethod
     def get_legacy_columns_with_warning(cls) -> dict[str, Column]:
+        if cls._DATATYPES == "default_datatypes":
+            raise NotImplementedError(
+                f"{cls.__name__} must declare Column attributes or override _DATATYPES"
+            )
+
         warnings.warn(
             f"{cls.__name__} uses the legacy _DATATYPES dict. "
             "Declare Column instances as class attributes instead "
