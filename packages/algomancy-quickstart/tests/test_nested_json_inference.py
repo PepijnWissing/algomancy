@@ -30,6 +30,7 @@ from algomancy_data import (
 )
 from algomancy_data.schema import SchemaType
 from algomancy_quickstart.data_inference import DataFileInfo, SchemaInferenceEngine
+from algomancy_quickstart.quickstart import QuickstartWizard
 
 
 SAMPLE_NESTED_JSON = {
@@ -221,6 +222,69 @@ class TestTemplate:
         child = result.datasource.get_table("picks.PickOrderLines")
         assert len(parent) == 2
         assert len(child) == 3
+
+
+# --------------------------------------------------------------------- #
+# Summary rendering (issue #171)
+# --------------------------------------------------------------------- #
+
+
+class TestSummaryDisplay:
+    def _build_wizard_with_nested(self, tmp_path: Path) -> QuickstartWizard:
+        engine = SchemaInferenceEngine()
+        info = _write(tmp_path, SAMPLE_NESTED_JSON)
+        with patch("click.confirm", return_value=True):
+            engine._infer_schema_with_config(info)
+        info.total_columns = sum(len(c) for c in info.inferred_schemas.values())
+
+        wizard = QuickstartWizard(skip_confirmation=True)
+        wizard.current_dir = tmp_path
+        wizard.detected_files = [info]
+        return wizard
+
+    def test_multi_groups_render_with_source_path_and_fk(self, tmp_path):
+        wizard = self._build_wizard_with_nested(tmp_path)
+        captured: list[str] = []
+
+        def _capture(msg="", *a, **kw):  # match click.echo signature
+            captured.append(str(msg))
+
+        with patch("click.echo", side_effect=_capture):
+            wizard._display_inferred_schemas_summary()
+
+        text = "\n".join(captured)
+        assert "(MULTI)" in text
+        assert "Group: PickLoadCarriers" in text
+        assert "source_path: root" in text
+        assert "Group: PickOrderLines" in text
+        assert "source_path: PickOrderLines" in text
+        # Primary keys annotated.
+        assert "primary key" in text
+        # Foreign key annotation references the parent table + col.
+        assert "foreign key → PickLoadCarriers.Identity" in text
+
+    def test_flat_json_renders_as_single(self, tmp_path):
+        engine = SchemaInferenceEngine()
+        info = _write(tmp_path, [{"id": "a", "v": 1}], name="flat")
+        with patch("click.confirm") as confirm:
+            engine._infer_schema_with_config(info)
+            confirm.assert_not_called()
+        info.total_columns = len(info.inferred_schemas["default"])
+
+        wizard = QuickstartWizard(skip_confirmation=True)
+        wizard.current_dir = tmp_path
+        wizard.detected_files = [info]
+
+        captured: list[str] = []
+        with patch(
+            "click.echo", side_effect=lambda msg="", *a, **kw: captured.append(str(msg))
+        ):
+            wizard._display_inferred_schemas_summary()
+
+        text = "\n".join(captured)
+        assert "(SINGLE)" in text
+        assert "Group:" not in text
+        assert "source_path" not in text
 
 
 # --------------------------------------------------------------------- #

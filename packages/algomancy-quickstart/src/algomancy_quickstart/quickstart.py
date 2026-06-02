@@ -63,16 +63,23 @@ class QuickstartWizard:
 
         click.echo()
 
-        # Step 2: Generate custom implementation shells (optional)
+        # Step 2: Generate custom implementation shells (optional). The
+        # ``has_custom_implementations`` flag is set BEFORE the step so the
+        # ``_update_main_py_with_custom_implementations`` call inside step 2
+        # renders the right wiring on the first try (previously the flag
+        # was set after the step, and the placeholder main.py only got
+        # corrected when a later step re-rendered).
         if click.confirm(
             "Do you want to generate custom implementation templates?", default=True
         ):
-            self.step_2_generate_implementations()
             self.has_custom_implementations = True
+            self.step_2_generate_implementations()
 
         click.echo()
 
-        # Step 3: Scan data folder and generate ETL pipeline (optional)
+        # Step 3: Scan data folder and generate ETL pipeline (optional).
+        # Same pre-set-the-flag pattern as step 2: render with the right
+        # ``has_generated_etl`` value the first time around.
         if click.confirm(
             "Do you want to scan your data folder and generate an ETL pipeline?",
             default=True,
@@ -83,21 +90,27 @@ class QuickstartWizard:
 
         click.echo()
 
-        # Step 4: Install assets (optional)
-        if click.confirm(
-            "Do you want to install default assets (CSS, images)?", default=True
-        ):
-            self.step_4_install_assets()
+        # Steps 4 (assets) and 5 (styling) are GUI-only — the API launcher
+        # never reads them. Skip the prompts entirely when GUI is not in the
+        # selected interfaces, so an API-only project doesn't end up with
+        # orphaned ``assets/`` content or ``src/styling_config.py``.
+        if "gui" in self.interfaces:
+            # Step 4: Install assets (optional)
+            if click.confirm(
+                "Do you want to install default assets (CSS, images)?", default=True
+            ):
+                self.step_4_install_assets()
 
-        click.echo()
+            click.echo()
 
-        # Step 5: Configure styling (optional)
-        if click.confirm(
-            "Do you want to configure custom styling (colors, themes)?", default=True
-        ):
-            self.step_5_configure_styling()
+            # Step 5: Configure styling (optional)
+            if click.confirm(
+                "Do you want to configure custom styling (colors, themes)?",
+                default=True,
+            ):
+                self.step_5_configure_styling()
 
-        click.echo()
+            click.echo()
 
         # Step 6: Generate pytest skeletons (optional)
         if click.confirm(
@@ -161,18 +174,21 @@ class QuickstartWizard:
         # Ask which persistence backend to bake into CoreConfig.
         self.persistence_backend, self.database_url = self._prompt_persistence()
 
-        # Define folder structure - include data/setup and src/styling
+        # Define folder structure. ``assets/`` and ``src/pages/`` are
+        # GUI-only — emit them only when the user opted into the GUI
+        # interface. ``data/setup/`` stays unconditional: the ETL pipeline
+        # still reads from it for API-only projects.
         folders = [
-            "assets",
             "data",
             "data/setup",
             "src",
             "src/data_handling",
-            "src/pages",
             "src/templates",
             "src/templates/kpi",
             "src/templates/algorithm",
         ]
+        if "gui" in self.interfaces:
+            folders = ["assets", *folders, "src/pages"]
 
         # Check if any folders already exist
         existing_folders = [f for f in folders if (self.current_dir / f).exists()]
@@ -255,18 +271,25 @@ class QuickstartWizard:
         click.echo(f"Using filename: {self.filename}")
         click.echo()
 
-        # Generate each component
+        # Generate each component. Page templates are GUI-only — for an
+        # API-only project the generated ``main.py`` doesn't import them, so
+        # emitting them just leaves orphans on disk (#170).
         components = [
             ("schema", "src/data_handling", "schemas.py"),
             ("algorithm", "src/templates/algorithm", f"{self.filename}_algorithm.py"),
             ("kpi", "src/templates/kpi", f"{self.filename}_kpi.py"),
             ("etl_factory", "src/data_handling", "etl_factory.py"),
-            ("home_page", "src/pages", "home_page.py"),
-            ("data_page", "src/pages", "data_page.py"),
-            ("scenario_page", "src/pages", "scenario_page.py"),
-            ("compare_page", "src/pages", "compare_page.py"),
-            ("overview_page", "src/pages", "overview_page.py"),
         ]
+        if "gui" in self.interfaces:
+            components.extend(
+                [
+                    ("home_page", "src/pages", "home_page.py"),
+                    ("data_page", "src/pages", "data_page.py"),
+                    ("scenario_page", "src/pages", "scenario_page.py"),
+                    ("compare_page", "src/pages", "compare_page.py"),
+                    ("overview_page", "src/pages", "overview_page.py"),
+                ]
+            )
 
         click.echo("Generating implementation templates...")
 
@@ -599,14 +622,22 @@ class QuickstartWizard:
         self._render_main_py()
 
     def _display_inferred_schemas_summary(self):
-        """Display a summary of all inferred schemas."""
+        """Display a summary of all inferred schemas.
+
+        For ``SchemaType.MULTI`` files (XLSX-multi or nested-JSON), each
+        group is rendered as its own section with ``source_path``,
+        primary-key, and foreign-key annotations so the user can see the
+        structure that will end up in the generated schema file.
+        """
         click.echo(click.style("Summary of detected schemas:", fg="cyan", bold=True))
         click.echo()
 
         for file_info in self.detected_files:
+            type_label = "MULTI" if file_info.is_multi_table else "SINGLE"
             click.echo(
                 click.style(
-                    f"📄 {file_info.file_name}{file_info.file_path.suffix}",
+                    f"📄 {file_info.file_name}{file_info.file_path.suffix}"
+                    f"   ({type_label})",
                     fg="cyan",
                     bold=True,
                 )
@@ -622,17 +653,32 @@ class QuickstartWizard:
 
             # Show schemas
             for schema_name, columns in file_info.inferred_schemas.items():
-                if file_info.is_multi_sheet:
-                    click.echo(f"  Sheet: {schema_name}")
+                if file_info.is_multi_table:
+                    self._echo_group_header(file_info, schema_name)
 
-                # Show first few columns
+                pk_cols = set(file_info.primary_key_columns.get(schema_name, []))
+                fk_map = file_info.nested_foreign_keys.get(schema_name, {})
+
                 col_items = list(columns.items())
                 show_count = min(10, len(col_items))
 
-                for col_name, data_type in col_items[:show_count]:
+                # Right-pad column names within the shown window so the type
+                # column lines up vertically — easier to scan than ragged.
+                shown = col_items[:show_count]
+                width = max((len(name) for name, _ in shown), default=0)
+
+                for col_name, data_type in shown:
                     type_color = self._get_type_color(data_type)
+                    annotations: list[str] = []
+                    if col_name in pk_cols:
+                        annotations.append("primary key")
+                    fk = fk_map.get(col_name)
+                    if fk:
+                        annotations.append(f"foreign key → {fk[0]}.{fk[1]}")
+                    suffix = f"  ({', '.join(annotations)})" if annotations else ""
                     click.echo(
-                        f"    • {col_name}: {click.style(data_type.value, fg=type_color)}"
+                        f"    • {col_name.ljust(width)}  "
+                        f"{click.style(data_type.value, fg=type_color)}{suffix}"
                     )
 
                 if len(col_items) > show_count:
@@ -641,6 +687,22 @@ class QuickstartWizard:
                     )
 
             click.echo()
+
+    @staticmethod
+    def _echo_group_header(file_info, group_name: str) -> None:
+        """Print the ``Group: <name>   (source_path: ...)`` header for a MULTI group.
+
+        XLSX-multi files have no ``source_path`` — they're inherently
+        per-sheet — so the header collapses to the group name alone. Nested
+        JSON renders ``root`` for the parent and the dotted key path for
+        children.
+        """
+        if file_info.is_nested_json:
+            path = file_info.nested_source_paths.get(group_name, ())
+            source_label = ".".join(path) if path else "root"
+            click.echo(f"  Group: {group_name}   (source_path: {source_label})")
+        else:
+            click.echo(f"  Sheet: {group_name}")
 
     def _get_type_color(self, data_type) -> str:
         """Get color for a data type."""
