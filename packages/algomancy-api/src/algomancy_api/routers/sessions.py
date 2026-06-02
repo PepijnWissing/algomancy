@@ -87,6 +87,26 @@ def copy_session(
     return _build_list_response(sm)
 
 
+@router.delete(
+    "/{session_id}",
+    status_code=status.HTTP_200_OK,
+    response_model=SessionsListResponse,
+    summary="Delete a session and all its scenarios, runs, and data",
+)
+def delete_session(
+    session_id: str,
+    sm: SessionManager = Depends(get_session_manager),
+) -> SessionsListResponse:
+    resolved = resolve_session_id(sm, session_id)
+    if resolved is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Session '{session_id}' not found",
+        )
+    sm.delete_session(resolved)
+    return _build_list_response(sm)
+
+
 @router.patch(
     "/{session_id}",
     response_model=SessionInfo,

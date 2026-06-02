@@ -11,7 +11,7 @@ from dash import (
 )
 import dash_bootstrap_components as dbc
 
-from .sessions import create_new_session_window
+from .sessions import create_new_session_window, create_delete_session_window
 from ..componentids import (
     ADMIN_NEW_SESSION,
     ACTIVE_SESSION,
@@ -21,7 +21,11 @@ from ..componentids import (
     ADMIN_LOG_FILTER,
     ADMIN_PAGE,
     ADMIN_COPY_SESSION,
+    ADMIN_DELETE_SESSION,
     SESSION_CREATOR_MODAL,
+    SESSION_DELETE_MODAL,
+    SESSION_DELETE_CONFIRM_BUTTON,
+    SESSION_DELETE_CANCEL_BUTTON,
     NEW_SESSION_BUTTON,
     NEW_SESSION_NAME,
     HOW_TO_CREATE_NEW_SESSION,
@@ -113,6 +117,18 @@ def admin_sessions(session_id):
                     width="auto",
                     className="d-flex align-items-end",
                 ),
+                # Delete Session button
+                dbc.Col(
+                    dbc.Button(
+                        "Delete Session",
+                        id=ADMIN_DELETE_SESSION,
+                        color="danger",
+                        className="ms-2 w-100",
+                        style={"height": "38px"},
+                    ),
+                    width="auto",
+                    className="d-flex align-items-end",
+                ),
             ],
             className="g-1",
         ),
@@ -187,7 +203,7 @@ def create_admin_page(session_id):
         admin_header()
         + admin_sessions(session_id)
         + admin_system_logs()
-        + [create_new_session_window()]
+        + [create_new_session_window(), create_delete_session_window()]
     )
     return admin_content
 
@@ -371,3 +387,60 @@ def toggle_session_creator_modal(
     if triggered_id == f"{NEW_SESSION_BUTTON}-cancel":
         return False, "", no_update, no_update
     return is_open, "", no_update, no_update
+
+
+@callback(
+    [
+        Output(SESSION_DELETE_MODAL, "is_open"),
+        Output(f"{SESSION_DELETE_MODAL}-target", "children"),
+        Output(ADMIN_SELECT_SESSION, "value", allow_duplicate=True),
+    ],
+    [
+        Input(ADMIN_DELETE_SESSION, "n_clicks"),
+        Input(SESSION_DELETE_CONFIRM_BUTTON, "n_clicks"),
+        Input(SESSION_DELETE_CANCEL_BUTTON, "n_clicks"),
+    ],
+    [
+        State(ACTIVE_SESSION, "data"),
+        State(SESSION_DELETE_MODAL, "is_open"),
+    ],
+    prevent_initial_call=True,
+)
+def toggle_session_delete_modal(
+    open_click, confirm_click, cancel_click, session_id, is_open
+):
+    """Handle the open/confirm/cancel flow of the session-delete modal.
+
+    On confirm: delete the active session, then nudge ``ACTIVE_SESSION`` to
+    the SessionManager's new start session id so downstream pages re-render
+    against a session that still exists.
+    """
+    ctx = callback_context
+    if not ctx.triggered:
+        return no_update, no_update, no_update
+    triggered_id = ctx.triggered[0]["prop_id"].split(".")[0]
+
+    if triggered_id == ADMIN_DELETE_SESSION and not is_open:
+        session_manager: SessionManager = get_app().server.session_manager
+        try:
+            label = session_manager.get_display_name(session_id)
+        except KeyError:
+            label = session_id
+        body = f"Selected session: {label!r}. Continue?"
+        return True, body, no_update
+
+    if triggered_id == SESSION_DELETE_CONFIRM_BUTTON and is_open:
+        session_manager = get_app().server.session_manager
+        try:
+            session_manager.delete_session(session_id)
+        except KeyError as exc:
+            session_manager.log(str(exc), MessageStatus.WARNING)
+            return False, "", no_update
+        # After deletion, switch to whatever the SessionManager now treats as
+        # the default — possibly a freshly auto-created "main".
+        return False, "", session_manager.start_session_id
+
+    if triggered_id == SESSION_DELETE_CANCEL_BUTTON:
+        return False, "", no_update
+
+    return is_open, no_update, no_update

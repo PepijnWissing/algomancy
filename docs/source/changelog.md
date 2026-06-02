@@ -4,6 +4,17 @@
 > for before/after snippets covering every breaking change in v0.6–v0.7.
 
 ## Prerelease (v0.8.0)
+### Added
+- **Session deletion.** New ``SessionManager.delete_session(id)`` and
+  ``DELETE /api/v1/sessions/{session_id}`` remove a session along with all
+  its scenarios, runs, KPI measurements, and uploaded data. The cascade
+  reaches the dynamic ``ds__{session}__*`` data tables on the database
+  backend and the session directory on the filesystem backend. Deleting
+  the last remaining session auto-creates a fresh ``"main"`` session in
+  its place so the runtime always has somewhere to put scenarios. The
+  admin page surfaces this as a "Delete Session" button with an explicit
+  confirmation modal.
+
 ### Breaking
 - **Session identity is now a UUID; ``display_name`` is the mutable label.**
   Previously a session's identifier was its user-facing string (``"default_session"``,

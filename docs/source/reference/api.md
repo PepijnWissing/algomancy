@@ -117,14 +117,21 @@ clients should always use the UUID returned by ``GET /sessions``.
 | `POST` | `/sessions` | Create — body `{"display_name": "..."}` |
 | `POST` | `/sessions/{sid}/copy` | Copy — body `{"new_display_name": "..."}` |
 | `PATCH` | `/sessions/{sid}` | Rename — body `{"display_name": "..."}` (id stays) |
+| `DELETE` | `/sessions/{sid}` | Delete a session and all its scenarios, runs, KPIs, and data |
 
 Status codes:
 - `201` on a successful create/copy.
-- `200` on a successful rename; the response is the updated `{id, display_name}`.
-- `404` when the source session of a copy or rename doesn't exist.
+- `200` on a successful rename or delete; the rename response is the
+  updated `{id, display_name}`, the delete response is the refreshed
+  session list.
+- `404` when the targeted session doesn't exist.
 - `409` when the requested `display_name` is already taken by another session.
 - `422` when the request body fails Pydantic validation (e.g. empty
   `display_name`).
+
+Deleting the last remaining session never leaves the manager empty: a
+fresh ``"main"`` session is auto-created in its place so subsequent
+scenario writes still have somewhere to land.
 
 ## Algorithm + KPI discovery
 

@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import shutil
 import uuid
 from typing import Dict, List, Optional, TypeVar, Type
 
@@ -15,6 +16,16 @@ from algomancy_utils.baseparameterset import BaseParameterSet
 
 
 SESSION_META_FILENAME = "meta.json"
+
+
+def _safe_table_segment(s: str) -> str:
+    """Mirror of ``algomancy_data.database.database_manager._safe_segment``.
+
+    Re-declared here to avoid creating a hard import dependency just for a
+    string transformation. Must produce identical output: anything that
+    isn't alphanumeric or underscore collapses to ``_``.
+    """
+    return re.sub(r"[^a-zA-Z0-9_]", "_", s)
 
 
 def _unwrap_core_config(cfg) -> CoreConfig:
@@ -475,6 +486,84 @@ class SessionManager:
         elif self._has_persistent_state:
             dir_name = self._directory_names[session_id]
             self._write_session_meta(dir_name, session_id, new_display_name)
+
+    def delete_session(self, session_id: str) -> None:
+        """Remove a session and all its scenarios, runs, KPIs, and data.
+
+        Refuses to leave the SessionManager in an empty state: if the deleted
+        session was the only one, a fresh default ``"main"`` session is
+        created in its place so the runtime always has somewhere to put
+        scenarios.
+
+        Filesystem backend: the session directory is removed with
+        ``shutil.rmtree``.
+
+        Database backend: all rows scoped to this session in the framework
+        tables (``algomancy_scenarios``, ``algomancy_scenario_runs``,
+        ``algomancy_kpi_measurements``, ``algomancy_datasets``) are deleted
+        — FK cascades chain runs and KPI measurements automatically — and
+        every ``ds__{session_id}__*`` data table is dropped.
+        """
+        if session_id not in self._sessions:
+            raise KeyError(f"Session '{session_id}' not found.")
+
+        if self._persistence_backend == "database":
+            self._cascade_delete_db_session(session_id)
+        elif self._has_persistent_state and self._persistence_backend == "json":
+            dir_name = self._directory_names.get(session_id)
+            if dir_name is not None:
+                session_path = os.path.join(self._data_folder, dir_name)
+                if os.path.isdir(session_path):
+                    shutil.rmtree(session_path)
+
+        del self._sessions[session_id]
+        self._display_names.pop(session_id, None)
+        self._directory_names.pop(session_id, None)
+        if self._start_session_id == session_id:
+            self._start_session_id = next(iter(self._sessions), session_id)
+
+        if not self._sessions:
+            # Re-establish the default session so callers always have a
+            # ScenarioManager to write into.
+            new_default_id = self.create_new_session("main")
+            self._start_session_id = new_default_id
+
+        self.log(f"Session '{session_id}' deleted.")
+
+    def _cascade_delete_db_session(self, session_id: str) -> None:
+        import sqlalchemy as sa
+
+        from .persistence.models import (
+            scenarios_table,
+            sessions_table,
+        )
+
+        with self._db_engine.begin() as conn:
+            # Scenarios cascade-delete their runs + KPI measurements via FK.
+            conn.execute(
+                scenarios_table.delete().where(
+                    scenarios_table.c.session_id == session_id
+                )
+            )
+            conn.execute(
+                sessions_table.delete().where(sessions_table.c.id == session_id)
+            )
+            # Drop dataset catalogue rows + dynamic ds__ tables.
+            try:
+                from algomancy_data.database.models import datasets_table
+
+                conn.execute(
+                    datasets_table.delete().where(
+                        datasets_table.c.session_id == session_id
+                    )
+                )
+            except ImportError:
+                pass
+            inspector = sa.inspect(conn)
+            prefix = f"ds__{_safe_table_segment(session_id)}__"
+            for table_name in inspector.get_table_names():
+                if table_name.startswith(prefix):
+                    conn.execute(sa.text(f"DROP TABLE {table_name}"))
 
     def resolve_id_by_display_name(self, display_name: str) -> Optional[str]:
         """Look up a session by its (currently mutable) display name.

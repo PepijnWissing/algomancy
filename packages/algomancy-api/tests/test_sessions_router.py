@@ -163,6 +163,40 @@ def test_rename_session_duplicate_display_name_returns_409(app_sessions):
     assert r.status_code == 409
 
 
+def test_delete_session_removes_it(app_sessions):
+    client = TestClient(app_sessions)
+    ids = _ids_by_display_name(client)
+    alpha_id = ids["alpha"]
+
+    r = client.delete(f"/api/v1/sessions/{alpha_id}")
+    assert r.status_code == 200
+    remaining = {s["display_name"] for s in r.json()["sessions"]}
+    assert "alpha" not in remaining
+    assert "beta" in remaining
+
+
+def test_delete_session_unknown_returns_404(app_sessions):
+    client = TestClient(app_sessions)
+    r = client.delete("/api/v1/sessions/does-not-exist")
+    assert r.status_code == 404
+
+
+def test_delete_last_session_creates_default_replacement(app_empty_sessions):
+    """Deleting the only session leaves the manager with a freshly auto-created
+    'main' session — never empty."""
+    client = TestClient(app_empty_sessions)
+    body = client.get("/api/v1/sessions").json()
+    only_id = body["default"]
+
+    r = client.delete(f"/api/v1/sessions/{only_id}")
+    assert r.status_code == 200
+    refreshed = r.json()
+    assert len(refreshed["sessions"]) == 1
+    assert refreshed["sessions"][0]["display_name"] == "main"
+    # The replacement session has a fresh UUID — id is not reused.
+    assert refreshed["sessions"][0]["id"] != only_id
+
+
 def test_openapi_lists_session_routes(app_sessions):
     client = TestClient(app_sessions)
     spec = client.get("/openapi.json").json()

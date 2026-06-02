@@ -161,6 +161,96 @@ def test_legacy_directory_gets_meta_on_discovery(mock_configs, tmp_path):
     assert sm.get_display_name(meta["id"]) == "legacy-session"
 
 
+def test_delete_session_removes_it_from_listing(mock_configs, tmp_path):
+    isolated = dict(mock_configs)
+    isolated["data_path"] = str(tmp_path)
+    sm = SessionManager.from_config(_make_core_config(isolated))
+    new_id = sm.create_new_session("disposable")
+    assert sm.has_session(new_id)
+
+    sm.delete_session(new_id)
+    assert not sm.has_session(new_id)
+    assert new_id not in sm.session_ids
+
+
+def test_delete_session_removes_filesystem_directory(mock_configs, tmp_path):
+    isolated = dict(mock_configs)
+    isolated["data_path"] = str(tmp_path)
+    sm = SessionManager.from_config(_make_core_config(isolated))
+    new_id = sm.create_new_session("ephemeral")
+    # The slugified display name "ephemeral" becomes the directory segment.
+    target_dir = tmp_path / "ephemeral"
+    assert target_dir.exists()
+
+    sm.delete_session(new_id)
+    assert not target_dir.exists()
+
+
+def test_delete_session_unknown_id_raises(mock_configs, tmp_path):
+    isolated = dict(mock_configs)
+    isolated["data_path"] = str(tmp_path)
+    sm = SessionManager.from_config(_make_core_config(isolated))
+    with pytest.raises(KeyError):
+        sm.delete_session("does-not-exist")
+
+
+def test_delete_last_session_recreates_default(mock_configs, tmp_path):
+    """The SessionManager must always have at least one session."""
+    isolated = dict(mock_configs)
+    isolated["data_path"] = str(tmp_path)
+    sm = SessionManager.from_config(_make_core_config(isolated))
+    only_id = sm.start_session_id
+    sm.delete_session(only_id)
+
+    # A fresh default named "main" replaces it.
+    assert len(sm.session_ids) == 1
+    assert sm.get_display_name(sm.start_session_id) == "main"
+
+
+def test_delete_session_database_backend_drops_ds_tables(mock_configs, tmp_path):
+    """Deleting a session in the DB backend drops its dynamic ds__ data tables
+    and removes its row from algomancy_sessions."""
+    sa = pytest.importorskip("sqlalchemy")
+    from algomancy_scenario.sessionmanager import _safe_table_segment
+
+    db_url = f"sqlite:///{tmp_path}/scenario.db"
+    cfg = CoreConfig(
+        data_path=str(tmp_path),
+        has_persistent_state=True,
+        save_type="json",
+        data_object_type=mock_configs["data_object_type"],
+        etl_factory=mock_configs["etl_factory"],
+        kpi_templates=mock_configs["kpi_templates"],
+        algo_templates=mock_configs["algo_templates"],
+        schemas=mock_configs["schemas"],
+        autocreate=False,
+        autorun=False,
+        persistence_backend="database",
+        database_url=db_url,
+    )
+    sm = SessionManager.from_config(cfg)
+    new_id = sm.create_new_session("to-drop")
+
+    # Stage a dummy ds__ data table so the cascade has something to clean up.
+    engine = sa.create_engine(db_url)
+    table_name = f"ds__{_safe_table_segment(new_id)}__sample__rows"
+    with engine.begin() as conn:
+        conn.execute(sa.text(f"CREATE TABLE {table_name} (x INTEGER)"))
+
+    sm.delete_session(new_id)
+
+    inspector = sa.inspect(engine)
+    prefix = f"ds__{_safe_table_segment(new_id)}__"
+    leftover = [t for t in inspector.get_table_names() if t.startswith(prefix)]
+    assert leftover == []
+    with engine.connect() as conn:
+        rows = conn.execute(
+            sa.text("SELECT id FROM algomancy_sessions WHERE id = :id"),
+            {"id": new_id},
+        ).fetchall()
+    assert rows == []
+
+
 def test_gui_reexport_still_works(mock_configs):
     """The legacy import path algomancy_gui.managers.sessionmanager.SessionManager
     must continue to resolve to the relocated class."""

@@ -61,6 +61,8 @@ All routes are prefixed with `cfg.prefix` (default `/api/v1`).
 - `POST   /sessions` — create a new session — body `{"display_name": "..."}`
 - `POST   /sessions/{sid}/copy` — copy — body `{"new_display_name": "..."}`
 - `PATCH  /sessions/{sid}` — rename — body `{"display_name": "..."}`
+- `DELETE /sessions/{sid}` — delete a session and all its data; the last
+  remaining session is auto-replaced with a fresh `"main"`
 
 `{sid}` accepts either the session's UUID (canonical) or its current
 `display_name` (soft-compat alias).
