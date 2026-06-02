@@ -56,7 +56,7 @@
 **CWD: `<repo>`** (the API `--example` config also resolves `example/data` relative to here)
 
 - [ ] `uv run algomancy-api --example` boots on port 8051 (override with `--port` if 8051 is busy)
-- [ ] `curl http://127.0.0.1:8051/health` → `{"status": "ok", …, "sessions": [...]}`
+- [ ] `curl http://127.0.0.1:8051/health` → `{"status": "ok", …, "sessions": [{"id": "<uuid>", "display_name": "default_session"}, ...]}`
 - [ ] `curl http://127.0.0.1:8051/docs` → Swagger UI renders
 - [ ] End-to-end: `POST /api/v1/sessions/default_session/scenarios` with body
       `{"tag":"smoke-api","dataset_key":"example_data","algo_name":"Instant","algo_params":{}}`

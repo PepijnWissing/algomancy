@@ -103,7 +103,7 @@ class ApiLauncher:
             return {
                 "status": "ok",
                 "title": cfg.title,
-                "sessions": sm.sessions_names,
+                "sessions": sm.list_sessions(),
             }
 
         app.include_router(sessions_router.router, prefix=cfg.prefix)

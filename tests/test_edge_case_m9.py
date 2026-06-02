@@ -306,8 +306,29 @@ class TestDataDirectories:
         assert len(result.datasource.tables["warehouse_layout"]) == 1
 
     def test_empty_session_folder_is_discoverable(self, tmp_path):
-        from algomancy_scenario.sessionmanager import SessionManager
+        """A bare directory with no meta.json still becomes a discoverable session;
+        the SessionManager backfills its identity on first scan."""
+        from algomancy_data import DataSource
+        from algomancy_scenario import CoreConfig, SessionManager
+        from example.data_handling.factories import ExampleETLFactory
+        from example.data_handling.schemas import example_schemas
+        from example.templates import algorithm_templates, kpi_templates
 
         (tmp_path / "empty_session").mkdir()
-        discovered = SessionManager._determine_sessions_from_folder(str(tmp_path))
-        assert "empty_session" in discovered
+
+        sm = SessionManager.from_config(
+            CoreConfig(
+                data_path=str(tmp_path),
+                has_persistent_state=True,
+                save_type="json",
+                data_object_type=DataSource,
+                etl_factory=ExampleETLFactory,
+                kpi_templates=kpi_templates,
+                algo_templates=algorithm_templates,
+                schemas=example_schemas,
+                autocreate=False,
+                autorun=False,
+            )
+        )
+        display_names = [s["display_name"] for s in sm.list_sessions()]
+        assert "empty_session" in display_names

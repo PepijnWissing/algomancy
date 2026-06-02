@@ -5,6 +5,33 @@
 
 ## Prerelease (v0.8.0)
 ### Breaking
+- **Session identity is now a UUID; ``display_name`` is the mutable label.**
+  Previously a session's identifier was its user-facing string (``"default_session"``,
+  ``"alice_experiment"``), which made renaming impossible and made URLs leak
+  human-readable names. After M14:
+  - Each session has a stable UUID ``id`` and a separate mutable ``display_name``.
+  - API routes use UUIDs: ``/api/v1/sessions/{session_uuid}/...``. The list
+    endpoint returns ``{sessions: [{id, display_name}, ...], default: id}``.
+  - New ``PATCH /api/v1/sessions/{id}`` renames a session (display_name only).
+  - ``CreateSessionRequest.name`` is now ``display_name``;
+    ``CopySessionRequest.new_name`` is now ``new_display_name``.
+  - Filesystem backend writes a small ``meta.json`` into each session
+    directory carrying ``{id, display_name}``. Directories without
+    ``meta.json`` are migrated transparently on first scan.
+  - DB backend changes ``algomancy_sessions`` from ``(name PK)`` to
+    ``(id PK, display_name)``.
+  - ``SessionManager`` API renames: ``sessions_names`` → ``session_ids``,
+    ``start_session_name`` → ``start_session_id``, new ``list_sessions()``,
+    ``get_display_name()``, ``rename_session()``, ``resolve_id_by_display_name()``.
+  - **Migration:** run ``python scripts/migrate_m14_session_ids.py
+    [--data-path DIR] [--database-url URL]`` once per deployment. The
+    filesystem migration is also performed automatically on first scan, so
+    upgrading without running the script will still work — the script just
+    makes the rewrite eager and visible. For API clients, the resolver
+    still accepts the old ``display_name`` in URLs (e.g.
+    ``/sessions/default_session/...``) as a soft alias, so existing
+    integrations keep working while you migrate them to UUIDs.
+
 - **Removed `CoreConfig.use_sessions`** (and the same flag on `ApiConfiguration`).
   `SessionManager` is now always constructed; single-tenant deployments simply
   get a single auto-created `"main"` session. The `/health` endpoint no longer

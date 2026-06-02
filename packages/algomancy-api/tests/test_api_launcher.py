@@ -24,7 +24,10 @@ def test_build_attaches_state(app):
     assert app.state.config is not None
     assert app.state.session_manager is not None
     # default session always exists
-    assert "main" in app.state.session_manager.sessions_names
+    display_names = [
+        s["display_name"] for s in app.state.session_manager.list_sessions()
+    ]
+    assert "main" in display_names
 
 
 def test_build_accepts_dict(api_core_kwargs):
@@ -51,7 +54,8 @@ def test_health_endpoint(client: TestClient):
     body = r.json()
     assert body["status"] == "ok"
     assert body["title"] == "Algomancy API"
-    assert "main" in body["sessions"]
+    display_names = [s["display_name"] for s in body["sessions"]]
+    assert "main" in display_names
     assert "use_sessions" not in body
 
 

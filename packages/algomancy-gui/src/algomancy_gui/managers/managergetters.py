@@ -10,7 +10,7 @@ def get_scenario_manager(
     """
     sm: SessionManager = server.session_manager
     if active_session_name is None:
-        active_session_name = sm.start_session_name
+        active_session_name = sm.start_session_id
     return sm.get_scenario_manager(active_session_name)
 
 

@@ -77,7 +77,7 @@ class GuiLauncher:
         # register the session manager on the app object
         app.server.session_manager = manager
         app.server.show_session_picker = cfg.features.show_session_picker
-        default_session_name = manager.start_session_name
+        default_session_id = manager.start_session_id
 
         # register the styling configuration on the app object
         app.server.styling_config = cfg.styling
@@ -106,7 +106,7 @@ class GuiLauncher:
                 dcc.Store(
                     id=ACTIVE_SESSION,
                     storage_type="session",
-                    data=default_session_name,
+                    data=default_session_id,
                 ),
             ]
         )

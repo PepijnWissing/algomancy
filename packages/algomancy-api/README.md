@@ -57,9 +57,13 @@ instead of using `ApiLauncher.run`.
 All routes are prefixed with `cfg.prefix` (default `/api/v1`).
 
 ### Sessions
-- `GET    /sessions` — list sessions and the default
-- `POST   /sessions` — create a new session
-- `POST   /sessions/{sid}/copy` — copy an existing session
+- `GET    /sessions` — list `[{id, display_name}, ...]` and the default id
+- `POST   /sessions` — create a new session — body `{"display_name": "..."}`
+- `POST   /sessions/{sid}/copy` — copy — body `{"new_display_name": "..."}`
+- `PATCH  /sessions/{sid}` — rename — body `{"display_name": "..."}`
+
+`{sid}` accepts either the session's UUID (canonical) or its current
+`display_name` (soft-compat alias).
 
 ### Algorithm + KPI discovery
 - `GET    /sessions/{sid}/algorithms` — list algorithm names

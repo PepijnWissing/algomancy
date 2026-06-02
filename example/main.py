@@ -174,7 +174,7 @@ def run_gui(args: argparse.Namespace) -> None:
     server = app.server
     if hasattr(server, "session_manager"):
         sm: SessionManager = server.session_manager
-        sm_default = sm.get_scenario_manager(sm.start_session_name)
+        sm_default = sm.get_scenario_manager(sm.start_session_id)
         try:
             from example.templates import seed_warehouse_scenarios
 

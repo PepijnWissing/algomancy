@@ -104,18 +104,27 @@ session is a self-contained `ScenarioManager` with its own data and
 scenarios — useful for serving multiple users or experiment workspaces from
 one process.
 
+**Identity.** Every session has a stable UUID ``id`` and a mutable
+``display_name``. The URL path uses the UUID; the ``display_name`` is what
+you show in UIs. For convenience, the URL path also accepts a session's
+current ``display_name`` as a soft-compat alias — useful for single-tenant
+deployments and clients migrating from pre-M14 algomancy. Authoritative
+clients should always use the UUID returned by ``GET /sessions``.
+
 | Verb | Path | Description |
 |---|---|---|
-| `GET` | `/sessions` | List session names and the default |
-| `POST` | `/sessions` | Create a new session — body `{"name": "..."}` |
-| `POST` | `/sessions/{sid}/copy` | Copy a session — body `{"new_name": "..."}` |
+| `GET` | `/sessions` | List `[{id, display_name}, ...]` and the default id |
+| `POST` | `/sessions` | Create — body `{"display_name": "..."}` |
+| `POST` | `/sessions/{sid}/copy` | Copy — body `{"new_display_name": "..."}` |
+| `PATCH` | `/sessions/{sid}` | Rename — body `{"display_name": "..."}` (id stays) |
 
 Status codes:
 - `201` on a successful create/copy.
-- `404` when the source session of a copy doesn't exist.
-- `409` for duplicate names **or** unsafe names (path separators, `..`,
-  drive prefixes, empty strings). Session names are validated at the
-  framework layer; the API doesn't add a second guard.
+- `200` on a successful rename; the response is the updated `{id, display_name}`.
+- `404` when the source session of a copy or rename doesn't exist.
+- `409` when the requested `display_name` is already taken by another session.
+- `422` when the request body fails Pydantic validation (e.g. empty
+  `display_name`).
 
 ## Algorithm + KPI discovery
 

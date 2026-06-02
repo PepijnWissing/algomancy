@@ -54,7 +54,7 @@ def admin_sessions(session_id):
         return []
 
     session_manager: SessionManager = get_app().server.session_manager
-    sessions = session_manager.sessions_names
+    sessions = session_manager.list_sessions()
 
     return [
         html.H3("Sessions"),
@@ -69,7 +69,10 @@ def admin_sessions(session_id):
                         html.Label("Select session:"),
                         dcc.Dropdown(
                             id=ADMIN_SELECT_SESSION,
-                            options=[{"label": s, "value": s} for s in sessions],
+                            options=[
+                                {"label": s["display_name"], "value": s["id"]}
+                                for s in sessions
+                            ],
                             value=session_id,
                             clearable=False,
                         ),
@@ -278,7 +281,9 @@ def validate_session_name(session_name: str):
     """
     if not get_app().server.show_session_picker:
         return no_update, no_update
-    existing_names = get_app().server.session_manager.sessions_names
+    existing_display_names = [
+        s["display_name"] for s in get_app().server.session_manager.list_sessions()
+    ]
 
     if not session_name:
         tooltip = dbc.Tooltip(
@@ -289,7 +294,7 @@ def validate_session_name(session_name: str):
         )
         return True, tooltip
 
-    if session_name in existing_names:
+    if session_name in existing_display_names:
         tooltip = dbc.Tooltip(
             "Session name already exists.",
             target=f"{NEW_SESSION_BUTTON}-wrapper",
@@ -353,16 +358,16 @@ def toggle_session_creator_modal(
         session_manager: SessionManager = get_app().server.session_manager
         try:
             if copy_session:
-                session_manager.copy_session(session_id, new_session_name)
+                new_id = session_manager.copy_session(session_id, new_session_name)
             else:
-                session_manager.create_new_session(new_session_name)
-        except ValueError as e:
-            # Duplicate name or invalid characters; keep the modal open with the
-            # entered value visible so the user can correct it.
+                new_id = session_manager.create_new_session(new_session_name)
+        except (ValueError, KeyError) as e:
+            # Duplicate display name or invalid characters; keep the modal open
+            # with the entered value visible so the user can correct it.
             session_manager.log(str(e), MessageStatus.WARNING)
             return no_update, no_update, no_update, no_update
 
-        return False, "", no_update, new_session_name
+        return False, "", no_update, new_id
     if triggered_id == f"{NEW_SESSION_BUTTON}-cancel":
         return False, "", no_update, no_update
     return is_open, "", no_update, no_update

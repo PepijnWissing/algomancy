@@ -12,7 +12,8 @@ metadata = sa.MetaData()
 sessions_table = sa.Table(
     "algomancy_sessions",
     metadata,
-    sa.Column("name", sa.String, primary_key=True),
+    sa.Column("id", sa.String, primary_key=True),
+    sa.Column("display_name", sa.String, nullable=False),
     sa.Column("created_at", sa.DateTime, nullable=True),
 )
 
