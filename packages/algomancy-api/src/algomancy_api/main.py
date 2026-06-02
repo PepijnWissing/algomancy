@@ -1,8 +1,8 @@
 """Console entry point for the ``algomancy-api`` script.
 
-Mirrors :mod:`algomancy_cli.main`: load a user's :class:`ApiConfiguration` via
-a ``module:function`` callback (or use the bundled example config), then hand
-the resulting app to :class:`ApiLauncher` to serve with uvicorn.
+Load a user's :class:`ApiConfiguration` via a ``module:function`` callback
+(or use the bundled example config), then hand the resulting app to
+:class:`ApiLauncher` to serve with uvicorn.
 
 Usage
 -----
@@ -110,8 +110,8 @@ def build_example_config() -> ApiConfiguration:
         schemas=example_schemas,
         data_object_type=DataSource,
         autocreate=True,
-        default_algo="Slow",
-        default_algo_params_values={"duration": 1},
+        default_algo="Instant",
+        default_algo_params_values={},
         autorun=False,
         title="Algomancy API (Example)",
     )

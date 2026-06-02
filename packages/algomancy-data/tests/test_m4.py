@@ -95,9 +95,17 @@ class TestRegistry:
             is XLSXMultiExtractor
         )
 
+    def test_json_multi_registered(self):
+        from algomancy_data.extractor import JSONMultiExtractor
+
+        assert (
+            get_extractor_class(FileExtension.JSON, SchemaType.MULTI)
+            is JSONMultiExtractor
+        )
+
     def test_unregistered_returns_none(self):
-        # JSON multi has no built-in
-        assert get_extractor_class(FileExtension.JSON, SchemaType.MULTI) is None
+        # CSV multi has no built-in (and is unlikely to ever gain one).
+        assert get_extractor_class(FileExtension.CSV, SchemaType.MULTI) is None
 
     def test_registered_keys_contains_defaults(self):
         keys = registered_keys()
@@ -120,18 +128,18 @@ class TestDefaultExtractionSequence:
     def test_unregistered_extension_raises(self, tmp_path):
         class WeirdSchema(Schema):
             _FILENAME = "weird"
-            _EXTENSION = FileExtension.JSON
+            _EXTENSION = FileExtension.CSV
             _SCHEMA_TYPE = SchemaType.MULTI  # no extractor registered
 
             _DATATYPES = {"a": {"x": DataType.STRING}}
 
         factory = SimpleETLFactory([WeirdSchema])
-        # Provide a JSON file-like to satisfy schemas_dct lookup
-        json_path = tmp_path / "weird.json"
-        json_path.write_text('[{"x": "1"}]', encoding="utf-8")
-        from algomancy_data import JSONFile
+        # Provide a CSV file-like to satisfy schemas_dct lookup
+        csv_path = tmp_path / "weird.csv"
+        csv_path.write_text("x\n1\n", encoding="utf-8")
+        from algomancy_data import CSVFile
 
-        file = JSONFile(name="weird", path=str(json_path))
+        file = CSVFile(name="weird", path=str(csv_path))
         with pytest.raises(ETLConstructionError, match="No extractor registered"):
             factory.create_extraction_sequence({"weird": file})
 
@@ -149,15 +157,23 @@ class TestDefaultValidationSequence:
         assert RequiredColumnsValidator in v_types
         assert SchemaValidator in v_types
 
-    def test_pk_validator_added_when_pk_declared(self):
-        factory = SimpleETLFactory([WidgetSchema])
-        seq = factory.create_validation_sequence()
-        assert PrimaryKeyValidator in [type(v) for v in seq._validators]
+    def test_pk_validator_always_present(self):
+        # Per issue #172: the validator is now appended unconditionally so
+        # MULTI schemas (whose primary_key() raises TypeError) don't break
+        # construction. PrimaryKeyValidator self-skips per-table when no
+        # PK is declared, so its presence is harmless for NoPK schemas.
+        for schema in (WidgetSchema, NoPKSchema):
+            seq = SimpleETLFactory([schema]).create_validation_sequence()
+            assert PrimaryKeyValidator in [type(v) for v in seq._validators]
 
-    def test_pk_validator_skipped_when_no_pk(self):
-        factory = SimpleETLFactory([NoPKSchema])
-        seq = factory.create_validation_sequence()
-        assert PrimaryKeyValidator not in [type(v) for v in seq._validators]
+    def test_pk_validator_self_skips_when_no_pk(self):
+        # NoPKSchema has no primary_key declared. Running validation against
+        # an empty data dict should produce no PK-related messages — the
+        # validator iterates _schema_table_map and short-circuits per table.
+        seq = SimpleETLFactory([NoPKSchema]).create_validation_sequence()
+        result = seq.run_validation({})
+        assert all(m.code != "MISSING_PK_COLUMN" for m in result.messages)
+        assert all(m.code != "PK_NULL" for m in result.messages)
 
 
 # ------------------------------------------------------------------ #

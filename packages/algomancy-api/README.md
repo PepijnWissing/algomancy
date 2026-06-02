@@ -1,9 +1,9 @@
 # algomancy-api
 
 FastAPI HTTP interface that exposes the same scenario- and data-management
-surface used by `algomancy-gui` and `algomancy-cli`, so a remote frontend
-(browser SPA, native desktop app, another Python process) can drive an
-Algomancy backend over the network instead of importing it in-process.
+surface used by `algomancy-gui`, so a remote frontend (browser SPA, native
+desktop app, another Python process) can drive an Algomancy backend over
+the network instead of importing it in-process.
 
 The HTTP layer is deliberately thin: every route maps to a single
 `ScenarioManager` / `SessionManager` method and responses use the existing

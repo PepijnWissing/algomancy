@@ -29,8 +29,8 @@ class ScenarioManager:
 
     @classmethod
     def from_config(cls, cfg) -> "ScenarioManager":
-        """Build from either a CoreConfig (or subclass like CliConfiguration,
-        ApiConfiguration) or any wrapper exposing a `.core` CoreConfig (e.g. AppConfig).
+        """Build from either a CoreConfig (or subclass like ApiConfiguration)
+        or any wrapper exposing a `.core` CoreConfig (e.g. AppConfig).
         """
         if isinstance(cfg, CoreConfig):
             core = cfg
@@ -72,6 +72,8 @@ class ScenarioManager:
         default_algo_name: str = None,
         default_param_values: Dict[str, any] = None,
         autorun: bool = False,
+        data_manager=None,
+        scenario_repository=None,
     ) -> None:
         self.logger = logger if logger else Logger()
         self.scenario_save_location = scenario_save_location
@@ -83,8 +85,10 @@ class ScenarioManager:
         assert save_type in ["json"], "Save type must be parquet or json."
         self._save_type = save_type
 
-        # Components
-        if self._has_persistent_state:
+        # Components — prefer injected implementations over auto-constructed ones
+        if data_manager is not None:
+            self._dm = data_manager
+        elif self._has_persistent_state:
             assert data_folder, (
                 "Data folder must be specified if data manager has state."
             )
@@ -105,23 +109,36 @@ class ScenarioManager:
                 data_object_type=data_object_type,
             )
 
-        self._registry = ScenarioRegistry(logger=self.logger)
+        self._registry = (
+            scenario_repository
+            if scenario_repository is not None
+            else ScenarioRegistry(logger=self.logger)
+        )
         self._factory = ScenarioFactory(
             kpi_templates=kpi_templates,
             algo_templates=algo_templates,
             data_manager=self._dm,
             logger=self.logger,
         )
-        self._processor = ScenarioProcessor(logger=self.logger)
+        # Wire the post-run callback so DB-backed repositories can persist run results
+        _on_processed = None
+        if hasattr(self._registry, "persist_run"):
+            _on_processed = self._registry.persist_run
+
+        self._processor = ScenarioProcessor(
+            logger=self.logger, on_processed=_on_processed
+        )
         self.toggle_autorun(autorun)
 
         # Keep inputs for accessors
         # self._algo_templates = algo_templates
         self._schemas = schemas
 
-        # Load initial data
+        # Load initial data and scenario history
         try:
             self._dm.startup()
+            if hasattr(self._registry, "startup"):
+                self._registry.startup()
             if self._auto_create_scenario:
                 self.auto_create_scenarios(self._dm.get_data_keys())
         except Exception as e:

@@ -592,6 +592,171 @@ class XLSXMultiExtractor(MultiExtractor):
         return dfs
 
 
+class JSONMultiExtractor(MultiExtractor):
+    """Extract a nested JSON document into multiple related tables.
+
+    The schema must be a ``SchemaType.MULTI`` schema declaring one
+    :class:`~algomancy_data.schema.ColumnGroup` per output table. Each group's
+    ``source_path`` says where its rows live relative to a root record:
+
+    - ``source_path=()`` — the **root** group. Each item of the top-level list
+      contributes one row. Exactly one group must use this.
+    - ``source_path=("PickOrderLines",)`` — a **child** group. Each root
+      record has a nested list at that key whose elements become this group's
+      rows. Deeper paths (``("foo", "bar")``) walk through intermediate dicts
+      before reaching the list.
+
+    A child column whose ``foreign_key=(parent_group_name, parent_pk_column)``
+    is automatically populated from the corresponding root record at extraction
+    time. The same FK declaration is also consumed by
+    :class:`~algomancy_data.validator.ForeignKeyValidator` and
+    :class:`~algomancy_data.transformer.CascadeDropTransformer`.
+
+    The top-level JSON may be either a list of records, or a dict with exactly
+    one list-valued key (the wrapper is unwrapped automatically). List columns
+    that are peeled off into a child group are dropped from the parent table so
+    each row is a flat, queryable record.
+
+    Attributes:
+        file: ``JSONFile`` containing the nested document.
+        schema: ``MULTI`` schema whose ``ColumnGroup``s carry the
+            ``source_path`` and ``foreign_key`` metadata.
+    """
+
+    def __init__(
+        self,
+        file: JSONFile,
+        schema: Schema,
+        logger: Logger = None,
+    ) -> None:
+        super().__init__(file, schema, logger)
+        # Resolve and cache group descriptors at construction time so
+        # mistakes surface eagerly rather than at extract().
+        self._groups = self._resolve_groups()
+        root = [g for g in self._groups if not g["source_path"]]
+        assert len(root) == 1, (
+            f"JSONMultiExtractor for {schema.file_name()} requires exactly one "
+            f"ColumnGroup with source_path=() (root/parent); found {len(root)}."
+        )
+        self._root = root[0]
+        self._children = [g for g in self._groups if g["source_path"]]
+        # FK targets on child groups must reference the root group's PK.
+        for child in self._children:
+            for col in child["columns"]:
+                if col.foreign_key is None:
+                    continue
+                parent_table, parent_col = col.foreign_key
+                if parent_table != self._root["name"]:
+                    continue
+                assert parent_col in self._root["pk_cols"] or any(
+                    c.name == parent_col for c in self._root["columns"]
+                ), (
+                    f"Child group '{child['name']}' column '{col.name}' "
+                    f"declares foreign_key to '{parent_table}.{parent_col}', "
+                    f"but no such column exists on the root group."
+                )
+
+    def _resolve_groups(self) -> List[Dict]:
+        """Return per-group descriptors: name, columns, source_path, pk_cols."""
+        from .schema import ColumnGroup
+
+        groups = [
+            attr for attr in vars(self.schema).values() if isinstance(attr, ColumnGroup)
+        ]
+        assert groups, (
+            f"JSONMultiExtractor requires {self.schema.file_name()} to declare "
+            "ColumnGroup attributes (legacy _DATATYPES dicts are not supported "
+            "for nested JSON because they cannot carry source_path)."
+        )
+        out: List[Dict] = []
+        for grp in groups:
+            pk_cols = tuple(c.name for c in grp.columns if c.primary_key)
+            out.append(
+                {
+                    "name": grp.name,
+                    "columns": list(grp.columns),
+                    "source_path": tuple(grp.source_path),
+                    "pk_cols": pk_cols,
+                }
+            )
+        return out
+
+    @staticmethod
+    def _resolve_list(record: dict, path: tuple) -> list:
+        """Walk ``path`` through ``record`` and return the list at the end.
+
+        Returns ``[]`` when any intermediate hop is missing/``None`` or the
+        final value is not a list. Non-strict because nested arrays are
+        commonly optional in real-world JSON.
+        """
+        cur = record
+        for key in path:
+            if not isinstance(cur, dict):
+                return []
+            cur = cur.get(key)
+            if cur is None:
+                return []
+        return cur if isinstance(cur, list) else []
+
+    def _load_root_records(self) -> list:
+        raw = json.load(StringIO(self.file.content))
+        if isinstance(raw, list):
+            return raw
+        if isinstance(raw, dict):
+            list_values = [v for v in raw.values() if isinstance(v, list)]
+            if len(list_values) == 1:
+                return list_values[0]
+        raise ValueError(
+            f"JSONMultiExtractor expects {self.file.name} to contain either a "
+            "top-level list of records or a dict with exactly one list-valued "
+            "key."
+        )
+
+    def _extract_files(self) -> Dict[str, pd.DataFrame]:
+        root_records = self._load_root_records()
+
+        parent_df = pd.json_normalize(root_records)
+        # Drop columns that correspond to nested lists peeled off into
+        # child tables. Dot-joined path matches how json_normalize names
+        # intermediate dict expansions.
+        for child in self._children:
+            col_to_drop = ".".join(child["source_path"])
+            if col_to_drop in parent_df.columns:
+                parent_df = parent_df.drop(columns=[col_to_drop])
+
+        child_dfs: Dict[str, pd.DataFrame] = {}
+        for child in self._children:
+            rows: List[dict] = []
+            fk_specs = [
+                (col.name, col.foreign_key[1])
+                for col in child["columns"]
+                if col.foreign_key and col.foreign_key[0] == self._root["name"]
+            ]
+            for record in root_records:
+                if not isinstance(record, dict):
+                    continue
+                sublist = self._resolve_list(record, child["source_path"])
+                for item in sublist:
+                    if not isinstance(item, dict):
+                        continue
+                    row = dict(item)
+                    for fk_col_name, parent_col_name in fk_specs:
+                        row[fk_col_name] = record.get(parent_col_name)
+                    rows.append(row)
+            child_dfs[child["name"]] = (
+                pd.json_normalize(rows)
+                if rows
+                else (pd.DataFrame(columns=[c.name for c in child["columns"]]))
+            )
+
+        out: Dict[str, pd.DataFrame] = {
+            self.get_extraction_key(self._root["name"]): parent_df,
+        }
+        for name, df in child_dfs.items():
+            out[self.get_extraction_key(name)] = df
+        return out
+
+
 class DataFrameExtractor(Extractor):
     """Extractor that wraps a pre-built ``pandas.DataFrame``.
 

@@ -114,6 +114,7 @@ the **extractor registry**.
 |---|---|
 | `CSVSingleExtractor` | Single table from a CSV. |
 | `JSONSingleExtractor` | Single table from a JSON file. |
+| `JSONMultiExtractor` | Multiple related tables from a nested JSON file. |
 | `XLSXSingleExtractor` | Single sheet from an XLSX file. |
 | `XLSXMultiExtractor` | Several sheets from an XLSX file. |
 | `DataFrameExtractor` | A pre-built `pandas.DataFrame` — useful in tests and notebooks. |
@@ -140,6 +141,88 @@ class MyETLFactory(ETLFactory):
             )
         )
         return seq
+```
+
+(nested-json-ref)=
+### Nested JSON into related tables
+
+`JSONSingleExtractor` flattens nested **objects** with dot notation, but a
+nested **list of objects** (e.g. an `Orders` array on each `Customer`)
+collapses to a single opaque cell. For documents like that, declare a
+`MULTI` schema with one `ColumnGroup` per output table and let
+`JSONMultiExtractor` split the document for you.
+
+Each `ColumnGroup` carries a `source_path` saying where its rows live
+relative to a top-level record:
+
+- `source_path=()` — the **root/parent** group. Each top-level record
+  contributes one row. Exactly one group must use this.
+- `source_path=("PickOrderLines",)` — a **child** group. Each parent
+  record's `PickOrderLines` list is exploded into this group's rows.
+- A child column with
+  `foreign_key=(parent_group_name, parent_pk_column)` is populated
+  automatically from the parent's primary key at extraction time. The
+  same declaration is consumed by `ForeignKeyValidator` and
+  `CascadeDropTransformer`.
+
+The top-level JSON can be either a list of records, or a dict with
+exactly one list-valued key (the wrapper is unwrapped automatically).
+
+```{code-block} python
+:caption: Splitting `PickLoadCarriers` and `PickOrderLines` into two tables
+from algomancy_data import (
+    Column,
+    ColumnGroup,
+    DataType,
+    FileExtension,
+    Schema,
+    SimpleETLFactory,
+)
+from algomancy_data.schema import SchemaType
+
+
+class PickLoadCarrierSchema(Schema):
+    _FILENAME = "picks"
+    _EXTENSION = FileExtension.JSON
+    _SCHEMA_TYPE = SchemaType.MULTI
+
+    PICK_LOAD_CARRIERS = ColumnGroup(
+        "PickLoadCarriers",
+        [
+            Column("Identity", dtype=DataType.STRING, primary_key=True),
+            Column("PickOrderIdentity", dtype=DataType.STRING),
+            Column("NumberOfPickOrderLines", dtype=DataType.INTEGER),
+        ],
+        source_path=(),
+    )
+
+    PICK_ORDER_LINES = ColumnGroup(
+        "PickOrderLines",
+        [
+            Column("Identity", dtype=DataType.STRING, primary_key=True),
+            Column(
+                "PickLoadCarrierIdentity",
+                dtype=DataType.STRING,
+                foreign_key=("PickLoadCarriers", "Identity"),
+            ),
+            Column("PickSequence", dtype=DataType.INTEGER),
+            Column("OrderedQuantity", dtype=DataType.INTEGER),
+        ],
+        source_path=("PickOrderLines",),
+    )
+
+
+factory = SimpleETLFactory([PickLoadCarrierSchema])
+result = factory.build_pipeline("today", files={"picks": picks_file}).run()
+# result.datasource.tables ->
+#   "picks.PickLoadCarriers": flat parent table (no PickOrderLines column)
+#   "picks.PickOrderLines":   one row per order line, with PickLoadCarrierIdentity FK
+```
+
+```{tip}
+`JSONMultiExtractor` validates the schema eagerly: it requires exactly one
+root group, and child FK columns must reference a real parent column.
+Misconfigurations raise at extractor construction, not at run time.
 ```
 
 To support a new file format, see

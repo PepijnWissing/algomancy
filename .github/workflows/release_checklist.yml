@@ -1,0 +1,114 @@
+name: Open release-checklist issue
+
+# Triggers after publish.yml completes successfully, OR on a tag push for
+# manual dry-runs during development (e.g. push a tag like v0.7.0-rc1).
+on:
+  workflow_run:
+    workflows: ["Build and publish to PyPI"]
+    types: [completed]
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+
+jobs:
+  open-checklist:
+    name: Open release-checklist issue
+    runs-on: ubuntu-latest
+    # Only run when triggered by a successful publish (or directly via tag push).
+    if: >
+      github.event_name == 'push' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+
+    permissions:
+      issues: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Resolve version
+        id: version
+        run: |
+          if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            # Tag-push: version comes from the tag name (strip leading "v")
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            # workflow_run: extract from pyproject.toml on the default branch.
+            VERSION=$(python -c "
+          import tomllib, pathlib
+          data = tomllib.loads(pathlib.Path('pyproject.toml').read_text())
+          print(data['project']['version'])
+          ")
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "title=v$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Skip if checklist issue already exists
+        id: dedupe
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TITLE="${{ steps.version.outputs.title }}"
+          # Both triggers (workflow_run and push:tags) can fire for the same
+          # release; bail out cleanly if an issue for this milestone already
+          # exists rather than opening duplicates.
+          # `.[0] // empty` emits the first match if any, or nothing at all
+          # when the array is empty — without this jq prints the literal
+          # string "null", which would slip past `[ -n "$EXISTING" ]` and
+          # crash the python parser. `2>/dev/null || true` swallows the
+          # "milestone not found" error gh emits on the very first release.
+          EXISTING_URL=$(gh issue list \
+            --label release-checklist \
+            --milestone "$TITLE" \
+            --state all \
+            --json url \
+            --jq '.[0].url // empty' 2>/dev/null || true)
+          if [ -n "$EXISTING_URL" ]; then
+            echo "release-checklist issue already exists for $TITLE: $EXISTING_URL"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Template RELEASE_CHECKLIST.md
+        if: steps.dedupe.outputs.skip != 'true'
+        id: body
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          sed "s/{VERSION}/$VERSION/g" RELEASE_CHECKLIST.md > /tmp/checklist_body.md
+          echo "body_path=/tmp/checklist_body.md" >> "$GITHUB_OUTPUT"
+
+      - name: Create or reuse milestone
+        if: steps.dedupe.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TITLE="${{ steps.version.outputs.title }}"
+          # `state=all` so a previously-closed milestone with the same name
+          # is reused instead of triggering a duplicate-create 422.
+          # `--paginate` so we still find older milestones once the repo has
+          # more than the default page (30) of them.
+          EXISTING=$(gh api --paginate \
+            'repos/:owner/:repo/milestones?state=all&per_page=100' \
+            --jq ".[] | select(.title == \"$TITLE\") | .number" | head -n1)
+          if [ -z "$EXISTING" ]; then
+            gh api repos/:owner/:repo/milestones \
+              --method POST \
+              --field title="$TITLE" >/dev/null
+            echo "Created milestone $TITLE"
+          else
+            echo "Reusing existing milestone $TITLE (#$EXISTING)"
+          fi
+
+      - name: Open release-checklist issue
+        if: steps.dedupe.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TITLE="${{ steps.version.outputs.title }}"
+          # `--milestone` takes the milestone NAME (gh resolves to the number).
+          gh issue create \
+            --title "Release $TITLE verification" \
+            --body-file /tmp/checklist_body.md \
+            --label "release-checklist" \
+            --milestone "$TITLE"

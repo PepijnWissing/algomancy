@@ -17,75 +17,26 @@ stderr from the subprocess and surface it so the failure is debuggable.
 
 from __future__ import annotations
 
-import os
-import pathlib
-import socket
-import subprocess
 import sys
 import time
 
 import httpx
 import pytest
 
-
-# Repo root — the example wiring uses ``example/data`` as a relative path, so
-# the subprocess must run with cwd here for ``--example`` to resolve.
-REPO_ROOT = pathlib.Path(__file__).resolve().parents[3]
-
-
-def _find_free_port() -> int:
-    """Bind ``0`` to grab an OS-assigned free port, then immediately release."""
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(("127.0.0.1", 0))
-        return s.getsockname()[1]
-
-
-def _wait_for_health(
-    base_url: str,
-    timeout_seconds: float,
-    proc: subprocess.Popen,
-    log_path: pathlib.Path,
-) -> None:
-    """Poll ``/health`` until 200, or fail with the subprocess's logs if not.
-
-    The example wiring runs ETL on every session on startup, which can take
-    several seconds and generate a lot of log output. We redirect output to a
-    file (so the pipes can't fill and block the process) and surface the file
-    contents on any startup failure.
-    """
-    deadline = time.monotonic() + timeout_seconds
-    last_err: Exception | None = None
-    while time.monotonic() < deadline:
-        if proc.poll() is not None:
-            log_text = log_path.read_text(errors="replace") if log_path.exists() else ""
-            pytest.fail(
-                f"algomancy-api exited with code {proc.returncode} before "
-                f"becoming healthy. Logs:\n{log_text}"
-            )
-        try:
-            r = httpx.get(f"{base_url}/health", timeout=1.0)
-            if r.status_code == 200:
-                return
-        except httpx.HTTPError as exc:
-            last_err = exc
-        time.sleep(0.25)
-    log_text = log_path.read_text(errors="replace") if log_path.exists() else ""
-    pytest.fail(
-        f"algomancy-api did not respond on {base_url}/health within "
-        f"{timeout_seconds}s; last error: {last_err}\nLogs:\n{log_text}"
-    )
+from algomancy_utils._smoke_helpers import (
+    find_free_port,
+    live_subprocess,
+    wait_for_http,
+)
 
 
 @pytest.fixture(scope="module")
 def live_server(tmp_path_factory):
     """Module-scoped: start one ``algomancy-api --example`` and reuse it."""
-    port = _find_free_port()
+    port = find_free_port()
     base_url = f"http://127.0.0.1:{port}"
     log_path = tmp_path_factory.mktemp("algomancy-api-smoke") / "server.log"
 
-    # Use the same Python interpreter as the test runner so uv state, sys.path,
-    # and the installed scripts all line up — invoking the console script by
-    # name would also work but this is more robust on Windows.
     cmd = [
         sys.executable,
         "-m",
@@ -94,29 +45,16 @@ def live_server(tmp_path_factory):
         "--port",
         str(port),
     ]
-    env = os.environ.copy()
 
-    log_file = open(log_path, "w", encoding="utf-8")
-    proc = subprocess.Popen(
-        cmd,
-        cwd=str(REPO_ROOT),
-        env=env,
-        stdout=log_file,
-        stderr=subprocess.STDOUT,
-        text=True,
-    )
-    try:
+    with live_subprocess(cmd, log_path=log_path) as proc:
         # Example startup runs ETL on every session — give it generous time.
-        _wait_for_health(base_url, timeout_seconds=60.0, proc=proc, log_path=log_path)
+        wait_for_http(
+            f"{base_url}/health",
+            timeout_seconds=60.0,
+            proc=proc,
+            log_path=log_path,
+        )
         yield base_url
-    finally:
-        proc.terminate()
-        try:
-            proc.wait(timeout=5.0)
-        except subprocess.TimeoutExpired:
-            proc.kill()
-            proc.wait(timeout=5.0)
-        log_file.close()
 
 
 # ---- Smoke tests ---------------------------------------------------------
@@ -128,17 +66,17 @@ def test_health_endpoint_responds(live_server):
     body = r.json()
     assert body["status"] == "ok"
     assert body["use_sessions"] is True
-    # The example wiring discovers ``default_session`` and ``test_session`` on
-    # disk; both must show up.
+    # The example wiring ships a single ``default_session`` on disk.
+    # Multi-session discovery semantics are unit-tested in
+    # packages/algomancy-scenario/tests/test_session_manager.py.
     assert "default_session" in body["sessions"]
-    assert "test_session" in body["sessions"]
 
 
 def test_sessions_endpoint_lists_example_sessions(live_server):
     r = httpx.get(f"{live_server}/api/v1/sessions")
     assert r.status_code == 200
     body = r.json()
-    assert set(body["sessions"]) >= {"default_session", "test_session"}
+    assert "default_session" in body["sessions"]
     assert body["default"] in body["sessions"]
 
 
@@ -147,8 +85,8 @@ def test_algorithms_endpoint_exposes_example_algorithms(live_server):
     sid = sessions["default"]
     r = httpx.get(f"{live_server}/api/v1/sessions/{sid}/algorithms")
     assert r.status_code == 200
-    # The example wiring registers Slow, AsIs, Batching, Random.
-    assert "Slow" in r.json()["algorithms"]
+    # The example registry must expose the warehouse-slotting algorithms.
+    assert "Instant" in r.json()["algorithms"]
 
 
 def test_openapi_docs_and_schema_available(live_server):
@@ -180,7 +118,7 @@ def test_end_to_end_create_run_complete(live_server):
     algorithms = httpx.get(f"{live_server}/api/v1/sessions/{sid}/algorithms").json()[
         "algorithms"
     ]
-    assert "Slow" in algorithms
+    assert "Instant" in algorithms
 
     data_keys = httpx.get(f"{live_server}/api/v1/sessions/{sid}/data").json()["keys"]
     assert data_keys, "example default_session is expected to ship with data"
@@ -192,8 +130,8 @@ def test_end_to_end_create_run_complete(live_server):
         json={
             "tag": "smoke-e2e",
             "dataset_key": dataset_key,
-            "algo_name": "Slow",
-            "algo_params": {"duration": 1},
+            "algo_name": "Instant",
+            "algo_params": {},
         },
     )
     assert create.status_code == 201, create.text
@@ -225,8 +163,12 @@ def test_end_to_end_create_run_complete(live_server):
     ).json()
     assert full["status"] == "complete"
     assert full["kpis"], "expected at least one KPI in completed scenario"
-    any_kpi = next(iter(full["kpis"].values()))
-    assert any_kpi["value"] is not None
+    # Some registered KPIs intentionally return NaN/Inf (which serialise to
+    # null) or are type-guarded against non-warehouse results. Require AT
+    # LEAST one KPI to have produced a usable numeric value.
+    assert any(k["value"] is not None for k in full["kpis"].values()), (
+        f"No KPI produced a numeric value: {full['kpis']}"
+    )
 
     # Cleanup.
     delete = httpx.delete(

@@ -120,10 +120,18 @@ class ColumnGroup:
         name:    Actual sheet / sub-schema name as it appears in the source
                  file (may contain spaces and mixed case).
         columns: Ordered list of ``Column`` objects for this sub-schema.
+        source_path: For nested sources (e.g. JSON), the path of keys from
+            the root record to the list of dicts that populates this group.
+            ``()`` (the default) means the group is built from the root
+            record itself; a tuple like ``("PickOrderLines",)`` means each
+            root record has a nested list at that key whose elements form
+            the rows of this group. Ignored by extractors that do not
+            support nesting (e.g. ``XLSXMultiExtractor``).
     """
 
     name: str
     columns: List[Column]
+    source_path: Tuple[str, ...] = field(default_factory=tuple)
 
 
 class Schema(ABC):
@@ -224,14 +232,6 @@ class Schema(ABC):
                 are defined.
             TypeError: If called on a MULTI schema (use ``datatype_groups()``).
         """
-        col_attrs = [attr for attr in vars(cls).values() if isinstance(attr, Column)]
-        if col_attrs:
-            return {col.name: col for col in col_attrs}
-
-        if cls._DATATYPES == "default_datatypes":
-            raise NotImplementedError(
-                f"{cls.__name__} must declare Column attributes or override _DATATYPES"
-            )
 
         if not cls.is_single():
             raise TypeError(
@@ -239,10 +239,19 @@ class Schema(ABC):
                 "Use datatype_groups() to inspect its column groups."
             )
 
+        col_attrs = [attr for attr in vars(cls).values() if isinstance(attr, Column)]
+        if col_attrs:
+            return {col.name: col for col in col_attrs}
+
         return cls.get_legacy_columns_with_warning()
 
     @classmethod
     def get_legacy_columns_with_warning(cls) -> dict[str, Column]:
+        if cls._DATATYPES == "default_datatypes":
+            raise NotImplementedError(
+                f"{cls.__name__} must declare Column attributes or override _DATATYPES"
+            )
+
         warnings.warn(
             f"{cls.__name__} uses the legacy _DATATYPES dict. "
             "Declare Column instances as class attributes instead "
@@ -284,6 +293,10 @@ class Schema(ABC):
                 grp.name: {col.name: col for col in grp.columns} for grp in group_attrs
             }
 
+        return cls._get_legacy_column_groups_with_warning()
+
+    @classmethod
+    def _get_legacy_column_groups_with_warning(cls) -> dict[str, dict[Any, Column]]:
         if cls._DATATYPES == "default_datatypes":
             raise NotImplementedError(
                 f"{cls.__name__} must declare ColumnGroup attributes or override _DATATYPES"
@@ -296,13 +309,14 @@ class Schema(ABC):
             DeprecationWarning,
             stacklevel=2,
         )
-        return {
+        cg = {
             group_name: {
                 col_name: Column(name=col_name, dtype=dtype)
                 for col_name, dtype in sub_dict.items()
             }
             for group_name, sub_dict in cls._DATATYPES.items()
         }
+        return cg
 
     @classmethod
     def required_columns(cls) -> List[str]:

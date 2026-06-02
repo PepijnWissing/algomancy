@@ -2,20 +2,19 @@
 # HTTP API
 
 The `algomancy-api` package exposes the same scenario- and data-management
-surface used by the Dash GUI and the CLI shell as an HTTP service. A remote
-process — browser SPA, native desktop app, another Python client — can drive
-an Algomancy backend over JSON-over-HTTP instead of importing it in-process.
+surface used by the Dash GUI as an HTTP service. A remote process —
+browser SPA, native desktop app, another Python client — can drive an
+Algomancy backend over JSON-over-HTTP instead of importing it in-process.
 
-The shape mirrors the other frontends:
+The shape mirrors the GUI:
 
 - An [`ApiConfiguration`](#configuration) carries the same domain wiring
   (ETL factory, algorithm/KPI templates, schemas, data paths) as
-  `CliConfiguration` and `AppConfig.core`.
+  `AppConfig.core`.
 - An [`ApiLauncher`](#launching) turns that configuration into a
   [FastAPI](https://fastapi.tiangolo.com/) app and serves it with uvicorn.
 - A console script `algomancy-api` accepts a `--config-callback module:fn`
-  that returns an `ApiConfiguration`, identical to how `algomancy-cli` is
-  bootstrapped.
+  that returns an `ApiConfiguration`.
 
 ```{tip}
 Once a server is running, point your browser at `/docs` for the interactive
@@ -86,8 +85,7 @@ process manager instead of using `ApiLauncher.run`.
 {ref}`Scenario reference <scenario-package-ref>`) with HTTP-specific fields. Inherited
 fields like `etl_factory`, `kpi_templates`, `algo_templates`, `schemas`,
 `data_object_type`, `data_path`, `has_persistent_state`, `use_sessions`,
-`autocreate`, `autorun`, and `title` behave exactly as they do for the GUI
-and CLI.
+`autocreate`, `autorun`, and `title` behave exactly as they do for the GUI.
 
 | Field | Type | Default | Notes |
 |---|---|---|---|
@@ -169,18 +167,131 @@ should poll `/status` for progress.
 | `GET` | `/sessions/{sid}/scenarios/{id}/status` | Lightweight `{id, tag, status, progress}` for polling |
 | `GET` | `/sessions/{sid}/processing` | The scenario currently processing, or `null` |
 
-Status codes for `POST /scenarios`:
-- `201` on success.
-- `404` if `algo_name` or `dataset_key` does not exist in this session.
-- `409` if `tag` is already used.
-- `400` for parameter validation failures (out-of-range values, wrong types).
-- `422` if a required body field is missing (Pydantic-level validation).
-
 ```{tip}
 The `/status` endpoint is intentionally small: just id, tag, status, and
 progress. It is safe to poll at a high frequency without serializing the full
 scenario (with KPIs, algorithm config, and result payload) every time.
 ```
+
+(api-create-scenario-ref)=
+### `POST /sessions/{sid}/scenarios` — create a scenario
+
+Binds an input dataset + algorithm + parameter values into a runnable
+scenario. The body is JSON.
+
+**Request body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `tag` | string | yes | Human-readable scenario name. Must be unique within the session — duplicates return `409`. |
+| `dataset_key` | string | yes | Must exist in this session's data manager. Discover via `GET /data`. |
+| `algo_name` | string | yes | Must exist in `available_algorithms`. Discover via `GET /algorithms`. |
+| `algo_params` | object | no | Parameter values keyed by parameter name. Omit or set to `null` for defaults. Discover the expected keys via `GET /algorithms/{name}/parameters`. |
+
+The `algo_params` keys come from the algorithm's parameter set — the
+`/parameters` endpoint described above returns the schema. Values are
+validated against that schema by `BaseParameterSet`; bad values raise
+`ParameterError` and the route returns `400` with the detail.
+
+**Example**
+
+```{code-block} python
+import httpx
+
+scenario = httpx.post(
+    "http://127.0.0.1:8051/api/v1/sessions/main/scenarios",
+    json={
+        "tag": "slow-5s",
+        "dataset_key": "Master data",
+        "algo_name": "Slow",
+        "algo_params": {"duration": 5},
+    },
+).json()
+```
+
+**Response** (`201`)
+
+Returns the full `Scenario.to_dict()` payload (see
+{ref}`Scenario response shape <api-scenario-shape-ref>` below). At this point
+`status` is `"CREATED"`, `result` is `null`, and each KPI's `value` is `None`.
+
+**Error cases**
+
+| Status | When |
+|---|---|
+| `404` | `algo_name` is not registered, or `dataset_key` is not present. |
+| `409` | `tag` already exists in this session. |
+| `400` | A parameter value failed validation (`ParameterError`). |
+| `422` | A required field is missing or has the wrong JSON type (Pydantic-level). |
+
+(api-run-scenario-ref)=
+### `POST /sessions/{sid}/scenarios/{id}/run` — enqueue for processing
+
+Fire-and-forget. Returns `202 Accepted` immediately and returns the scenario
+in its `QUEUED` state — actual computation happens on a worker thread. Clients
+must poll `GET /status` to observe progress and completion.
+
+The status state machine, in order:
+
+```
+CREATED  →  QUEUED  →  PROCESSING  →  COMPLETE
+                                  ↘   FAILED
+```
+
+`COMPLETE` and `FAILED` are terminal. A subsequent `/run` on a terminal
+scenario re-enqueues it from the current state — the manager allows re-runs.
+At any moment, at most one scenario per session is in `PROCESSING`; check
+`GET /processing` to see which one.
+
+**Polling**
+
+`GET /status` returns just `{id, tag, status, progress}` and is safe to call
+at high frequency. `progress` is a float in `[0.0, 1.0]`. Once `status` is
+`COMPLETE` or `FAILED`, fetch the full result with `GET /scenarios/{id}`.
+
+**Error cases**
+
+| Status | When |
+|---|---|
+| `404` | `scenario_id` does not exist in this session. |
+| `500` | The algorithm raised an exception during processing. Note: the HTTP response for `/run` itself does not surface this — the failure is reflected in the scenario's `status=FAILED` field. Inspect the server log for the traceback. |
+
+(api-scenario-shape-ref)=
+### Scenario response shape
+
+`GET /scenarios` and `GET /scenarios/{id}` (and the create/run endpoints)
+return the dict produced by `Scenario.to_dict()`:
+
+```{code-block} json
+{
+  "id": "01HZX...",
+  "tag": "slow-5s",
+  "input_data_id": "Master data",
+  "algorithm": {
+    "name": "Slow",
+    "parameters": [
+      {"name": "duration", "type": "integer", "value": 5, "default": 1, "min": 1, "max": 60, "required": true}
+    ]
+  },
+  "kpis": {
+    "throughput": {"name": "throughput", "value": 42.0, "unit": "items/s"}
+  },
+  "status": "complete",
+  "result": { "...domain-specific Result.to_dict() payload..." }
+}
+```
+
+- `result` and each KPI's `value` are `null` until the scenario reaches
+  `COMPLETE`.
+- `kpis` is keyed by the KPI template name registered in `kpi_templates`.
+- `algorithm.parameters` is the same descriptor shape returned by
+  `GET /algorithms/{name}/parameters`, plus the `value` chosen for this run.
+- `result` is whatever your domain's `BaseResult.to_dict()` returns. The
+  framework does not impose a shape — see the
+  {ref}`Scenario reference <scenario-package-ref>`.
+
+There is no separate `/kpi-measurements` endpoint; KPI values are part of
+this payload.
 
 ## Data management
 
@@ -193,13 +304,106 @@ scenario (with KPIs, algorithm config, and result payload) every time.
 | `POST` | `/sessions/{sid}/data/from-json` | Add a dataset from a `DataSource.to_json()` payload |
 | `POST` | `/sessions/{sid}/etl` | Run ETL over an uploaded multipart bundle |
 
-`POST /etl` accepts a multipart form with `dataset_name` (form field) and one
-or more `files` parts. The filename stem becomes the logical name the ETL
-factory expects (`sku_data.csv` ⇒ `sku_data`); the extension picks the
-`File` subclass (`.csv`, `.json`, `.xlsx`).
-
 Deleting a dataset that is referenced by a scenario returns `409`. To delete
 the underlying data, delete its referencing scenarios first.
+
+(api-etl-ref)=
+### `POST /sessions/{sid}/etl` — run ETL over uploaded files
+
+Stages a bundle of uploaded files into a temp directory, wraps each one in the
+appropriate `algomancy_data.File` subclass, and calls
+`ScenarioManager.etl_data(file_map, dataset_name)`. The result is a new (or
+overwritten) dataset accessible under the chosen `dataset_name`.
+
+This is the only endpoint that uses a **multipart/form-data** body — every
+other write accepts JSON. There is no Pydantic model for the request because
+FastAPI's `UploadFile` handling is what converts the multipart parts into
+file-like objects on the server. The OpenAPI schema at `/openapi.json` does
+describe the `dataset_name` form field and the `files` array.
+
+**Form fields**
+
+| Field | Repeated? | Type | Notes |
+|---|---|---|---|
+| `dataset_name` | once | string | Logical key the resulting dataset is stored under. Required, non-empty. |
+| `files` | one or more | file upload | Each upload's filename stem becomes the **logical name** the ETL factory expects. Extension picks the `File` subclass — `csv` → `CSVFile`, `json` → `JSONFile`, `xlsx` → `XLSXFile`. Any other extension fails with `400`. |
+
+The filename stem mapping means the ETL factory does NOT receive uploaded
+filenames as opaque blobs — they must match the logical names declared by your
+schemas. For example, if your schemas declare a `sku_data` group, the
+corresponding upload must be `sku_data.csv` (or `.json`, or `.xlsx`).
+
+**Curl example**
+
+```{code-block} bash
+curl -X POST http://127.0.0.1:8051/api/v1/sessions/main/etl \
+  -F dataset_name=uploaded \
+  -F files=@./sku_data.csv \
+  -F files=@./inventory.xlsx
+```
+
+Note: each `-F files=@...` repeats the same form field name `files`; that is
+how multipart "array" fields are encoded.
+
+**Python example (httpx)**
+
+```{code-block} python
+import httpx
+
+with open("sku_data.csv", "rb") as csv, open("inventory.xlsx", "rb") as xlsx:
+    r = httpx.post(
+        "http://127.0.0.1:8051/api/v1/sessions/main/etl",
+        data={"dataset_name": "uploaded"},
+        files=[
+            ("files", ("sku_data.csv", csv, "text/csv")),
+            (
+                "files",
+                (
+                    "inventory.xlsx",
+                    xlsx,
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                ),
+            ),
+        ],
+    )
+r.raise_for_status()
+```
+
+**Response**
+
+```{code-block} json
+{
+  "dataset_name": "uploaded",
+  "success": true,
+  "keys": ["uploaded", "Master data"]
+}
+```
+
+`success` reflects `ETLResult.is_success` — a successful HTTP request can
+still report `success=false` when extraction or validation produced ERRORs but
+the request itself completed cleanly. Inspect the dataset and the manager's
+log to diagnose.
+
+**Error cases**
+
+| Status | When |
+|---|---|
+| `400` | No files uploaded, an upload is missing a filename, or the filename extension is not in `{csv, json, xlsx}`. |
+| `404` | `session_id` does not exist. |
+| `422` | `dataset_name` form field missing (Pydantic-level validation). |
+| `500` | The ETL pipeline itself raised an unhandled exception (logged with traceback). |
+
+(api-from-json-ref)=
+### `POST /sessions/{sid}/data/from-json` — ingest a serialized DataSource
+
+Accepts the raw JSON produced by `DataSource.to_json()` as the request body
+(not wrapped in any envelope). The framework parses the body with
+`DataSource.from_json`, so the bytes are forwarded verbatim and the route does
+no re-encoding. Both an object-rooted and array-rooted payload are accepted —
+whichever your `DataSource` subclass produces.
+
+Returns `201` with the full key list. Common errors: `400` on an empty body or
+malformed JSON, `404` on unknown session.
 
 ## Polling pattern
 
@@ -261,4 +465,3 @@ humans and may change between versions.
 
 - {ref}`Scenario reference <scenario-package-ref>` — `CoreConfig`, `ScenarioManager`, `SessionManager`.
 - {ref}`Data reference <data-ref>` — `DataSource`, `ETLFactory`, `Schema`.
-- {ref}`CLI reference <cli-ref>` — the sibling headless frontend.
