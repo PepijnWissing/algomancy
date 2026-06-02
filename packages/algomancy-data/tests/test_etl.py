@@ -290,6 +290,43 @@ class TestStatefulStartup:
         # Manager left in a defined state (no partial keys).
         assert dm.get_data_keys() == []
 
+    def test_session_meta_file_is_skipped(self, tmp_path):
+        """A session's meta.json is framework-owned metadata, not a DataSource;
+        startup must skip it silently so restarting doesn't error out."""
+        data_folder = tmp_path / "session"
+        data_folder.mkdir()
+        (data_folder / "meta.json").write_text(
+            '{"id": "fake-uuid", "display_name": "test"}', encoding="utf-8"
+        )
+        # And a leftover scenarios.json — same shape, not a DataSource either.
+        (data_folder / "scenarios.json").write_text("[]", encoding="utf-8")
+
+        class _NoopETL(ETLFactory):
+            def create_extraction_sequence(self, files):
+                return ExtractionSequence()
+
+            def create_validation_sequence(self):
+                return ValidationSequence()
+
+            def create_transformation_sequence(self):
+                return TransformationSequence()
+
+            def create_loader(self):
+                return DataSourceLoader(logger=None)
+
+        dm = StatefulDataManager(
+            etl_factory=_NoopETL,
+            schemas=[WidgetSchema],
+            data_folder=str(data_folder),
+            save_type="json",
+            data_object_type=DataSource,
+            logger=None,
+        )
+        dm.startup()
+        # Neither file produces an error or a phantom dataset key.
+        assert dm.startup_errors == []
+        assert dm.get_data_keys() == []
+
 
 # ------------------------------------------------------------------ #
 # ETLResult convenience helpers
