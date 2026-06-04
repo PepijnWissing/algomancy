@@ -54,8 +54,8 @@ state) and a small `meta.json`:
 
 ```
 data/
-├── default_session/
-│   ├── meta.json              ← {"id": "<uuid>", "display_name": "default_session"}
+├── main/
+│   ├── meta.json              ← {"id": "<uuid>", "display_name": "main"}
 │   ├── scenarios.json
 │   └── example_data/
 │       ├── sku_data.csv

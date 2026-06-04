@@ -24,7 +24,7 @@ from example.templates.kpi.warehouse_kpis import (
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-EXAMPLE_DATA_DIR = REPO_ROOT / "example" / "data" / "default_session" / "example_data"
+EXAMPLE_DATA_DIR = REPO_ROOT / "example" / "data" / "main" / "example_data"
 
 
 # ---------------------------------------------------------------------------

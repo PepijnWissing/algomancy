@@ -65,11 +65,11 @@ def test_health_endpoint_responds(live_server):
     assert r.status_code == 200
     body = r.json()
     assert body["status"] == "ok"
-    # The example wiring ships a single ``default_session`` on disk.
+    # The example wiring ships a single ``main`` on disk.
     # Multi-session discovery semantics are unit-tested in
     # packages/algomancy-scenario/tests/test_session_manager.py.
     display_names = [s["display_name"] for s in body["sessions"]]
-    assert "default_session" in display_names
+    assert "main" in display_names
 
 
 def test_sessions_endpoint_lists_example_sessions(live_server):
@@ -78,7 +78,7 @@ def test_sessions_endpoint_lists_example_sessions(live_server):
     body = r.json()
     display_names = [s["display_name"] for s in body["sessions"]]
     ids = [s["id"] for s in body["sessions"]]
-    assert "default_session" in display_names
+    assert "main" in display_names
     assert body["default"] in ids
 
 
@@ -87,8 +87,7 @@ def test_algorithms_endpoint_exposes_example_algorithms(live_server):
     sid = sessions["default"]
     r = httpx.get(f"{live_server}/api/v1/sessions/{sid}/algorithms")
     assert r.status_code == 200
-    # The example registry must expose the warehouse-slotting algorithms.
-    assert "Instant" in r.json()["algorithms"]
+    assert "Greedy Slotting" in r.json()["algorithms"]
 
 
 def test_openapi_docs_and_schema_available(live_server):
@@ -116,30 +115,21 @@ def test_end_to_end_create_run_complete(live_server):
     sessions = httpx.get(f"{live_server}/api/v1/sessions").json()
     sid = sessions["default"]
 
-    # Pick an algorithm + dataset that we know exist in the example.
-    algorithms = httpx.get(f"{live_server}/api/v1/sessions/{sid}/algorithms").json()[
-        "algorithms"
-    ]
-    assert "Instant" in algorithms
-
     data_keys = httpx.get(f"{live_server}/api/v1/sessions/{sid}/data").json()["keys"]
-    assert data_keys, "example default_session is expected to ship with data"
-    dataset_key = data_keys[0]
+    assert data_keys, "example main is expected to ship with data"
 
-    # Create.
     create = httpx.post(
         f"{live_server}/api/v1/sessions/{sid}/scenarios",
         json={
             "tag": "smoke-e2e",
-            "dataset_key": dataset_key,
-            "algo_name": "Instant",
+            "dataset_key": data_keys[0],
+            "algo_name": "Greedy Slotting",
             "algo_params": {},
         },
     )
     assert create.status_code == 201, create.text
     sid_scenario = create.json()["id"]
 
-    # Run.
     run = httpx.post(
         f"{live_server}/api/v1/sessions/{sid}/scenarios/{sid_scenario}/run"
     )
@@ -159,17 +149,13 @@ def test_end_to_end_create_run_complete(live_server):
         time.sleep(0.1)
     assert final is not None and final["status"] == "complete", final
 
-    # Full scenario response should carry KPI values now.
     full = httpx.get(
         f"{live_server}/api/v1/sessions/{sid}/scenarios/{sid_scenario}"
     ).json()
     assert full["status"] == "complete"
     assert full["kpis"], "expected at least one KPI in completed scenario"
-    # Some registered KPIs intentionally return NaN/Inf (which serialise to
-    # null) or are type-guarded against non-warehouse results. Require AT
-    # LEAST one KPI to have produced a usable numeric value.
-    assert any(k["value"] is not None for k in full["kpis"].values()), (
-        f"No KPI produced a numeric value: {full['kpis']}"
+    assert all(k["value"] is not None for k in full["kpis"].values()), (
+        f"Every warehouse KPI should produce a value for Greedy: {full['kpis']}"
     )
 
     # Cleanup.

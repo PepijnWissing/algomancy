@@ -46,7 +46,7 @@
 - [ ] Overview page renders slot scatter coloured by zone
 - [ ] Run **Long Progress** (10 s) → progress bar advances → DELETE cancels within 2 s
 - [ ] Run **Failure Modes** with `mode=raise_value_error` → scenario shows failed state with error message
-- [ ] Single-session wiring (`default_session`) loads without crash on the data page
+- [ ] Single-session wiring (`main`) loads without crash on the data page
 - [ ] **Database backend** (requires `uv sync --extra database`):
       `uv run python -m example.main --interface gui --backend database --database-url sqlite:///./tmp_test.db`
       boots end-to-end; delete `<repo>/tmp_test.db` afterwards
@@ -56,9 +56,9 @@
 **CWD: `<repo>`** (the example config resolves `example/data` relative to here)
 
 - [ ] `uv run python -c "from algomancy_api import ApiLauncher; from algomancy_api.example import build_example_config; ApiLauncher.run(ApiLauncher.build(build_example_config()))"` boots on port 8051
-- [ ] `curl http://127.0.0.1:8051/health` → `{"status": "ok", …, "sessions": [{"id": "<uuid>", "display_name": "default_session"}, ...]}`
+- [ ] `curl http://127.0.0.1:8051/health` → `{"status": "ok", …, "sessions": [{"id": "<uuid>", "display_name": "main"}, ...]}`
 - [ ] `curl http://127.0.0.1:8051/docs` → Swagger UI renders
-- [ ] End-to-end: `POST /api/v1/sessions/default_session/scenarios` with body
+- [ ] End-to-end: `POST /api/v1/sessions/main/scenarios` with body
       `{"tag":"smoke-api","dataset_key":"example_data","algo_name":"Instant","algo_params":{}}`
       then `POST .../scenarios/{id}/run` → poll `.../status` until `complete`; verify the full GET returns at least one KPI with a numeric value
 

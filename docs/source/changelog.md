@@ -40,7 +40,7 @@
 
   :::{dropdown} {octicon}`light-bulb` Details
   :color: light
-  Previously a session's identifier was its user-facing string (``"default_session"``,
+  Previously a session's identifier was its user-facing string (``"main"``,
   ``"alice_experiment"``), which made renaming impossible and made URLs leak
   human-readable names. The new set-up features:
   - Each session has a stable UUID ``id`` and a separate mutable ``display_name``.
@@ -63,7 +63,7 @@
     upgrading without running the script will still work — the script just
     makes the rewrite eager and visible. For API clients, the resolver
     still accepts the old ``display_name`` in URLs (e.g.
-    ``/sessions/default_session/...``) as a soft alias, so existing
+    ``/sessions/main/...``) as a soft alias, so existing
     integrations keep working while you migrate them to UUIDs.
   :::
 - Sessions are now always used
