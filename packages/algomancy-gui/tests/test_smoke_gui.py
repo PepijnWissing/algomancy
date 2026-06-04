@@ -30,13 +30,19 @@ from algomancy_utils._smoke_helpers import (
 
 pytestmark = [pytest.mark.gui, pytest.mark.slow]
 
-# Importorskip is gated on the gui marker via collection — if the user
-# explicitly opts into GUI tests but Playwright is missing, fail loudly here.
-pytest.importorskip(
-    "playwright", reason="playwright not installed — run 'playwright install chromium'"
-)
-
 _RESULTS_DIR = REPO_ROOT / "pytest-results"
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _require_playwright():
+    # Module-level importorskip would fire during collection, before marker
+    # filtering, creating a spurious skip on the fast PR path. Using a fixture
+    # defers the check until pytest actually selects tests from this module.
+    pytest.importorskip(
+        "playwright",
+        reason="playwright not installed — run 'playwright install chromium'",
+    )
+
 
 # Concrete algorithm names registered on `better-example` (and ancestors of
 # this branch). The dropdown must include AT LEAST ONE — asserting on a list
