@@ -99,9 +99,9 @@ class TestInstantAlgorithm:
         assert isinstance(result, ScenarioResult)
 
     def test_registered_in_templates(self):
-        from example.templates.algorithm import algorithm_templates
+        from example.templates.algorithm import algorithms
 
-        assert "Instant" in algorithm_templates
+        assert "Instant" in algorithms
 
 
 # ---------------------------------------------------------------------------
@@ -111,9 +111,9 @@ class TestInstantAlgorithm:
 
 class TestLongProgressAlgorithm:
     def test_registered_in_templates(self):
-        from example.templates.algorithm import algorithm_templates
+        from example.templates.algorithm import algorithms
 
-        assert "Long Progress" in algorithm_templates
+        assert "Long Progress" in algorithms
 
     def test_cancel_flag_stops_early(self, monkeypatch):
         import example.templates.algorithm.edge_progress_long as _mod
@@ -156,9 +156,9 @@ class TestLongProgressAlgorithm:
 
 class TestFailureModesAlgorithm:
     def test_registered_in_templates(self):
-        from example.templates.algorithm import algorithm_templates
+        from example.templates.algorithm import algorithms
 
-        assert "Failure Modes" in algorithm_templates
+        assert "Failure Modes" in algorithms
 
     def _run_mode(self, mode: str):
         params = FailureModesAlgorithm.initialize_parameters()
@@ -194,9 +194,9 @@ class TestFailureModesAlgorithm:
 
 class TestParameterMatrixAlgorithm:
     def test_registered_in_templates(self):
-        from example.templates.algorithm import algorithm_templates
+        from example.templates.algorithm import algorithms
 
-        assert "Parameter Matrix" in algorithm_templates
+        assert "Parameter Matrix" in algorithms
 
     def test_all_parameter_types_present(self):
         params = ParameterMatrixAlgorithm.initialize_parameters()
@@ -312,7 +312,7 @@ class TestDataDirectories:
         from algomancy_scenario import CoreConfig, SessionManager
         from example.data_handling.factories import ExampleETLFactory
         from example.data_handling.schemas import example_schemas
-        from example.templates import algorithm_templates, kpi_templates
+        from example.templates import algorithms, kpi_templates
 
         (tmp_path / "empty_session").mkdir()
 
@@ -324,7 +324,7 @@ class TestDataDirectories:
                 data_object_type=DataSource,
                 etl_factory=ExampleETLFactory,
                 kpi_templates=kpi_templates,
-                algo_templates=algorithm_templates,
+                algorithms=algorithms,
                 schemas=example_schemas,
                 autocreate=False,
                 autorun=False,

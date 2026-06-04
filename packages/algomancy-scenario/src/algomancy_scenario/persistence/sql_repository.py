@@ -40,7 +40,7 @@ class SqlScenarioRepository:
     Args:
         engine: A SQLAlchemy ``Engine`` for the target database.
         session_id: Logical session name that scopes all reads/writes.
-        algo_templates: Algorithm class registry (same as ``CoreConfig.algo_templates``).
+        algorithms: Algorithm class registry (same as ``CoreConfig.algorithms``).
         kpi_templates: KPI class registry (same as ``CoreConfig.kpi_templates``).
         data_manager: DataManager used to load ``input_data`` when rehydrating
             scenarios from the database.
@@ -51,14 +51,14 @@ class SqlScenarioRepository:
         self,
         engine: sa.Engine,
         session_id: str,
-        algo_templates: Dict[str, Type[ALGORITHM]],
+        algorithms: Dict[str, Type[ALGORITHM]],
         kpi_templates: Dict[str, Type[BASE_KPI]],
         data_manager,
         logger: Logger | None = None,
     ) -> None:
         self._engine = engine
         self._session_id = session_id
-        self._algo_factory = AlgorithmFactory(algo_templates, logger)
+        self._algo_factory = AlgorithmFactory(algorithms, logger)
         self._kpi_factory = KpiFactory(kpi_templates)
         self._data_manager = data_manager
         self._logger = logger

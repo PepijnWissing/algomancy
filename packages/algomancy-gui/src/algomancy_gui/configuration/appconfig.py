@@ -37,7 +37,7 @@ class AppConfig:
         ...     core_config=CoreConfig(
         ...         etl_factory=ExampleETLFactory,
         ...         kpi_templates=kpi_templates,
-        ...         algo_templates=algorithm_templates,
+        ...         algorithms=algorithms,
         ...     ),
         ...     server_config=ServerConfig(port=9000),
         ...     compare_page_config=ComparePageConfig(

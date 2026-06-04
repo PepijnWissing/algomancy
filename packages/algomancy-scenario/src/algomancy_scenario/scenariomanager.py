@@ -44,7 +44,7 @@ class ScenarioManager:
         return cls(
             etl_factory=core.etl_factory,
             kpi_templates=core.kpi_templates,
-            algo_templates=core.algo_templates,
+            algorithms=core.algorithms,
             schemas=core.schemas,
             data_object_type=core.data_object_type,
             data_folder=core.data_path,
@@ -60,7 +60,7 @@ class ScenarioManager:
         self,
         etl_factory: type[E],
         kpi_templates: Dict[str, Type[BASE_KPI]],
-        algo_templates: Dict[str, Type[ALGORITHM]],
+        algorithms: Dict[str, Type[ALGORITHM]],
         schemas: List[Schema],
         data_object_type: type[BASEDATASOURCE],  # for extensions of datasource
         data_folder: str = None,
@@ -116,7 +116,7 @@ class ScenarioManager:
         )
         self._factory = ScenarioFactory(
             kpi_templates=kpi_templates,
-            algo_templates=algo_templates,
+            algorithms=algorithms,
             data_manager=self._dm,
             logger=self.logger,
         )
@@ -131,7 +131,6 @@ class ScenarioManager:
         self.toggle_autorun(autorun)
 
         # Keep inputs for accessors
-        # self._algo_templates = algo_templates
         self._schemas = schemas
 
         # Load initial data and scenario history
@@ -179,7 +178,7 @@ class ScenarioManager:
         return self._processor.currently_processing
 
     def get_algorithm_parameters(self, key) -> BASE_PARAMS_BOUND:
-        return self._factory.algo_templates.get(key).initialize_parameters()
+        return self._factory.algorithms.get(key).initialize_parameters()
 
     # Data operations (delegated)
     def get_data_keys(self) -> List[str]:

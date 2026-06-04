@@ -77,10 +77,10 @@ def _core_kwargs() -> dict:
         {% endif %}
         {% if has_custom_implementations %}
         kpi_templates={"{{ filename }}": {{ class_name }}KPI},
-        algo_templates={"{{ class_name }}": {{ class_name }}Algorithm},
+        algorithms={"{{ class_name }}": {{ class_name }}Algorithm},
         {% else %}
         kpi_templates={"placeholder": PlaceholderKPI},
-        algo_templates={"placeholder": PlaceholderAlgorithm},
+        algorithms={"placeholder": PlaceholderAlgorithm},
         {% endif %}
         data_object_type=DataSource,
         autocreate=False,

@@ -1,9 +1,9 @@
-from .algorithm import algorithm_templates
+from .algorithm import algorithms
 from .kpi import kpi_templates
 from .scenarios import debug_create_example_scenarios, seed_warehouse_scenarios
 
 __all__ = [
-    "algorithm_templates",
+    "algorithms",
     "kpi_templates",
     "debug_create_example_scenarios",
     "seed_warehouse_scenarios",

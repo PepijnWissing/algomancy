@@ -35,7 +35,7 @@ _spec.loader.exec_module(_shared)
 
 ExampleETLFactory = _shared.ExampleETLFactory
 example_schemas = _shared.example_schemas
-algorithm_templates = _shared.algorithm_templates
+algorithms = _shared.algorithms
 kpi_templates = _shared.kpi_templates
 SlowAlgorithm = _shared.SlowAlgorithm
 SlowAlgorithmParams = _shared.SlowAlgorithmParams
@@ -78,7 +78,7 @@ def repo(engine, dm):
     r = SqlScenarioRepository(
         engine=engine,
         session_id="test_session",
-        algo_templates=algorithm_templates,
+        algorithms=algorithms,
         kpi_templates=kpi_templates,
         data_manager=dm,
     )
@@ -151,7 +151,7 @@ class TestSqlScenarioRepositoryPersistence:
         repo1 = SqlScenarioRepository(
             engine=engine,
             session_id="test_session",
-            algo_templates=algorithm_templates,
+            algorithms=algorithms,
             kpi_templates=kpi_templates,
             data_manager=dm,
         )
@@ -163,7 +163,7 @@ class TestSqlScenarioRepositoryPersistence:
         repo2 = SqlScenarioRepository(
             engine=engine,
             session_id="test_session",
-            algo_templates=algorithm_templates,
+            algorithms=algorithms,
             kpi_templates=kpi_templates,
             data_manager=dm,
         )
@@ -179,7 +179,7 @@ class TestSqlScenarioRepositoryPersistence:
         repo = SqlScenarioRepository(
             engine=engine,
             session_id="test_session",
-            algo_templates=algorithm_templates,
+            algorithms=algorithms,
             kpi_templates=kpi_templates,
             data_manager=dm,
         )
@@ -198,7 +198,7 @@ class TestSqlScenarioRepositoryPersistence:
         repo2 = SqlScenarioRepository(
             engine=engine,
             session_id="test_session",
-            algo_templates=algorithm_templates,
+            algorithms=algorithms,
             kpi_templates=kpi_templates,
             data_manager=dm,
         )
@@ -227,7 +227,7 @@ class TestSqlScenarioRepositoryPersistence:
             repo_local = SqlScenarioRepository(
                 engine=engine,
                 session_id=sid,
-                algo_templates=algorithm_templates,
+                algorithms=algorithms,
                 kpi_templates=kpi_templates,
                 data_manager=dm_local,
             )
@@ -252,7 +252,7 @@ class TestSqlScenarioRepositoryPersistence:
         rx = SqlScenarioRepository(
             engine=engine,
             session_id="session_x",
-            algo_templates=algorithm_templates,
+            algorithms=algorithms,
             kpi_templates=kpi_templates,
             data_manager=dm_x,
         )

@@ -29,7 +29,7 @@ class CoreConfig:
         etl_factory: An instance responsible for creating ETL processes.
         kpi_templates: A mapping of KPI names to their corresponding class
             implementations.
-        algo_templates: A mapping of algorithm names to their corresponding class
+        algorithms: A mapping of algorithm names to their corresponding class
             implementations.
         input_configs: A list of configurations defining the input files and their
             schemas.
@@ -55,7 +55,7 @@ class CoreConfig:
         # === scenario manager configuration ===
         etl_factory: Any | None = None,
         kpi_templates: Dict[str, Type[BASE_KPI]] | None = None,
-        algo_templates: Dict[str, Type[ALGORITHM]] | None = None,
+        algorithms: Dict[str, Type[ALGORITHM]] | None = None,
         schemas: List[Type[Schema]] | None = None,
         # === auto start/create features ===
         autocreate: bool | None = None,
@@ -76,7 +76,7 @@ class CoreConfig:
             data_object_type: Type of the data container. Defaults to None.
             etl_factory: Factory object for ETL operations. Defaults to None.
             kpi_templates: Dictionary of KPI identifiers and classes. Defaults to None.
-            algo_templates: Dictionary of algorithm identifiers and classes. Defaults to None.
+            algorithms: Dictionary of algorithm identifiers and classes. Defaults to None.
             input_configs: List of input file specifications. Defaults to None.
             autocreate: Whether to create a default scenario on startup. Defaults to None.
             default_algo: Name of the default algorithm. Defaults to None.
@@ -97,7 +97,7 @@ class CoreConfig:
         self.data_object_type = data_object_type
         self.etl_factory = etl_factory
         self.kpi_templates = kpi_templates
-        self.algo_templates = algo_templates
+        self.algorithms = algorithms
         self.schemas = schemas
         self.autocreate = autocreate
         self.default_algo = default_algo
@@ -125,7 +125,7 @@ class CoreConfig:
             "data_object_type": self.data_object_type,
             "etl_factory": self.etl_factory,
             "kpi_templates": self.kpi_templates,
-            "algo_templates": self.algo_templates,
+            "algorithms": self.algorithms,
             "schemas": self.schemas,
             "autocreate": self.autocreate,
             "default_algo": self.default_algo,
@@ -158,7 +158,7 @@ class CoreConfig:
         required_fields = {
             "etl_factory": self.etl_factory,
             "kpi_templates": self.kpi_templates,
-            "algo_templates": self.algo_templates,
+            "algorithms": self.algorithms,
             "schemas": self.schemas,
             "data_object_type": self.data_object_type,
         }
@@ -203,7 +203,7 @@ class CoreConfig:
 
     def _validate_algorithm_parameters_core(self) -> None:
         if self.autocreate:
-            tmp_factory = AlgorithmFactory(self.algo_templates)
+            tmp_factory = AlgorithmFactory(self.algorithms)
             test_algorithm = tmp_factory.create(
                 self.default_algo, self.default_algo_params_values
             )

@@ -114,7 +114,7 @@ class SessionManager:
         return cls(
             etl_factory=core.etl_factory,
             kpi_templates=core.kpi_templates,
-            algo_templates=core.algo_templates,
+            algorithms=core.algorithms,
             schemas=core.schemas,
             data_object_type=core.data_object_type,
             data_folder=core.data_path,
@@ -132,7 +132,7 @@ class SessionManager:
         self,
         etl_factory: type[E],
         kpi_templates: Dict[str, Type[BaseKPI]],
-        algo_templates: Dict[str, Type[BaseAlgorithm]],
+        algorithms: Dict[str, Type[BaseAlgorithm]],
         schemas: List[Schema],
         data_object_type: type[BASEDATASOURCE],
         data_folder: str = None,
@@ -150,7 +150,7 @@ class SessionManager:
         self.logger = logger if logger else Logger()
         self._etl_factory = etl_factory
         self._kpi_templates = kpi_templates
-        self._algo_templates = algo_templates
+        self._algorithms = algorithms
         self._schemas = schemas
         self._data_object_type = data_object_type
         self._autorun = autorun
@@ -335,7 +335,7 @@ class SessionManager:
         self._sessions[session_id] = ScenarioManager(
             etl_factory=self._etl_factory,
             kpi_templates=self._kpi_templates,
-            algo_templates=self._algo_templates,
+            algorithms=self._algorithms,
             schemas=self._schemas,
             data_object_type=self._data_object_type,
             data_folder=session_path,
@@ -369,7 +369,7 @@ class SessionManager:
         repo = SqlScenarioRepository(
             engine=self._db_engine,
             session_id=session_id,
-            algo_templates=self._algo_templates,
+            algorithms=self._algorithms,
             kpi_templates=self._kpi_templates,
             data_manager=dm,
             logger=self.logger,
@@ -377,7 +377,7 @@ class SessionManager:
         return ScenarioManager(
             etl_factory=self._etl_factory,
             kpi_templates=self._kpi_templates,
-            algo_templates=self._algo_templates,
+            algorithms=self._algorithms,
             schemas=self._schemas,
             data_object_type=self._data_object_type,
             data_folder=None,
@@ -420,7 +420,7 @@ class SessionManager:
         return self._display_names.get(session_id, session_id)
 
     def get_algorithm_parameters(self, key) -> BaseParameterSet:
-        template: Type[BaseAlgorithm] = self._algo_templates.get(key)
+        template: Type[BaseAlgorithm] = self._algorithms.get(key)
         if template is None:
             raise KeyError(f"Unable to find template {key} in the available templates.")
         return template.initialize_parameters()

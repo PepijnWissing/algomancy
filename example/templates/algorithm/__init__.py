@@ -11,10 +11,10 @@ __all__ = [
     "AsIsSlotting",
     "GreedySlotting",
     "SimulatedAnnealingSlotting",
-    "algorithm_templates",
+    "algorithms",
 ]
 
-algorithm_templates = {
+algorithms = {
     "AsIs Slotting": AsIsSlotting,
     "Greedy Slotting": GreedySlotting,
     "SA Slotting": SimulatedAnnealingSlotting,

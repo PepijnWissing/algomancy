@@ -35,7 +35,7 @@ _shared = _load_shared()
 
 ExampleETLFactory = _shared.ExampleETLFactory
 example_schemas = _shared.example_schemas
-algorithm_templates = _shared.algorithm_templates
+algorithms = _shared.algorithms
 kpi_templates = _shared.kpi_templates
 
 
@@ -56,7 +56,7 @@ def api_core_kwargs(tmp_path) -> dict:
         "etl_factory": ExampleETLFactory,
         "schemas": example_schemas,
         "kpi_templates": kpi_templates,
-        "algo_templates": algorithm_templates,
+        "algorithms": algorithms,
         "autocreate": False,
         "autorun": False,
     }

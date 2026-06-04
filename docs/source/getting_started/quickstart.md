@@ -117,7 +117,7 @@ to be guided through the set-up steps, outlined below.
             core_config=CoreConfig(
                 etl_factory=PlaceholderETLFactory,
                 kpi_templates={"placeholder": PlaceholderKPI},
-                algo_templates={"placeholder": PlaceholderAlgorithm},
+                algorithms={"placeholder": PlaceholderAlgorithm},
                 schemas=[PlaceholderSchema()],
                 data_object_type=DataSource,
                 autocreate=False,
@@ -243,7 +243,7 @@ to be guided through the set-up steps, outlined below.
                 etl_factory=TestETLFactory,  # 'Test' is replaced by your own custom name
                 schemas=all_schemas,
                 kpi_templates={"test": TestKPI},
-                algo_templates={"Test": TestAlgorithm},
+                algorithms={"Test": TestAlgorithm},
                 data_object_type=DataSource,
                 autocreate=False,
                 autorun=False,

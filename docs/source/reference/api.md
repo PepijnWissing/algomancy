@@ -28,14 +28,14 @@ from algomancy_api import ApiConfiguration, ApiLauncher
 from algomancy_data import DataSource
 
 from myapp.etl import MyETLFactory
-from myapp.templates import kpi_templates, algorithm_templates
+from myapp.templates import kpi_templates, algorithms
 from myapp.schemas import all_schemas
 
 
 cfg = ApiConfiguration(
     etl_factory=MyETLFactory,
     kpi_templates=kpi_templates,
-    algo_templates=algorithm_templates,
+    algorithms=algorithms,
     schemas=all_schemas,
     data_object_type=DataSource,
     has_persistent_state=True,
@@ -70,7 +70,7 @@ ApiLauncher.run(ApiLauncher.build(build_example_config()))
 
 `ApiConfiguration` extends `CoreConfig` (see the
 {ref}`Scenario reference <scenario-package-ref>`) with HTTP-specific fields. Inherited
-fields like `etl_factory`, `kpi_templates`, `algo_templates`, `schemas`,
+fields like `etl_factory`, `kpi_templates`, `algorithms`, `schemas`,
 `data_object_type`, `data_path`, `has_persistent_state`, `autocreate`,
 `autorun`, and `title` behave exactly as they do for the GUI.
 

@@ -328,7 +328,7 @@ class SlowAlgorithm(BaseAlgorithm):
         return ScenarioResult(data_id=data.id)
 
 
-algorithm_templates = {
+algorithms = {
     "Slow": SlowAlgorithm,
 }
 
@@ -365,7 +365,7 @@ def mock_configs():
         "schemas": example_schemas,  # Plug in your own input configs here
         "autorun": False,
         "kpi_templates": kpi_templates,
-        "algo_templates": algorithm_templates,
+        "algorithms": algorithms,
     }
 
 
@@ -381,7 +381,7 @@ def mock_scenario_manager_no_data(mock_configs, quiet_logger: Logger):
     sm: ScenarioManager = ScenarioManager(
         etl_factory=mock_configs["etl_factory"],
         kpi_templates=mock_configs["kpi_templates"],
-        algo_templates=mock_configs["algo_templates"],
+        algorithms=mock_configs["algorithms"],
         data_folder=mock_configs["data_path"],
         schemas=mock_configs["schemas"],
         has_persistent_state=mock_configs["has_persistent_state"],
@@ -397,7 +397,7 @@ def mock_scenario_manager_with_data(mock_configs, quiet_logger: Logger):
     sm: ScenarioManager = ScenarioManager(
         etl_factory=mock_configs["etl_factory"],
         kpi_templates=mock_configs["kpi_templates"],
-        algo_templates=mock_configs["algo_templates"],
+        algorithms=mock_configs["algorithms"],
         data_folder=mock_configs["data_path"],
         schemas=mock_configs["schemas"],
         has_persistent_state=mock_configs["has_persistent_state"],

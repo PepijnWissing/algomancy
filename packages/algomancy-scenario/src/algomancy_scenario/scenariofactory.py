@@ -18,13 +18,13 @@ class ScenarioFactory:
     def __init__(
         self,
         kpi_templates: Dict[str, Type[BASE_KPI]],
-        algo_templates: Dict[str, Type[ALGORITHM]],
+        algorithms: Dict[str, Type[ALGORITHM]],
         data_manager: DataManager,
         logger: Logger | None = None,
     ):
         self.logger = logger
         self._kpi_factory = KpiFactory(kpi_templates)
-        self._algorithm_factory = AlgorithmFactory(algo_templates, logger)
+        self._algorithm_factory = AlgorithmFactory(algorithms, logger)
         self._data_manager = data_manager
 
     @property
@@ -36,7 +36,7 @@ class ScenarioFactory:
         return self._kpi_factory.available_kpis
 
     @property
-    def algo_templates(self) -> Dict[str, Type[ALGORITHM]]:
+    def algorithms(self) -> Dict[str, Type[ALGORITHM]]:
         return self._algorithm_factory.templates
 
     def log(self, msg: str):
