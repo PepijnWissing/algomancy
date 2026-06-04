@@ -50,7 +50,8 @@ jobs:
         run: |
           if [ -d "tests" ]; then
             MARKER="${{ github.event_name == 'pull_request' && 'not slow and not gui' || 'not gui' }}"
-            uv run pytest tests -v -m "$MARKER" --junitxml=pytest-results-root.xml
+            uv run pytest tests -v -m "$MARKER" --junitxml=pytest-results-root.xml || RC=$?
+            [ "${RC:-0}" -eq 0 ] || [ "${RC:-0}" -eq 5 ]
           else
             echo "No root tests directory found."
           fi
@@ -113,7 +114,8 @@ jobs:
           if [ -d "$PKG/tests" ]; then
             MARKER="${{ github.event_name == 'pull_request' && 'not slow and not gui' || 'not gui' }}"
             uv run pytest "$PKG/tests" -v -m "$MARKER" \
-              --junitxml="pytest-results-${{ matrix.package }}.xml"
+              --junitxml="pytest-results-${{ matrix.package }}.xml" || RC=$?
+            [ "${RC:-0}" -eq 0 ] || [ "${RC:-0}" -eq 5 ]
           else
             echo "No tests directory found for ${{ matrix.package }}"
           fi
