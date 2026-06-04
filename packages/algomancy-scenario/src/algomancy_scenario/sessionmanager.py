@@ -558,6 +558,7 @@ class SessionManager:
                     )
                 )
             except ImportError:
+                # intentional pass: the target table is already gone.
                 pass
             inspector = sa.inspect(conn)
             prefix = f"ds__{_safe_table_segment(session_id)}__"

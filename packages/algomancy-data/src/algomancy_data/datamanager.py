@@ -320,7 +320,7 @@ class StatefulDataManager(DataManager):
                         del self._data[added]
                     if self.logger:
                         self.logger.error(
-                            f"Failed to load file '{item_path}' as a DataSource: {exc}"
+                            f"Failed to load file '{item_path}' as a DataSource"
                         )
                         self.logger.log_traceback(exc)
                     self.startup_errors.append((item_path, exc))

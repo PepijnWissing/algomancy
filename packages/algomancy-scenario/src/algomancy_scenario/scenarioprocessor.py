@@ -59,8 +59,9 @@ class ScenarioProcessor:
                 except Exception as exc:
                     if self.logger:
                         self.logger.error(
-                            f"on_processed callback failed for '{scenario.tag}': {exc}"
+                            f"on_processed callback failed for '{scenario.tag}'"
                         )
+                        self.logger.log_traceback(exc)
 
             if self.logger:
                 self.logger.log(f"Scenario '{scenario.tag}' completed.")

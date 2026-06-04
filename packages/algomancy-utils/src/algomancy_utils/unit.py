@@ -178,11 +178,11 @@ class Quantity:
         """
         try:
             return self.associated_units[key]
-        except KeyError:
+        except KeyError as ke:
             raise KeyError(
                 f"Unit '{key}' not found in quantity '{self.name}'\n"
                 f"  Available units are: {', '.join(self.associated_units.keys())}"
-            )
+            ) from ke
 
     def add_unit(self, base_unit: Unit, factor_to_base: float):
         """

@@ -37,12 +37,8 @@ class File(ABC):
 
     def read_contents_from_path(self) -> str:
         """Read textual contents of the file from ``self.path``."""
-        try:
-            with open(self.path, "r") as f:
-                return f.read()
-        except Exception as e:
-            print(e)
-            raise e
+        with open(self.path, "r") as f:
+            return f.read()
 
 
 class CSVFile(File):
@@ -61,19 +57,14 @@ class CSVFile(File):
     @staticmethod
     def _set_content_from_uploader(content: str) -> str:
         """Decode data-URI CSV content and return it as UTF-8 text."""
-        try:
-            # Extract the base64 content from the data URI
-            content_type, content_string = content.split(",", 1)
-            decoded = base64.b64decode(content_string)
+        # Extract the base64 content from the data URI
+        content_type, content_string = content.split(",", 1)
+        decoded = base64.b64decode(content_string)
 
-            # transform to textformat
-            csv_file = decoded.decode("utf-8")
+        # transform to textformat
+        csv_file = decoded.decode("utf-8")
 
-            return csv_file
-
-        except Exception as e:
-            print(f"Error reading CSV file from uploader: {e}")
-            raise e
+        return csv_file
 
 
 class JSONFile(File):
@@ -92,19 +83,14 @@ class JSONFile(File):
     @staticmethod
     def _set_content_from_uploader(content: str) -> str:
         """Decode data-URI JSON content and return a canonical JSON string."""
-        try:
-            # Extract the base64 content from the data URI
-            content_type, content_string = content.split(",", 1)
-            decoded = base64.b64decode(content_string)
+        # Extract the base64 content from the data URI
+        content_type, content_string = content.split(",", 1)
+        decoded = base64.b64decode(content_string)
 
-            # Transform the decoded data to json
-            json_data = json.loads(decoded)
+        # Transform the decoded data to json
+        json_data = json.loads(decoded)
 
-            return json.dumps(json_data)
-
-        except Exception as e:
-            print(f"Error reading JSON file from uploader: {e}")
-            raise e
+        return json.dumps(json_data)
 
 
 class XLSXFile(File):
@@ -126,31 +112,21 @@ class XLSXFile(File):
         and stored in a dictionary. Each sheet is converted to JSON and stored, to allow
         the XLSX extractor to access the appropriate sheet.
         """
-        try:
-            # Extract the base64 content from the data URI
-            content_type, content_string = content.split(",", 1)
-            decoded = base64.b64decode(content_string)
+        # Extract the base64 content from the data URI
+        content_type, content_string = content.split(",", 1)
+        decoded = base64.b64decode(content_string)
 
-            # Use BytesIO instead of StringIO for binary data
-            excel_file = pd.ExcelFile(BytesIO(decoded))
+        # Use BytesIO instead of StringIO for binary data
+        excel_file = pd.ExcelFile(BytesIO(decoded))
 
-            # Return as JSON string
-            return self._process_excel_file(excel_file)
-
-        except Exception as e:
-            print(f"Error reading Excel file from uploader: {e}")
-            raise e
+        # Return as JSON string
+        return self._process_excel_file(excel_file)
 
     def read_contents_from_path(self) -> str:
         """Read and convert the Excel file to the standard JSON payload."""
-        try:
-            # Read all sheets from the Excel file
-            excel_file = pd.ExcelFile(self.path)
-            return self._process_excel_file(excel_file)
-
-        except Exception as e:
-            print(f"Error reading Excel file {self.path}: {e}")
-            raise e
+        # Read all sheets from the Excel file
+        excel_file = pd.ExcelFile(self.path)
+        return self._process_excel_file(excel_file)
 
     def _process_excel_file(self, excel_file):
         """Convert all sheets in the given ``ExcelFile`` to a JSON payload."""

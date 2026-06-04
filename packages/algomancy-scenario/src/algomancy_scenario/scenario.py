@@ -112,7 +112,8 @@ class Scenario(Generic[BASE_KPI]):
         except Exception as e:
             self.status = ScenarioStatus.FAILED
             if logger:
-                logger.error(f"Scenario '{self.tag}' failed to process: {str(e)}")
+                logger.error(f"Scenario '{self.tag}' failed to process.")
+                logger.log_traceback(e)
             self.result = {"error": str(e)}
 
     def cancel(self, logger: Logger = None):

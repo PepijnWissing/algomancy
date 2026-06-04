@@ -8,7 +8,7 @@ from algomancy_data import (
     Schema,
 )
 
-from algomancy_utils.logger import Logger, MessageStatus
+from algomancy_utils.logger import Logger
 from .basealgorithm import ALGORITHM
 from algomancy_utils.baseparameterset import BASE_PARAMS_BOUND
 
@@ -142,14 +142,12 @@ class ScenarioManager:
             if self._auto_create_scenario:
                 self.auto_create_scenarios(self._dm.get_data_keys())
         except Exception as e:
-            self.log(f"Error loading initial data: {e}", status=MessageStatus.ERROR)
+            if self.logger:
+                self.logger.error("Error loading initial data.")
+                self.logger.log_traceback(e)
 
-        self.log("ScenarioManager initialized.")
-
-    # Logging
-    def log(self, message: str, status: MessageStatus = MessageStatus.INFO) -> None:
         if self.logger:
-            self.logger.log(message, status)
+            self.logger.log("ScenarioManager initialized.")
 
     @property
     def has_persistent_state(self):
@@ -222,7 +220,11 @@ class ScenarioManager:
             self._processor.auto_run_scenarios = not self._processor.auto_run_scenarios
         else:
             self._processor.auto_run_scenarios = value
-        self.log(f"Auto-run scenarios set to {self._processor.auto_run_scenarios}")
+
+        if self.logger:
+            self.logger.log(
+                f"Auto-run scenarios set to {self._processor.auto_run_scenarios}"
+            )
 
     # Processing operations (delegated)
     def process_scenario_async(self, scenario):
@@ -246,7 +248,10 @@ class ScenarioManager:
         algo_params=None,
     ) -> Scenario:
         if self._registry.has_tag(tag):
-            self.log(f"Scenario with tag '{tag}' already exists. Skipping creation.")
+            if self.logger:
+                self.logger.log(
+                    f"Scenario with tag '{tag}' already exists. Skipping creation."
+                )
             raise ValueError(f"A scenario with tag '{tag}' already exists.")
 
         scenario = self._factory.create(
@@ -295,7 +300,11 @@ class ScenarioManager:
             self._default_algo_name = (
                 default_algo_name if self._auto_create_scenario else None
             )
-        self.log(f"Auto-create scenarios set to {self._auto_create_scenario}")
+
+        if self.logger:
+            self.logger.log(
+                f"Auto-create scenarios set to {self._auto_create_scenario}"
+            )
 
     def add_datasource_from_json(self, json_string):
         # Create data source from JSON
