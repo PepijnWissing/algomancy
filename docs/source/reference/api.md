@@ -28,13 +28,13 @@ from algomancy_api import ApiConfiguration, ApiLauncher
 from algomancy_data import DataSource
 
 from myapp.etl import MyETLFactory
-from myapp.templates import kpi_templates, algorithms
+from myapp.templates import kpis, algorithms
 from myapp.schemas import all_schemas
 
 
 cfg = ApiConfiguration(
     etl_factory=MyETLFactory,
-    kpi_templates=kpi_templates,
+    kpis=kpis,
     algorithms=algorithms,
     schemas=all_schemas,
     data_object_type=DataSource,
@@ -70,7 +70,7 @@ ApiLauncher.run(ApiLauncher.build(build_example_config()))
 
 `ApiConfiguration` extends `CoreConfig` (see the
 {ref}`Scenario reference <scenario-package-ref>`) with HTTP-specific fields. Inherited
-fields like `etl_factory`, `kpi_templates`, `algorithms`, `schemas`,
+fields like `etl_factory`, `kpis`, `algorithms`, `schemas`,
 `data_object_type`, `data_path`, `has_persistent_state`, `autocreate`,
 `autorun`, and `title` behave exactly as they do for the GUI.
 
@@ -285,7 +285,7 @@ return the dict produced by `Scenario.to_dict()`:
 
 - `result` and each KPI's `value` are `null` until the scenario reaches
   `COMPLETE`.
-- `kpis` is keyed by the KPI template name registered in `kpi_templates`.
+- `kpis` is keyed by the KPI template name registered in `kpis`.
 - `algorithm.parameters` is the same descriptor shape returned by
   `GET /algorithms/{name}/parameters`, plus the `value` chosen for this run.
 - `result` is whatever your domain's `BaseResult.to_dict()` returns. The

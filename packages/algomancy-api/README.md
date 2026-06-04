@@ -18,7 +18,7 @@ from algomancy_data import DataSource
 
 cfg = ApiConfiguration(
     etl_factory=MyETLFactory,
-    kpi_templates=kpi_templates,
+    kpis=kpis,
     algorithms=algorithms,
     schemas=schemas,
     data_object_type=DataSource,

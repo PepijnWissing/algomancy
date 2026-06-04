@@ -27,7 +27,7 @@ class CoreConfig:
         data_object_type: The class used to represent the data source (must inherit
             from `BaseDataSource`).
         etl_factory: An instance responsible for creating ETL processes.
-        kpi_templates: A mapping of KPI names to their corresponding class
+        kpis: A mapping of KPI names to their corresponding class
             implementations.
         algorithms: A mapping of algorithm names to their corresponding class
             implementations.
@@ -54,7 +54,7 @@ class CoreConfig:
         database_url: str | None = None,
         # === scenario manager configuration ===
         etl_factory: Any | None = None,
-        kpi_templates: Dict[str, Type[BASE_KPI]] | None = None,
+        kpis: Dict[str, Type[BASE_KPI]] | None = None,
         algorithms: Dict[str, Type[ALGORITHM]] | None = None,
         schemas: List[Type[Schema]] | None = None,
         # === auto start/create features ===
@@ -75,7 +75,7 @@ class CoreConfig:
             save_type: File format for persistence ('json' or 'parquet'). Defaults to "json".
             data_object_type: Type of the data container. Defaults to None.
             etl_factory: Factory object for ETL operations. Defaults to None.
-            kpi_templates: Dictionary of KPI identifiers and classes. Defaults to None.
+            kpis: Dictionary of KPI identifiers and classes. Defaults to None.
             algorithms: Dictionary of algorithm identifiers and classes. Defaults to None.
             input_configs: List of input file specifications. Defaults to None.
             autocreate: Whether to create a default scenario on startup. Defaults to None.
@@ -96,7 +96,7 @@ class CoreConfig:
         self.save_type = save_type
         self.data_object_type = data_object_type
         self.etl_factory = etl_factory
-        self.kpi_templates = kpi_templates
+        self.kpis = kpis
         self.algorithms = algorithms
         self.schemas = schemas
         self.autocreate = autocreate
@@ -124,7 +124,7 @@ class CoreConfig:
             "save_type": self.save_type,
             "data_object_type": self.data_object_type,
             "etl_factory": self.etl_factory,
-            "kpi_templates": self.kpi_templates,
+            "kpis": self.kpis,
             "algorithms": self.algorithms,
             "schemas": self.schemas,
             "autocreate": self.autocreate,
@@ -157,7 +157,7 @@ class CoreConfig:
         # required non-null entries for scenario/data managers
         required_fields = {
             "etl_factory": self.etl_factory,
-            "kpi_templates": self.kpi_templates,
+            "kpis": self.kpis,
             "algorithms": self.algorithms,
             "schemas": self.schemas,
             "data_object_type": self.data_object_type,

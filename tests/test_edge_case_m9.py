@@ -312,7 +312,7 @@ class TestDataDirectories:
         from algomancy_scenario import CoreConfig, SessionManager
         from example.data_handling.factories import ExampleETLFactory
         from example.data_handling.schemas import example_schemas
-        from example.templates import algorithms, kpi_templates
+        from example.templates import algorithms, kpis
 
         (tmp_path / "empty_session").mkdir()
 
@@ -323,7 +323,7 @@ class TestDataDirectories:
                 save_type="json",
                 data_object_type=DataSource,
                 etl_factory=ExampleETLFactory,
-                kpi_templates=kpi_templates,
+                kpis=kpis,
                 algorithms=algorithms,
                 schemas=example_schemas,
                 autocreate=False,

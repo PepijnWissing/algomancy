@@ -348,7 +348,7 @@ class DelayKPI(BaseKPI):
         return 1000 * (1 + 0.5 * random.random())
 
 
-kpi_templates = {
+kpis = {
     "Delay": DelayKPI,
 }
 
@@ -364,7 +364,7 @@ def mock_configs():
         "etl_factory": ExampleETLFactory,  # Plug in your own ETL factory here
         "schemas": example_schemas,  # Plug in your own input configs here
         "autorun": False,
-        "kpi_templates": kpi_templates,
+        "kpis": kpis,
         "algorithms": algorithms,
     }
 
@@ -380,7 +380,7 @@ def quiet_logger():
 def mock_scenario_manager_no_data(mock_configs, quiet_logger: Logger):
     sm: ScenarioManager = ScenarioManager(
         etl_factory=mock_configs["etl_factory"],
-        kpi_templates=mock_configs["kpi_templates"],
+        kpis=mock_configs["kpis"],
         algorithms=mock_configs["algorithms"],
         data_folder=mock_configs["data_path"],
         schemas=mock_configs["schemas"],
@@ -396,7 +396,7 @@ def mock_scenario_manager_no_data(mock_configs, quiet_logger: Logger):
 def mock_scenario_manager_with_data(mock_configs, quiet_logger: Logger):
     sm: ScenarioManager = ScenarioManager(
         etl_factory=mock_configs["etl_factory"],
-        kpi_templates=mock_configs["kpi_templates"],
+        kpis=mock_configs["kpis"],
         algorithms=mock_configs["algorithms"],
         data_folder=mock_configs["data_path"],
         schemas=mock_configs["schemas"],

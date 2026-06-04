@@ -17,13 +17,13 @@ class ScenarioFactory:
 
     def __init__(
         self,
-        kpi_templates: Dict[str, Type[BASE_KPI]],
+        kpis: Dict[str, Type[BASE_KPI]],
         algorithms: Dict[str, Type[ALGORITHM]],
         data_manager: DataManager,
         logger: Logger | None = None,
     ):
         self.logger = logger
-        self._kpi_factory = KpiFactory(kpi_templates)
+        self._kpi_factory = KpiFactory(kpis)
         self._algorithm_factory = AlgorithmFactory(algorithms, logger)
         self._data_manager = data_manager
 

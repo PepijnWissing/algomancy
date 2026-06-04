@@ -22,7 +22,7 @@ from algomancy_scenario.core_configuration import CoreConfig
 from example.data_handling.factories import ExampleETLFactory
 from example.data_handling.schemas import example_schemas
 from example.pages.exampledatapage import ExampleDataPage
-from example.templates import kpi_templates, algorithms
+from example.templates import kpis, algorithms
 
 # Ensure project root is on sys.path
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -65,7 +65,7 @@ def _core_kwargs(args: argparse.Namespace) -> dict:
     return dict(
         data_path="example/data",
         etl_factory=ExampleETLFactory,
-        kpi_templates=kpi_templates,
+        kpis=kpis,
         algorithms=algorithms,
         schemas=example_schemas,
         data_object_type=DataSource,

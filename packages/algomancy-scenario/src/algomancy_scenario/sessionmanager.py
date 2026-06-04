@@ -113,7 +113,7 @@ class SessionManager:
         core = _unwrap_core_config(cfg)
         return cls(
             etl_factory=core.etl_factory,
-            kpi_templates=core.kpi_templates,
+            kpis=core.kpis,
             algorithms=core.algorithms,
             schemas=core.schemas,
             data_object_type=core.data_object_type,
@@ -131,7 +131,7 @@ class SessionManager:
     def __init__(
         self,
         etl_factory: type[E],
-        kpi_templates: Dict[str, Type[BaseKPI]],
+        kpis: Dict[str, Type[BaseKPI]],
         algorithms: Dict[str, Type[BaseAlgorithm]],
         schemas: List[Schema],
         data_object_type: type[BASEDATASOURCE],
@@ -149,7 +149,7 @@ class SessionManager:
     ) -> None:
         self.logger = logger if logger else Logger()
         self._etl_factory = etl_factory
-        self._kpi_templates = kpi_templates
+        self._kpis = kpis
         self._algorithms = algorithms
         self._schemas = schemas
         self._data_object_type = data_object_type
@@ -334,7 +334,7 @@ class SessionManager:
         )
         self._sessions[session_id] = ScenarioManager(
             etl_factory=self._etl_factory,
-            kpi_templates=self._kpi_templates,
+            kpis=self._kpis,
             algorithms=self._algorithms,
             schemas=self._schemas,
             data_object_type=self._data_object_type,
@@ -370,13 +370,13 @@ class SessionManager:
             engine=self._db_engine,
             session_id=session_id,
             algorithms=self._algorithms,
-            kpi_templates=self._kpi_templates,
+            kpis=self._kpis,
             data_manager=dm,
             logger=self.logger,
         )
         return ScenarioManager(
             etl_factory=self._etl_factory,
-            kpi_templates=self._kpi_templates,
+            kpis=self._kpis,
             algorithms=self._algorithms,
             schemas=self._schemas,
             data_object_type=self._data_object_type,

@@ -43,7 +43,7 @@ class ScenarioManager:
                 )
         return cls(
             etl_factory=core.etl_factory,
-            kpi_templates=core.kpi_templates,
+            kpis=core.kpis,
             algorithms=core.algorithms,
             schemas=core.schemas,
             data_object_type=core.data_object_type,
@@ -59,7 +59,7 @@ class ScenarioManager:
     def __init__(
         self,
         etl_factory: type[E],
-        kpi_templates: Dict[str, Type[BASE_KPI]],
+        kpis: Dict[str, Type[BASE_KPI]],
         algorithms: Dict[str, Type[ALGORITHM]],
         schemas: List[Schema],
         data_object_type: type[BASEDATASOURCE],  # for extensions of datasource
@@ -115,7 +115,7 @@ class ScenarioManager:
             else ScenarioRegistry(logger=self.logger)
         )
         self._factory = ScenarioFactory(
-            kpi_templates=kpi_templates,
+            kpis=kpis,
             algorithms=algorithms,
             data_manager=self._dm,
             logger=self.logger,

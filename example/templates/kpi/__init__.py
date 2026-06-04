@@ -10,7 +10,7 @@ __all__ = [
     "WarehouseReslotCostKPI",
 ]
 
-kpi_templates = {
+kpis = {
     "Travel Distance": WarehouseTravelKPI,
     "Zone Balance": WarehouseZoneBalanceKPI,
     "Reslot Cost": WarehouseReslotCostKPI,

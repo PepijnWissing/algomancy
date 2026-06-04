@@ -38,7 +38,7 @@ the framework:
 | `algomancy-api` | Remote frontends (browser SPAs, native apps, scripts) over HTTP, headless backend testing | `ApiLauncher.build(ApiConfiguration)` |
 
 The configuration objects share a `CoreConfig` base, so the same backend
-wiring (`etl_factory`, `kpi_templates`, `algorithms`, `schemas`,
+wiring (`etl_factory`, `kpis`, `algorithms`, `schemas`,
 `data_object_type`) can be passed to either launcher.
 
 ## Dash GUI

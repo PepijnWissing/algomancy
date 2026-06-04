@@ -36,7 +36,7 @@ _spec.loader.exec_module(_shared)
 ExampleETLFactory = _shared.ExampleETLFactory
 example_schemas = _shared.example_schemas
 algorithms = _shared.algorithms
-kpi_templates = _shared.kpi_templates
+kpis = _shared.kpis
 SlowAlgorithm = _shared.SlowAlgorithm
 SlowAlgorithmParams = _shared.SlowAlgorithmParams
 DelayKPI = _shared.DelayKPI
@@ -79,7 +79,7 @@ def repo(engine, dm):
         engine=engine,
         session_id="test_session",
         algorithms=algorithms,
-        kpi_templates=kpi_templates,
+        kpis=kpis,
         data_manager=dm,
     )
     r.startup()
@@ -152,7 +152,7 @@ class TestSqlScenarioRepositoryPersistence:
             engine=engine,
             session_id="test_session",
             algorithms=algorithms,
-            kpi_templates=kpi_templates,
+            kpis=kpis,
             data_manager=dm,
         )
         repo1.startup()
@@ -164,7 +164,7 @@ class TestSqlScenarioRepositoryPersistence:
             engine=engine,
             session_id="test_session",
             algorithms=algorithms,
-            kpi_templates=kpi_templates,
+            kpis=kpis,
             data_manager=dm,
         )
         repo2.startup()
@@ -180,7 +180,7 @@ class TestSqlScenarioRepositoryPersistence:
             engine=engine,
             session_id="test_session",
             algorithms=algorithms,
-            kpi_templates=kpi_templates,
+            kpis=kpis,
             data_manager=dm,
         )
         repo.startup()
@@ -199,7 +199,7 @@ class TestSqlScenarioRepositoryPersistence:
             engine=engine,
             session_id="test_session",
             algorithms=algorithms,
-            kpi_templates=kpi_templates,
+            kpis=kpis,
             data_manager=dm,
         )
         repo2.startup()
@@ -228,7 +228,7 @@ class TestSqlScenarioRepositoryPersistence:
                 engine=engine,
                 session_id=sid,
                 algorithms=algorithms,
-                kpi_templates=kpi_templates,
+                kpis=kpis,
                 data_manager=dm_local,
             )
             repo_local.startup()
@@ -253,7 +253,7 @@ class TestSqlScenarioRepositoryPersistence:
             engine=engine,
             session_id="session_x",
             algorithms=algorithms,
-            kpi_templates=kpi_templates,
+            kpis=kpis,
             data_manager=dm_x,
         )
         rx.startup()

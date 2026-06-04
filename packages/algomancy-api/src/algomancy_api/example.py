@@ -22,14 +22,14 @@ def build_example_config() -> ApiConfiguration:
     """Construct an ApiConfiguration backed by the bundled example wiring."""
     from example.data_handling.schemas import example_schemas
     from example.data_handling.factories import ExampleETLFactory
-    from example.templates import kpi_templates, algorithms
+    from example.templates import kpis, algorithms
     from algomancy_data import DataSource
 
     return ApiConfiguration(
         data_path="example/data",
         has_persistent_state=True,
         etl_factory=ExampleETLFactory,
-        kpi_templates=kpi_templates,
+        kpis=kpis,
         algorithms=algorithms,
         schemas=example_schemas,
         data_object_type=DataSource,

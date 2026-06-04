@@ -36,7 +36,7 @@ class AppConfig:
         >>> config = AppConfig(
         ...     core_config=CoreConfig(
         ...         etl_factory=ExampleETLFactory,
-        ...         kpi_templates=kpi_templates,
+        ...         kpis=kpis,
         ...         algorithms=algorithms,
         ...     ),
         ...     server_config=ServerConfig(port=9000),

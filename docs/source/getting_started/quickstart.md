@@ -116,7 +116,7 @@ to be guided through the set-up steps, outlined below.
         app_cfg = AppConfig(
             core_config=CoreConfig(
                 etl_factory=PlaceholderETLFactory,
-                kpi_templates={"placeholder": PlaceholderKPI},
+                kpis={"placeholder": PlaceholderKPI},
                 algorithms={"placeholder": PlaceholderAlgorithm},
                 schemas=[PlaceholderSchema()],
                 data_object_type=DataSource,
@@ -242,7 +242,7 @@ to be guided through the set-up steps, outlined below.
             core_config=CoreConfig(
                 etl_factory=TestETLFactory,  # 'Test' is replaced by your own custom name
                 schemas=all_schemas,
-                kpi_templates={"test": TestKPI},
+                kpis={"test": TestKPI},
                 algorithms={"Test": TestAlgorithm},
                 data_object_type=DataSource,
                 autocreate=False,

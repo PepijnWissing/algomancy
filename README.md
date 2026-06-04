@@ -58,7 +58,7 @@ def main() -> None:
   app_cfg = AppConfig(
     core_config=CoreConfig(
       etl_factory=PlaceholderETLFactory,
-      kpi_templates={"placeholder": PlaceholderKPI},
+      kpis={"placeholder": PlaceholderKPI},
       algorithms={"placeholder": PlaceholderAlgorithm},
       schemas=[PlaceholderSchema()],
       data_object_type=DataSource,
