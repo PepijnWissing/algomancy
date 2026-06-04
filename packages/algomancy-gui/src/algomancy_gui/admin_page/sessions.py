@@ -21,9 +21,13 @@ def create_new_session_window() -> dbc.Modal:
     sc: StylingConfig = get_app().server.styling_config
     window = dbc.Modal(
         [
-            dbc.ModalHeader(dbc.ModalTitle("Create New Session"), close_button=False),
+            dbc.ModalHeader(
+                dbc.ModalTitle(id=f"{SESSION_CREATOR_MODAL}-title"),
+                close_button=False,
+            ),
             dbc.ModalBody(
                 [
+                    html.P(id=f"{SESSION_CREATOR_MODAL}-source"),
                     dbc.Label("Session name:"),
                     dbc.Input(id=NEW_SESSION_NAME, placeholder="Session name"),
                 ]

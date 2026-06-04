@@ -74,6 +74,11 @@ dependencies = [
     { name = "sphinxcontrib-mermaid" },
 ]
 
+[package.optional-dependencies]
+database = [
+    { name = "algomancy-scenario", extra = ["database"] },
+]
+
 [package.dev-dependencies]
 dev = [
     { name = "httpx" },
@@ -89,6 +94,7 @@ requires-dist = [
     { name = "algomancy-gui", editable = "packages/algomancy-gui" },
     { name = "algomancy-quickstart", editable = "packages/algomancy-quickstart" },
     { name = "algomancy-scenario", editable = "packages/algomancy-scenario" },
+    { name = "algomancy-scenario", extras = ["database"], marker = "extra == 'database'", editable = "packages/algomancy-scenario" },
     { name = "algomancy-utils", editable = "packages/algomancy-utils" },
     { name = "furo", specifier = ">=2025.12.19" },
     { name = "ipykernel", specifier = ">=7.2.0" },
@@ -102,6 +108,7 @@ requires-dist = [
     { name = "sphinx-rtd-theme", specifier = ">=3.1.0" },
     { name = "sphinxcontrib-mermaid", specifier = ">=2.0.0" },
 ]
+provides-extras = ["database"]
 
 [package.metadata.requires-dev]
 dev = [

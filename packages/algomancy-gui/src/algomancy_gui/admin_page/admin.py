@@ -329,6 +329,8 @@ def validate_session_name(session_name: str):
         Output(NEW_SESSION_NAME, "value"),
         Output(HOW_TO_CREATE_NEW_SESSION, "data"),
         Output(ADMIN_SELECT_SESSION, "value"),
+        Output(f"{SESSION_CREATOR_MODAL}-title", "children"),
+        Output(f"{SESSION_CREATOR_MODAL}-source", "children"),
     ],
     [
         Input(ADMIN_NEW_SESSION, "n_clicks"),
@@ -364,12 +366,18 @@ def toggle_session_creator_modal(
     """
     ctx = callback_context
     if not ctx.triggered:
-        return no_update, no_update, no_update, no_update
+        return no_update, no_update, no_update, no_update, no_update, no_update
     triggered_id = ctx.triggered[0]["prop_id"].split(".")[0]
     if triggered_id == ADMIN_NEW_SESSION and not is_open:
-        return True, "", False, no_update
+        return True, "", False, no_update, "Create New Session", ""
     if triggered_id == ADMIN_COPY_SESSION and not is_open:
-        return True, "", True, no_update
+        session_manager: SessionManager = get_app().server.session_manager
+        try:
+            label = session_manager.get_display_name(session_id)
+        except KeyError:
+            label = session_id
+        source = f"Copying from: {label!r}"
+        return True, "", True, no_update, "Copy Session", source
     if triggered_id == NEW_SESSION_BUTTON and is_open:
         session_manager: SessionManager = get_app().server.session_manager
         try:
@@ -381,12 +389,12 @@ def toggle_session_creator_modal(
             # Duplicate display name or invalid characters; keep the modal open
             # with the entered value visible so the user can correct it.
             session_manager.log(str(e), MessageStatus.WARNING)
-            return no_update, no_update, no_update, no_update
+            return no_update, no_update, no_update, no_update, no_update, no_update
 
-        return False, "", no_update, new_id
+        return False, "", no_update, new_id, no_update, no_update
     if triggered_id == f"{NEW_SESSION_BUTTON}-cancel":
-        return False, "", no_update, no_update
-    return is_open, "", no_update, no_update
+        return False, "", no_update, no_update, no_update, no_update
+    return is_open, "", no_update, no_update, no_update, no_update
 
 
 @callback(
