@@ -18,4 +18,8 @@ datasets_table = sa.Table(
     sa.Column("session_id", sa.String, nullable=False),
     sa.Column("ds_type", sa.String, nullable=False),
     sa.Column("creation_datetime", sa.DateTime, nullable=True),
+    # Populated only when the row was persisted via the JSON-blob fallback path,
+    # i.e. when the DataSource subclass does NOT implement SqlTableLayout. When
+    # NULL, the DataSource's tables live in per-sub-table ds__... SQL tables.
+    sa.Column("payload", sa.Text, nullable=True),
 )

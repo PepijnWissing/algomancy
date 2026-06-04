@@ -299,3 +299,10 @@ class DataSource(BaseDataSource):
 
     def list_tables(self):
         return list(self.tables.keys())
+
+    def sql_tables(self) -> dict[str, pd.DataFrame]:
+        return self.tables
+
+    def apply_sql_tables(self, tables: dict[str, pd.DataFrame]) -> None:
+        for table_name, df in tables.items():
+            self.add_table(table_name, df)
