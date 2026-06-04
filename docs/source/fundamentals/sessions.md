@@ -87,9 +87,22 @@ algomancy_sessions
 The session's scenarios, runs, and KPI measurements live in
 `algomancy_scenarios`, `algomancy_scenario_runs`, and
 `algomancy_kpi_measurements` (all keyed by `session_id`). The session's
-datasets land in dynamic per-session tables named
-`ds__{session_id}__{dataset_name}__{sub_table}`, with the catalogue in
-`algomancy_datasets`.
+datasets are persisted through one of two paths, chosen per-DataSource
+by `DatabaseDataManager`:
+
+- **Per-sub-table SQL** (default, used by the bundled `DataSource` and
+  any custom subclass that implements the `SqlTableLayout` protocol) —
+  each DataFrame becomes its own table named
+  `ds__{session_id}__{dataset_name}__{sub_table}`. Data stays externally
+  queryable and is loaded lazily on first access.
+- **JSON blob** (fallback, used by any other `BaseDataSource` subclass)
+  — the DataSource is serialised via `to_json()` into a `payload`
+  column on the catalogue.
+
+Either way the row in `algomancy_datasets` carries the dataset's id,
+name, classification, and creation time. See
+{ref}`Database persistence of custom data sources <fundamentals-data-container-ref>`
+for the opt-in protocol.
 
 To choose the database backend pass `persistence_backend="database"`
 and `database_url=...` to `CoreConfig` / `ApiConfiguration`.
