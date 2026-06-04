@@ -315,37 +315,37 @@ hr {
    ========================= */
 
 .scenario-multi-btn-created { /* process */
-    background-color: #1b9e08;
+    background-color: var(--scenario-process-color);
     border: 0;
-    color: #FFFFFF;
+    color: var(--button-text);
     min-width: 80px;
     pointer-events: all;
     transition: background-color 0.2s ease-in-out;
 }
 
 .scenario-multi-btn-created:hover { /* process */
-    background-color: #105906;
-    color: #FFFFFF;
+    background-color: var(--scenario-process-color-hover);
+    color: var(--button-text);
 }
 
 
 .scenario-multi-btn-completed { /* refresh */
-    background-color: #4487d5;
+    background-color: var(--scenario-refresh-color);
     border: 0;
-    color: #FFFFFF;
+    color: var(--button-text);
     min-width: 80px;
     pointer-events: all;
 }
 
 .scenario-multi-btn-completed:hover, .scenario-multi-btn-completed:focus {
-    background-color: #2b5688;
-    color: #FFFFFF;
+    background-color: var(--scenario-refresh-color-hover);
+    color: var(--button-text);
 }
 
 .scenario-multi-btn-queued, .scenario-delete-btn-created, .scenario-delete-btn-completed { /* cancel */
-    background-color: #bd1414;
+    background-color: var(--scenario-cancel-color);
     border: 0;
-    color: #FFFFFF;
+    color: var(--button-text);
     min-width: 80px;
     pointer-events: all;
 }
@@ -353,14 +353,14 @@ hr {
 .scenario-multi-btn-queued:hover, .scenario-multi-btn-queued:focus,
 .scenario-delete-btn-created:hover, .scenario-delete-btn-created:focus,
 .scenario-delete-btn-completed:hover, .scenario-delete-btn-completed:focus {
-    background-color: #770d0d;
-    color: #FFFFFF;
+    background-color: var(--scenario-cancel-color-hover);
+    color: var(--button-text);
 }
 
-.scenario-delete-btn-queued { /* delete */
-    background-color: #a14a4a;
+.scenario-delete-btn-queued { /* delete disabled while processing */
+    background-color: var(--scenario-delete-disabled-color);
     border: 0;
-    color: #FFFFFF;
+    color: var(--button-text);
     min-width: 80px;
     pointer-events: none;
 }
