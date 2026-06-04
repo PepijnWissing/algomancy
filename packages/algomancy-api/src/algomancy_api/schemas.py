@@ -74,6 +74,12 @@ class CreateScenarioRequest(BaseModel):
         description="Parameter values keyed by parameter name. "
         "Omit or set to null to use defaults.",
     )
+    data_params: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Values for the data source's declared parameters "
+        "(see ``BaseDataSource.initialize_data_parameters``). "
+        "Omit or set to null when the dataset declares none.",
+    )
 
 
 class ScenarioStatusResponse(BaseModel):

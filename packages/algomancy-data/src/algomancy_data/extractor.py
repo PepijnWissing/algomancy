@@ -104,7 +104,7 @@ class DataTypeConverter:
         try:
             # Standard conversion first
             df[column] = df[column].astype(target_type)
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             # Try fixing common localization issues
             try:
                 # Try European format (comma as decimal separator)
@@ -123,7 +123,7 @@ class DataTypeConverter:
                             .astype(DataType.INTEGER)
                         )
                         df[column] = temp_values
-            except (ValueError, TypeError, AttributeError, IndexError):
+            except ValueError, TypeError, AttributeError, IndexError:
                 try:
                     # Try with thousands separator removal
                     if df[column].dtype == "object" and len(df[column]) > 0:
@@ -156,7 +156,7 @@ class DataTypeConverter:
             # Standard conversion using pandas to_datetime
             temp = pd.to_datetime(df[column])
             df[column] = temp
-        except (ValueError, TypeError, AttributeError):
+        except ValueError, TypeError, AttributeError:
             # Try different date formats
             success = False
             for date_format in [
@@ -171,7 +171,7 @@ class DataTypeConverter:
                     df[column] = temp
                     success = True
                     break  # Break the loop if conversion succeeds
-                except (ValueError, TypeError, AttributeError):
+                except ValueError, TypeError, AttributeError:
                     continue  # Try next format
             if not success:
                 raise DateFormatError(
@@ -198,7 +198,7 @@ class DataTypeConverter:
             temp = pd.to_datetime(df[column])
             df[column] = temp
             return df
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             # Try different datetime formats
             for datetime_format in [
                 "%Y-%m-%d %H:%M:%S",
@@ -211,7 +211,7 @@ class DataTypeConverter:
                     temp = pd.to_datetime(df[column], format=datetime_format)
                     df[column] = temp
                     return df
-                except (ValueError, TypeError, AttributeError):
+                except ValueError, TypeError, AttributeError:
                     continue  # Try next format
             if issues is not None:
                 issues.append(
@@ -234,7 +234,7 @@ class DataTypeConverter:
         """Convert a column to boolean type, handling various representations."""
         try:
             df[column] = df[column].astype(DataType.BOOLEAN)
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             try:
                 # Try common boolean string representations
                 bool_map = {

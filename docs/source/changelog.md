@@ -5,6 +5,42 @@
 
 ## Prerelease (v0.8.0)
 ### Added
+- **Data Parameters** — per-scenario knobs declared by `BaseDataSource` subclasses.
+
+  :::{dropdown} {octicon}`light-bulb` Details
+  :color: light
+  A concrete `BaseDataSource` subclass can override the new
+  `initialize_data_parameters()` method to return a typed
+  `BaseParameterSet` describing data-side knobs (date range, region filter,
+  category whitelist, ...). The framework collects user-supplied values per
+  scenario, persists them alongside the algorithm parameters, and pushes
+  them onto the algorithm via `BaseAlgorithm.set_data_params` before
+  `run()`. Algorithms read `self.data_params` and decide whether and how to
+  act on them — nothing is applied automatically.
+
+  Surfaces:
+  - `BaseDataSource.initialize_data_parameters()` — default returns
+    `EmptyParameters()`, so existing subclasses keep working unchanged.
+  - `BaseAlgorithm.data_params` property + `set_data_params(...)` method.
+  - `Scenario` accepts a `data_params` kwarg and pushes it onto the
+    algorithm before each `run()`.
+  - `ScenarioFactory.get_associated_parameters(algo_name, dataset_key)`
+    returns the `(algo_params, data_params)` tuple, resolving the data half
+    via the selected data source.
+  - `ScenarioManager.create_scenario(..., data_params=...)` and
+    `ScenarioManager.get_data_parameters(dataset_key)`.
+  - GUI: a second parameter card renders next to the algorithm card in the
+    scenario-creation modal, populated as soon as the user picks a dataset.
+  - API: `GET /api/v1/sessions/{sid}/data/{dataset_key}/parameters` returns
+    the descriptor; `POST /scenarios` accepts a new `data_params` field.
+  - Persistence: new nullable `data_parameter_values TEXT` column on
+    `algomancy_scenarios`, added idempotently via `ALTER TABLE` on startup
+    so existing databases keep loading.
+
+  See {ref}`Data Parameters <data-parameters-ref>` for the data-source
+  declaration pattern and {ref}`Algorithms and Parameters
+  <fundamentals-algorithm-ref>` for the algorithm-side read pattern.
+  :::
 - **`SqlTableLayout` protocol** for database persistence for custom data sources.
   
   :::{dropdown} {octicon}`light-bulb` Details

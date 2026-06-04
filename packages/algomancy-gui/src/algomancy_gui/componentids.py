@@ -117,6 +117,11 @@ ALGO_PARAM_INPUT = "algo-param-input"
 ALGO_PARAM_DATE_INPUT = "algo-param-date-input"
 ALGO_PARAM_INTERVAL_INPUT = "algo-param-interval-input"
 
+DATA_PARAMS_ENTRY_CARD = "data-params-entry-card"
+DATA_PARAM_INPUT = "data-param-input"
+DATA_PARAM_DATE_INPUT = "data-param-date-input"
+DATA_PARAM_INTERVAL_INPUT = "data-param-interval-input"
+
 SCENARIO_PROG_INTERVAL = "scenario-progress-polling-interval"
 SCENARIO_PROG_BAR = "scenario-progress-bar"
 SCENARIO_PROG_TEXT = "scenario-progress-text"

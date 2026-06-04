@@ -97,6 +97,26 @@ def _load_tables(data: DataSource) -> tuple[pd.DataFrame, pd.DataFrame]:
     return sku, layout
 
 
+def _apply_data_filters(sku: pd.DataFrame, data_params) -> pd.DataFrame:
+    """Filter the SKU table by the data-source-declared knobs, if any.
+
+    Algorithms that consume ``WarehouseDataSource`` can opt into pre-filtering
+    by category and minimum pick volume. Data sources that declare neither
+    leave the table untouched.
+    """
+    if data_params is None or not data_params.has_inputs():
+        return sku
+    if data_params.contains("category_filter"):
+        selected = data_params["category_filter"]
+        if selected and "category" in sku.columns:
+            sku = sku[sku["category"].isin(selected)]
+    if data_params.contains("min_daily_picks"):
+        threshold = data_params["min_daily_picks"]
+        if threshold and "daily_picks" in sku.columns:
+            sku = sku[sku["daily_picks"] >= threshold]
+    return sku.reset_index(drop=True)
+
+
 def _dist(x1: float, y1: float, x2: float, y2: float) -> float:
     return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
 
@@ -182,6 +202,9 @@ class GreedySlotting(BaseAlgorithm):
     def run(self, data: DataSource) -> WarehouseAllocationResult:
         sku, layout = _load_tables(data)
         p: SlottingParams = self.params
+
+        # Optional pre-filter driven by the data source's declared parameters.
+        sku = _apply_data_filters(sku, self.data_params)
 
         # Sort items by daily_picks descending (deterministic tiebreak on itemid)
         items = sku.sort_values(

@@ -23,6 +23,9 @@ from ..componentids import (
     SCENARIO_ALGO_INPUT,
     ALGO_PARAMS_WINDOW_ID,
     ALGO_PARAMS_ENTRY_CARD,
+    ALGO_PARAM_INPUT,
+    DATA_PARAMS_ENTRY_CARD,
+    DATA_PARAM_INPUT,
     SCENARIO_NEW_BUTTON,
     SCENARIO_DELETE_MODAL,
     SCENARIO_DELETE_BUTTON,
@@ -46,6 +49,7 @@ from ..componentids import (
 )
 from .new_scenario_parameters_window import (
     create_algo_parameters_entry_card_body,
+    create_data_parameters_entry_card_body,
 )
 from .scenario_cards import scenario_cards
 from algomancy_gui.managers.contentregistry import ContentRegistry
@@ -352,7 +356,7 @@ def refresh_on_close(is_open):
 
 
 @callback(
-    Output(ALGO_PARAMS_WINDOW_ID, "is_open"),
+    Output(ALGO_PARAMS_WINDOW_ID, "is_open", allow_duplicate=True),
     Output(ALGO_PARAMS_ENTRY_CARD, "children"),
     Input(SCENARIO_ALGO_INPUT, "value"),
     State(ACTIVE_SESSION, "data"),
@@ -363,8 +367,24 @@ def open_algo_params_window(algo_name, session_id):
         try:
             return True, create_algo_parameters_entry_card_body(algo_name)
         except AssertionError:
-            return False, ""
-    return False, ""
+            return no_update, ""
+    return no_update, ""
+
+
+@callback(
+    Output(ALGO_PARAMS_WINDOW_ID, "is_open", allow_duplicate=True),
+    Output(DATA_PARAMS_ENTRY_CARD, "children"),
+    Input(SCENARIO_DATA_INPUT, "value"),
+    State(ACTIVE_SESSION, "data"),
+    prevent_initial_call=True,
+)
+def populate_data_params_card(dataset_key, session_id):
+    if dataset_key:
+        try:
+            return True, create_data_parameters_entry_card_body(dataset_key)
+        except AssertionError:
+            return no_update, ""
+    return no_update, ""
 
 
 InputChecker.register_name_callback(
@@ -387,16 +407,24 @@ InputChecker.register_name_callback(
     State(SCENARIO_TAG_INPUT, "value"),
     State(SCENARIO_DATA_INPUT, "value"),
     State(SCENARIO_ALGO_INPUT, "value"),
-    State({"type": "algo-param-input", "param": ALL}, "value"),
+    State({"type": ALGO_PARAM_INPUT, "param": ALL}, "value"),
+    State({"type": DATA_PARAM_INPUT, "param": ALL}, "value"),
     State(SCENARIO_SELECTED_ID_STORE, "data"),
     State(ACTIVE_SESSION, "data"),
     prevent_initial_call=True,
 )
 def create_scenario(
-    create_clicks, tag, dataset, algorithm, algo_param_values, selected_id, session_id
+    create_clicks,
+    tag,
+    dataset,
+    algorithm,
+    algo_param_values,
+    data_param_values,
+    selected_id,
+    session_id,
 ):
-    # Now algo_param_values is a list containing the values of each param input, in DOM order!
-    # You can also get their IDs from dash.callback_context.inputs_list for mapping
+    # algo_param_values and data_param_values are lists of values in DOM order;
+    # IDs come from callback_context.states_list for mapping.
 
     if not tag:
         return no_update, "Tag is required", True, False, no_update
@@ -411,18 +439,27 @@ def create_scenario(
     interval_disabled = False if scenario_manager.auto_run_scenarios else no_update
 
     algo_param_shell, data_param_shell = scenario_manager.get_associated_parameters(
-        algorithm
+        algorithm, dataset
     )
 
-    param_ids = [s["id"] for s in callback_context.states_list[3]]
+    algo_param_ids = [s["id"] for s in callback_context.states_list[3]]
     algo_params = {
         pid["param"]: value
-        for pid, value in zip(param_ids, algo_param_values)
+        for pid, value in zip(algo_param_ids, algo_param_values)
         if algo_param_shell.contains(pid["param"])
     }
 
+    data_param_ids = [s["id"] for s in callback_context.states_list[4]]
+    data_params = {
+        pid["param"]: value
+        for pid, value in zip(data_param_ids, data_param_values)
+        if data_param_shell.contains(pid["param"]) and value is not None
+    }
+
     try:
-        scenario_manager.create_scenario(tag, dataset, algorithm, algo_params)
+        scenario_manager.create_scenario(
+            tag, dataset, algorithm, algo_params, data_params
+        )
         return "new scenario created", "", False, False, interval_disabled
     except Exception as e:
         get_manager(get_app().server).logger.log_traceback(e)

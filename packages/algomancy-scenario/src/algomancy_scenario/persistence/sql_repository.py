@@ -73,6 +73,7 @@ class SqlScenarioRepository:
     def startup(self) -> None:
         """Initialise DB schema and load all persisted scenarios into memory."""
         _scenario_metadata.create_all(self._engine, checkfirst=True)
+        self._migrate_add_data_parameter_values_column()
         with self._engine.connect() as conn:
             rows = conn.execute(
                 scenarios_table.select().where(
@@ -98,6 +99,9 @@ class SqlScenarioRepository:
         params_json = "{}"
         if hasattr(scenario._algorithm, "params"):
             params_json = scenario._algorithm.params.serialize()
+        data_params_json: Optional[str] = None
+        if scenario.data_params is not None and scenario.data_params.has_inputs():
+            data_params_json = scenario.data_params.serialize()
         kpi_names = list(scenario.kpis.keys())
         with self._engine.begin() as conn:
             conn.execute(
@@ -108,6 +112,7 @@ class SqlScenarioRepository:
                     input_data_key=scenario.input_data_key,
                     algorithm_name=scenario._algorithm.name,
                     parameter_values=params_json,
+                    data_parameter_values=data_params_json,
                     kpi_names=json.dumps(kpi_names),
                     status=str(scenario.status),
                     created_at=datetime.now(),
@@ -287,12 +292,28 @@ class SqlScenarioRepository:
             )
             return None
 
+        data_params = input_data.initialize_data_parameters()
+        raw_data_params = getattr(row, "data_parameter_values", None)
+        if raw_data_params:
+            try:
+                parsed = json.loads(raw_data_params)
+                if isinstance(parsed, dict) and "parameters" in parsed:
+                    data_params.set_values(parsed["parameters"])
+                elif isinstance(parsed, dict):
+                    data_params.set_values(parsed)
+            except json.JSONDecodeError:
+                self._log(
+                    f"Scenario '{row.tag}': data_parameter_values is not valid JSON; "
+                    "falling back to defaults."
+                )
+
         scenario = Scenario(
             tag=row.tag,
             input_data=input_data,
             kpis=kpis,
             algorithm=algorithm,
             provided_id=row.id,
+            data_params=data_params,
         )
         scenario.status = ScenarioStatus(row.status)
 
@@ -324,3 +345,27 @@ class SqlScenarioRepository:
     def _log(self, msg: str) -> None:
         if self._logger:
             self._logger.log(msg)
+
+    def _migrate_add_data_parameter_values_column(self) -> None:
+        """Add ``data_parameter_values`` to an older schema's scenarios table.
+
+        ``create_all(checkfirst=True)`` skips existing tables entirely, so it
+        never adds new columns to a table that pre-dates this migration. We
+        ALTER in the column once, idempotently, so older SQLite/Postgres
+        databases keep loading.
+        """
+        inspector = sa.inspect(self._engine)
+        if not inspector.has_table(scenarios_table.name):
+            return
+        existing_columns = {
+            col["name"] for col in inspector.get_columns(scenarios_table.name)
+        }
+        if "data_parameter_values" in existing_columns:
+            return
+        with self._engine.begin() as conn:
+            conn.execute(
+                sa.text(
+                    f"ALTER TABLE {scenarios_table.name} "
+                    "ADD COLUMN data_parameter_values TEXT"
+                )
+            )

@@ -100,6 +100,21 @@ def test_get_data_unknown_returns_404(client_with_data):
     assert "nope" in r.json()["detail"]
 
 
+def test_get_data_parameters_returns_descriptor(client_with_data):
+    """Plain ``DataSource`` declares no params — the endpoint still returns 200
+    with an empty parameter list."""
+    r = client_with_data.get(f"/api/v1/sessions/main/data/{DATASET_KEY}/parameters")
+    assert r.status_code == 200
+    body = r.json()
+    assert "name" in body
+    assert body["parameters"] == []
+
+
+def test_get_data_parameters_unknown_returns_404(client_with_data):
+    r = client_with_data.get("/api/v1/sessions/main/data/nope/parameters")
+    assert r.status_code == 404
+
+
 # ---- Delete ---------------------------------------------------------------
 
 
