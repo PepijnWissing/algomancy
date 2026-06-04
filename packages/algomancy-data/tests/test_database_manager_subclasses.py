@@ -139,10 +139,10 @@ class TabularDataSource(BaseDataSource):
         super().__init__(ds_type, name, validation_messages, ds_id, creation_datetime)
         self._tables: dict[str, pd.DataFrame] = {}
 
-    def sql_tables(self) -> dict[str, pd.DataFrame]:
+    def to_sql_tables(self) -> dict[str, pd.DataFrame]:
         return self._tables
 
-    def apply_sql_tables(self, tables: dict[str, pd.DataFrame]) -> None:
+    def from_sql_tables(self, tables: dict[str, pd.DataFrame]) -> None:
         self._tables.update(tables)
 
     def to_json(self) -> str:  # required by abstract API, used by derive()
@@ -167,7 +167,7 @@ class TabularDataSource(BaseDataSource):
             ds_id=d["id"],
             creation_datetime=d["creation_datetime"],
         )
-        ds.apply_sql_tables(
+        ds.from_sql_tables(
             {n: pd.DataFrame(records) for n, records in d["tables"].items()}
         )
         return ds
@@ -251,7 +251,7 @@ class TestSqlLayoutCustomSubclass:
         m1 = _make_manager(engine, TabularDataSource)
         ds = TabularDataSource(ds_type=DataClassification.MASTER_DATA, name="tab")
         df = pd.DataFrame({"id": ["a", "b"], "v": [1, 2]})
-        ds.apply_sql_tables({"items": df})
+        ds.from_sql_tables({"items": df})
         m1.add_data_source(ds)
 
         # A real per-sub-table SQL table exists, and the payload column is NULL.
@@ -264,7 +264,7 @@ class TestSqlLayoutCustomSubclass:
         loaded = m2.get_data("tab")
         assert isinstance(loaded, TabularDataSource)
         pd.testing.assert_frame_equal(
-            loaded.sql_tables()["items"].reset_index(drop=True),
+            loaded.to_sql_tables()["items"].reset_index(drop=True),
             df.reset_index(drop=True),
             check_dtype=False,
         )
@@ -275,7 +275,7 @@ class TestSqlLayoutCustomSubclass:
         # Persist via the per-table path.
         m_writer = _make_manager(engine, TabularDataSource)
         ds = TabularDataSource(ds_type=DataClassification.MASTER_DATA, name="tab")
-        ds.apply_sql_tables({"items": pd.DataFrame({"id": ["a"], "v": [1]})})
+        ds.from_sql_tables({"items": pd.DataFrame({"id": ["a"], "v": [1]})})
         m_writer.add_data_source(ds)
 
         # Reopen with a BlobDataSource data_object_type — it can't satisfy the protocol.

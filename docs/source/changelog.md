@@ -5,21 +5,44 @@
 
 ## Prerelease (v0.8.0)
 ### Added
-- **Session deletion.** New ``SessionManager.delete_session(id)`` and
-  ``DELETE /api/v1/sessions/{session_id}`` remove a session along with all
-  its scenarios, runs, KPI measurements, and uploaded data. The cascade
-  reaches the dynamic ``ds__{session}__*`` data tables on the database
-  backend and the session directory on the filesystem backend. Deleting
-  the last remaining session auto-creates a fresh ``"main"`` session in
-  its place so the runtime always has somewhere to put scenarios. The
-  admin page surfaces this as a "Delete Session" button with an explicit
-  confirmation modal.
+- **`SqlTableLayout` protocol** for database persistence for custom data sources.
+  
+  :::{dropdown} {octicon}`light-bulb` Details
+  :color: light
+  `DatabaseDataManager` now works for any ``BaseDataSource`` subclass, not
+  just the bundled ``DataSource``. Two persistence paths are dispatched at
+  write time:
+  - Subclasses that implement the new ``algomancy_data.database.SqlTableLayout``
+    protocol (``to_sql_tables() -> dict[str, DataFrame]`` and
+    ``from_sql_tables(tables)``) get per-sub-table SQL storage —
+    DataFrames land in real ``ds__{session}__{dataset}__{sub}`` tables and
+    stay externally queryable.
+  - Subclasses that don't implement it fall back to JSON-blob persistence
+    via the abstract ``to_json``/``from_json`` API already required by
+    ``BaseDataSource``. The catalogue grows a nullable ``payload`` column
+    to hold the blob.
+
+  The bundled ``DataSource`` satisfies ``SqlTableLayout`` trivially via
+  its ``tables`` dict, so existing deployments see no behavioural change.
+  Pre-existing ``algomancy_datasets`` tables that are missing the
+  ``payload`` column now raise a clear error on startup directing the user
+  at the manual-rebuild path. See
+  {ref}`Database persistence of custom data sources <fundamentals-data-container-ref>`
+  for the protocol and a worked example.
+:::
+- Added infrastructure to delete sessions. 
+
+  New ``SessionManager.delete_session(id)`` is used by a GUI interface element and
+  the ``DELETE /api/v1/sessions/{session_id}`` API endpoint. 
 
 ### Breaking
-- **Session identity is now a UUID; ``display_name`` is the mutable label.**
+- Session identity is now a UUID; new property ``display_name`` is the mutable label.
+
+  :::{dropdown} {octicon}`light-bulb` Details
+  :color: light
   Previously a session's identifier was its user-facing string (``"default_session"``,
   ``"alice_experiment"``), which made renaming impossible and made URLs leak
-  human-readable names. After M14:
+  human-readable names. The new set-up features:
   - Each session has a stable UUID ``id`` and a separate mutable ``display_name``.
   - API routes use UUIDs: ``/api/v1/sessions/{session_uuid}/...``. The list
     endpoint returns ``{sessions: [{id, display_name}, ...], default: id}``.
@@ -42,8 +65,12 @@
     still accepts the old ``display_name`` in URLs (e.g.
     ``/sessions/default_session/...``) as a soft alias, so existing
     integrations keep working while you migrate them to UUIDs.
+  :::
+- Sessions are now always used
 
-- **Removed `CoreConfig.use_sessions`** (and the same flag on `ApiConfiguration`).
+  :::{dropdown} {octicon}`light-bulb` Details
+  :color: light
+  The `CoreConfig.use_sessions` attribute was **removed** (and the same flag on `ApiConfiguration`).
   `SessionManager` is now always constructed; single-tenant deployments simply
   get a single auto-created `"main"` session. The `/health` endpoint no longer
   reports `use_sessions`.
@@ -56,8 +83,9 @@
     branched on it should use `app.server.session_manager` unconditionally;
     code that gated picker visibility should use
     `app.server.show_session_picker`.
+  :::
 
-## Prerelease (v0.7.0)
+## v0.7.0
 ### Added
 - **`algomancy-api` package**: new FastAPI HTTP service that exposes the same
   `ScenarioManager` / `SessionManager` surface used by the Dash GUI and CLI,

@@ -244,7 +244,7 @@ class DatabaseDataManager(DataManager):
                 sub_table = table_name[len(prefix) :]
                 with self._engine.connect() as conn:
                     tables[sub_table] = pd.read_sql_table(table_name, conn)
-        ds.apply_sql_tables(tables)
+        ds.from_sql_tables(tables)
         self.log(
             f"Loaded DataSource '{dataset_name}' from database ({len(tables)} tables)."
         )
@@ -257,7 +257,7 @@ class DatabaseDataManager(DataManager):
         sub_table_count = 0
 
         if isinstance(data_source, SqlTableLayout):
-            for sub_table, df in data_source.sql_tables().items():
+            for sub_table, df in data_source.to_sql_tables().items():
                 sql_name = _data_table_name(self._session_id, dataset_name, sub_table)
                 with self._engine.begin() as conn:
                     df.to_sql(sql_name, conn, if_exists="replace", index=False)

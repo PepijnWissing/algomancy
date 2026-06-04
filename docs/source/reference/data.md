@@ -8,6 +8,7 @@ Below you will find API reference pages for each module in the `algomancy_data` 
 
 data/datamanager
 data/datasource
+data/protocols
 data/etl
 data/extractor
 data/schema

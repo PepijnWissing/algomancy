@@ -91,4 +91,56 @@ class MyCustomSource(BaseDataSource):
 ```
 :::
 
+## Database persistence
+
+When the framework runs with `persistence_backend="database"` (see
+{ref}`Sessions <fundamentals-sessions-ref>`), the `DatabaseDataManager`
+persists every `DataSource` through whichever `data_object_type` was wired
+into `CoreConfig`. It chooses between two storage paths per DataSource:
+
+1. **JSON blob (universal default).** The full DataSource is serialised via
+   its `to_json()` and stored in a `payload` column on the catalogue table.
+   Any `BaseDataSource` subclass works out of the box — the only requirement
+   is the abstract `to_json` / `from_json` pair every subclass already has
+   to implement.
+2. **Per-sub-table SQL (opt-in).** Each DataFrame the DataSource exposes
+   becomes its own SQL table, named
+   `ds__{session_id}__{dataset_name}__{sub_table}`. The data stays
+   externally queryable and the DataSource is loaded lazily on
+   `get_data()`. The bundled `DataSource` uses this path automatically.
+
+To opt a custom subclass into the per-table path, implement the
+{ref}`SqlTableLayout <sql-table-layout-ref>` protocol. That is: implement the
+`to_sql_tables()` and `from_sql_tables()` functions. A si
+
+```python
+from algomancy_data import BaseDataSource, DataClassification
+from algomancy_data.database import SqlTableLayout  # noqa: F401  (for type hints only)
+import pandas as pd
+
+class MyTabularSource(BaseDataSource):
+    def __init__(self, ds_type, name, **kwargs):
+        super().__init__(ds_type, name, **kwargs)
+        self._tables: dict[str, pd.DataFrame] = {}
+
+    # ---- SqlTableLayout protocol ----
+    def to_sql_tables(self) -> dict[str, pd.DataFrame]:
+        return self._tables
+
+    def from_sql_tables(self, tables: dict[str, pd.DataFrame]) -> None:
+        self._tables.update(tables)
+
+    # ---- BaseDataSource (still required) ----
+    def to_json(self) -> str: ...
+    @classmethod
+    def from_json(cls, payload: str) -> "MyTabularSource": ...
+```
+
+If a subclass doesn't implement these two methods, persistence falls back
+to the JSON-blob path automatically — nothing else changes. Pick the
+per-table path when external SQL queryability or memory-efficient lazy
+loading of large DataFrames matters; pick the default JSON-blob path when
+the DataSource holds non-tabular state or you want the simplest possible
+contract.
+
 For more details on specific classes, see the {ref}`API reference<datasource-ref>`.
