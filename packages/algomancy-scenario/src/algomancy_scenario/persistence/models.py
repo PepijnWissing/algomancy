@@ -26,6 +26,9 @@ scenarios_table = sa.Table(
     sa.Column("input_data_key", sa.String, nullable=False),
     sa.Column("algorithm_name", sa.String, nullable=False),
     sa.Column("parameter_values", sa.Text, nullable=True),  # JSON
+    sa.Column(
+        "data_parameter_values", sa.Text, nullable=True
+    ),  # JSON, nullable for back-compat
     sa.Column("kpi_names", sa.Text, nullable=True),  # JSON array
     sa.Column("status", sa.String, nullable=False),
     sa.Column("created_at", sa.DateTime, nullable=True),

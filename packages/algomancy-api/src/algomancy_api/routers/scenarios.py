@@ -87,6 +87,7 @@ def create_scenario(
             dataset_key=body.dataset_key,
             algo_name=body.algo_name,
             algo_params=body.algo_params or {},
+            data_params=body.data_params or {},
         )
     except ValueError as exc:
         # Duplicate tag.

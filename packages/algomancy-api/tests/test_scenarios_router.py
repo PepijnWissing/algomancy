@@ -95,6 +95,24 @@ def test_create_scenario_default_params(client):
     assert r.status_code == 201
 
 
+def test_create_scenario_accepts_data_params_field(client):
+    """A plain DataSource declares no params, but the API must still accept the
+    field (empty or null) without errors — that's the back-compat contract."""
+    r = client.post(
+        "/api/v1/sessions/main/scenarios",
+        json={
+            "tag": "with-data-params",
+            "dataset_key": DATASET_KEY,
+            "algo_name": "Slow",
+            "algo_params": {"duration": 1},
+            "data_params": {},
+        },
+    )
+    assert r.status_code == 201
+    body = r.json()
+    assert body["data_parameters"] == {}
+
+
 def test_create_scenario_unknown_algorithm_returns_404(client):
     r = client.post(
         "/api/v1/sessions/main/scenarios",

@@ -312,7 +312,7 @@ class SchemaInferenceEngine:
 
             return unique_sheets
 
-        except (ValueError, IndexError):
+        except ValueError, IndexError:
             return []
 
     def _detect_csv_separator(self, file_path: Path) -> str | None:
@@ -700,7 +700,7 @@ class SchemaInferenceEngine:
                 warnings.simplefilter("ignore", UserWarning)
                 pd.to_datetime(sample)
             return True
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             return False
 
     def _get_file_extension(self, file_path: Path) -> FileExtension | None:

@@ -4,7 +4,11 @@ from typing import TypeVar
 from algomancy_data import BASEDATASOURCE
 from algomancy_utils import Logger
 from .result import BASE_RESULT_BOUND
-from algomancy_utils.baseparameterset import BASE_PARAMS_BOUND
+from algomancy_utils.baseparameterset import (
+    BASE_PARAMS_BOUND,
+    BaseParameterSet,
+    EmptyParameters,
+)
 
 
 class BaseAlgorithm(ABC):
@@ -12,6 +16,7 @@ class BaseAlgorithm(ABC):
         self._name: str = name
         self.description = str(params.serialize())
         self._params: BASE_PARAMS_BOUND = params
+        self._data_params: BaseParameterSet = EmptyParameters()
         self._progress: float = 0
         self._logger: Logger | None = None  # set by factory after initialization
 
@@ -21,6 +26,20 @@ class BaseAlgorithm(ABC):
     @property
     def params(self):
         return self._params
+
+    @property
+    def data_params(self) -> BaseParameterSet:
+        """The data parameters declared by the input data source for the current run.
+
+        Defaults to ``EmptyParameters()``. The scenario calls
+        ``set_data_params`` with the user-supplied values before ``run()``.
+        """
+        return self._data_params
+
+    def set_data_params(self, data_params: BaseParameterSet) -> None:
+        self._data_params = (
+            data_params if data_params is not None else EmptyParameters()
+        )
 
     @property
     def get_progress(self) -> float:

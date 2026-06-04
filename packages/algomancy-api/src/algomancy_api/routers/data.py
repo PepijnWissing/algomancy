@@ -29,6 +29,7 @@ from algomancy_data.file import File as AlgomancyFile
 from algomancy_scenario import ScenarioManager
 
 from ..dependencies import get_scenario_manager
+from ..parameter_describer import describe_parameter_set
 from ..schemas import DataKeysResponse, DeriveDataRequest, EtlResponse
 
 
@@ -92,6 +93,24 @@ def get_data(
     # ScenarioManager hands back a JSON STRING; parse before returning so the
     # response is a proper JSON object rather than a string-encoded blob.
     return json.loads(sm.get_data_as_json(data_key))
+
+
+@router.get(
+    "/data/{data_key}/parameters",
+    summary="Describe the dataset's declared data-parameter shape",
+    response_model=dict,
+)
+def get_data_parameters(
+    data_key: str,
+    sm: ScenarioManager = Depends(get_scenario_manager),
+) -> dict:
+    if data_key not in sm.get_data_keys():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Dataset '{data_key}' not found",
+        )
+    params = sm.get_data_parameters(data_key)
+    return describe_parameter_set(params)
 
 
 @router.delete(

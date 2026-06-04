@@ -453,7 +453,7 @@ class OptionalColumnGuard(Transformer):
                 df[col_name] = col.default
                 try:
                     df[col_name] = df[col_name].astype(col.dtype)
-                except (ValueError, TypeError):
+                except ValueError, TypeError:
                     # Default may not be coercible (e.g. None for non-nullable
                     # numerics); leave dtype as-is and let SchemaValidator flag.
                     pass

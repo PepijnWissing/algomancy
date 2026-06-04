@@ -91,6 +91,77 @@ class MyCustomSource(BaseDataSource):
 ```
 :::
 
+(data-parameters-ref)=
+## Data Parameters
+
+A `BaseDataSource` subclass can declare a typed `BaseParameterSet` that the
+framework collects per scenario, persists alongside the algorithm parameters,
+and pushes onto the algorithm before `run()`. Use them for knobs that belong
+conceptually to the *data* rather than the algorithm — date range, region
+filter, category whitelist — so the same algorithm can consume the same data
+source under different slices without rewriting either side.
+
+Override `initialize_data_parameters` to declare the shape; the default
+returns `EmptyParameters()`, so existing subclasses keep working with no
+changes. The method runs on a populated instance, so it can inspect
+`self.tables` to derive sensible defaults (e.g. the unique values of a
+`category` column).
+
+:::{dropdown} {octicon}`eye` Example: a warehouse data source with two knobs
+:color: success
+```{code-block} python
+:caption: Custom DataSource that declares data parameters
+:linenos:
+from algomancy_data import DataSource
+from algomancy_utils.baseparameterset import (
+    BaseParameterSet,
+    IntegerParameter,
+    MultiEnumParameter,
+)
+
+
+class WarehouseDataParameters(BaseParameterSet):
+    def __init__(self, categories: list[str]) -> None:
+        super().__init__(name="Warehouse Data")
+        self.add_parameters([
+            MultiEnumParameter(
+                name="category_filter",
+                choices=categories or ["(none)"],
+                value=list(categories or ["(none)"]),
+            ),
+            IntegerParameter(name="min_daily_picks", minvalue=0, default=0),
+        ])
+
+    def validate(self) -> None:
+        pass
+
+
+class WarehouseDataSource(DataSource):
+    def initialize_data_parameters(self) -> BaseParameterSet:
+        sku = self.tables.get("sku_data")
+        categories = (
+            sorted(str(c) for c in sku["category"].dropna().unique())
+            if sku is not None and "category" in sku.columns
+            else []
+        )
+        return WarehouseDataParameters(categories=categories)
+```
+:::
+
+The framework does **not** apply data parameters to the data automatically.
+The algorithm reads `self.data_params` and decides whether to act on them —
+typically by filtering its input before its main loop. Algorithms that
+don't care simply ignore the attribute; the safe access pattern is
+`self.data_params.contains("knob_name")` followed by `self.data_params["knob_name"]`.
+
+In the GUI the data parameter card renders next to the algorithm parameter
+card in the scenario-creation modal, populated as soon as the user picks a
+dataset. Over the HTTP API the descriptor is served by
+`GET /api/v1/sessions/{sid}/data/{dataset_key}/parameters`, and supplied
+values flow through the `data_params` field of `POST /scenarios`. See
+{ref}`Algorithms and Parameters <fundamentals-algorithm-ref>` for the
+algorithm-side read pattern.
+
 ## Database persistence
 
 When the framework runs with `persistence_backend="database"` (see

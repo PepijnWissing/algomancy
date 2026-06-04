@@ -236,8 +236,13 @@ class ScenarioManager:
         self._processor.shutdown()
 
     # Scenario creation/registry
-    def get_associated_parameters(self, algo_name: str):
-        return self._factory.get_associated_parameters(algo_name)
+    def get_associated_parameters(
+        self, algo_name: str, dataset_key: Optional[str] = None
+    ):
+        return self._factory.get_associated_parameters(algo_name, dataset_key)
+
+    def get_data_parameters(self, dataset_key: str) -> BASE_PARAMS_BOUND:
+        return self.get_data(dataset_key).initialize_data_parameters()
 
     def create_scenario(
         self,
@@ -245,6 +250,7 @@ class ScenarioManager:
         dataset_key: str = "Master data",
         algo_name: str = "",
         algo_params=None,
+        data_params=None,
     ) -> Scenario:
         if self._registry.has_tag(tag):
             if self.logger:
@@ -258,6 +264,7 @@ class ScenarioManager:
             dataset_key=dataset_key,
             algo_name=algo_name,
             algo_params=algo_params,
+            data_params=data_params,
         )
         self._registry.add(scenario)
 

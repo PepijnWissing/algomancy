@@ -16,11 +16,11 @@ import argparse
 import os
 import sys
 
-from algomancy_data import DataSource
 from algomancy_scenario.core_configuration import CoreConfig
 
 from example.data_handling.factories import ExampleETLFactory
 from example.data_handling.schemas import example_schemas
+from example.data_handling.warehouse_data_source import WarehouseDataSource
 from example.pages.exampledatapage import ExampleDataPage
 from example.templates import kpis, algorithms
 
@@ -68,7 +68,7 @@ def _core_kwargs(args: argparse.Namespace) -> dict:
         kpis=kpis,
         algorithms=algorithms,
         schemas=example_schemas,
-        data_object_type=DataSource,
+        data_object_type=WarehouseDataSource,
         autocreate=False,
         default_algo="Greedy Slotting",
         default_algo_params_values={

@@ -19,6 +19,10 @@ from algomancy_gui.componentids import (
     ALGO_PARAM_INPUT,
     ALGO_PARAM_DATE_INPUT,
     ALGO_PARAM_INTERVAL_INPUT,
+    DATA_PARAMS_ENTRY_CARD,
+    DATA_PARAM_INPUT,
+    DATA_PARAM_DATE_INPUT,
+    DATA_PARAM_INTERVAL_INPUT,
 )
 
 
@@ -27,30 +31,36 @@ def prettify_label(key):
     return key.replace("_", " ").title()
 
 
-def create_parameter_input_component(param: TypedParameter, param_name: str):
+def create_parameter_input_component(
+    param: TypedParameter,
+    param_name: str,
+    input_id_type: str = ALGO_PARAM_INPUT,
+    date_id_type: str = ALGO_PARAM_DATE_INPUT,
+    interval_id_type: str = ALGO_PARAM_INTERVAL_INPUT,
+):
     typ = param.parameter_type
     match typ:
         case ParameterType.STRING:
             return dbc.Input(
-                id={"type": ALGO_PARAM_INPUT, "param": param_name}, type="text"
+                id={"type": input_id_type, "param": param_name}, type="text"
             )
         case ParameterType.INTEGER:
             return dbc.Input(
-                id={"type": ALGO_PARAM_INPUT, "param": param_name}, type="number"
+                id={"type": input_id_type, "param": param_name}, type="number"
             )
         case ParameterType.FLOAT:
             return dbc.Input(
-                id={"type": ALGO_PARAM_INPUT, "param": param_name}, type="number"
+                id={"type": input_id_type, "param": param_name}, type="number"
             )
         case ParameterType.BOOLEAN:
             return dbc.Checklist(
                 options=[{"label": "On", "value": True}],
-                id={"type": ALGO_PARAM_INPUT, "param": param_name},
+                id={"type": input_id_type, "param": param_name},
                 switch=True,
             )
         case ParameterType.ENUM:
             return dcc.Dropdown(
-                id={"type": ALGO_PARAM_INPUT, "param": param_name},
+                id={"type": input_id_type, "param": param_name},
                 options=[
                     {"label": prettify_label(opt), "value": opt}
                     for opt in param.choices
@@ -58,7 +68,7 @@ def create_parameter_input_component(param: TypedParameter, param_name: str):
             )
         case ParameterType.MULTI_ENUM:
             return dcc.Dropdown(
-                id={"type": ALGO_PARAM_INPUT, "param": param_name},
+                id={"type": input_id_type, "param": param_name},
                 options=[
                     {"label": prettify_label(opt), "value": opt}
                     for opt in param.choices
@@ -67,12 +77,12 @@ def create_parameter_input_component(param: TypedParameter, param_name: str):
             )
         case ParameterType.TIME:
             return dcc.DatePickerSingle(
-                id={"type": ALGO_PARAM_DATE_INPUT, "param": param_name},
+                id={"type": date_id_type, "param": param_name},
                 date=param.default,
             )
         case ParameterType.INTERVAL:
             return dcc.DatePickerRange(
-                id={"type": ALGO_PARAM_INTERVAL_INPUT, "param": param_name},
+                id={"type": interval_id_type, "param": param_name},
                 start_date=param.default_start,
                 end_date=param.default_end,
             )
@@ -80,7 +90,12 @@ def create_parameter_input_component(param: TypedParameter, param_name: str):
             raise ValueError(f"Unsupported parameter type: {typ}")
 
 
-def create_input_group(param_dict: Dict[str, TypedParameter]):
+def create_input_group(
+    param_dict: Dict[str, TypedParameter],
+    input_id_type: str = ALGO_PARAM_INPUT,
+    date_id_type: str = ALGO_PARAM_DATE_INPUT,
+    interval_id_type: str = ALGO_PARAM_INTERVAL_INPUT,
+):
     """
     Given a dictionary of parameter names and Python types,
     returns a list of input groups, each with a neat label and input.
@@ -89,9 +104,11 @@ def create_input_group(param_dict: Dict[str, TypedParameter]):
     for param_name, param in param_dict.items():
         label = prettify_label(param_name)
 
-        html_id = f"{ALGO_PARAM_INPUT}-{param_name}"
+        html_id = f"{input_id_type}-{param_name}"
 
-        component = create_parameter_input_component(param, param_name)
+        component = create_parameter_input_component(
+            param, param_name, input_id_type, date_id_type, interval_id_type
+        )
 
         form_groups.append(
             html.Div(
@@ -119,9 +136,30 @@ def create_algo_parameters_entry_card_body(template_name: str) -> dbc.CardBody:
     input_group = create_input_group(algo_params.get_parameters())
 
     return dbc.CardBody(
-        input_group,
+        [html.H5("Algorithm Parameters", className="mb-3"), *input_group],
         style={
-            "maxHeight": "60vh",  # or e.g. "420px"
+            "maxHeight": "60vh",
+            "overflowY": "auto",
+            "overflowX": "hidden",
+        },
+    )
+
+
+def create_data_parameters_entry_card_body(dataset_key: str) -> dbc.CardBody:
+    session_manager: SessionManager | ScenarioManager = get_manager(get_app().server)
+    data_params: BaseParameterSet = session_manager.get_data_parameters(dataset_key)
+    assert data_params.has_inputs(), "No data parameters declared by this dataset."
+    input_group = create_input_group(
+        data_params.get_parameters(),
+        input_id_type=DATA_PARAM_INPUT,
+        date_id_type=DATA_PARAM_DATE_INPUT,
+        interval_id_type=DATA_PARAM_INTERVAL_INPUT,
+    )
+
+    return dbc.CardBody(
+        [html.H5("Data Parameters", className="mb-3"), *input_group],
+        style={
+            "maxHeight": "60vh",
             "overflowY": "auto",
             "overflowX": "hidden",
         },
@@ -131,10 +169,13 @@ def create_algo_parameters_entry_card_body(template_name: str) -> dbc.CardBody:
 def create_algo_parameters_window() -> dbc.Collapse:
     tabs = []
 
-    param_entry_card = dbc.Card(id=ALGO_PARAMS_ENTRY_CARD, class_name="mt-3")
-    tabs.append(
-        dbc.Tab(param_entry_card, label="Fill in", tab_id=ALGO_PARAMS_ENTRY_TAB)
+    entry_body = html.Div(
+        [
+            dbc.Card(id=DATA_PARAMS_ENTRY_CARD, class_name="mt-3"),
+            dbc.Card(id=ALGO_PARAMS_ENTRY_CARD, class_name="mt-3"),
+        ]
     )
+    tabs.append(dbc.Tab(entry_body, label="Fill in", tab_id=ALGO_PARAMS_ENTRY_TAB))
 
     settings: SettingsManager = get_app().server.settings
     if settings.allow_param_upload_by_file:
