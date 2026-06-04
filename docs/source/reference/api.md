@@ -13,8 +13,6 @@ The shape mirrors the GUI:
   `AppConfig.core`.
 - An [`ApiLauncher`](#launching) turns that configuration into a
   [FastAPI](https://fastapi.tiangolo.com/) app and serves it with uvicorn.
-- A console script `algomancy-api` accepts a `--config-callback module:fn`
-  that returns an `ApiConfiguration`.
 
 ```{tip}
 Once a server is running, point your browser at `/docs` for the interactive
@@ -24,22 +22,9 @@ is discoverable there.
 
 ## Launching
 
-### As a console script
-```bash
-# the bundled example wiring (uses ./example/data)
-algomancy-api --example
-
-# your own application
-algomancy-api --config-callback myapp.api:make_config
-
-# override host / port from the config
-algomancy-api --example --host 0.0.0.0 --port 9000
-```
-
-The callback must be a zero-argument function returning an `ApiConfiguration`:
 ```{code-block} python
 :caption: myapp/api.py
-from algomancy_api import ApiConfiguration
+from algomancy_api import ApiConfiguration, ApiLauncher
 from algomancy_data import DataSource
 
 from myapp.etl import MyETLFactory
@@ -47,27 +32,20 @@ from myapp.templates import kpi_templates, algorithm_templates
 from myapp.schemas import all_schemas
 
 
-def make_config() -> ApiConfiguration:
-    return ApiConfiguration(
-        etl_factory=MyETLFactory,
-        kpi_templates=kpi_templates,
-        algo_templates=algorithm_templates,
-        schemas=all_schemas,
-        data_object_type=DataSource,
-        has_persistent_state=True,
-        data_path="data",
-        autocreate=False,
-        autorun=False,
-        host="127.0.0.1",
-        port=8051,
-    )
-```
+cfg = ApiConfiguration(
+    etl_factory=MyETLFactory,
+    kpi_templates=kpi_templates,
+    algo_templates=algorithm_templates,
+    schemas=all_schemas,
+    data_object_type=DataSource,
+    has_persistent_state=True,
+    data_path="data",
+    autocreate=False,
+    autorun=False,
+    host="127.0.0.1",
+    port=8051,
+)
 
-### Programmatically
-```{code-block} python
-from algomancy_api import ApiConfiguration, ApiLauncher
-
-cfg = ApiConfiguration(...)
 app = ApiLauncher.build(cfg)
 ApiLauncher.run(app)  # blocks; host/port come from cfg
 ```
@@ -76,6 +54,16 @@ ApiLauncher.run(app)  # blocks; host/port come from cfg
 plain dict with the same keys. It returns a standard `FastAPI` instance — for
 production deployments you can hand that to your own uvicorn / gunicorn
 process manager instead of using `ApiLauncher.run`.
+
+To try the API quickly against the bundled example wiring (data lives in
+`./example/data`):
+
+```{code-block} python
+from algomancy_api import ApiLauncher
+from algomancy_api.example import build_example_config
+
+ApiLauncher.run(ApiLauncher.build(build_example_config()))
+```
 
 (api-configuration-ref)=
 ## Configuration
@@ -99,7 +87,7 @@ so single-tenant deployments still have a working URL shape.
 
 ## Sessions
 
-`algomancy-api` always exposes routes under `/sessions/{session_id}/...`. A
+The API always exposes routes under `/sessions/{session_id}/...`. A
 session is a self-contained `ScenarioManager` with its own data and
 scenarios — useful for serving multiple users or experiment workspaces from
 one process.

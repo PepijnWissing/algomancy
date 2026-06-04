@@ -53,9 +53,9 @@
 
 ## 4 API manual walk
 
-**CWD: `<repo>`** (the API `--example` config also resolves `example/data` relative to here)
+**CWD: `<repo>`** (the example config resolves `example/data` relative to here)
 
-- [ ] `uv run algomancy-api --example` boots on port 8051 (override with `--port` if 8051 is busy)
+- [ ] `uv run python -c "from algomancy_api import ApiLauncher; from algomancy_api.example import build_example_config; ApiLauncher.run(ApiLauncher.build(build_example_config()))"` boots on port 8051
 - [ ] `curl http://127.0.0.1:8051/health` → `{"status": "ok", …, "sessions": [{"id": "<uuid>", "display_name": "default_session"}, ...]}`
 - [ ] `curl http://127.0.0.1:8051/docs` → Swagger UI renders
 - [ ] End-to-end: `POST /api/v1/sessions/default_session/scenarios` with body
