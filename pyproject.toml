@@ -49,6 +49,11 @@ readme = "README.md"
 requires-python = ">=3.14"
 version = "0.7.0"
 
+[project.optional-dependencies]
+database = [
+  "algomancy-scenario[database]"
+]
+
 [project.scripts]
 algomancy-api = "algomancy_api.main:main"
 algomancy-quickstart = "algomancy_quickstart.main:main"
