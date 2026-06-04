@@ -65,19 +65,21 @@ def test_health_endpoint_responds(live_server):
     assert r.status_code == 200
     body = r.json()
     assert body["status"] == "ok"
-    assert body["use_sessions"] is True
     # The example wiring ships a single ``default_session`` on disk.
     # Multi-session discovery semantics are unit-tested in
     # packages/algomancy-scenario/tests/test_session_manager.py.
-    assert "default_session" in body["sessions"]
+    display_names = [s["display_name"] for s in body["sessions"]]
+    assert "default_session" in display_names
 
 
 def test_sessions_endpoint_lists_example_sessions(live_server):
     r = httpx.get(f"{live_server}/api/v1/sessions")
     assert r.status_code == 200
     body = r.json()
-    assert "default_session" in body["sessions"]
-    assert body["default"] in body["sessions"]
+    display_names = [s["display_name"] for s in body["sessions"]]
+    ids = [s["id"] for s in body["sessions"]]
+    assert "default_session" in display_names
+    assert body["default"] in ids
 
 
 def test_algorithms_endpoint_exposes_example_algorithms(live_server):

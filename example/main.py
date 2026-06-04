@@ -33,6 +33,7 @@ _DEFAULT_HOST = "127.0.0.1"
 _GUI_PORT = 8050
 _API_PORT = 8051
 
+_SEED = False
 
 # ---------------------------------------------------------------------------
 # Shared configuration helpers
@@ -62,7 +63,6 @@ def _core_kwargs(args: argparse.Namespace) -> dict:
         )
 
     return dict(
-        use_sessions=True,
         data_path="example/data",
         etl_factory=ExampleETLFactory,
         kpi_templates=kpi_templates,
@@ -125,7 +125,10 @@ def build_gui(args: argparse.Namespace):
             default_open=["side-by-side", "kpis", "compare"],
             ordered_components=["side-by-side", "kpis", "compare", "details"],
         ),
-        feature_config=FeatureConfig(use_authentication=False),
+        feature_config=FeatureConfig(
+            use_authentication=False,
+            show_session_picker=False,
+        ),
         page_config=PageConfig(
             data_page=ExampleDataPage(),
             **(
@@ -175,11 +178,12 @@ def run_gui(args: argparse.Namespace) -> None:
     server = app.server
     if hasattr(server, "session_manager"):
         sm: SessionManager = server.session_manager
-        sm_default = sm.get_scenario_manager(sm.start_session_name)
+        sm_default = sm.get_scenario_manager(sm.start_session_id)
         try:
             from example.templates import seed_warehouse_scenarios
 
-            seed_warehouse_scenarios(sm_default)
+            if _SEED:
+                seed_warehouse_scenarios(sm_default)
         except ImportError:
             pass
 

@@ -113,6 +113,17 @@ makes comparison across scenarios intuitive and accessible.
 For in-depth technical detail, refer to the {ref}`KPI reference <kpi-ref>`.
 
 
+## Sessions
+The framework wraps every running backend in a `SessionManager` that owns
+one or more **sessions** — each an isolated workspace with its own
+scenarios, runs, KPIs, and data. The split between an immutable session
+``id`` (UUID) and a mutable ``display_name`` is what lets you rename or
+reorganize workspaces without breaking URLs or database FKs.
+
+See {ref}`Sessions <fundamentals-sessions-ref>` for the full model:
+identity, persistence backends (filesystem vs. database), lifecycle, and
+how the HTTP API / Dash GUI scope by session.
+
 ## More
 For an in-depth discussion of the underlying concepts, visit the pages below. 
 ```{toctree}
@@ -122,4 +133,5 @@ data
 ETL
 algorithms
 result
+sessions
 ```

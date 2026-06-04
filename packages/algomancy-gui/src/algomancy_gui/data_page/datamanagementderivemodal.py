@@ -147,26 +147,21 @@ def _sanitize(name: str) -> str:
     ],
     prevent_initial_call=True,
 )
-def derive_data_callback(
-    n_clicks, selected_data_key, derived_name, invalid_derived_name, session_id: str
-):
+def derive_data_callback(n_clicks, selected_data_key, derived_name, session_id: str):
     """
-    Creates a derived dataset from an existing one when the derive button is clicked, except when dataset_name is invalid.
-
-    Updates dropdown options across the application with the new dataset list,
-    displays success or error messages, and closes the modal upon completion.
+    Creates a derived dataset from an existing one when the derive button is
+    clicked, unless the source selection or new name is empty.
 
     Args:
         n_clicks: Number of times the submit button has been clicked
         selected_data_key: Key of the dataset to derive from
         derived_name: Name for the new derived dataset
-        invalid_derived_name: Boolean indicating if feedback should be shown
         session_id: ID of the active session
 
     Returns:
         Tuple containing updated dropdown options, alert messages, and modal state
     """
-    if not selected_data_key or not derived_name or invalid_derived_name is True:
+    if not selected_data_key or not derived_name:
         return no_update, "", False, "Choose a dataset and enter a name!", True, False
     sm: ScenarioManager = get_scenario_manager(get_app().server, session_id)
     try:

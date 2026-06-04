@@ -56,7 +56,6 @@ def make_config() -> ApiConfiguration:
         data_object_type=DataSource,
         has_persistent_state=True,
         data_path="data",
-        use_sessions=True,
         autocreate=False,
         autorun=False,
         host="127.0.0.1",
@@ -84,8 +83,8 @@ process manager instead of using `ApiLauncher.run`.
 `ApiConfiguration` extends `CoreConfig` (see the
 {ref}`Scenario reference <scenario-package-ref>`) with HTTP-specific fields. Inherited
 fields like `etl_factory`, `kpi_templates`, `algo_templates`, `schemas`,
-`data_object_type`, `data_path`, `has_persistent_state`, `use_sessions`,
-`autocreate`, `autorun`, and `title` behave exactly as they do for the GUI.
+`data_object_type`, `data_path`, `has_persistent_state`, `autocreate`,
+`autorun`, and `title` behave exactly as they do for the GUI.
 
 | Field | Type | Default | Notes |
 |---|---|---|---|
@@ -94,10 +93,9 @@ fields like `etl_factory`, `kpi_templates`, `algo_templates`, `schemas`,
 | `prefix` | `str` | `"/api/v1"` | URL prefix for all routes (must start with `/`) |
 | `cors_origins` | `list[str]` | `[]` | Allowed CORS origins; empty disables CORS middleware |
 
-When `use_sessions=False` the API still wraps the underlying manager in a
-`SessionManager`, but only the default `"main"` session is registered.
-This keeps the URL shape (`/sessions/{session_id}/...`) consistent across
-configurations.
+Routes are always scoped by session under `/sessions/{session_id}/...`. The
+SessionManager auto-creates a default `"main"` session when none exists yet,
+so single-tenant deployments still have a working URL shape.
 
 ## Sessions
 
@@ -106,18 +104,34 @@ session is a self-contained `ScenarioManager` with its own data and
 scenarios — useful for serving multiple users or experiment workspaces from
 one process.
 
+**Identity.** Every session has a stable UUID ``id`` and a mutable
+``display_name``. The URL path uses the UUID; the ``display_name`` is what
+you show in UIs. For convenience, the URL path also accepts a session's
+current ``display_name`` as a soft-compat alias — useful for single-tenant
+deployments and clients migrating from pre-M14 algomancy. Authoritative
+clients should always use the UUID returned by ``GET /sessions``.
+
 | Verb | Path | Description |
 |---|---|---|
-| `GET` | `/sessions` | List session names and the default |
-| `POST` | `/sessions` | Create a new session — body `{"name": "..."}` |
-| `POST` | `/sessions/{sid}/copy` | Copy a session — body `{"new_name": "..."}` |
+| `GET` | `/sessions` | List `[{id, display_name}, ...]` and the default id |
+| `POST` | `/sessions` | Create — body `{"display_name": "..."}` |
+| `POST` | `/sessions/{sid}/copy` | Copy — body `{"new_display_name": "..."}` |
+| `PATCH` | `/sessions/{sid}` | Rename — body `{"display_name": "..."}` (id stays) |
+| `DELETE` | `/sessions/{sid}` | Delete a session and all its scenarios, runs, KPIs, and data |
 
 Status codes:
 - `201` on a successful create/copy.
-- `404` when the source session of a copy doesn't exist.
-- `409` for duplicate names **or** unsafe names (path separators, `..`,
-  drive prefixes, empty strings). Session names are validated at the
-  framework layer; the API doesn't add a second guard.
+- `200` on a successful rename or delete; the rename response is the
+  updated `{id, display_name}`, the delete response is the refreshed
+  session list.
+- `404` when the targeted session doesn't exist.
+- `409` when the requested `display_name` is already taken by another session.
+- `422` when the request body fails Pydantic validation (e.g. empty
+  `display_name`).
+
+Deleting the last remaining session never leaves the manager empty: a
+fresh ``"main"`` session is auto-created in its place so subsequent
+scenario writes still have somewhere to land.
 
 ## Algorithm + KPI discovery
 

@@ -30,9 +30,8 @@ class ApiLauncher:
         """Construct a FastAPI app from a config (object or dict)."""
         cfg_obj = ApiLauncher._normalize_config(cfg)
 
-        # Always wrap in a SessionManager so all routes share one resolution
-        # shape, regardless of cfg.use_sessions. When use_sessions=False the
-        # SessionManager just has the single default "main" session.
+        # All routes are scoped by session; the SessionManager auto-creates a
+        # default "main" session when none exists on disk / in the DB yet.
         session_manager = SessionManager.from_config(cfg_obj)
 
         app = FastAPI(
@@ -104,8 +103,7 @@ class ApiLauncher:
             return {
                 "status": "ok",
                 "title": cfg.title,
-                "sessions": sm.sessions_names,
-                "use_sessions": cfg.use_sessions,
+                "sessions": sm.list_sessions(),
             }
 
         app.include_router(sessions_router.router, prefix=cfg.prefix)

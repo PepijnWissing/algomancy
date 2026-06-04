@@ -168,7 +168,7 @@ class WarehouseHomePage(BaseHomePage):
         # ``get_scenario_manager(server)`` passes ``None`` and the session
         # manager raises ``KeyError("Session 'None' not found.")``.
         session_id = (
-            server.session_manager.start_session_name
+            server.session_manager.start_session_id
             if hasattr(server, "session_manager")
             else None
         )

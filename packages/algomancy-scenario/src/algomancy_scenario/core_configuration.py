@@ -21,7 +21,6 @@ class CoreConfig:
     required fields are present and correctly typed.
 
     Args:
-        use_sessions: Whether to enable multi-session support.
         data_path: Path to the directory where session and persistent data is stored.
         has_persistent_state: If True, data is persisted to disk using `save_type`.
         save_type: Format for persistent data storage ('json' or 'parquet').
@@ -44,8 +43,6 @@ class CoreConfig:
 
     def __init__(
         self,
-        # === session manager configuration ===
-        use_sessions: bool = False,
         # === path specifications ===
         data_path: str = "data",
         # === data manager configuration ===
@@ -73,7 +70,6 @@ class CoreConfig:
         Initializes the CoreConfiguration.
 
         Args:
-            use_sessions: Enable or disable multi-session handling. Defaults to False.
             data_path: File system path for data storage. Defaults to "data".
             has_persistent_state: Enable or disable disk persistence. Defaults to False.
             save_type: File format for persistence ('json' or 'parquet'). Defaults to "json".
@@ -92,9 +88,6 @@ class CoreConfig:
         Raises:
             ValueError: If required fields are missing or if provided paths are invalid.
         """
-        # session management
-        self.use_sessions = use_sessions
-
         # paths
         self.data_path = data_path
 
@@ -126,7 +119,6 @@ class CoreConfig:
     # ----- public API -----
     def as_dict(self) -> Dict[str, Any]:
         return {
-            "use_sessions": self.use_sessions,
             "data_path": self.data_path,
             "has_persistent_state": self.has_persistent_state,
             "save_type": self.save_type,

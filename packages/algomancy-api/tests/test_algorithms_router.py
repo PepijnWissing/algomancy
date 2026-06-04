@@ -10,7 +10,7 @@ from algomancy_api import ApiConfiguration, ApiLauncher
 
 @pytest.fixture
 def client(api_core_kwargs) -> TestClient:
-    cfg = ApiConfiguration(use_sessions=False, **api_core_kwargs)
+    cfg = ApiConfiguration(**api_core_kwargs)
     return TestClient(ApiLauncher.build(cfg))
 
 

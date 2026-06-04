@@ -11,7 +11,7 @@ from dash import (
 )
 import dash_bootstrap_components as dbc
 
-from .sessions import create_new_session_window
+from .sessions import create_new_session_window, create_delete_session_window
 from ..componentids import (
     ADMIN_NEW_SESSION,
     ACTIVE_SESSION,
@@ -21,7 +21,11 @@ from ..componentids import (
     ADMIN_LOG_FILTER,
     ADMIN_PAGE,
     ADMIN_COPY_SESSION,
+    ADMIN_DELETE_SESSION,
     SESSION_CREATOR_MODAL,
+    SESSION_DELETE_MODAL,
+    SESSION_DELETE_CONFIRM_BUTTON,
+    SESSION_DELETE_CANCEL_BUTTON,
     NEW_SESSION_BUTTON,
     NEW_SESSION_NAME,
     HOW_TO_CREATE_NEW_SESSION,
@@ -50,11 +54,11 @@ def admin_header():
 def admin_sessions(session_id):
     """Creates a page-section where sessions can be selected and created."""
 
-    if not get_app().server.use_sessions:
+    if not get_app().server.show_session_picker:
         return []
 
     session_manager: SessionManager = get_app().server.session_manager
-    sessions = session_manager.sessions_names
+    sessions = session_manager.list_sessions()
 
     return [
         html.H3("Sessions"),
@@ -69,7 +73,10 @@ def admin_sessions(session_id):
                         html.Label("Select session:"),
                         dcc.Dropdown(
                             id=ADMIN_SELECT_SESSION,
-                            options=[{"label": s, "value": s} for s in sessions],
+                            options=[
+                                {"label": s["display_name"], "value": s["id"]}
+                                for s in sessions
+                            ],
                             value=session_id,
                             clearable=False,
                         ),
@@ -106,6 +113,18 @@ def admin_sessions(session_id):
                             "border": "none",
                             "height": "38px%",
                         },
+                    ),
+                    width="auto",
+                    className="d-flex align-items-end",
+                ),
+                # Delete Session button
+                dbc.Col(
+                    dbc.Button(
+                        "Delete Session",
+                        id=ADMIN_DELETE_SESSION,
+                        color="danger",
+                        className="ms-2 w-100",
+                        style={"height": "38px"},
                     ),
                     width="auto",
                     className="d-flex align-items-end",
@@ -184,7 +203,7 @@ def create_admin_page(session_id):
         admin_header()
         + admin_sessions(session_id)
         + admin_system_logs()
-        + [create_new_session_window()]
+        + [create_new_session_window(), create_delete_session_window()]
     )
     return admin_content
 
@@ -276,9 +295,11 @@ def validate_session_name(session_name: str):
     A name is considered invalid if it is empty or already exists.
     A tooltip is displayed if the session name is invalid with a short explanation.
     """
-    if not get_app().server.use_sessions:
+    if not get_app().server.show_session_picker:
         return no_update, no_update
-    existing_names = get_app().server.session_manager.sessions_names
+    existing_display_names = [
+        s["display_name"] for s in get_app().server.session_manager.list_sessions()
+    ]
 
     if not session_name:
         tooltip = dbc.Tooltip(
@@ -289,7 +310,7 @@ def validate_session_name(session_name: str):
         )
         return True, tooltip
 
-    if session_name in existing_names:
+    if session_name in existing_display_names:
         tooltip = dbc.Tooltip(
             "Session name already exists.",
             target=f"{NEW_SESSION_BUTTON}-wrapper",
@@ -308,6 +329,8 @@ def validate_session_name(session_name: str):
         Output(NEW_SESSION_NAME, "value"),
         Output(HOW_TO_CREATE_NEW_SESSION, "data"),
         Output(ADMIN_SELECT_SESSION, "value"),
+        Output(f"{SESSION_CREATOR_MODAL}-title", "children"),
+        Output(f"{SESSION_CREATOR_MODAL}-source", "children"),
     ],
     [
         Input(ADMIN_NEW_SESSION, "n_clicks"),
@@ -343,26 +366,89 @@ def toggle_session_creator_modal(
     """
     ctx = callback_context
     if not ctx.triggered:
-        return no_update, no_update, no_update, no_update
+        return no_update, no_update, no_update, no_update, no_update, no_update
     triggered_id = ctx.triggered[0]["prop_id"].split(".")[0]
     if triggered_id == ADMIN_NEW_SESSION and not is_open:
-        return True, "", False, no_update
+        return True, "", False, no_update, "Create New Session", ""
     if triggered_id == ADMIN_COPY_SESSION and not is_open:
-        return True, "", True, no_update
+        session_manager: SessionManager = get_app().server.session_manager
+        try:
+            label = session_manager.get_display_name(session_id)
+        except KeyError:
+            label = session_id
+        source = f"Copying from: {label!r}"
+        return True, "", True, no_update, "Copy Session", source
     if triggered_id == NEW_SESSION_BUTTON and is_open:
         session_manager: SessionManager = get_app().server.session_manager
         try:
             if copy_session:
-                session_manager.copy_session(session_id, new_session_name)
+                new_id = session_manager.copy_session(session_id, new_session_name)
             else:
-                session_manager.create_new_session(new_session_name)
-        except ValueError as e:
-            # Duplicate name or invalid characters; keep the modal open with the
-            # entered value visible so the user can correct it.
+                new_id = session_manager.create_new_session(new_session_name)
+        except (ValueError, KeyError) as e:
+            # Duplicate display name or invalid characters; keep the modal open
+            # with the entered value visible so the user can correct it.
             session_manager.log(str(e), MessageStatus.WARNING)
-            return no_update, no_update, no_update, no_update
+            return no_update, no_update, no_update, no_update, no_update, no_update
 
-        return False, "", no_update, new_session_name
+        return False, "", no_update, new_id, no_update, no_update
     if triggered_id == f"{NEW_SESSION_BUTTON}-cancel":
-        return False, "", no_update, no_update
-    return is_open, "", no_update, no_update
+        return False, "", no_update, no_update, no_update, no_update
+    return is_open, "", no_update, no_update, no_update, no_update
+
+
+@callback(
+    [
+        Output(SESSION_DELETE_MODAL, "is_open"),
+        Output(f"{SESSION_DELETE_MODAL}-target", "children"),
+        Output(ADMIN_SELECT_SESSION, "value", allow_duplicate=True),
+    ],
+    [
+        Input(ADMIN_DELETE_SESSION, "n_clicks"),
+        Input(SESSION_DELETE_CONFIRM_BUTTON, "n_clicks"),
+        Input(SESSION_DELETE_CANCEL_BUTTON, "n_clicks"),
+    ],
+    [
+        State(ACTIVE_SESSION, "data"),
+        State(SESSION_DELETE_MODAL, "is_open"),
+    ],
+    prevent_initial_call=True,
+)
+def toggle_session_delete_modal(
+    open_click, confirm_click, cancel_click, session_id, is_open
+):
+    """Handle the open/confirm/cancel flow of the session-delete modal.
+
+    On confirm: delete the active session, then nudge ``ACTIVE_SESSION`` to
+    the SessionManager's new start session id so downstream pages re-render
+    against a session that still exists.
+    """
+    ctx = callback_context
+    if not ctx.triggered:
+        return no_update, no_update, no_update
+    triggered_id = ctx.triggered[0]["prop_id"].split(".")[0]
+
+    if triggered_id == ADMIN_DELETE_SESSION and not is_open:
+        session_manager: SessionManager = get_app().server.session_manager
+        try:
+            label = session_manager.get_display_name(session_id)
+        except KeyError:
+            label = session_id
+        body = f"Selected session: {label!r}. Continue?"
+        return True, body, no_update
+
+    if triggered_id == SESSION_DELETE_CONFIRM_BUTTON and is_open:
+        session_manager = get_app().server.session_manager
+        try:
+            session_manager.delete_session(session_id)
+        except KeyError as exc:
+            session_manager.log(str(exc), MessageStatus.WARNING)
+            return False, "", no_update
+        # After deletion, switch to whatever the SessionManager now treats as
+        # the default — possibly a freshly auto-created "main".
+        return False, "", session_manager.start_session_id
+
+    if triggered_id == SESSION_DELETE_CANCEL_BUTTON:
+        return False, "", no_update
+
+    return is_open, no_update, no_update

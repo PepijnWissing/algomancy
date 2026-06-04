@@ -7,7 +7,7 @@ from algomancy_api import ApiConfiguration, ApiLauncher
 
 @pytest.fixture
 def app(api_core_kwargs) -> FastAPI:
-    cfg = ApiConfiguration(use_sessions=False, **api_core_kwargs)
+    cfg = ApiConfiguration(**api_core_kwargs)
     return ApiLauncher.build(cfg)
 
 
@@ -24,18 +24,21 @@ def test_build_attaches_state(app):
     assert app.state.config is not None
     assert app.state.session_manager is not None
     # default session always exists
-    assert "main" in app.state.session_manager.sessions_names
+    display_names = [
+        s["display_name"] for s in app.state.session_manager.list_sessions()
+    ]
+    assert "main" in display_names
 
 
 def test_build_accepts_dict(api_core_kwargs):
-    app = ApiLauncher.build({"use_sessions": False, **api_core_kwargs})
+    app = ApiLauncher.build({**api_core_kwargs})
     assert isinstance(app, FastAPI)
 
 
 def test_build_accepts_core_config(api_core_kwargs):
     from algomancy_scenario import CoreConfig
 
-    cfg = CoreConfig(use_sessions=False, **api_core_kwargs)
+    cfg = CoreConfig(**api_core_kwargs)
     app = ApiLauncher.build(cfg)
     assert isinstance(app, FastAPI)
 
@@ -51,8 +54,9 @@ def test_health_endpoint(client: TestClient):
     body = r.json()
     assert body["status"] == "ok"
     assert body["title"] == "Algomancy API"
-    assert "main" in body["sessions"]
-    assert body["use_sessions"] is False
+    display_names = [s["display_name"] for s in body["sessions"]]
+    assert "main" in display_names
+    assert "use_sessions" not in body
 
 
 def test_openapi_docs_available(client: TestClient):
@@ -63,7 +67,6 @@ def test_openapi_docs_available(client: TestClient):
 
 def test_cors_middleware_active_when_origins_configured(api_core_kwargs):
     cfg = ApiConfiguration(
-        use_sessions=False,
         cors_origins=["http://example.com"],
         **api_core_kwargs,
     )
