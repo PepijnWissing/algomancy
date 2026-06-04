@@ -12,23 +12,6 @@ the same `Scenario`, `DataSource`, and `KPI` concepts the Dash GUI does.
 
 ## Quick start
 
-```bash
-# launch with the bundled example wiring
-algomancy-api --example
-
-# or with your own configuration callback
-algomancy-api --config-callback myapp.api:make_config
-
-# override host / port from the config
-algomancy-api --example --host 0.0.0.0 --port 9000
-```
-
-The server starts (default `127.0.0.1:8051`) and serves the OpenAPI schema at
-`/openapi.json` plus the interactive Swagger UI at `/docs`. All scenario/data
-endpoints live under `/api/v1/sessions/{session_id}/...`.
-
-## Programmatic use
-
 ```python
 from algomancy_api import ApiConfiguration, ApiLauncher
 from algomancy_data import DataSource
@@ -48,9 +31,22 @@ app = ApiLauncher.build(cfg)  # returns a standard FastAPI app
 ApiLauncher.run(app)          # blocks; uses cfg.host / cfg.port
 ```
 
+The server starts (default `127.0.0.1:8051`) and serves the OpenAPI schema at
+`/openapi.json` plus the interactive Swagger UI at `/docs`. All scenario/data
+endpoints live under `/api/v1/sessions/{session_id}/...`.
+
 `ApiLauncher.build` returns a standard `FastAPI` instance — for production
 deploys you can hand it to your own uvicorn / gunicorn process manager
 instead of using `ApiLauncher.run`.
+
+To try it against the bundled example wiring:
+
+```python
+from algomancy_api import ApiLauncher
+from algomancy_api.example import build_example_config
+
+ApiLauncher.run(ApiLauncher.build(build_example_config()))
+```
 
 ## Endpoint inventory
 

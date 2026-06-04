@@ -57,7 +57,7 @@ Data page → DataManager → ETLFactory → Extractor/Transformer/Loader → Da
 Scenario page → Scenario lifecycle → BaseAlgorithm.run() → BaseKPI.compute()
 ```
 
-The `algomancy-api` entry point (`algomancy-api --config-callback myapp:make_config`, default port `8051`) serves the same backend as JSON over HTTP — useful for remote frontends and headless backend testing. Routes under `/api/v1/sessions/{session_id}/...` cover the full scenario lifecycle (CRUD + run + poll), data management, and algorithm/KPI discovery. OpenAPI schema at `/openapi.json`, Swagger UI at `/docs`.
+The `algomancy-api` package serves the same backend as JSON over HTTP — useful for remote frontends and headless backend testing. Launch with `ApiLauncher.build(ApiConfiguration(...))` + `ApiLauncher.run(app)` (default port `8051`). Routes under `/api/v1/sessions/{session_id}/...` cover the full scenario lifecycle (CRUD + run + poll), data management, and algorithm/KPI discovery. OpenAPI schema at `/openapi.json`, Swagger UI at `/docs`.
 
 ### Extension points
 

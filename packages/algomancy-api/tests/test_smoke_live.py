@@ -1,10 +1,11 @@
-"""End-to-end smoke test against a live ``algomancy-api --example`` process.
+"""End-to-end smoke test against a live uvicorn process serving the example.
 
 Unlike the other test modules (which use ``fastapi.testclient.TestClient`` and
 talk to the app in-process), this test:
 
-1. Launches the real ``algomancy-api`` console script in a subprocess so the
-   uvicorn server actually binds a port and serves HTTP.
+1. Launches a real uvicorn server in a subprocess (via ``ApiLauncher.run`` on
+   the bundled example config) so the server actually binds a port and serves
+   HTTP.
 2. Drives it with ``httpx`` against ``http://127.0.0.1:<free port>``.
 3. Walks through the canonical client flow: list sessions → list algorithms →
    create scenario → run → poll until complete → fetch full result.
@@ -32,19 +33,18 @@ from algomancy_utils._smoke_helpers import (
 
 @pytest.fixture(scope="module")
 def live_server(tmp_path_factory):
-    """Module-scoped: start one ``algomancy-api --example`` and reuse it."""
+    """Module-scoped: start one uvicorn process serving the example config."""
     port = find_free_port()
     base_url = f"http://127.0.0.1:{port}"
     log_path = tmp_path_factory.mktemp("algomancy-api-smoke") / "server.log"
 
-    cmd = [
-        sys.executable,
-        "-m",
-        "algomancy_api.main",
-        "--example",
-        "--port",
-        str(port),
-    ]
+    launcher = (
+        "from algomancy_api import ApiLauncher;"
+        "from algomancy_api.example import build_example_config;"
+        "app = ApiLauncher.build(build_example_config());"
+        f"ApiLauncher.run(app, host='127.0.0.1', port={port})"
+    )
+    cmd = [sys.executable, "-c", launcher]
 
     with live_subprocess(cmd, log_path=log_path) as proc:
         # Example startup runs ETL on every session — give it generous time.

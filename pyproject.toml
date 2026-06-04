@@ -55,7 +55,6 @@ database = [
 ]
 
 [project.scripts]
-algomancy-api = "algomancy_api.main:main"
 algomancy-quickstart = "algomancy_quickstart.main:main"
 
 [project.urls]

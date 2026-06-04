@@ -35,7 +35,7 @@ the framework:
 | Frontend | Best for | Entry point |
 |---|---|---|
 | `algomancy-gui` | Interactive analysis with rich, domain-specific visualizations | `GuiLauncher.build(AppConfig)` |
-| `algomancy-api` | Remote frontends (browser SPAs, native apps, scripts) over HTTP, headless backend testing | `algomancy-api --config-callback module:fn` |
+| `algomancy-api` | Remote frontends (browser SPAs, native apps, scripts) over HTTP, headless backend testing | `ApiLauncher.build(ApiConfiguration)` |
 
 The configuration objects share a `CoreConfig` base, so the same backend
 wiring (`etl_factory`, `kpi_templates`, `algo_templates`, `schemas`,
@@ -74,8 +74,8 @@ need read-only access from the second.
 
 ## Development tip
 
-During development, it may be desirable to have a live backend to poke around while running the `algomancy-api` server. 
-You can do this by starting the API server in one terminal and then using a Jupyter notebook to send HTTP requests to it. 
+During development, it may be desirable to have a live backend to poke around while running the API server.
+You can do this by starting the API server in one terminal (`ApiLauncher.run(ApiLauncher.build(cfg))`) and then using a Jupyter notebook to send HTTP requests to it.
 Here's how you can do that with `httpx`:
 
 
