@@ -148,3 +148,4 @@ test-algomancy-app/
 # Playwright/GUI smoke test screenshots
 pytest-results/
 /api_testing_scripts/
+/pytest-results-gui-smoke.xml
