@@ -3,7 +3,13 @@
 > Migrating from v0.5 or earlier? See the [migration guide](migration-ref)
 > for before/after snippets covering every breaking change in v0.6–v0.7.
 
-## Prerelease (v0.8.0)
+## Prerelease (v0.8.2)
+_Released on XX-06-2026_
+### Fixed
+- Fixed a bug where playwright tests would fail to initialize due to an erroneous version lookup.
+
+## v0.8.1
+_Released on 05-06-2026_
 ### Added
 - **Data Parameters** — per-scenario knobs declared by `BaseDataSource` subclasses.
 
