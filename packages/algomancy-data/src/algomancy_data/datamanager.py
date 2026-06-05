@@ -1,5 +1,6 @@
 import os
 import shutil
+import warnings
 from abc import ABC, abstractmethod
 from typing import Dict, List, Optional, Tuple, TypeVar
 
@@ -232,6 +233,13 @@ class StatefulDataManager(DataManager):
         data_object_type: type[BASEDATASOURCE],
         logger: Logger | None = None,
     ):
+        warnings.warn(
+            "StatefulDataManager is deprecated and will be removed in a future release. "
+            "Use DatabaseDataManager (algomancy-data[database]) for persistent storage, "
+            "or StatelessDataManager for in-memory-only usage.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         super().__init__(etl_factory, schemas, save_type, data_object_type, logger)
         self._data_folder = data_folder
         self._data: Dict[str, BASEDATASOURCE] = {}  # Loading

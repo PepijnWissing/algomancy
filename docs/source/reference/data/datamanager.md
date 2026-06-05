@@ -6,10 +6,16 @@ It is usually not accessed directly, but rather through the ScenarioManager faca
 Three concrete implementations are available:
 
 - `StatelessDataManager` — in-memory only; no persistence.
-- `StatefulDataManager` — persists DataSources to disk as JSON files and reloads them on startup.
+- `StatefulDataManager` — persists DataSources to disk as JSON files and reloads them on startup. **Deprecated** — use `DatabaseDataManager` for new projects.
 - `DatabaseDataManager` — persists DataSources to a SQL database (requires the `[database]` extra).
 
 ## StatelessDataManager / StatefulDataManager
+
+```{deprecated}
+`StatefulDataManager` is deprecated and will be removed in a future release.
+For persistent storage use {ref}`DatabaseDataManager <database-data-manager-ref>`;
+for in-memory-only usage use `StatelessDataManager`.
+```
 
 ```{eval-rst}
 .. automodule:: algomancy_data.datamanager
