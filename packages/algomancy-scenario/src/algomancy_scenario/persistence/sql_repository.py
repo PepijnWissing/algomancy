@@ -14,10 +14,12 @@ skipped and a warning is logged rather than silently dropped.
 from __future__ import annotations
 
 import json
+import re
 import uuid
 from datetime import datetime
 from typing import Dict, List, Optional, Type
 
+import pandas as pd
 import sqlalchemy as sa
 from algomancy_utils.logger import Logger
 
@@ -25,6 +27,7 @@ from ..algorithmfactory import AlgorithmFactory
 from ..basealgorithm import ALGORITHM
 from ..keyperformanceindicator import BASE_KPI
 from ..kpifactory import KpiFactory
+from ..result import BaseScenarioResult
 from ..scenario import Scenario, ScenarioStatus
 from .models import (
     metadata as _scenario_metadata,
@@ -32,6 +35,21 @@ from .models import (
     scenario_runs_table,
     kpi_measurements_table,
 )
+from .protocols import SqlResultLayout
+
+
+def _safe_segment(s: str) -> str:
+    """Collapse anything that is not alphanumeric or underscore into ``_``."""
+    return re.sub(r"[^a-zA-Z0-9_]", "_", s)
+
+
+def _result_table_name(session_id: str, scenario_id: str, sub_table: str) -> str:
+    """Deterministic SQL table name for one sub-table of a ScenarioResult."""
+    return f"result__{_safe_segment(session_id)}__{_safe_segment(scenario_id)}__{_safe_segment(sub_table)}"
+
+
+def _result_table_prefix(session_id: str, scenario_id: str) -> str:
+    return f"result__{_safe_segment(session_id)}__{_safe_segment(scenario_id)}__"
 
 
 class SqlScenarioRepository:
@@ -133,6 +151,8 @@ class SqlScenarioRepository:
         if scenario_id not in self._scenarios:
             return False
         tag = self._scenarios[scenario_id].tag
+        inspector = sa.inspect(self._engine)
+        result_prefix = _result_table_prefix(self._session_id, scenario_id)
         with self._engine.begin() as conn:
             # Cascade in DB (FK ON DELETE CASCADE) handles scenario_runs and
             # kpi_measurements rows. If the DB doesn't enforce FK constraints
@@ -152,6 +172,10 @@ class SqlScenarioRepository:
             conn.execute(
                 scenarios_table.delete().where(scenarios_table.c.id == scenario_id)
             )
+            # Drop any per-sub-table result tables for this scenario
+            for table_name in inspector.get_table_names():
+                if table_name.startswith(result_prefix):
+                    conn.execute(sa.text(f'DROP TABLE IF EXISTS "{table_name}"'))
         del self._scenarios[scenario_id]
         if tag in self._tag_index:
             del self._tag_index[tag]
@@ -191,12 +215,9 @@ class SqlScenarioRepository:
         if scenario.status == ScenarioStatus.COMPLETE:
             if scenario.result is not None:
                 try:
-                    raw = (
-                        scenario.result.to_dict()
-                        if hasattr(scenario.result, "to_dict")
-                        else scenario.result
+                    result_blob = self._persist_result_payload(
+                        scenario.result, scenario.id
                     )
-                    result_blob = json.dumps(raw)
                 except (TypeError, ValueError) as exc:
                     self._log(
                         f"Could not serialise result for scenario '{scenario.tag}': {exc}"
@@ -319,14 +340,54 @@ class SqlScenarioRepository:
 
         # Restore the latest run result for completed scenarios
         if scenario.status == ScenarioStatus.COMPLETE:
-            latest_result = self._load_latest_result(row.id)
+            latest_result = self._load_latest_result(row.id, algorithm)
             if latest_result is not None:
                 scenario.result = latest_result
 
         return scenario
 
-    def _load_latest_result(self, scenario_id: str):
-        """Return the parsed result blob from the most recent run, or None."""
+    def _persist_result_payload(self, result, scenario_id: str) -> Optional[str]:
+        """Persist a scenario result, returning the ``result_blob`` value to store.
+
+        Dispatch mirrors :class:`DatabaseDataManager._persist_datasource`: if the
+        result implements :class:`SqlResultLayout`, each DataFrame is written to
+        a dedicated ``result__<session>__<scenario_id>__<sub>`` table and the
+        catalogue blob is ``None``. Otherwise the result is serialised via
+        :meth:`BaseScenarioResult.to_json` and stored as a JSON string. A bare
+        ``dict`` is serialised directly via :func:`json.dumps` to preserve
+        backward compatibility with code paths that stashed raw dicts as
+        ``Scenario.result`` (e.g. failure payloads).
+        """
+        if isinstance(result, SqlResultLayout):
+            prefix = _result_table_prefix(self._session_id, scenario_id)
+            inspector = sa.inspect(self._engine)
+            # Drop any stale sub-tables left over from a previous run whose
+            # result schema may have differed. Sub-tables we re-write get
+            # replaced anyway via ``if_exists="replace"``, but a removed
+            # sub-table would otherwise linger.
+            with self._engine.begin() as conn:
+                for table_name in inspector.get_table_names():
+                    if table_name.startswith(prefix):
+                        conn.execute(sa.text(f'DROP TABLE IF EXISTS "{table_name}"'))
+            for sub_table, df in result.to_sql_tables().items():
+                sql_name = _result_table_name(self._session_id, scenario_id, sub_table)
+                with self._engine.begin() as conn:
+                    df.to_sql(sql_name, conn, if_exists="replace", index=False)
+            return None
+        if isinstance(result, BaseScenarioResult):
+            return result.to_json()
+        return json.dumps(result, default=str)
+
+    def _load_latest_result(
+        self, scenario_id: str, algorithm: ALGORITHM
+    ) -> Optional[BaseScenarioResult]:
+        """Reconstruct the typed result of the most recent completed run, or None.
+
+        Dispatch mirrors :class:`DatabaseDataManager._load_datasource_from_db`:
+        if ``result_blob`` is present, use ``algorithm.result_class.from_json``;
+        otherwise instantiate via ``result_class`` and load sub-tables via
+        :class:`SqlResultLayout`.
+        """
         with self._engine.connect() as conn:
             row = conn.execute(
                 scenario_runs_table.select()
@@ -335,12 +396,47 @@ class SqlScenarioRepository:
                 .order_by(scenario_runs_table.c.finished_at.desc())
                 .limit(1)
             ).fetchone()
-        if row is None or row.result_blob is None:
+        if row is None:
             return None
+        result_cls = getattr(algorithm, "result_class", None)
+        if result_cls is None:
+            return None
+        if row.result_blob is not None:
+            try:
+                return result_cls.from_json(row.result_blob)
+            except (TypeError, ValueError, json.JSONDecodeError) as exc:
+                self._log(
+                    f"Could not deserialise result for scenario '{scenario_id}': {exc}"
+                )
+                return None
+        # SQL-table path: instantiate empty and load sub-tables
         try:
-            return json.loads(row.result_blob)
-        except json.JSONDecodeError:
+            inst = result_cls(data_id=scenario_id)
+        except TypeError as exc:
+            self._log(
+                f"Could not instantiate result_class {result_cls.__name__} "
+                f"with data_id only for scenario '{scenario_id}': {exc}. "
+                "Override result_class to a type whose constructor accepts "
+                "data_id alone, or persist via the JSON fallback."
+            )
             return None
+        if not isinstance(inst, SqlResultLayout):
+            raise TypeError(
+                f"Scenario '{scenario_id}' was persisted as per-table SQL but "
+                f"result_class {result_cls.__name__} does not implement "
+                "SqlResultLayout. Either restore the original result_class or "
+                "delete and re-run the scenario."
+            )
+        prefix = _result_table_prefix(self._session_id, scenario_id)
+        inspector = sa.inspect(self._engine)
+        tables: Dict[str, pd.DataFrame] = {}
+        for table_name in inspector.get_table_names():
+            if table_name.startswith(prefix):
+                sub_table = table_name[len(prefix) :]
+                with self._engine.connect() as conn:
+                    tables[sub_table] = pd.read_sql_table(table_name, conn)
+        inst.from_sql_tables(tables)
+        return inst
 
     def _log(self, msg: str) -> None:
         if self._logger:

@@ -113,7 +113,11 @@ def test_landing_page_renders_dashboard_title(gui_base_url):
 @pytest.mark.gui
 @pytest.mark.slow
 def test_scenarios_page_renders_registered_algorithm(gui_base_url):
-    """The scenarios page must render at least one registered algorithm name."""
+    """The scenarios page must render at least one registered algorithm name.
+
+    The algorithm dropdown lives inside the 'Create New Scenario' modal, so we
+    open the modal before checking.
+    """
     from playwright.sync_api import sync_playwright
 
     with sync_playwright() as pw:
@@ -121,15 +125,27 @@ def test_scenarios_page_renders_registered_algorithm(gui_base_url):
         page = browser.new_page()
         try:
             page.goto(f"{gui_base_url}/scenarios", wait_until="domcontentloaded")
-            # Give Dash a moment to hydrate the algorithm dropdown.
+            # Wait for Dash to finish hydrating the page.
             page.wait_for_timeout(1500)
+
+            # Open the Create New Scenario modal so the algorithm dropdown
+            # is rendered into the DOM.
+            page.click("#scenario-creator-open-btn")
+            page.wait_for_selector("#scenario-algo-input", timeout=5000)
+
+            # Click the dropdown to open the option list; React Select only
+            # renders option text into the DOM when the menu is open.
+            page.click("#scenario-algo-input .Select-control, #scenario-algo-input")
+            page.wait_for_timeout(800)
+
             page.screenshot(path=str(_screenshot_dir() / "gui_scenarios.png"))
             content = page.content().lower()
 
             matches = [a for a in _REGISTERED_ALGOS_LOWER if a in content]
             assert matches, (
                 f"Expected at least one registered algorithm name in the "
-                f"scenarios page; tried {_REGISTERED_ALGOS_LOWER}.\n"
+                f"scenarios page after opening the algorithm dropdown; "
+                f"tried {_REGISTERED_ALGOS_LOWER}.\n"
                 f"URL: {page.url}"
             )
         except Exception:

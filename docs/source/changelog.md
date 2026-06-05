@@ -3,7 +3,46 @@
 > Migrating from v0.5 or earlier? See the [migration guide](migration-ref)
 > for before/after snippets covering every breaking change in v0.6–v0.7.
 
-## Prerelease (v0.8.0)
+## v0.8.2
+_Released on 05-06-2026_
+### Added
+- **Database-backed `ScenarioResult` persistence** — `SqlScenarioRepository` now writes results to the database via the same dual-path strategy as `DatabaseDataManager`.
+
+  :::{dropdown} {octicon}`light-bulb` Details
+  :color: light
+  Results whose subclass implements the new
+  `algomancy_scenario.persistence.SqlResultLayout` protocol are written as
+  real, externally queryable SQL tables (one per sub-table, named
+  `result__<session>__<scenario_id>__<sub>`); everything else falls back to
+  a JSON blob in `algomancy_scenario_runs.result_blob` via the new abstract
+  `to_json` / `from_json` contract on `BaseScenarioResult`. Typed
+  rehydration on restart uses the algorithm's `result_class` attribute
+  (defaults to the bundled `ScenarioResult`). `SqlScenarioRepository.delete`
+  cleans up any per-scenario result tables alongside the run/KPI rows.
+  :::
+
+### Changed
+- Actualized the quickstart documentation page. 
+- `StatefulDataManager` marked deprecated; `DatabaseDataManager` should be used for persistent deployments; `StatelessDataManager` is the default for in-memory use.
+- **`BaseScenarioResult` now requires `to_json` / `from_json`** — abstract on the base, concrete on the bundled `ScenarioResult`. **Breaking** for custom subclasses.
+
+  :::{dropdown} {octicon}`light-bulb` Details
+  :color: light
+  Add `to_json(self) -> str` and a `from_json(cls, json_string) ->
+  BaseScenarioResult` classmethod to existing `BaseScenarioResult`
+  subclasses, or implement
+  `algomancy_scenario.persistence.SqlResultLayout` to land DataFrames in
+  real SQL tables instead of a JSON blob. The contract mirrors
+  `BaseDataSource.to_json` / `from_json` exactly.
+  :::
+- **`BaseAlgorithm.result_class`** — new class attribute (defaults to `ScenarioResult`) used by the repository to rehydrate persisted results into their original type; override on algorithms whose `run()` returns a custom subclass.
+
+### Fixed
+- Fixed a bug where playwright tests would fail to initialize due to an erroneous version lookup.
+- Added documentation for `DatabaseDataManager`.
+
+## v0.8.1
+_Released on 05-06-2026_
 ### Added
 - **Data Parameters** — per-scenario knobs declared by `BaseDataSource` subclasses.
 
@@ -123,17 +162,19 @@
 
 ## v0.7.0
 ### Added
-- **`algomancy-api` package**: new FastAPI HTTP service that exposes the same
-  `ScenarioManager` / `SessionManager` surface used by the Dash GUI and CLI,
-  so remote frontends (browser SPA, native desktop app, another Python
-  process) can drive an Algomancy backend over the network. The HTTP layer
-  is deliberately thin — every route maps to a single manager method and
-  responses reuse the existing `to_dict()` payloads. There is no parallel
-  domain model; clients work with the same `Scenario`, `DataSource`, and
-  `KPI` concepts the GUI does. Launch with `algomancy-api --config-callback
-  myapp:make_config` (default port `8051`) or `algomancy-api --example` for
-  the bundled wiring. `ApiLauncher.build(cfg)` returns a standard `FastAPI`
-  instance for use behind a production uvicorn/gunicorn process manager.
+- **`algomancy-api` package** — new FastAPI HTTP service exposing the full `ScenarioManager` / `SessionManager` surface over HTTP, so remote frontends can drive an Algomancy backend over the network.
+
+  :::{dropdown} {octicon}`light-bulb` Details
+  :color: light
+  The HTTP layer is deliberately thin — every route maps to a single manager
+  method and responses reuse the existing `to_dict()` payloads. There is no
+  parallel domain model; clients work with the same `Scenario`, `DataSource`,
+  and `KPI` concepts the GUI does. Launch with `algomancy-api
+  --config-callback myapp:make_config` (default port `8051`) or
+  `algomancy-api --example` for the bundled wiring. `ApiLauncher.build(cfg)`
+  returns a standard `FastAPI` instance for use behind a production
+  uvicorn/gunicorn process manager.
+
   - **Sessions router** — `GET/POST /sessions`, `POST /sessions/{sid}/copy`
     with session-name validation and conflict handling.
   - **Algorithm + KPI discovery router** — `GET /sessions/{sid}/algorithms`,
@@ -150,21 +191,11 @@
     ETL over a multipart upload.
   - **Meta** — `GET /health` liveness probe; OpenAPI schema at
     `/openapi.json` and Swagger UI at `/docs`.
-- **Error mapping**: a single exception → HTTP-status mapping (`ValueError`
-  → 400, `ParameterError` → 400, `AssertionError` → 409, route-level
-  `HTTPException` → 404/409, anything else → 500 with traceback logged).
-  Response shape is always `{"detail": "<message>"}`.
-- **End-to-end smoke test** (`tests/test_smoke_live.py`) drives the full
-  session → scenario → run → poll → fetch flow against a live server.
-- **`algomancy-scenario` surface**: `KPIFactory`, `ScenarioFactory`, and
-  `ScenarioManager` now expose the algorithm/KPI template names so the API
-  discovery endpoints can introspect them without reaching into the GUI.
-- Documentation:
-  - New "Frontends" fundamentals page (`docs/source/fundamentals/frontends.md`)
-    covering the GUI / CLI / API trio that share the same backend.
-  - New HTTP API reference (`docs/source/reference/api.md`).
-  - Refreshed `packages/algomancy-api/README.md` with quick-start, endpoint
-    inventory, polling pattern, and error-mapping table.
+  :::
+- **Error mapping** — single exception → HTTP-status map (`ValueError` → 400, `ParameterError` → 400, `AssertionError` → 409, anything else → 500); response shape is always `{"detail": "<message>"}`.
+- **End-to-end smoke test** (`tests/test_smoke_live.py`) drives the full session → scenario → run → poll → fetch flow against a live server.
+- **`algomancy-scenario` surface** — `KPIFactory`, `ScenarioFactory`, and `ScenarioManager` now expose algorithm/KPI template names for API discovery.
+- **Documentation** — new "Frontends" fundamentals page and HTTP API reference (`docs/source/reference/api.md`); refreshed `algomancy-api` README with quick-start and endpoint inventory.
 
 ### Changed
 - `SessionManager` was lifted out of `algomancy-gui` into `algomancy-scenario`
@@ -182,147 +213,159 @@ where possible; consult the [migration guide](migration-ref) for the
 breaking-change summary.
 
 ### Added
-- **Schema API modernization (M1)**: new `Column` dataclass (`name`,
-  `dtype`, `optional`, `primary_key`, `default`, `nullable`, `unique`,
-  `description`) gives schemas a declarative field model. `Schema` now
-  exposes `columns()`, `required_columns()`, `optional_columns()`, and
-  `primary_key()` classmethods. `Column` is exported from the public
-  `algomancy_data` API. Example schemas migrated to the Column style;
-  legacy `_DATATYPES` dicts auto-convert with a `DeprecationWarning`.
-- **Structured validation framework (M2)**:
-  - `ValidationMessage` gains optional `table`, `column`, `row`, and
-    `code` fields. `__str__` surfaces the location inline; `__eq__` /
-    `to_dict()` added for inspection and serialisation.
+- **Schema API modernization (M1)** — new `Column` dataclass gives schemas a declarative field model; `Schema` gains `columns()`, `required_columns()`, `optional_columns()`, and `primary_key()` classmethods.
+
+  :::{dropdown} {octicon}`light-bulb` Details
+  :color: light
+  `Column` fields: `name`, `dtype`, `optional`, `primary_key`, `default`,
+  `nullable`, `unique`, `description`. `Column` is exported from the public
+  `algomancy_data` API. Example schemas migrated to the Column style; legacy
+  `_DATATYPES` dicts auto-convert with a `DeprecationWarning`.
+  :::
+- **Structured validation framework (M2)** — `ValidationMessage` gains location fields; `run_validation` returns a rich `ValidationResult` dataclass; new built-in validators added.
+
+  :::{dropdown} {octicon}`light-bulb` Details
+  :color: light
+  - `ValidationMessage` gains optional `table`, `column`, `row`, and `code`
+    fields. `__str__` surfaces the location inline; `__eq__` / `to_dict()`
+    added for inspection and serialisation.
   - `ValidationSequence.run_validation` now returns a `ValidationResult`
     dataclass (`is_valid`, `messages`, `halt_on`, `counts_by_severity`,
-    plus `as_dataframe()`, `messages_by_severity()`,
-    `messages_at_least()`, and `__bool__` / `__iter__` / `__len__`
-    helpers).
-  - `ValidationSequence.halt_on` (default `CRITICAL`) lets projects
-    promote `ERROR` or `WARNING` to a pipeline-halting severity without
-    subclassing.
+    plus `as_dataframe()`, `messages_by_severity()`, `messages_at_least()`,
+    and `__bool__` / `__iter__` / `__len__` helpers).
+  - `ValidationSequence.halt_on` (default `CRITICAL`) lets projects promote
+    `ERROR` or `WARNING` to a pipeline-halting severity without subclassing.
   - New built-in validators: `RequiredColumnsValidator`,
-    `OptionalColumnGuard` (validator/transformer hybrid that injects
-    missing optional columns with their declared default and dtype),
+    `OptionalColumnGuard` (validator/transformer hybrid that injects missing
+    optional columns with their declared default and dtype),
     `PrimaryKeyValidator` (joint-key uniqueness + non-null),
     `UniqueValueValidator`, and `MissingValueValidator`.
-- **Predictable ETL termination (M3)**:
-  - `ETLPipeline.run()` now returns an `ETLResult` dataclass
-    (`status`, `datasource`, `validation_result`, `raised`, plus
-    `is_success` / `is_failure` / `messages` helpers). Data-quality
-    failures arrive as `ETLResult(status='failed')`; programmer errors
-    (KeyError/AttributeError/TypeError) still propagate so real defects
-    aren't masked. `DataManager.etl_data` /
-    `ScenarioManager.etl_data` return the result; auto-create only fires
-    on success.
-  - `DataTypeConverter` records `ConversionIssue` objects instead of
-    printing and silently producing `NaN`s; the pipeline surfaces them
-    as `CONVERSION_FAILED` messages.
-  - `StatefulDataManager.startup()` now records per-item failures in
-    `self.startup_errors` and rolls back keys added by a failing loader,
-    leaving the manager in a defined state.
-- **Reduce ETL boilerplate (M4)**:
-  - New extractor registry (`register_extractor`,
-    `get_extractor_class`, `registered_keys`) keyed on
-    `(FileExtension, SchemaType)`. The four built-in extractors (CSV
-    single, JSON single, XLSX single, XLSX multi) populate it at import
-    time.
-  - `ETLFactory` now ships with default implementations of
-    `create_extraction_sequence`, `create_validation_sequence`,
-    `create_transformation_sequence`, and `create_loader`. These are no
-    longer `@abstractmethod`, so existing subclasses continue to work.
-  - New `SimpleETLFactory(schemas, transformers=None, loader=None,
-    logger=None)` — a concrete factory that lets users build a full
-    pipeline without subclassing `ETLFactory` at all.
-  - `DataManager.prepare_files` now consults the schemas' declared
-    `_EXTENSION` to dispatch by file type, falling back to the path
-    suffix. Files with no extension or unusual names load correctly when
-    the schema declares the right extension.
-- **Flexibility & extension points (M5)**:
-  - `register_extractor` and friends are now part of the documented
-    public surface. `Schema.extension()` accepts any `StrEnum`-derived
-    value (or any string), so user-defined `FileExtension` subclasses
-    route through the registry without further changes.
-  - New `ForeignKeyValidator` checks every (non-null) value in
-    `left_table[left_col]` exists in `right_table[right_col]`. Supports
-    composite keys. Emits structured messages with `FK_VIOLATION`,
-    `TABLE_NOT_FOUND`, and `COLUMN_NOT_FOUND` codes.
-  - New `DataFrameExtractor` wraps a pre-built pandas `DataFrame` and
-    exposes it via the same `Extractor` contract used by the file-based
-    extractors. dtype coercion and `ConversionIssue` plumbing apply as
-    usual.
-  - New docs page `fundamentals/extending.md` walks through subclassing
-    `FileExtension`, registering an extractor, and the template to
-    follow when extending `DataTypeConverter`.
-- **Docs, tests, migration (M6)**:
-  - `pytest-cov` added; coverage of `algomancy-data` now reports 87%.
-  - `docs/source/fundamentals/ETL.md` rewritten end-to-end — opens with
-    a `SimpleETLFactory` quickstart, then covers Column-based schemas,
-    the extractor registry, the new validators, structured validation
-    messages, `ETLResult`-based termination, and a full worked example.
-  - New single migration guide `docs/source/migration.md` covering every
-    breaking change in v0.6/0.7/0.8 with before/after snippets.
-  - Bundled example refreshed: `ExampleETLFactory` now inherits from
-    `SimpleETLFactory`, reuses the default validators via `super()`,
-    and demonstrates `OptionalColumnGuard` and `ForeignKeyValidator`.
-- **Relational cascade cleanup (M7)**: `algomancy-data` ships a declarative
-  cascade-drop mechanism. Declare foreign keys on schemas via
-  `Column(foreign_key=("parent_table", "parent_col"))`, opt parents into
-  cascade with `parent_requires_child=True`, and optionally
-  `track_partial_loss=True`. Add `CascadeDropTransformer` to your
-  transformation sequence to drop orphans and parents-with-missing-children
-  to a fixpoint, and pair it with `CascadeSnapshot` to enable partial-loss
-  detection. Drops surface as aggregated `ValidationMessage`s with codes
-  `CASCADE_ORPHAN_DROP`, `CASCADE_REQUIRED_CHILD_DROP`, and
-  `CASCADE_PARTIAL_LOSS_DROP` at `Severity.ERROR`. `ForeignKeyValidator`
-  now also exposes `from_schemas([...])` to auto-derive validators from the
-  same declarations. Fully opt-in: pipelines that don't add the transformer
-  see no change.
-- **Quickstart modernization (M8)**: `algomancy-quickstart` templates were
-  updated to emit Column-based schemas, `SimpleETLFactory`-derived ETL
-  factories, and the new validation defaults out of the box. Data inference
-  now produces idiomatic v0.6.0 schema declarations.
-- **Quickstart Module**: Introduced `algomancy-quickstart` package with an interactive setup wizard (`QuickstartWizard`)
-  that streamlines the creation of new Algomancy applications. The wizard guides users through five configurable steps: 
-  1. creating folder structure and generating a basic `main.py`, 
-  2. generating custom implementation templates for schemas, 
-    algorithms, KPIs, and ETL factories, and custom pages.
-  3. automatically scanning data files and generating ETL pipelines with schema inference, 
-  4. installing default assets (CSS, images) from GitHub or bundled fallback, and 
-  5. configuring custom styling with colors and themes. 
+  :::
+- **Predictable ETL termination (M3)** — `ETLPipeline.run()` returns an `ETLResult` dataclass; data-quality failures surface cleanly rather than as exceptions.
 
-  The wizard features interactive prompts, intelligent file detection (CSV, XLSX, JSON), automatic datatype inference 
-  with column mapping, and generates code templates using Jinja2. This significantly reduces the initial
-  setup time and provides new users with a structured starting point following framework best practices.
-- Added charactersafe & existing scenario name checks (in `InputChecker` Class), resulting in a disabled create button
-- Added `list_tags` function to the scenario registry, making accessable via the scenario manager
-- `BaseAlgorithm` now has access to the application's central logger through the attribute `_logger`.
-- Added pages section to the tutorial. 
+  :::{dropdown} {octicon}`light-bulb` Details
+  :color: light
+  `ETLResult` carries `status`, `datasource`, `validation_result`, `raised`,
+  plus `is_success` / `is_failure` / `messages` helpers. Data-quality
+  failures arrive as `ETLResult(status='failed')`; programmer errors
+  (KeyError/AttributeError/TypeError) still propagate so real defects aren't
+  masked. `DataManager.etl_data` / `ScenarioManager.etl_data` return the
+  result; auto-create only fires on success. `DataTypeConverter` records
+  `ConversionIssue` objects instead of silently producing `NaN`s; these
+  surface as `CONVERSION_FAILED` messages. `StatefulDataManager.startup()`
+  records per-item failures in `self.startup_errors` and rolls back failing
+  keys.
+  :::
+- **Reduce ETL boilerplate (M4)** — extractor registry and `SimpleETLFactory` let users build a full pipeline without subclassing `ETLFactory`.
+
+  :::{dropdown} {octicon}`light-bulb` Details
+  :color: light
+  New extractor registry (`register_extractor`, `get_extractor_class`,
+  `registered_keys`) keyed on `(FileExtension, SchemaType)`. The four
+  built-in extractors (CSV single, JSON single, XLSX single, XLSX multi)
+  populate it at import time. `ETLFactory` now ships with default
+  implementations of `create_extraction_sequence`,
+  `create_validation_sequence`, `create_transformation_sequence`, and
+  `create_loader` — no longer `@abstractmethod`. New
+  `SimpleETLFactory(schemas, transformers=None, loader=None, logger=None)`
+  is a concrete factory requiring no subclassing. `DataManager.prepare_files`
+  dispatches by the schema's declared `_EXTENSION`, falling back to the path
+  suffix.
+  :::
+- **Flexibility & extension points (M5)** — `register_extractor` is now public; new `ForeignKeyValidator` and `DataFrameExtractor`; docs on extending the registry.
+
+  :::{dropdown} {octicon}`light-bulb` Details
+  :color: light
+  `Schema.extension()` accepts any `StrEnum`-derived value or plain string,
+  so user-defined `FileExtension` subclasses route through the registry
+  without changes. `ForeignKeyValidator` checks every (non-null) value in
+  `left_table[left_col]` exists in `right_table[right_col]`; supports
+  composite keys; emits structured messages with `FK_VIOLATION`,
+  `TABLE_NOT_FOUND`, and `COLUMN_NOT_FOUND` codes. `DataFrameExtractor`
+  wraps a pre-built pandas `DataFrame` via the same `Extractor` contract.
+  New docs page `fundamentals/extending.md` covers subclassing
+  `FileExtension`, registering an extractor, and extending
+  `DataTypeConverter`.
+  :::
+- **Docs, tests, migration (M6)** — `algomancy-data` coverage at 87%; `docs/source/fundamentals/ETL.md` rewritten end-to-end; single migration guide added.
+
+  :::{dropdown} {octicon}`light-bulb` Details
+  :color: light
+  `pytest-cov` added; `algomancy-data` coverage reports 87%.
+  `docs/source/fundamentals/ETL.md` opens with a `SimpleETLFactory`
+  quickstart, then covers Column-based schemas, the extractor registry, new
+  validators, structured validation messages, `ETLResult`-based termination,
+  and a full worked example. New `docs/source/migration.md` covers every
+  breaking change in v0.6/0.7/0.8 with before/after snippets. Bundled
+  example refreshed: `ExampleETLFactory` inherits from `SimpleETLFactory`,
+  demonstrates `OptionalColumnGuard` and `ForeignKeyValidator`.
+  :::
+- **Relational cascade cleanup (M7)** — declarative cascade-drop mechanism via `CascadeDropTransformer` and `CascadeSnapshot`; drops surface as structured `ValidationMessage`s.
+
+  :::{dropdown} {octicon}`light-bulb` Details
+  :color: light
+  Declare foreign keys via `Column(foreign_key=("parent_table",
+  "parent_col"))`, opt parents into cascade with `parent_requires_child=True`,
+  and optionally `track_partial_loss=True`. `CascadeDropTransformer` drops
+  orphans and parents-with-missing-children to a fixpoint; `CascadeSnapshot`
+  enables partial-loss detection. Drop messages carry codes
+  `CASCADE_ORPHAN_DROP`, `CASCADE_REQUIRED_CHILD_DROP`, and
+  `CASCADE_PARTIAL_LOSS_DROP` at `Severity.ERROR`.
+  `ForeignKeyValidator.from_schemas([...])` auto-derives validators from the
+  same declarations. Fully opt-in: pipelines without the transformer are
+  unaffected.
+  :::
+- **Quickstart modernization (M8)** — `algomancy-quickstart` templates updated to emit Column-based schemas, `SimpleETLFactory`-derived ETL factories, and new validation defaults out of the box.
+- **Quickstart Module** (`algomancy-quickstart`) — interactive setup wizard that guides new users through creating a full Algomancy application in five steps.
+
+  :::{dropdown} {octicon}`light-bulb` Details
+  :color: light
+  The `QuickstartWizard` covers: (1) creating folder structure and a basic
+  `main.py`; (2) generating implementation templates for schemas, algorithms,
+  KPIs, ETL factories, and custom pages; (3) scanning data files and
+  generating ETL pipelines with schema inference; (4) installing default
+  assets (CSS, images) from GitHub or a bundled fallback; and (5) configuring
+  custom styling with colors and themes. Features interactive prompts,
+  intelligent file detection (CSV, XLSX, JSON), automatic datatype inference
+  with column mapping, and Jinja2-based code generation.
+  :::
+- Added character-safe and existing scenario name checks (via `InputChecker`), resulting in a disabled create button when invalid.
+- Added `list_tags` function to the scenario registry, accessible via `ScenarioManager`.
+- `BaseAlgorithm` now has access to the application's central logger through `self._logger`.
+- Added pages section to the tutorial.
 
 ### Changed
-- Cleanup of dependencies between `algomancy-content` and `algomancy-gui`
-  - **[Breaking]** Moved `BasePage` and subclasses to `algomancy_gui`; imports have to be updated appropriately
-  - Moved `LibraryManager` to `algomancy-gui` from `algomancy-content`
-  - Reorganized `algomancy-gui` internals 
-- Refinement of `Schema` class
-  - **[Breaking]** Moved `_defined_datatypes` to `_DATATYPES` as class attribute to define the datatypes of each column.
-  - `Schema`s no longer need to be instantiated before being passed to the configuration. Passing types to the configuration is now possible; passing instances still works.
-  - **[Breaking]** Schema classproperties (`datatypes`, `datatype_groups`, `sub_names`, `file_name`, `extension`) are
-    now explicit `@classmethod`s — call sites must use `()`. The `classproperty` shim was removed; `get_subschema()`
-    now returns a dynamic class rather than an instance, eliminating subschema instance state.
-- Made dataset_name_invalid generic (name_invalid) for datasets and scenarios: 
-- Moved callback for name_invalid to inputchecker.py to avoid duplicate code in datamanagerderive/importmodal
-- Euro (€) is now the default quantity for money 
-- Split up `AppConfigurtion` into separate configuration containers for better organization and maintainability. 
-  
-  _Note: these changes are backwards compatible._  
-- Implemented the Singleton pattern to Logger class for global access.
-- Bound type definition `BASE_DATA_BOUND` was renamed to `BASEDATASOURCE` for legibility.
-- `fill_empty()` in `transformer.py`: replaced deprecated `fillna(method=...)`
-  with `DataFrame.ffill(axis=1)`.
-- `algomancy-gui` `DataManagementImportModal` now reads `ETLResult` and shows
-  validation message counts on failure (back-compat catch on
-  `ValidationError` preserved).
+- **Cleanup of dependencies between `algomancy-content` and `algomancy-gui`.**
+
+  :::{dropdown} {octicon}`light-bulb` Details
+  :color: light
+  - **[Breaking]** `BasePage` and subclasses moved to `algomancy_gui`; update
+    imports accordingly.
+  - `LibraryManager` moved to `algomancy-gui` from `algomancy-content`.
+  - `algomancy-gui` internals reorganized.
+  :::
+- **Refinement of `Schema` class.**
+
+  :::{dropdown} {octicon}`light-bulb` Details
+  :color: light
+  - **[Breaking]** `_defined_datatypes` moved to `_DATATYPES` as a class
+    attribute.
+  - `Schema`s no longer need to be instantiated before being passed to the
+    configuration — passing types works; passing instances still works.
+  - **[Breaking]** Schema classproperties (`datatypes`, `datatype_groups`,
+    `sub_names`, `file_name`, `extension`) are now explicit `@classmethod`s —
+    call sites must use `()`. The `classproperty` shim was removed;
+    `get_subschema()` now returns a dynamic class rather than an instance,
+    eliminating subschema instance state.
+  :::
+- Made `dataset_name_invalid` generic (`name_invalid`) for both datasets and scenarios.
+- Moved `name_invalid` callback to `inputchecker.py` to avoid duplicate code.
+- Euro (€) is now the default quantity for money.
+- Split `AppConfiguration` into separate configuration containers for better organization. _(backwards compatible)_
+- Implemented the Singleton pattern on `Logger` for global access.
+- `BASE_DATA_BOUND` renamed to `BASEDATASOURCE` for legibility.
+- `fill_empty()` in `transformer.py`: replaced deprecated `fillna(method=...)` with `DataFrame.ffill(axis=1)`.
+- `DataManagementImportModal` now reads `ETLResult` and shows validation message counts on failure (back-compat catch on `ValidationError` preserved).
 
 ### Fixed
 

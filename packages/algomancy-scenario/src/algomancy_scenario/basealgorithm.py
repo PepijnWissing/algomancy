@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import TypeVar
+from typing import Type, TypeVar
 
 from algomancy_data import BASEDATASOURCE
 from algomancy_utils import Logger
-from .result import BASE_RESULT_BOUND
+from .result import BASE_RESULT_BOUND, BaseScenarioResult, ScenarioResult
 from algomancy_utils.baseparameterset import (
     BASE_PARAMS_BOUND,
     BaseParameterSet,
@@ -12,6 +12,11 @@ from algomancy_utils.baseparameterset import (
 
 
 class BaseAlgorithm(ABC):
+    # Class returned by ``run``. Override on subclasses whose ``run`` returns a
+    # custom ``BaseScenarioResult`` subclass; the database repository uses this
+    # to rehydrate persisted results into their original type.
+    result_class: Type[BaseScenarioResult] = ScenarioResult
+
     def __init__(self, name: str, params: BASE_PARAMS_BOUND):
         self._name: str = name
         self.description = str(params.serialize())

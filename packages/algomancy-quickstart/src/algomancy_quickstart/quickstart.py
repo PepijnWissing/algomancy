@@ -47,7 +47,7 @@ class QuickstartWizard:
         self.interfaces: list[str] = ["gui"]
         # Persistence backend: "none" | "json" | "database". The wizard's
         # step_1 prompt selects this; the template wires it into CoreConfig.
-        self.persistence_backend: str = "json"
+        self.persistence_backend: str = "none"
         self.database_url: str | None = None
         self.host = "127.0.0.1"
         self.port = 8050
@@ -875,13 +875,15 @@ class QuickstartWizard:
         """
         click.echo()
         click.echo("Which persistence backend should the generated app use?")
-        click.echo("  none     — in-memory only, nothing is persisted")
-        click.echo("  json     — persistent JSON-on-disk (the historical default)")
+        click.echo("  none     — in-memory only, nothing is persisted (default)")
+        click.echo(
+            "  json     — persistent JSON-on-disk (deprecated, use database instead)"
+        )
         click.echo("  database — SQL-backed via DatabaseDataManager")
         backend = click.prompt(
             "Backend",
             type=click.Choice(["none", "json", "database"], case_sensitive=False),
-            default="json",
+            default="none",
             show_default=True,
         ).lower()
 
