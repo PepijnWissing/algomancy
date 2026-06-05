@@ -21,16 +21,15 @@ class CoreConfig:
     required fields are present and correctly typed.
 
     Args:
-        use_sessions: Whether to enable multi-session support.
         data_path: Path to the directory where session and persistent data is stored.
         has_persistent_state: If True, data is persisted to disk using `save_type`.
         save_type: Format for persistent data storage ('json' or 'parquet').
         data_object_type: The class used to represent the data source (must inherit
             from `BaseDataSource`).
         etl_factory: An instance responsible for creating ETL processes.
-        kpi_templates: A mapping of KPI names to their corresponding class
+        kpis: A mapping of KPI names to their corresponding class
             implementations.
-        algo_templates: A mapping of algorithm names to their corresponding class
+        algorithms: A mapping of algorithm names to their corresponding class
             implementations.
         input_configs: A list of configurations defining the input files and their
             schemas.
@@ -44,18 +43,19 @@ class CoreConfig:
 
     def __init__(
         self,
-        # === session manager configuration ===
-        use_sessions: bool = False,
         # === path specifications ===
         data_path: str = "data",
         # === data manager configuration ===
         has_persistent_state: bool = False,
         save_type: str | None = "json",
         data_object_type: type[BASEDATASOURCE] | None = None,
+        # === persistence backend ===
+        persistence_backend: str | None = None,
+        database_url: str | None = None,
         # === scenario manager configuration ===
         etl_factory: Any | None = None,
-        kpi_templates: Dict[str, Type[BASE_KPI]] | None = None,
-        algo_templates: Dict[str, Type[ALGORITHM]] | None = None,
+        kpis: Dict[str, Type[BASE_KPI]] | None = None,
+        algorithms: Dict[str, Type[ALGORITHM]] | None = None,
         schemas: List[Type[Schema]] | None = None,
         # === auto start/create features ===
         autocreate: bool | None = None,
@@ -70,14 +70,13 @@ class CoreConfig:
         Initializes the CoreConfiguration.
 
         Args:
-            use_sessions: Enable or disable multi-session handling. Defaults to False.
             data_path: File system path for data storage. Defaults to "data".
             has_persistent_state: Enable or disable disk persistence. Defaults to False.
             save_type: File format for persistence ('json' or 'parquet'). Defaults to "json".
             data_object_type: Type of the data container. Defaults to None.
             etl_factory: Factory object for ETL operations. Defaults to None.
-            kpi_templates: Dictionary of KPI identifiers and classes. Defaults to None.
-            algo_templates: Dictionary of algorithm identifiers and classes. Defaults to None.
+            kpis: Dictionary of KPI identifiers and classes. Defaults to None.
+            algorithms: Dictionary of algorithm identifiers and classes. Defaults to None.
             input_configs: List of input file specifications. Defaults to None.
             autocreate: Whether to create a default scenario on startup. Defaults to None.
             default_algo: Name of the default algorithm. Defaults to None.
@@ -89,9 +88,6 @@ class CoreConfig:
         Raises:
             ValueError: If required fields are missing or if provided paths are invalid.
         """
-        # session management
-        self.use_sessions = use_sessions
-
         # paths
         self.data_path = data_path
 
@@ -100,13 +96,20 @@ class CoreConfig:
         self.save_type = save_type
         self.data_object_type = data_object_type
         self.etl_factory = etl_factory
-        self.kpi_templates = kpi_templates
-        self.algo_templates = algo_templates
+        self.kpis = kpis
+        self.algorithms = algorithms
         self.schemas = schemas
         self.autocreate = autocreate
         self.default_algo = default_algo
         self.default_algo_params_values = default_algo_params_values
         self.autorun = autorun
+
+        # persistence backend — derives from has_persistent_state when not set explicitly
+        if persistence_backend is None:
+            self.persistence_backend = "json" if has_persistent_state else "none"
+        else:
+            self.persistence_backend = persistence_backend
+        self.database_url = database_url
 
         # misc
         self.title = title
@@ -116,20 +119,21 @@ class CoreConfig:
     # ----- public API -----
     def as_dict(self) -> Dict[str, Any]:
         return {
-            "use_sessions": self.use_sessions,
             "data_path": self.data_path,
             "has_persistent_state": self.has_persistent_state,
             "save_type": self.save_type,
             "data_object_type": self.data_object_type,
             "etl_factory": self.etl_factory,
-            "kpi_templates": self.kpi_templates,
-            "algo_templates": self.algo_templates,
+            "kpis": self.kpis,
+            "algorithms": self.algorithms,
             "schemas": self.schemas,
             "autocreate": self.autocreate,
             "default_algo": self.default_algo,
             "default_algo_params_values": self.default_algo_params_values,
             "autorun": self.autorun,
             "title": self.title,
+            "persistence_backend": self.persistence_backend,
+            "database_url": self.database_url,
         }
 
     # ----- validation -----
@@ -139,6 +143,8 @@ class CoreConfig:
         self._validate_algorithm_parameters_core()
 
     def _validate_paths_core(self) -> None:
+        if self.persistence_backend == "database":
+            return  # database_url is validated in _validate_values_core
         if self.has_persistent_state:
             if self.data_path is None or self.data_path == "":
                 raise ValueError("data_path must be provided")
@@ -151,8 +157,8 @@ class CoreConfig:
         # required non-null entries for scenario/data managers
         required_fields = {
             "etl_factory": self.etl_factory,
-            "kpi_templates": self.kpi_templates,
-            "algo_templates": self.algo_templates,
+            "kpis": self.kpis,
+            "algorithms": self.algorithms,
             "schemas": self.schemas,
             "data_object_type": self.data_object_type,
         }
@@ -173,6 +179,18 @@ class CoreConfig:
                     f"Boolean configuration '{name}' must be set to True or False, not None"
                 )
 
+        # persistence backend
+        valid_backends = {"none", "json", "database"}
+        if self.persistence_backend not in valid_backends:
+            raise ValueError(
+                f"persistence_backend must be one of {valid_backends}; "
+                f"got {self.persistence_backend!r}"
+            )
+        if self.persistence_backend == "database" and not self.database_url:
+            raise ValueError(
+                "database_url must be provided when persistence_backend='database'"
+            )
+
         # save type
         if self.save_type is None:
             raise ValueError("save_type must be set to 'json' or 'parquet'")
@@ -185,7 +203,7 @@ class CoreConfig:
 
     def _validate_algorithm_parameters_core(self) -> None:
         if self.autocreate:
-            tmp_factory = AlgorithmFactory(self.algo_templates)
+            tmp_factory = AlgorithmFactory(self.algorithms)
             test_algorithm = tmp_factory.create(
                 self.default_algo, self.default_algo_params_values
             )

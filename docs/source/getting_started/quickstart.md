@@ -69,24 +69,33 @@ algomancy-quickstart
 to be guided through the set-up steps, outlined below. 
 1. **Creating the folder structure**
     
-    The user is prompted for some basic information (app title, host, port), after which the following directory
-    structure is created, with a basic `main.py` file.
+    The user is prompted for some basic information (app title, host, port, interface, persistence backend), after which
+    the following directory structure is created, with a basic `main.py` file.
+
+    The **interface** prompt accepts a comma-separated subset of `gui` and `api` (e.g. `gui`, `api`, or `gui,api`). GUI-only
+    artifacts are skipped when `gui` is not selected — an API-only project will not contain `assets/`, `src/pages/`, or
+    `src/styling_config.py`, and steps 4 (default assets) and 5 (styling) are skipped without prompting. The persistence
+    backend is one of `none`, `json`, or `database` and is wired into `CoreConfig` in the generated `main.py`.
+
     :::{dropdown} {octicon}`code` Content after step
     :color: secondary
     ```{code-block} text
-    :caption: Project directory after initializing with algomancy-quickstart
+    :caption: Project directory after initializing with algomancy-quickstart (GUI interface)
     root/
-    |── assets/ 
+    |── assets/                  # GUI only
     ├── data/   
     │   └── setup/
     ├── src/
     │   ├── data_handling/
-    │   ├── pages/
+    │   ├── pages/               # GUI only
     │   └── templates/
     │       ├── kpi/
     │       └── algorithm/
     └── main.py  
     ```
+
+    For an API-only project (`interfaces=api`), the `assets/` and `src/pages/` folders are not created.
+
     ```{code-block} python
     :linenos:
     :caption: main.py after initializing with algomancy-quickstart
@@ -107,8 +116,8 @@ to be guided through the set-up steps, outlined below.
         app_cfg = AppConfig(
             core_config=CoreConfig(
                 etl_factory=PlaceholderETLFactory,
-                kpi_templates={"placeholder": PlaceholderKPI},
-                algo_templates={"placeholder": PlaceholderAlgorithm},
+                kpis={"placeholder": PlaceholderKPI},
+                algorithms={"placeholder": PlaceholderAlgorithm},
                 schemas=[PlaceholderSchema()],
                 data_object_type=DataSource,
                 autocreate=False,
@@ -172,9 +181,9 @@ to be guided through the set-up steps, outlined below.
     :::{dropdown} {octicon}`code` Content after step
     :color: secondary
     ```{code-block} text
-    :caption: Project directory after algomancy-quickstart
+    :caption: Project directory after algomancy-quickstart (GUI interface)
     root/
-    |── assets/ 
+    |── assets/                       # GUI only
     │   ├── css/
     │   ├── ...
     │   └── styling.css
@@ -185,7 +194,7 @@ to be guided through the set-up steps, outlined below.
     │   ├── data_handling/
     │   │   ├── etl_factory.py
     │   │   └── generated_schemas.py
-    │   ├── pages/
+    │   ├── pages/                    # GUI only
     │   │   ├── compare_page.py
     │   │   ├── data_page.py
     │   │   ├── home_page.py
@@ -196,7 +205,7 @@ to be guided through the set-up steps, outlined below.
     │   │   │   └── custom_kpi.py
     │   │   └── algorithm/
     │   │       └── custom_algorithm.py
-    │   └── styling_config.py
+    │   └── styling_config.py         # GUI only
     └── main.py  
     ```
     ```{code-block} python
@@ -233,8 +242,8 @@ to be guided through the set-up steps, outlined below.
             core_config=CoreConfig(
                 etl_factory=TestETLFactory,  # 'Test' is replaced by your own custom name
                 schemas=all_schemas,
-                kpi_templates={"test": TestKPI},
-                algo_templates={"Test": TestAlgorithm},
+                kpis={"test": TestKPI},
+                algorithms={"Test": TestAlgorithm},
                 data_object_type=DataSource,
                 autocreate=False,
                 autorun=False,

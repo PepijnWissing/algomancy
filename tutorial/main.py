@@ -23,8 +23,8 @@ from algomancy_scenario.core_configuration import CoreConfig
 
 from src.data_handling.TSPETLFactory import TSPETLFactory  # noqa
 from src.data_handling.schemas import schemas
-from src.templates.algorithm import algorithm_templates
-from src.templates.kpi import kpi_templates
+from src.templates.algorithm import algorithms
+from src.templates.kpi import kpis
 from tutorial.src.pages.page_compare import TSPComparePage
 from tutorial.src.pages.page_overview import TSPOverviewPage
 from tutorial.src.pages.page_scenarios import TSPScenarioPage
@@ -69,8 +69,8 @@ def main() -> None:
     app_cfg = AppConfig(
         core_config=CoreConfig(
             etl_factory=TSPETLFactory,
-            kpi_templates=kpi_templates,
-            algo_templates=algorithm_templates,
+            kpis=kpis,
+            algorithms=algorithms,
             schemas=schemas,
             data_object_type=DataSource,
             has_persistent_state=True,

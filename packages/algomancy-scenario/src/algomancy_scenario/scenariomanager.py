@@ -8,7 +8,7 @@ from algomancy_data import (
     Schema,
 )
 
-from algomancy_utils.logger import Logger, MessageStatus
+from algomancy_utils.logger import Logger
 from .basealgorithm import ALGORITHM
 from algomancy_utils.baseparameterset import BASE_PARAMS_BOUND
 
@@ -29,8 +29,8 @@ class ScenarioManager:
 
     @classmethod
     def from_config(cls, cfg) -> "ScenarioManager":
-        """Build from either a CoreConfig (or subclass like CliConfiguration,
-        ApiConfiguration) or any wrapper exposing a `.core` CoreConfig (e.g. AppConfig).
+        """Build from either a CoreConfig (or subclass like ApiConfiguration)
+        or any wrapper exposing a `.core` CoreConfig (e.g. AppConfig).
         """
         if isinstance(cfg, CoreConfig):
             core = cfg
@@ -43,8 +43,8 @@ class ScenarioManager:
                 )
         return cls(
             etl_factory=core.etl_factory,
-            kpi_templates=core.kpi_templates,
-            algo_templates=core.algo_templates,
+            kpis=core.kpis,
+            algorithms=core.algorithms,
             schemas=core.schemas,
             data_object_type=core.data_object_type,
             data_folder=core.data_path,
@@ -59,8 +59,8 @@ class ScenarioManager:
     def __init__(
         self,
         etl_factory: type[E],
-        kpi_templates: Dict[str, Type[BASE_KPI]],
-        algo_templates: Dict[str, Type[ALGORITHM]],
+        kpis: Dict[str, Type[BASE_KPI]],
+        algorithms: Dict[str, Type[ALGORITHM]],
         schemas: List[Schema],
         data_object_type: type[BASEDATASOURCE],  # for extensions of datasource
         data_folder: str = None,
@@ -72,6 +72,8 @@ class ScenarioManager:
         default_algo_name: str = None,
         default_param_values: Dict[str, any] = None,
         autorun: bool = False,
+        data_manager=None,
+        scenario_repository=None,
     ) -> None:
         self.logger = logger if logger else Logger()
         self.scenario_save_location = scenario_save_location
@@ -83,8 +85,10 @@ class ScenarioManager:
         assert save_type in ["json"], "Save type must be parquet or json."
         self._save_type = save_type
 
-        # Components
-        if self._has_persistent_state:
+        # Components — prefer injected implementations over auto-constructed ones
+        if data_manager is not None:
+            self._dm = data_manager
+        elif self._has_persistent_state:
             assert data_folder, (
                 "Data folder must be specified if data manager has state."
             )
@@ -105,34 +109,44 @@ class ScenarioManager:
                 data_object_type=data_object_type,
             )
 
-        self._registry = ScenarioRegistry(logger=self.logger)
+        self._registry = (
+            scenario_repository
+            if scenario_repository is not None
+            else ScenarioRegistry(logger=self.logger)
+        )
         self._factory = ScenarioFactory(
-            kpi_templates=kpi_templates,
-            algo_templates=algo_templates,
+            kpis=kpis,
+            algorithms=algorithms,
             data_manager=self._dm,
             logger=self.logger,
         )
-        self._processor = ScenarioProcessor(logger=self.logger)
+        # Wire the post-run callback so DB-backed repositories can persist run results
+        _on_processed = None
+        if hasattr(self._registry, "persist_run"):
+            _on_processed = self._registry.persist_run
+
+        self._processor = ScenarioProcessor(
+            logger=self.logger, on_processed=_on_processed
+        )
         self.toggle_autorun(autorun)
 
         # Keep inputs for accessors
-        # self._algo_templates = algo_templates
         self._schemas = schemas
 
-        # Load initial data
+        # Load initial data and scenario history
         try:
             self._dm.startup()
+            if hasattr(self._registry, "startup"):
+                self._registry.startup()
             if self._auto_create_scenario:
                 self.auto_create_scenarios(self._dm.get_data_keys())
         except Exception as e:
-            self.log(f"Error loading initial data: {e}", status=MessageStatus.ERROR)
+            if self.logger:
+                self.logger.error("Error loading initial data.")
+                self.logger.log_traceback(e)
 
-        self.log("ScenarioManager initialized.")
-
-    # Logging
-    def log(self, message: str, status: MessageStatus = MessageStatus.INFO) -> None:
         if self.logger:
-            self.logger.log(message, status)
+            self.logger.log("ScenarioManager initialized.")
 
     @property
     def has_persistent_state(self):
@@ -164,7 +178,7 @@ class ScenarioManager:
         return self._processor.currently_processing
 
     def get_algorithm_parameters(self, key) -> BASE_PARAMS_BOUND:
-        return self._factory.algo_templates.get(key).initialize_parameters()
+        return self._factory.algorithms.get(key).initialize_parameters()
 
     # Data operations (delegated)
     def get_data_keys(self) -> List[str]:
@@ -205,7 +219,11 @@ class ScenarioManager:
             self._processor.auto_run_scenarios = not self._processor.auto_run_scenarios
         else:
             self._processor.auto_run_scenarios = value
-        self.log(f"Auto-run scenarios set to {self._processor.auto_run_scenarios}")
+
+        if self.logger:
+            self.logger.log(
+                f"Auto-run scenarios set to {self._processor.auto_run_scenarios}"
+            )
 
     # Processing operations (delegated)
     def process_scenario_async(self, scenario):
@@ -218,8 +236,13 @@ class ScenarioManager:
         self._processor.shutdown()
 
     # Scenario creation/registry
-    def get_associated_parameters(self, algo_name: str):
-        return self._factory.get_associated_parameters(algo_name)
+    def get_associated_parameters(
+        self, algo_name: str, dataset_key: Optional[str] = None
+    ):
+        return self._factory.get_associated_parameters(algo_name, dataset_key)
+
+    def get_data_parameters(self, dataset_key: str) -> BASE_PARAMS_BOUND:
+        return self.get_data(dataset_key).initialize_data_parameters()
 
     def create_scenario(
         self,
@@ -227,9 +250,13 @@ class ScenarioManager:
         dataset_key: str = "Master data",
         algo_name: str = "",
         algo_params=None,
+        data_params=None,
     ) -> Scenario:
         if self._registry.has_tag(tag):
-            self.log(f"Scenario with tag '{tag}' already exists. Skipping creation.")
+            if self.logger:
+                self.logger.log(
+                    f"Scenario with tag '{tag}' already exists. Skipping creation."
+                )
             raise ValueError(f"A scenario with tag '{tag}' already exists.")
 
         scenario = self._factory.create(
@@ -237,6 +264,7 @@ class ScenarioManager:
             dataset_key=dataset_key,
             algo_name=algo_name,
             algo_params=algo_params,
+            data_params=data_params,
         )
         self._registry.add(scenario)
 
@@ -278,7 +306,11 @@ class ScenarioManager:
             self._default_algo_name = (
                 default_algo_name if self._auto_create_scenario else None
             )
-        self.log(f"Auto-create scenarios set to {self._auto_create_scenario}")
+
+        if self.logger:
+            self.logger.log(
+                f"Auto-create scenarios set to {self._auto_create_scenario}"
+            )
 
     def add_datasource_from_json(self, json_string):
         # Create data source from JSON

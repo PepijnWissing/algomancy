@@ -74,6 +74,15 @@
     --new-scenario-modal-cancel-color: #D13438;
     --new-scenario-modal-cancel-color-hover: #b92629;
 
+    /* scenario page action button colors */
+    --scenario-process-color: #1b9e08;
+    --scenario-process-color-hover: #105906;
+    --scenario-refresh-color: #4487d5;
+    --scenario-refresh-color-hover: #2b5688;
+    --scenario-cancel-color: #bd1414;
+    --scenario-cancel-color-hover: #770d0d;
+    --scenario-delete-disabled-color: #a14a4a;
+
     /* compare toggle switch colors*/
     --compare-toggle-color: #0078D4;
     --compare-active-handle-url: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%2326CD0A84'/%3e%3c/svg%3e");

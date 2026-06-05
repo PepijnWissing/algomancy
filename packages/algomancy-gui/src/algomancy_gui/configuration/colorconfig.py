@@ -95,6 +95,11 @@ class ColorConfig:
             - "unified_color": Base color for all buttons
             - "unified_hover": Hover color for all buttons
 
+            **Scenario page action buttons** (work in both modes):
+            - "scenario_process", "scenario_process_hover": Process button (created state)
+            - "scenario_refresh", "scenario_refresh_hover": Refresh button (completed state)
+            - "scenario_cancel", "scenario_cancel_hover": Cancel/Delete button
+
             If not provided or keys are missing, defaults are calculated based on
             theme colors with different ratios for visual distinction in SEPARATE mode.
 
@@ -602,6 +607,41 @@ class ColorConfig:
             self.new_scenario_cancel, "new_scenario_cancel"
         )
 
+    # Scenario card action buttons
+    @property
+    def scenario_process(self):
+        return self._get_button_color_with_default("scenario_process", 0.0)
+
+    @property
+    def scenario_process_hover(self):
+        return self._get_button_hover_color_with_default(
+            self.scenario_process, "scenario_process"
+        )
+
+    @property
+    def scenario_refresh(self):
+        return self._get_button_color_with_default("scenario_refresh", 0.60)
+
+    @property
+    def scenario_refresh_hover(self):
+        return self._get_button_hover_color_with_default(
+            self.scenario_refresh, "scenario_refresh"
+        )
+
+    @property
+    def scenario_cancel(self):
+        return self._get_button_color_with_default("scenario_cancel", 0.20)
+
+    @property
+    def scenario_cancel_hover(self):
+        return self._get_button_hover_color_with_default(
+            self.scenario_cancel, "scenario_cancel"
+        )
+
+    @property
+    def scenario_delete_disabled(self):
+        return self.linear_combination_hex(self.scenario_cancel, "#FFFFFF", 0.3)
+
     # Compare toggle
     @property
     def compare_toggle(self):
@@ -732,6 +772,13 @@ class ColorConfig:
             "--new-scenario-modal-confirm-color-hover": self.new_scenario_confirm_hover,
             "--new-scenario-modal-cancel-color": self.new_scenario_cancel,
             "--new-scenario-modal-cancel-color-hover": self.new_scenario_cancel_hover,
+            "--scenario-process-color": self.scenario_process,
+            "--scenario-process-color-hover": self.scenario_process_hover,
+            "--scenario-refresh-color": self.scenario_refresh,
+            "--scenario-refresh-color-hover": self.scenario_refresh_hover,
+            "--scenario-cancel-color": self.scenario_cancel,
+            "--scenario-cancel-color-hover": self.scenario_cancel_hover,
+            "--scenario-delete-disabled-color": self.scenario_delete_disabled,
         }
 
         compare_colors = {

@@ -1,9 +1,9 @@
 # algomancy-api
 
 FastAPI HTTP interface that exposes the same scenario- and data-management
-surface used by `algomancy-gui` and `algomancy-cli`, so a remote frontend
-(browser SPA, native desktop app, another Python process) can drive an
-Algomancy backend over the network instead of importing it in-process.
+surface used by `algomancy-gui`, so a remote frontend (browser SPA, native
+desktop app, another Python process) can drive an Algomancy backend over
+the network instead of importing it in-process.
 
 The HTTP layer is deliberately thin: every route maps to a single
 `ScenarioManager` / `SessionManager` method and responses use the existing
@@ -12,36 +12,18 @@ the same `Scenario`, `DataSource`, and `KPI` concepts the Dash GUI does.
 
 ## Quick start
 
-```bash
-# launch with the bundled example wiring
-algomancy-api --example
-
-# or with your own configuration callback
-algomancy-api --config-callback myapp.api:make_config
-
-# override host / port from the config
-algomancy-api --example --host 0.0.0.0 --port 9000
-```
-
-The server starts (default `127.0.0.1:8051`) and serves the OpenAPI schema at
-`/openapi.json` plus the interactive Swagger UI at `/docs`. All scenario/data
-endpoints live under `/api/v1/sessions/{session_id}/...`.
-
-## Programmatic use
-
 ```python
 from algomancy_api import ApiConfiguration, ApiLauncher
 from algomancy_data import DataSource
 
 cfg = ApiConfiguration(
     etl_factory=MyETLFactory,
-    kpi_templates=kpi_templates,
-    algo_templates=algorithm_templates,
+    kpis=kpis,
+    algorithms=algorithms,
     schemas=schemas,
     data_object_type=DataSource,
     has_persistent_state=True,
     data_path="data",
-    use_sessions=True,
     autocreate=False,
     autorun=False,
 )
@@ -49,18 +31,37 @@ app = ApiLauncher.build(cfg)  # returns a standard FastAPI app
 ApiLauncher.run(app)          # blocks; uses cfg.host / cfg.port
 ```
 
+The server starts (default `127.0.0.1:8051`) and serves the OpenAPI schema at
+`/openapi.json` plus the interactive Swagger UI at `/docs`. All scenario/data
+endpoints live under `/api/v1/sessions/{session_id}/...`.
+
 `ApiLauncher.build` returns a standard `FastAPI` instance — for production
 deploys you can hand it to your own uvicorn / gunicorn process manager
 instead of using `ApiLauncher.run`.
+
+To try it against the bundled example wiring:
+
+```python
+from algomancy_api import ApiLauncher
+from algomancy_api.example import build_example_config
+
+ApiLauncher.run(ApiLauncher.build(build_example_config()))
+```
 
 ## Endpoint inventory
 
 All routes are prefixed with `cfg.prefix` (default `/api/v1`).
 
 ### Sessions
-- `GET    /sessions` — list sessions and the default
-- `POST   /sessions` — create a new session
-- `POST   /sessions/{sid}/copy` — copy an existing session
+- `GET    /sessions` — list `[{id, display_name}, ...]` and the default id
+- `POST   /sessions` — create a new session — body `{"display_name": "..."}`
+- `POST   /sessions/{sid}/copy` — copy — body `{"new_display_name": "..."}`
+- `PATCH  /sessions/{sid}` — rename — body `{"display_name": "..."}`
+- `DELETE /sessions/{sid}` — delete a session and all its data; the last
+  remaining session is auto-replaced with a fresh `"main"`
+
+`{sid}` accepts either the session's UUID (canonical) or its current
+`display_name` (soft-compat alias).
 
 ### Algorithm + KPI discovery
 - `GET    /sessions/{sid}/algorithms` — list algorithm names

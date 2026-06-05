@@ -33,6 +33,7 @@ from .extractor import (
     XLSXSingleExtractor,
     XLSXMultiExtractor,
     JSONSingleExtractor,
+    JSONMultiExtractor,
     DataFrameExtractor,
 )
 from .transformer import (
@@ -97,6 +98,7 @@ __all__ = [
     "XLSXSingleExtractor",
     "XLSXMultiExtractor",
     "JSONSingleExtractor",
+    "JSONMultiExtractor",
     "DataFrameExtractor",
     "Transformer",
     "NoopTransformer",

@@ -14,7 +14,6 @@ from algomancy_gui.managers.sessionmanager import SessionManager
 from .componentids import ACTIVE_SESSION
 from algomancy_gui.configuration.appconfig import AppConfig
 from algomancy_gui.managers.librarymanager import LibraryManager as lm
-from algomancy_scenario import ScenarioManager
 from algomancy_utils.logger import MessageStatus
 
 
@@ -29,10 +28,7 @@ class GuiLauncher:
         else:
             raise TypeError("DashLauncher.build expects AppConfig or dict")
 
-        if cfg_obj.core.use_sessions:
-            manager: SessionManager = SessionManager.from_config(cfg_obj)
-        else:
-            manager: ScenarioManager = ScenarioManager.from_config(cfg_obj)
+        manager: SessionManager = SessionManager.from_config(cfg_obj)
 
         # Create the app
         app = GuiLauncher._construct(
@@ -59,7 +55,7 @@ class GuiLauncher:
     @staticmethod
     def _construct(
         cfg: AppConfig,
-        manager: SessionManager | ScenarioManager,
+        manager: SessionManager,
     ) -> Dash:
         # Initialize the app
         external_stylesheets = [
@@ -78,19 +74,10 @@ class GuiLauncher:
         )
         app.title = cfg.core.title
 
-        # register the scenario manager on the app object
-        if isinstance(manager, SessionManager):
-            app.server.session_manager = manager
-            app.server.use_sessions = True
-            default_session_name = app.server.session_manager.start_session_name
-        elif isinstance(manager, ScenarioManager):
-            app.server.scenario_manager = manager
-            app.server.use_sessions = False
-            default_session_name = None
-        else:
-            raise TypeError(
-                "DashLauncher._construct expects SessionManager or ScenarioManager"
-            )
+        # register the session manager on the app object
+        app.server.session_manager = manager
+        app.server.show_session_picker = cfg.features.show_session_picker
+        default_session_id = manager.start_session_id
 
         # register the styling configuration on the app object
         app.server.styling_config = cfg.styling
@@ -119,7 +106,7 @@ class GuiLauncher:
                 dcc.Store(
                     id=ACTIVE_SESSION,
                     storage_type="session",
-                    data=default_session_name,
+                    data=default_session_id,
                 ),
             ]
         )
@@ -136,12 +123,7 @@ class GuiLauncher:
         debug: bool = False,
     ) -> None:
         server = get_app().server
-        if hasattr(server, "session_manager"):
-            manager = server.session_manager
-        elif hasattr(server, "scenario_manager"):
-            manager = server.scenario_manager
-        else:
-            raise Exception("No manager available")
+        manager = server.session_manager
 
         algomancy_version = importlib.metadata.version("algomancy")
         manager.log(f"Algomancy version: {algomancy_version}", MessageStatus.INFO)

@@ -1,0 +1,93 @@
+{
+    "PickLoadCarriers": [
+        {
+            "Identity": "29036570",
+            "PickOrderIdentity": "113379427",
+            "ClientIdentity": "TOK",
+            "NumberOfPackages": 109,
+            "Priority": 8,
+            "EstimatedPickingTime": 277,
+            "NumberOfPickOrderLines": 4,
+            "PickOrderLines": [
+                {
+                    "Identity": "259526451",
+                    "PickSequence": 28258,
+                    "AreaIdentity": "A",
+                    "OrderedQuantity": 1,
+                    "LocationXCoordinate": 96.44,
+                    "LocationYCoordinate": 118.39
+                },
+                {
+                    "Identity": "259526486",
+                    "PickSequence": 28182,
+                    "AreaIdentity": "A",
+                    "OrderedQuantity": 1,
+                    "LocationXCoordinate": 93.54,
+                    "LocationYCoordinate": 114.69
+                },
+                {
+                    "Identity": "259526446",
+                    "PickSequence": 28085,
+                    "AreaIdentity": "A",
+                    "OrderedQuantity": 2,
+                    "LocationXCoordinate": 93.54,
+                    "LocationYCoordinate": 113.79
+                },
+                {
+                    "Identity": "259526490",
+                    "PickSequence": 28028,
+                    "AreaIdentity": "A",
+                    "OrderedQuantity": 3,
+                    "LocationXCoordinate": 96.44,
+                    "LocationYCoordinate": 112.89
+                }
+            ]
+        },
+        {
+            "Identity": "29036571",
+            "PickOrderIdentity": "113379428",
+            "ClientIdentity": "TOK",
+            "NumberOfPackages": 42,
+            "Priority": 5,
+            "EstimatedPickingTime": 161,
+            "NumberOfPickOrderLines": 2,
+            "PickOrderLines": [
+                {
+                    "Identity": "259526485",
+                    "PickSequence": 27933,
+                    "AreaIdentity": "A",
+                    "OrderedQuantity": 1,
+                    "LocationXCoordinate": 96.44,
+                    "LocationYCoordinate": 111.69
+                },
+                {
+                    "Identity": "259526460",
+                    "PickSequence": 27691,
+                    "AreaIdentity": "A",
+                    "OrderedQuantity": 1,
+                    "LocationXCoordinate": 93.54,
+                    "LocationYCoordinate": 106.39
+                }
+            ]
+        },
+        {
+            "Identity": "29036572",
+            "PickOrderIdentity": "113379429",
+            "ClientIdentity": "TOK",
+            "NumberOfPackages": 17,
+            "Priority": 3,
+            "EstimatedPickingTime": 88,
+            "NumberOfPickOrderLines": 1,
+            "PickOrderLines": [
+                {
+                    "Identity": "259449993",
+                    "PickSequence": 26956,
+                    "AreaIdentity": "A",
+                    "OrderedQuantity": 1,
+                    "LocationXCoordinate": 93.54,
+                    "LocationYCoordinate": 89.49
+                }
+            ]
+        }
+    ]
+}

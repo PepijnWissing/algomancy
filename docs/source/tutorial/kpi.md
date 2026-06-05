@@ -43,22 +43,22 @@ class TotalCostsKPI(BaseKPI):
 ```python
 from .total_costs import TotalCostsKPI
 
-kpi_templates = {
+kpis = {
     "Total_costs": TotalCostsKPI,
 }
 ```
 
-3. Update `main.py` to use `TotalCostsKPI`. The quickstart already added a `kpi_templates` argument to `AppConfiguration` — update the import and the dict:
+3. Update `main.py` to use `TotalCostsKPI`. The quickstart already added a `kpis` argument to `AppConfiguration` — update the import and the dict:
 
 ```python
-from src.templates.kpi import kpi_templates
+from src.templates.kpi import kpis
 ```
 
 ```python
 app_cfg = AppConfiguration(
     core_config=CoreConfig(
         ...
-        kpi_templates=kpi_templates,
+        kpis=kpis,
         ...
     ),
 )

@@ -11,6 +11,7 @@ from enum import StrEnum, auto
 from typing import Dict, Generic
 
 from algomancy_utils.logger import Logger
+from algomancy_utils.baseparameterset import BaseParameterSet, EmptyParameters
 from algomancy_data import BASEDATASOURCE
 from .basealgorithm import ALGORITHM
 from .keyperformanceindicator import BASE_KPI
@@ -43,6 +44,7 @@ class Scenario(Generic[BASE_KPI]):
         kpis: Dict[str, BASE_KPI],
         algorithm: ALGORITHM,
         provided_id: str = None,
+        data_params: BaseParameterSet | None = None,
     ):
         """
         Initializes a new Scenario with the specified parameters.
@@ -53,12 +55,19 @@ class Scenario(Generic[BASE_KPI]):
             kpis: (Dict[str, KPI]): A dictionary of KPIs to compute for the scenario
             algorithm (str): The algorithm to use for processing
             provided_id (str): An optional unique identifier for the scenario. If not provided, a UUID will be generated.
+            data_params (BaseParameterSet): Per-scenario values for the data source's declared
+                parameters (see ``BaseDataSource.initialize_data_parameters``).
+                Pushed onto the algorithm via ``set_data_params`` before ``run()``.
+                Defaults to ``EmptyParameters()`` when the data source declares none.
         """
         self.id = provided_id if provided_id else str(uuid.uuid4())
         self.tag = tag  # user-defined label
         self._input_data = input_data  # includes raw or preprocessed data
         self._kpis = kpis
         self._algorithm = algorithm
+        self._data_params = (
+            data_params if data_params is not None else EmptyParameters()
+        )
 
         self.status = ScenarioStatus.CREATED
         self.result = None
@@ -81,6 +90,10 @@ class Scenario(Generic[BASE_KPI]):
     @property
     def kpis(self) -> Dict[str, BASE_KPI]:
         return self._kpis
+
+    @property
+    def data_params(self) -> BaseParameterSet:
+        return self._data_params
 
     @property
     def progress(self) -> float:
@@ -106,13 +119,15 @@ class Scenario(Generic[BASE_KPI]):
 
         self.status = ScenarioStatus.PROCESSING
         try:
+            self._algorithm.set_data_params(self._data_params)
             self.result = self._algorithm.run(self._input_data)
             self.compute_kpis()
             self.status = ScenarioStatus.COMPLETE
         except Exception as e:
             self.status = ScenarioStatus.FAILED
             if logger:
-                logger.error(f"Scenario '{self.tag}' failed to process: {str(e)}")
+                logger.error(f"Scenario '{self.tag}' failed to process.")
+                logger.log_traceback(e)
             self.result = {"error": str(e)}
 
     def cancel(self, logger: Logger = None):
@@ -165,6 +180,9 @@ class Scenario(Generic[BASE_KPI]):
             "algorithm": self._algorithm.to_dict()
             if hasattr(self._algorithm, "to_dict")
             else self._algorithm,
+            "data_parameters": self._data_params.get_values()
+            if self._data_params.has_inputs()
+            else {},
             "status": self.status,
             "result": self.result.to_dict()
             if hasattr(self.result, "to_dict")

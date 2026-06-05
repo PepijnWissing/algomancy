@@ -15,6 +15,12 @@ from .file import File, CSVFile, JSONFile, XLSXFile
 E = TypeVar("E", bound=ETLFactory)
 
 
+# Filenames the SessionManager / ScenarioManager write into a session folder
+# that are not DataSource payloads. The data scanner must skip these or
+# ``from_json`` will fail on every restart.
+_RESERVED_SESSION_FILENAMES = frozenset({"meta.json", "scenarios.json"})
+
+
 class DataManager(ABC):
     """
     Handles all data-related operations: loading, deriving, deleting, and storing datasets.
@@ -291,6 +297,11 @@ class StatefulDataManager(DataManager):
 
             # If it's a file, try to load it as a file of the appropriate type
             if os.path.isfile(item_path):
+                # Framework-owned metadata (session id, scenario state)
+                # lives alongside DataSource files; skip it silently so a
+                # restart doesn't error out on every meta.json.
+                if item in _RESERVED_SESSION_FILENAMES:
+                    continue
                 # Verify that item is of the appropriate data format
                 if not item.endswith(f".{self._save_type}"):
                     if self.logger:
@@ -309,7 +320,7 @@ class StatefulDataManager(DataManager):
                         del self._data[added]
                     if self.logger:
                         self.logger.error(
-                            f"Failed to load file '{item_path}' as a DataSource: {exc}"
+                            f"Failed to load file '{item_path}' as a DataSource"
                         )
                         self.logger.log_traceback(exc)
                     self.startup_errors.append((item_path, exc))

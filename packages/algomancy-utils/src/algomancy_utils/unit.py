@@ -1,3 +1,4 @@
+import math
 from typing import List, Tuple, Dict, Optional, Callable
 
 """
@@ -177,11 +178,11 @@ class Quantity:
         """
         try:
             return self.associated_units[key]
-        except KeyError:
+        except KeyError as ke:
             raise KeyError(
                 f"Unit '{key}' not found in quantity '{self.name}'\n"
                 f"  Available units are: {', '.join(self.associated_units.keys())}"
-            )
+            ) from ke
 
     def add_unit(self, base_unit: Unit, factor_to_base: float):
         """
@@ -372,9 +373,11 @@ class Measurement:
         if self.value == Measurement.INITIAL_VALUE:
             return self
 
-        # Handle edge case of zero
+        # Handle edge cases of zero, nan, and inf
         if self.value == 0:
             return Measurement(self.base_measurement, 0)
+        if not math.isfinite(self.value):
+            return self
 
         # determine the number of digits (ignoring sign and decimal)
         n_digits = self._get_digits()

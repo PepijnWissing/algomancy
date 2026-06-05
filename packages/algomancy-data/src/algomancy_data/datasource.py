@@ -14,6 +14,8 @@ from contextlib import suppress
 
 import pandas as pd
 
+from algomancy_utils.baseparameterset import BaseParameterSet, EmptyParameters
+
 from .validator import ValidationMessage
 
 
@@ -129,6 +131,27 @@ class BaseDataSource(ABC):
         Hook method for post-derivation processing. Can be overridden by subclasses.
         """
         pass
+
+    def initialize_data_parameters(self) -> BaseParameterSet:
+        """
+        Declare per-scenario knobs this data source exposes.
+
+        Subclasses override to return a populated ``BaseParameterSet`` with
+        whichever typed parameters make sense for the dataset (date range,
+        region filter, etc.). The framework persists user-supplied values on
+        each scenario and hands them to the algorithm via
+        ``BaseAlgorithm.set_data_params`` before ``run()``; the algorithm
+        decides whether and how to act on them.
+
+        The default returns ``EmptyParameters()`` so existing data sources
+        keep working with no edits.
+
+        Returns:
+            BaseParameterSet: A fresh template describing this data source's
+                              parameters. Callers populate values via
+                              ``set_validated_values``.
+        """
+        return EmptyParameters()
 
 
 BASEDATASOURCE = TypeVar("BASEDATASOURCE", bound=BaseDataSource)
@@ -299,3 +322,10 @@ class DataSource(BaseDataSource):
 
     def list_tables(self):
         return list(self.tables.keys())
+
+    def to_sql_tables(self) -> dict[str, pd.DataFrame]:
+        return self.tables
+
+    def from_sql_tables(self, tables: dict[str, pd.DataFrame]) -> None:
+        for table_name, df in tables.items():
+            self.add_table(table_name, df)

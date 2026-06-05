@@ -1,80 +1,62 @@
-"""Session-name validation and session-discovery gating.
+"""Display-name validation on the SessionManager.
 
-Covers the per-tenant data-isolation hazards on the SessionManager that the
-headless API surfaces: name traversal via ``create_new_session`` and unintended
-subdirectory auto-registration when ``use_sessions=False``.
+Display names go through validation only enough to reject empty/whitespace
+strings — the storage layer is keyed by UUIDs so display strings cannot
+escape the data folder. The cross-platform path-segment hazards (``..``,
+separators, drive prefixes) are guarded at the directory-slug layer instead,
+which is fed only the slugified version of the display name.
 """
 
 from __future__ import annotations
-
-import os
 
 import pytest
 
 from algomancy_scenario import CoreConfig, SessionManager
 
 
-def _build_manager(mock_configs, tmp_path, **extra) -> SessionManager:
+def _build_manager(mock_configs, tmp_path) -> SessionManager:
     """Construct a SessionManager from the shared mock_configs fixture, with
     an isolated data folder."""
     kwargs = dict(mock_configs)
     kwargs["data_path"] = str(tmp_path)
     kwargs.setdefault("autocreate", False)
     kwargs.setdefault("autorun", False)
-    cfg = CoreConfig(**kwargs, **extra)
+    cfg = CoreConfig(**kwargs)
     return SessionManager.from_config(cfg)
 
 
-@pytest.mark.parametrize(
-    "name",
-    [
-        "../escape",
-        "..\\escape",
-        "..",
-        ".",
-        "foo/bar",
-        "foo\\bar",
-        "",
-        "C:somewhere",
-    ],
-)
-def test_create_new_session_rejects_unsafe_names(mock_configs, tmp_path, name):
-    sm = _build_manager(mock_configs, tmp_path, use_sessions=True)
+@pytest.mark.parametrize("name", ["", " ", "\t", "\n\n"])
+def test_create_new_session_rejects_empty_display_names(mock_configs, tmp_path, name):
+    sm = _build_manager(mock_configs, tmp_path)
     with pytest.raises(ValueError):
         sm.create_new_session(name)
 
 
-def test_copy_session_validates_destination_name(mock_configs, tmp_path):
-    sm = _build_manager(mock_configs, tmp_path, use_sessions=True)
-    with pytest.raises(ValueError):
-        sm.copy_session(sm.start_session_name, "../escape")
+def test_create_new_session_accepts_unicode_and_spaces(mock_configs, tmp_path):
+    sm = _build_manager(mock_configs, tmp_path)
+    new_id = sm.create_new_session("Alice's experiment v2 — Q1")
+    assert sm.get_display_name(new_id) == "Alice's experiment v2 — Q1"
 
 
-def test_create_new_session_does_not_create_dirs_outside_root(mock_configs, tmp_path):
-    sm = _build_manager(mock_configs, tmp_path, use_sessions=True)
+def test_create_new_session_handles_path_traversal_in_display_name(
+    mock_configs, tmp_path
+):
+    """Display names with path traversal characters slugify to a safe segment
+    instead of escaping the data folder."""
+    import os
+
+    sm = _build_manager(mock_configs, tmp_path)
     parent_before = set(os.listdir(tmp_path.parent))
-    with pytest.raises(ValueError):
-        sm.create_new_session("../sneaky")
+    sm.create_new_session("../escape")
     parent_after = set(os.listdir(tmp_path.parent))
     assert parent_before == parent_after
 
 
-def test_use_sessions_false_does_not_scan_data_folder(mock_configs, tmp_path):
-    # Pre-seed the data folder with subdirectories that look like sessions.
-    (tmp_path / "cache").mkdir()
-    (tmp_path / "junk").mkdir()
-    (tmp_path / ".git").mkdir()
-
-    sm = _build_manager(mock_configs, tmp_path, use_sessions=False)
-
-    # With sessions disabled the only registered session is the default "main".
-    assert sm.sessions_names == ["main"]
-
-
-def test_use_sessions_true_still_discovers_existing_sessions(mock_configs, tmp_path):
+def test_discovers_existing_session_directories(mock_configs, tmp_path):
     (tmp_path / "alpha").mkdir()
     (tmp_path / "beta").mkdir()
 
-    sm = _build_manager(mock_configs, tmp_path, use_sessions=True)
+    sm = _build_manager(mock_configs, tmp_path)
 
-    assert set(sm.sessions_names) >= {"alpha", "beta"}
+    display_names = {s["display_name"] for s in sm.list_sessions()}
+    assert {"alpha", "beta"} <= display_names

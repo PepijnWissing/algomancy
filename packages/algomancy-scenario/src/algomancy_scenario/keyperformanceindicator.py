@@ -290,7 +290,7 @@ class BaseKPI(ABC):
             self.value = value
         except Exception as e:
             print(f"Error computing KPI {self.name}: {e}")
-            raise KpiError(f"Error computing KPI {self.name}")
+            raise KpiError(f"Error computing KPI {self.name}") from e
 
     def to_dict(self):
         """

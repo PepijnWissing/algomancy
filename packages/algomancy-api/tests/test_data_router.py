@@ -54,7 +54,7 @@ def client_with_data(api_core_kwargs, isolated_data_path) -> TestClient:
     _stage_example_data(isolated_data_path)
     kwargs = dict(api_core_kwargs)
     kwargs["data_path"] = str(isolated_data_path)
-    cfg = ApiConfiguration(use_sessions=False, **kwargs)
+    cfg = ApiConfiguration(**kwargs)
     app: FastAPI = ApiLauncher.build(cfg)
     sm = app.state.session_manager.get_scenario_manager("main")
     sm.debug_load_data(DATASET_KEY)
@@ -66,7 +66,7 @@ def client_empty(api_core_kwargs, isolated_data_path) -> TestClient:
     """Client with no data loaded — useful for ETL upload tests."""
     kwargs = dict(api_core_kwargs)
     kwargs["data_path"] = str(isolated_data_path)
-    cfg = ApiConfiguration(use_sessions=False, **kwargs)
+    cfg = ApiConfiguration(**kwargs)
     return TestClient(ApiLauncher.build(cfg))
 
 
@@ -98,6 +98,21 @@ def test_get_data_unknown_returns_404(client_with_data):
     r = client_with_data.get("/api/v1/sessions/main/data/nope")
     assert r.status_code == 404
     assert "nope" in r.json()["detail"]
+
+
+def test_get_data_parameters_returns_descriptor(client_with_data):
+    """Plain ``DataSource`` declares no params — the endpoint still returns 200
+    with an empty parameter list."""
+    r = client_with_data.get(f"/api/v1/sessions/main/data/{DATASET_KEY}/parameters")
+    assert r.status_code == 200
+    body = r.json()
+    assert "name" in body
+    assert body["parameters"] == []
+
+
+def test_get_data_parameters_unknown_returns_404(client_with_data):
+    r = client_with_data.get("/api/v1/sessions/main/data/nope/parameters")
+    assert r.status_code == 404
 
 
 # ---- Delete ---------------------------------------------------------------

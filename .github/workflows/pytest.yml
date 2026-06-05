@@ -2,14 +2,21 @@ name: pytest
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [main]
   push:
-    branches: [ main ]
+    branches: [main]
 
 env:
   PYTHON_VERSION: "3.14"
 
+# PR path: fast tests only (-m "not slow and not gui").
+# Main-branch path: full suite including slow + gui tests.
+# The GUI job is separate and only runs on push to main.
+
 jobs:
+  # --------------------------------------------------------------------------
+  # Root tests (tests/ directory)
+  # --------------------------------------------------------------------------
   test-root:
     name: Root tests
     runs-on: ubuntu-latest
@@ -35,15 +42,16 @@ jobs:
           restore-keys: |
             uv-${{ runner.os }}-${{ env.PYTHON_VERSION }}-
 
-      - name: Install project dependencies (including test deps)
+      - name: Install project dependencies
         run: |
           uv sync --frozen
-          uv pip install pytest pytest-cov
 
       - name: Run root tests
         run: |
           if [ -d "tests" ]; then
-            uv run pytest tests -v --junitxml=pytest-results-root.xml
+            MARKER="${{ github.event_name == 'pull_request' && 'not slow and not gui' || 'not gui' }}"
+            uv run pytest tests -v -m "$MARKER" --junitxml=pytest-results-root.xml || RC=$?
+            [ "${RC:-0}" -eq 0 ] || [ "${RC:-0}" -eq 5 ]
           else
             echo "No root tests directory found."
           fi
@@ -55,7 +63,9 @@ jobs:
           name: pytest-results-root
           path: pytest-results-root.xml
 
-
+  # --------------------------------------------------------------------------
+  # Per-package tests (matrix)
+  # --------------------------------------------------------------------------
   test-packages:
     name: Package tests (${{ matrix.package }})
     runs-on: ubuntu-latest
@@ -64,10 +74,11 @@ jobs:
       fail-fast: false
       matrix:
         package:
-          - algomancy-cli
+          - algomancy-api
           - algomancy-content
           - algomancy-data
           - algomancy-gui
+          - algomancy-quickstart
           - algomancy-scenario
           - algomancy-utils
 
@@ -92,18 +103,19 @@ jobs:
           restore-keys: |
             uv-${{ runner.os }}-${{ env.PYTHON_VERSION }}-
 
-      - name: Install project dependencies (including test deps)
+      - name: Install project dependencies
         run: |
           uv sync --frozen
-          uv pip install pytest pytest-cov
 
       - name: Run tests for ${{ matrix.package }}
         run: |
           PKG="packages/${{ matrix.package }}"
 
           if [ -d "$PKG/tests" ]; then
-            uv run pytest "$PKG/tests" -v \
-              --junitxml="pytest-results-${{ matrix.package }}.xml"
+            MARKER="${{ github.event_name == 'pull_request' && 'not slow and not gui' || 'not gui' }}"
+            uv run pytest "$PKG/tests" -v -m "$MARKER" \
+              --junitxml="pytest-results-${{ matrix.package }}.xml" || RC=$?
+            [ "${RC:-0}" -eq 0 ] || [ "${RC:-0}" -eq 5 ]
           else
             echo "No tests directory found for ${{ matrix.package }}"
           fi
@@ -114,3 +126,75 @@ jobs:
         with:
           name: pytest-results-${{ matrix.package }}
           path: pytest-results-${{ matrix.package }}.xml
+
+  # --------------------------------------------------------------------------
+  # GUI smoke tests (Playwright) — push to main only
+  # --------------------------------------------------------------------------
+  test-gui-smoke:
+    name: GUI smoke (Playwright)
+    runs-on: ubuntu-latest
+    # Only run the full GUI suite on push to main, not on PRs.
+    if: github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install uv
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install uv
+
+      - name: Cache uv
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: uv-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/uv.lock') }}
+          restore-keys: |
+            uv-${{ runner.os }}-${{ env.PYTHON_VERSION }}-
+
+      - name: Install project dependencies
+        run: |
+          uv sync --frozen
+          uv pip install pytest-playwright
+
+      - name: Determine Playwright version
+        id: pw-version
+        run: |
+          PW_VER=$(uv run python -c "import playwright; print(playwright.__version__)")
+          echo "version=$PW_VER" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-${{ steps.pw-version.outputs.version }}
+          restore-keys: |
+            playwright-chromium-${{ runner.os }}-
+
+      - name: Install Playwright Chromium (if not cached)
+        run: |
+          uv run playwright install chromium --with-deps
+
+      - name: Run GUI smoke tests
+        run: |
+          uv run pytest packages/algomancy-gui/tests -v -m "gui" \
+            --junitxml=pytest-results-gui-smoke.xml
+
+      - name: Upload GUI pytest results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-results-gui-smoke
+          path: pytest-results-gui-smoke.xml
+
+      - name: Upload failure screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-failure-screenshots
+          path: pytest-results/

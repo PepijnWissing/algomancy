@@ -17,26 +17,38 @@ from pydantic import BaseModel, Field
 
 
 class CreateSessionRequest(BaseModel):
-    name: str = Field(
+    display_name: str = Field(
         ...,
         min_length=1,
-        description="Identifier for the new session. Must be a single safe path "
-        "segment (no separators, no '..', no drive prefix).",
+        description="Human-readable name for the new session. Display only; "
+        "the server generates a UUID id and returns it.",
     )
 
 
 class CopySessionRequest(BaseModel):
-    new_name: str = Field(
+    new_display_name: str = Field(
         ...,
         min_length=1,
-        description="Identifier for the destination session. Same restrictions "
-        "as session creation.",
+        description="Human-readable name for the destination session.",
     )
 
 
+class RenameSessionRequest(BaseModel):
+    display_name: str = Field(
+        ...,
+        min_length=1,
+        description="New human-readable name for the session.",
+    )
+
+
+class SessionInfo(BaseModel):
+    id: str = Field(..., description="Stable UUID identifying the session.")
+    display_name: str = Field(..., description="Mutable label shown in UIs.")
+
+
 class SessionsListResponse(BaseModel):
-    sessions: List[str]
-    default: str
+    sessions: List[SessionInfo]
+    default: str = Field(..., description="UUID of the session selected by default.")
 
 
 # ---- Algorithms / KPIs -----------------------------------------------------
@@ -61,6 +73,12 @@ class CreateScenarioRequest(BaseModel):
         default=None,
         description="Parameter values keyed by parameter name. "
         "Omit or set to null to use defaults.",
+    )
+    data_params: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Values for the data source's declared parameters "
+        "(see ``BaseDataSource.initialize_data_parameters``). "
+        "Omit or set to null when the dataset declares none.",
     )
 
 

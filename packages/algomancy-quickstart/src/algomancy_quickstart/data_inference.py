@@ -3,12 +3,25 @@ Data inference utilities for detecting file types and inferring schemas.
 """
 
 import pandas as pd
+import re
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Tuple
 import warnings
 import click
 
 from algomancy_data import DataType, FileExtension
+
+
+def _to_pascal_case(text: str) -> str:
+    """Convert ``text`` to PascalCase, splitting on whitespace and non-alphanumerics."""
+    parts = [p for p in re.split(r"[^0-9a-zA-Z]+", text) if p]
+    return "".join(p[:1].upper() + p[1:] for p in parts)
+
+
+def _to_snake_case(text: str) -> str:
+    """Convert ``text`` to snake_case."""
+    parts = [p for p in re.split(r"[^0-9a-zA-Z]+", text) if p]
+    return "_".join(p.lower() for p in parts)
 
 
 class DataFileInfo:
@@ -36,10 +49,41 @@ class DataFileInfo:
         self.selected_sheets: List[str] = []  # For Excel files
         self.skip_file: bool = False  # User can choose to skip a file
 
+        # Nested-JSON metadata. ``nested_source_paths`` carries each group's
+        # ``ColumnGroup.source_path`` tuple (parent uses ``()``, children use
+        # the key path to their list). ``nested_foreign_keys`` carries
+        # ``{group_name: {fk_col_name: (parent_table, parent_pk_col)}}`` so the
+        # schema template can emit ``foreign_key=(...)``. Both are empty for
+        # flat-JSON / CSV / XLSX files; the ``is_nested_json`` property below
+        # is the canonical "should we render as MULTI with source_path?" flag.
+        self.nested_source_paths: Dict[str, Tuple[str, ...]] = {}
+        self.nested_foreign_keys: Dict[str, Dict[str, Tuple[str, str]]] = {}
+
+        # Template-rendering metadata derived from file_name. Set here so the
+        # schema template always renders a distinct class name even if later
+        # steps (inference, metadata enrichment) are skipped or fail.
+        self.class_name: str = _to_pascal_case(file_name) or "Data"
+        self.snake_name: str = _to_snake_case(file_name) or "data"
+        self.total_columns: int = 0
+
     @property
     def is_multi_sheet(self) -> bool:
         """Check if this file contains multiple sheets to be extracted."""
         return len(self.selected_sheets) > 1
+
+    @property
+    def is_nested_json(self) -> bool:
+        """Check if this file is a JSON with one or more nested child groups."""
+        return bool(self.nested_source_paths)
+
+    @property
+    def is_multi_table(self) -> bool:
+        """Check if this file should render as a ``SchemaType.MULTI`` schema.
+
+        True when an Excel file has multiple sheets selected *or* a JSON file
+        has nested arrays the user agreed to split into related tables.
+        """
+        return self.is_multi_sheet or self.is_nested_json
 
     @property
     def sheets_to_extract(self) -> List[str]:
@@ -268,7 +312,7 @@ class SchemaInferenceEngine:
 
             return unique_sheets
 
-        except (ValueError, IndexError):
+        except ValueError, IndexError:
             return []
 
     def _detect_csv_separator(self, file_path: Path) -> str | None:
@@ -345,27 +389,187 @@ class SchemaInferenceEngine:
                     click.echo(f"  ✓ Sheet '{sheet_name}': {len(df.columns)} columns")
 
             elif file_info.extension == FileExtension.JSON:
-                # Use json_normalize to flatten nested structures
                 import json
 
                 with open(file_info.file_path, "r") as f:
                     json_data = json.load(f)
 
-                # Normalize JSON to flatten nested objects
-                df = pd.json_normalize(json_data)
+                # Unwrap a single-key dict that wraps the root records list,
+                # matching JSONMultiExtractor's tolerance for that shape.
+                records, wrapper_key = self._unwrap_json_records(json_data)
 
-                if len(df) > self.sample_rows:
-                    df = df.head(self.sample_rows)
-
-                file_info.inferred_schemas["default"] = self._infer_from_dataframe(df)
-                file_info.primary_key_columns["default"] = self._infer_primary_keys(df)
-                click.echo(f"  ✓ Inferred schema with {len(df.columns)} columns")
+                if records is not None and self._try_configure_nested_json(
+                    file_info, records, wrapper_key
+                ):
+                    # Nested-JSON path populated inferred_schemas with one
+                    # entry per parent + child group.
+                    pass
+                else:
+                    # Flat path — same behavior as before: json_normalize the
+                    # raw payload and infer a single ``default`` schema.
+                    df = pd.json_normalize(json_data)
+                    if len(df) > self.sample_rows:
+                        df = df.head(self.sample_rows)
+                    file_info.inferred_schemas["default"] = self._infer_from_dataframe(
+                        df
+                    )
+                    file_info.primary_key_columns["default"] = self._infer_primary_keys(
+                        df
+                    )
+                    click.echo(f"  ✓ Inferred schema with {len(df.columns)} columns")
 
             return True
 
         except Exception as e:
             click.echo(click.style(f"   Error inferring schema: {e}", fg="red"))
             return False
+
+    @staticmethod
+    def _unwrap_json_records(payload):
+        """Return ``(records_list, wrapper_key)`` or ``(None, None)``.
+
+        Mirrors :class:`JSONMultiExtractor` so quickstart's view of the file
+        agrees with what the extractor will do at runtime: a top-level list
+        is taken as-is, and a top-level dict with exactly one list-valued
+        key is unwrapped (with the key returned so we can use it as the
+        parent table name).
+        """
+        if isinstance(payload, list):
+            return payload, None
+        if isinstance(payload, dict):
+            list_values = [(k, v) for k, v in payload.items() if isinstance(v, list)]
+            if len(list_values) == 1:
+                return list_values[0][1], list_values[0][0]
+        return None, None
+
+    def _detect_nested_object_keys(self, records) -> List[str]:
+        """Return keys whose value is a non-empty list of dicts in any record.
+
+        Sampled across up to ``self.sample_rows`` records — enough to see the
+        shape without scanning huge files. Key order is preserved by first
+        occurrence so prompts are deterministic.
+        """
+        seen: Dict[str, None] = {}
+        for record in records[: self.sample_rows]:
+            if not isinstance(record, dict):
+                continue
+            for key, value in record.items():
+                if key in seen:
+                    continue
+                if (
+                    isinstance(value, list)
+                    and value
+                    and all(isinstance(item, dict) for item in value)
+                ):
+                    seen[key] = None
+        return list(seen.keys())
+
+    def _try_configure_nested_json(
+        self, file_info: DataFileInfo, records, wrapper_key: str | None
+    ) -> bool:
+        """Detect nested arrays in ``records`` and, with user consent, build
+        a parent + per-array child schema on ``file_info``.
+
+        Returns ``True`` when ``file_info`` has been populated as a nested
+        ``MULTI`` schema. Returns ``False`` to signal the caller should fall
+        back to the flat single-table path — either because no nested
+        list-of-objects were found, or because the parent had no detectable
+        primary key (so children couldn't be linked), or because the user
+        declined the split.
+        """
+        nested_keys = self._detect_nested_object_keys(records)
+        if not nested_keys:
+            return False
+
+        # Build the parent DataFrame (records minus the nested-list keys) so
+        # we can sniff a primary-key candidate before bothering the user.
+        parent_records = [
+            {k: v for k, v in r.items() if k not in nested_keys}
+            for r in records
+            if isinstance(r, dict)
+        ]
+        parent_df = pd.json_normalize(parent_records)
+        if len(parent_df) > self.sample_rows:
+            parent_df = parent_df.head(self.sample_rows)
+        parent_pk = self._infer_primary_keys(parent_df)
+
+        if not parent_pk:
+            click.echo(
+                click.style(
+                    f"  ⓘ Detected nested array(s) ({', '.join(nested_keys)}) "
+                    "but no primary key column on the parent — using flat "
+                    "extraction.",
+                    fg="yellow",
+                )
+            )
+            return False
+
+        parent_table = wrapper_key or file_info.class_name
+        click.echo()
+        click.echo(
+            f"  Detected nested array(s) in {file_info.file_name}: "
+            f"{', '.join(nested_keys)}."
+        )
+        if not click.confirm(
+            "  Split into separate tables with a foreign key back to the parent?",
+            default=True,
+        ):
+            return False
+
+        # Parent group: source_path=() and the inferred PK column.
+        file_info.inferred_schemas[parent_table] = self._infer_from_dataframe(parent_df)
+        file_info.primary_key_columns[parent_table] = parent_pk
+        file_info.nested_source_paths[parent_table] = ()
+        file_info.nested_foreign_keys[parent_table] = {}
+
+        parent_pk_col = parent_pk[0]
+        parent_pk_dtype = file_info.inferred_schemas[parent_table].get(
+            parent_pk_col, DataType.STRING
+        )
+
+        # One child group per nested-list key, with an injected FK column.
+        for nested_key in nested_keys:
+            child_rows = []
+            for record in records:
+                if not isinstance(record, dict):
+                    continue
+                sublist = record.get(nested_key)
+                if not isinstance(sublist, list):
+                    continue
+                for item in sublist:
+                    if isinstance(item, dict):
+                        child_rows.append(item)
+
+            child_df = pd.json_normalize(child_rows)
+            if len(child_df) > self.sample_rows:
+                child_df = child_df.head(self.sample_rows)
+            child_schema = self._infer_from_dataframe(child_df)
+            child_pk = self._infer_primary_keys(child_df)
+
+            fk_col_name = f"{parent_table}{parent_pk_col}"
+            # FK column lands first so the relationship is visually obvious
+            # in the generated schema.
+            ordered_columns: Dict[str, DataType] = {fk_col_name: parent_pk_dtype}
+            ordered_columns.update(child_schema)
+
+            file_info.inferred_schemas[nested_key] = ordered_columns
+            file_info.primary_key_columns[nested_key] = child_pk
+            file_info.nested_source_paths[nested_key] = (nested_key,)
+            file_info.nested_foreign_keys[nested_key] = {
+                fk_col_name: (parent_table, parent_pk_col)
+            }
+            click.echo(
+                f"    ↳ {nested_key}: {len(child_df.columns)} column(s), "
+                f"linked via {fk_col_name}"
+            )
+
+        click.echo(
+            click.style(
+                f"  ✓ Built {len(nested_keys) + 1} related tables from {file_info.file_name}",
+                fg="green",
+            )
+        )
+        return True
 
     def _infer_from_dataframe(self, df: pd.DataFrame) -> Dict[str, DataType]:
         """
@@ -414,9 +618,11 @@ class SchemaInferenceEngine:
         """Heuristically pick primary-key columns from sample data.
 
         A column is treated as PK-like when it is all-unique, all-non-null,
-        and either named ``id`` / ``*_id`` or is the single best unique
-        column in the sample. Returns at most one column to avoid emitting
-        compound PKs that the user didn't actually ask for.
+        and named like an identifier (``id`` / ``*_id`` / ``*identity`` —
+        the last suffix is common in warehouse/ERP JSON exports). Returns
+        at most one column to avoid emitting compound PKs the user didn't
+        ask for. Columns whose values are unhashable (lists, dicts) are
+        skipped because ``nunique()`` cannot evaluate them.
         """
         if df.empty:
             return []
@@ -426,10 +632,20 @@ class SchemaInferenceEngine:
             series = df[column]
             if series.isna().any():
                 continue
-            if series.nunique() != len(series):
+            try:
+                if series.nunique() != len(series):
+                    continue
+            except TypeError:
+                # Unhashable values (e.g. list/dict cells from json_normalize
+                # over still-nested data) — they're not viable PKs anyway.
                 continue
             lowered = str(column).lower()
-            if lowered == "id" or lowered.endswith("_id") or lowered.endswith("id"):
+            if (
+                lowered == "id"
+                or lowered.endswith("_id")
+                or lowered.endswith("id")
+                or lowered.endswith("identity")
+            ):
                 candidates.append(column)
 
         return candidates[:1]
@@ -484,7 +700,7 @@ class SchemaInferenceEngine:
                 warnings.simplefilter("ignore", UserWarning)
                 pd.to_datetime(sample)
             return True
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             return False
 
     def _get_file_extension(self, file_path: Path) -> FileExtension | None:

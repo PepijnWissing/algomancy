@@ -36,8 +36,8 @@ class AppConfig:
         >>> config = AppConfig(
         ...     core_config=CoreConfig(
         ...         etl_factory=ExampleETLFactory,
-        ...         kpi_templates=kpi_templates,
-        ...         algo_templates=algorithm_templates,
+        ...         kpis=kpis,
+        ...         algorithms=algorithms,
         ...     ),
         ...     server_config=ServerConfig(port=9000),
         ...     compare_page_config=ComparePageConfig(
@@ -221,7 +221,6 @@ class AppConfig:
             >>> config_dict = {
             ...     "title": "My Dashboard",
             ...     "port": 9000,
-            ...     "use_sessions": True,
             ... }
             >>> app_config = AppConfig.from_dict(config_dict)
             >>> app_config.server.port

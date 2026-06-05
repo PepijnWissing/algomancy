@@ -1,10 +1,11 @@
-"""End-to-end smoke test against a live ``algomancy-api --example`` process.
+"""End-to-end smoke test against a live uvicorn process serving the example.
 
 Unlike the other test modules (which use ``fastapi.testclient.TestClient`` and
 talk to the app in-process), this test:
 
-1. Launches the real ``algomancy-api`` console script in a subprocess so the
-   uvicorn server actually binds a port and serves HTTP.
+1. Launches a real uvicorn server in a subprocess (via ``ApiLauncher.run`` on
+   the bundled example config) so the server actually binds a port and serves
+   HTTP.
 2. Drives it with ``httpx`` against ``http://127.0.0.1:<free port>``.
 3. Walks through the canonical client flow: list sessions → list algorithms →
    create scenario → run → poll until complete → fetch full result.
@@ -17,106 +18,43 @@ stderr from the subprocess and surface it so the failure is debuggable.
 
 from __future__ import annotations
 
-import os
-import pathlib
-import socket
-import subprocess
 import sys
 import time
 
 import httpx
 import pytest
 
-
-# Repo root — the example wiring uses ``example/data`` as a relative path, so
-# the subprocess must run with cwd here for ``--example`` to resolve.
-REPO_ROOT = pathlib.Path(__file__).resolve().parents[3]
-
-
-def _find_free_port() -> int:
-    """Bind ``0`` to grab an OS-assigned free port, then immediately release."""
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(("127.0.0.1", 0))
-        return s.getsockname()[1]
-
-
-def _wait_for_health(
-    base_url: str,
-    timeout_seconds: float,
-    proc: subprocess.Popen,
-    log_path: pathlib.Path,
-) -> None:
-    """Poll ``/health`` until 200, or fail with the subprocess's logs if not.
-
-    The example wiring runs ETL on every session on startup, which can take
-    several seconds and generate a lot of log output. We redirect output to a
-    file (so the pipes can't fill and block the process) and surface the file
-    contents on any startup failure.
-    """
-    deadline = time.monotonic() + timeout_seconds
-    last_err: Exception | None = None
-    while time.monotonic() < deadline:
-        if proc.poll() is not None:
-            log_text = log_path.read_text(errors="replace") if log_path.exists() else ""
-            pytest.fail(
-                f"algomancy-api exited with code {proc.returncode} before "
-                f"becoming healthy. Logs:\n{log_text}"
-            )
-        try:
-            r = httpx.get(f"{base_url}/health", timeout=1.0)
-            if r.status_code == 200:
-                return
-        except httpx.HTTPError as exc:
-            last_err = exc
-        time.sleep(0.25)
-    log_text = log_path.read_text(errors="replace") if log_path.exists() else ""
-    pytest.fail(
-        f"algomancy-api did not respond on {base_url}/health within "
-        f"{timeout_seconds}s; last error: {last_err}\nLogs:\n{log_text}"
-    )
+from algomancy_utils._smoke_helpers import (
+    find_free_port,
+    live_subprocess,
+    wait_for_http,
+)
 
 
 @pytest.fixture(scope="module")
 def live_server(tmp_path_factory):
-    """Module-scoped: start one ``algomancy-api --example`` and reuse it."""
-    port = _find_free_port()
+    """Module-scoped: start one uvicorn process serving the example config."""
+    port = find_free_port()
     base_url = f"http://127.0.0.1:{port}"
     log_path = tmp_path_factory.mktemp("algomancy-api-smoke") / "server.log"
 
-    # Use the same Python interpreter as the test runner so uv state, sys.path,
-    # and the installed scripts all line up — invoking the console script by
-    # name would also work but this is more robust on Windows.
-    cmd = [
-        sys.executable,
-        "-m",
-        "algomancy_api.main",
-        "--example",
-        "--port",
-        str(port),
-    ]
-    env = os.environ.copy()
-
-    log_file = open(log_path, "w", encoding="utf-8")
-    proc = subprocess.Popen(
-        cmd,
-        cwd=str(REPO_ROOT),
-        env=env,
-        stdout=log_file,
-        stderr=subprocess.STDOUT,
-        text=True,
+    launcher = (
+        "from algomancy_api import ApiLauncher;"
+        "from algomancy_api.example import build_example_config;"
+        "app = ApiLauncher.build(build_example_config());"
+        f"ApiLauncher.run(app, host='127.0.0.1', port={port})"
     )
-    try:
+    cmd = [sys.executable, "-c", launcher]
+
+    with live_subprocess(cmd, log_path=log_path) as proc:
         # Example startup runs ETL on every session — give it generous time.
-        _wait_for_health(base_url, timeout_seconds=60.0, proc=proc, log_path=log_path)
+        wait_for_http(
+            f"{base_url}/health",
+            timeout_seconds=60.0,
+            proc=proc,
+            log_path=log_path,
+        )
         yield base_url
-    finally:
-        proc.terminate()
-        try:
-            proc.wait(timeout=5.0)
-        except subprocess.TimeoutExpired:
-            proc.kill()
-            proc.wait(timeout=5.0)
-        log_file.close()
 
 
 # ---- Smoke tests ---------------------------------------------------------
@@ -127,19 +65,21 @@ def test_health_endpoint_responds(live_server):
     assert r.status_code == 200
     body = r.json()
     assert body["status"] == "ok"
-    assert body["use_sessions"] is True
-    # The example wiring discovers ``default_session`` and ``test_session`` on
-    # disk; both must show up.
-    assert "default_session" in body["sessions"]
-    assert "test_session" in body["sessions"]
+    # The example wiring ships a single ``main`` on disk.
+    # Multi-session discovery semantics are unit-tested in
+    # packages/algomancy-scenario/tests/test_session_manager.py.
+    display_names = [s["display_name"] for s in body["sessions"]]
+    assert "main" in display_names
 
 
 def test_sessions_endpoint_lists_example_sessions(live_server):
     r = httpx.get(f"{live_server}/api/v1/sessions")
     assert r.status_code == 200
     body = r.json()
-    assert set(body["sessions"]) >= {"default_session", "test_session"}
-    assert body["default"] in body["sessions"]
+    display_names = [s["display_name"] for s in body["sessions"]]
+    ids = [s["id"] for s in body["sessions"]]
+    assert "main" in display_names
+    assert body["default"] in ids
 
 
 def test_algorithms_endpoint_exposes_example_algorithms(live_server):
@@ -147,8 +87,7 @@ def test_algorithms_endpoint_exposes_example_algorithms(live_server):
     sid = sessions["default"]
     r = httpx.get(f"{live_server}/api/v1/sessions/{sid}/algorithms")
     assert r.status_code == 200
-    # The example wiring registers Slow, AsIs, Batching, Random.
-    assert "Slow" in r.json()["algorithms"]
+    assert "Greedy Slotting" in r.json()["algorithms"]
 
 
 def test_openapi_docs_and_schema_available(live_server):
@@ -176,30 +115,21 @@ def test_end_to_end_create_run_complete(live_server):
     sessions = httpx.get(f"{live_server}/api/v1/sessions").json()
     sid = sessions["default"]
 
-    # Pick an algorithm + dataset that we know exist in the example.
-    algorithms = httpx.get(f"{live_server}/api/v1/sessions/{sid}/algorithms").json()[
-        "algorithms"
-    ]
-    assert "Slow" in algorithms
-
     data_keys = httpx.get(f"{live_server}/api/v1/sessions/{sid}/data").json()["keys"]
-    assert data_keys, "example default_session is expected to ship with data"
-    dataset_key = data_keys[0]
+    assert data_keys, "example main is expected to ship with data"
 
-    # Create.
     create = httpx.post(
         f"{live_server}/api/v1/sessions/{sid}/scenarios",
         json={
             "tag": "smoke-e2e",
-            "dataset_key": dataset_key,
-            "algo_name": "Slow",
-            "algo_params": {"duration": 1},
+            "dataset_key": data_keys[0],
+            "algo_name": "Greedy Slotting",
+            "algo_params": {},
         },
     )
     assert create.status_code == 201, create.text
     sid_scenario = create.json()["id"]
 
-    # Run.
     run = httpx.post(
         f"{live_server}/api/v1/sessions/{sid}/scenarios/{sid_scenario}/run"
     )
@@ -219,14 +149,14 @@ def test_end_to_end_create_run_complete(live_server):
         time.sleep(0.1)
     assert final is not None and final["status"] == "complete", final
 
-    # Full scenario response should carry KPI values now.
     full = httpx.get(
         f"{live_server}/api/v1/sessions/{sid}/scenarios/{sid_scenario}"
     ).json()
     assert full["status"] == "complete"
     assert full["kpis"], "expected at least one KPI in completed scenario"
-    any_kpi = next(iter(full["kpis"].values()))
-    assert any_kpi["value"] is not None
+    assert all(k["value"] is not None for k in full["kpis"].values()), (
+        f"Every warehouse KPI should produce a value for Greedy: {full['kpis']}"
+    )
 
     # Cleanup.
     delete = httpx.delete(

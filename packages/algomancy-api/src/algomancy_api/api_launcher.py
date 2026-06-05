@@ -18,10 +18,9 @@ from .routers import sessions as sessions_router
 class ApiLauncher:
     """Builds and runs the FastAPI app that exposes the scenario-management surface.
 
-    Mirrors :class:`algomancy_cli.cli_launcher.CliLauncher` and
-    :class:`algomancy_gui.gui_launcher.GuiLauncher` in shape: a static ``build``
-    method that returns the framework's primitive (here, a FastAPI app), and a
-    static ``run`` method that hosts it.
+    Mirrors :class:`algomancy_gui.gui_launcher.GuiLauncher` in shape: a static
+    ``build`` method that returns the framework's primitive (here, a FastAPI app),
+    and a static ``run`` method that hosts it.
     """
 
     @staticmethod
@@ -31,9 +30,8 @@ class ApiLauncher:
         """Construct a FastAPI app from a config (object or dict)."""
         cfg_obj = ApiLauncher._normalize_config(cfg)
 
-        # Always wrap in a SessionManager so all routes share one resolution
-        # shape, regardless of cfg.use_sessions. When use_sessions=False the
-        # SessionManager just has the single default "main" session.
+        # All routes are scoped by session; the SessionManager auto-creates a
+        # default "main" session when none exists on disk / in the DB yet.
         session_manager = SessionManager.from_config(cfg_obj)
 
         app = FastAPI(
@@ -105,8 +103,7 @@ class ApiLauncher:
             return {
                 "status": "ok",
                 "title": cfg.title,
-                "sessions": sm.sessions_names,
-                "use_sessions": cfg.use_sessions,
+                "sessions": sm.list_sessions(),
             }
 
         app.include_router(sessions_router.router, prefix=cfg.prefix)

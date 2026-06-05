@@ -1,5 +1,5 @@
 from .total_costs import TotalCostsKPI
 
-kpi_templates = {
+kpis = {
     "Total_costs": TotalCostsKPI,
 }

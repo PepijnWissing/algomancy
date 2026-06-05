@@ -98,6 +98,32 @@ class MyParams(BaseParameterSet):
 | `TimeParameter`       | A specific point in time.                        | `TimeParameter(name="start_time")`           |
 | `IntervalParameter`   | A time range (start and end).                    | `IntervalParameter(name="window")`           |
 
+### Data Parameters
+
+Alongside its own parameter set, an algorithm receives a second
+`BaseParameterSet` that the *data source* declared via
+{ref}`initialize_data_parameters <data-parameters-ref>`. Read it from
+`self.data_params` inside `run()` to subset, filter, or slice the input data
+before the main loop. The framework persists the supplied values per
+scenario and pushes them onto the algorithm before `run()`; nothing is
+applied automatically.
+
+```{code-block} python
+:caption: Algorithm reading a data-parameter knob
+:linenos:
+def run(self, data: BaseDataSource) -> ScenarioResult:
+    sku = data.tables["sku_data"].copy()
+    if self.data_params.contains("category_filter"):
+        selected = self.data_params["category_filter"]
+        if selected:
+            sku = sku[sku["category"].isin(selected)]
+    # ...rest of the algorithm
+```
+
+Algorithms that don't care about data parameters simply ignore the
+attribute — it defaults to `EmptyParameters()`, so the `.contains(...)`
+guard is always safe.
+
 
 ## KPIs
 

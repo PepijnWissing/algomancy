@@ -34,6 +34,10 @@ jobs:
         run: |
           uv lock --check || (echo "Lockfile out of date" && exit 1)
 
+      - name: Check version consistency across all packages
+        run: |
+          uv run python algomancy-version-bump.py --check
+
       - name: Build source and wheels with uv
         run: |
           uv build --all-packages --wheel

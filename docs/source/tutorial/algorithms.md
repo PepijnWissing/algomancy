@@ -88,25 +88,25 @@ class NearestNeighborAlgorithm(BaseAlgorithm):
 ```python
 from templates.algorithm.nearest_neighbor import NearestNeighborAlgorithm
 
-algorithm_templates = {
+algorithms = {
     "NearestNeighbor": NearestNeighborAlgorithm,
 }
 ```
 
 The dict key is the algorithm name shown in the dashboard; the value is the class.
 
-3. Update `main.py` to use the algorithm templates. The quickstart already added an `algo_templates` argument — update the import and the dict:
+3. Update `main.py` to use the algorithm templates. The quickstart already added an `algorithms` argument — update the import and the dict:
 
 4. Add the algorithm template(s) to `CoreConfig` in `main.py`.
 ```python
-from src.templates.algorithm import algorithm_templates
+from src.templates.algorithm import algorithms
 ```
 
 ```python
 app_cfg = AppConfig(
     core_config=CoreConfig(
         ...
-        algo_templates=algorithm_templates,
+        algorithms=algorithms,
         ...
     )
 )
@@ -248,7 +248,7 @@ class SimulatedAnnealingAlgorithm(BaseAlgorithm):
 from templates.algorithm.nearest_neighbor import NearestNeighborAlgorithm
 from templates.algorithm.simulated_annealing import SimulatedAnnealingAlgorithm
 
-algorithm_templates = {
+algorithms = {
     "NearestNeighbor": NearestNeighborAlgorithm,
     "SimulatingAnnealing": SimulatedAnnealingAlgorithm,
 }

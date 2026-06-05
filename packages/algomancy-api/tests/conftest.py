@@ -35,8 +35,8 @@ _shared = _load_shared()
 
 ExampleETLFactory = _shared.ExampleETLFactory
 example_schemas = _shared.example_schemas
-algorithm_templates = _shared.algorithm_templates
-kpi_templates = _shared.kpi_templates
+algorithms = _shared.algorithms
+kpis = _shared.kpis
 
 
 @pytest.fixture
@@ -55,8 +55,8 @@ def api_core_kwargs(tmp_path) -> dict:
         "data_object_type": DataSource,
         "etl_factory": ExampleETLFactory,
         "schemas": example_schemas,
-        "kpi_templates": kpi_templates,
-        "algo_templates": algorithm_templates,
+        "kpis": kpis,
+        "algorithms": algorithms,
         "autocreate": False,
         "autorun": False,
     }

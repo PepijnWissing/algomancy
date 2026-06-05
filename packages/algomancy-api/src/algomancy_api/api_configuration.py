@@ -15,14 +15,13 @@ class ApiConfiguration(CoreConfig):
     def __init__(
         self,
         # core parameters (see CoreConfig)
-        use_sessions: bool = False,
         data_path: str = "data",
         has_persistent_state: bool = False,
         save_type: str | None = "json",
         data_object_type: type | None = None,
         etl_factory: Any | None = None,
-        kpi_templates: Dict[str, Any] | None = None,
-        algo_templates: Dict[str, Any] | None = None,
+        kpis: Dict[str, Any] | None = None,
+        algorithms: Dict[str, Any] | None = None,
         schemas: list | None = None,
         autocreate: bool | None = None,
         default_algo: str | None = None,
@@ -37,14 +36,13 @@ class ApiConfiguration(CoreConfig):
         **kwargs: Any,
     ) -> None:
         super().__init__(
-            use_sessions=use_sessions,
             data_path=data_path,
             has_persistent_state=has_persistent_state,
             save_type=save_type,
             data_object_type=data_object_type,
             etl_factory=etl_factory,
-            kpi_templates=kpi_templates,
-            algo_templates=algo_templates,
+            kpis=kpis,
+            algorithms=algorithms,
             schemas=schemas,
             autocreate=autocreate,
             default_algo=default_algo,

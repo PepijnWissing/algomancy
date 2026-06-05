@@ -3,7 +3,125 @@
 > Migrating from v0.5 or earlier? See the [migration guide](migration-ref)
 > for before/after snippets covering every breaking change in v0.6–v0.7.
 
-## Prerelease (v0.7.0)
+## Prerelease (v0.8.0)
+### Added
+- **Data Parameters** — per-scenario knobs declared by `BaseDataSource` subclasses.
+
+  :::{dropdown} {octicon}`light-bulb` Details
+  :color: light
+  A concrete `BaseDataSource` subclass can override the new
+  `initialize_data_parameters()` method to return a typed
+  `BaseParameterSet` describing data-side knobs (date range, region filter,
+  category whitelist, ...). The framework collects user-supplied values per
+  scenario, persists them alongside the algorithm parameters, and pushes
+  them onto the algorithm via `BaseAlgorithm.set_data_params` before
+  `run()`. Algorithms read `self.data_params` and decide whether and how to
+  act on them — nothing is applied automatically.
+
+  Surfaces:
+  - `BaseDataSource.initialize_data_parameters()` — default returns
+    `EmptyParameters()`, so existing subclasses keep working unchanged.
+  - `BaseAlgorithm.data_params` property + `set_data_params(...)` method.
+  - `Scenario` accepts a `data_params` kwarg and pushes it onto the
+    algorithm before each `run()`.
+  - `ScenarioFactory.get_associated_parameters(algo_name, dataset_key)`
+    returns the `(algo_params, data_params)` tuple, resolving the data half
+    via the selected data source.
+  - `ScenarioManager.create_scenario(..., data_params=...)` and
+    `ScenarioManager.get_data_parameters(dataset_key)`.
+  - GUI: a second parameter card renders next to the algorithm card in the
+    scenario-creation modal, populated as soon as the user picks a dataset.
+  - API: `GET /api/v1/sessions/{sid}/data/{dataset_key}/parameters` returns
+    the descriptor; `POST /scenarios` accepts a new `data_params` field.
+  - Persistence: new nullable `data_parameter_values TEXT` column on
+    `algomancy_scenarios`, added idempotently via `ALTER TABLE` on startup
+    so existing databases keep loading.
+
+  See {ref}`Data Parameters <data-parameters-ref>` for the data-source
+  declaration pattern and {ref}`Algorithms and Parameters
+  <fundamentals-algorithm-ref>` for the algorithm-side read pattern.
+  :::
+- **`SqlTableLayout` protocol** for database persistence for custom data sources.
+  
+  :::{dropdown} {octicon}`light-bulb` Details
+  :color: light
+  `DatabaseDataManager` now works for any ``BaseDataSource`` subclass, not
+  just the bundled ``DataSource``. Two persistence paths are dispatched at
+  write time:
+  - Subclasses that implement the new ``algomancy_data.database.SqlTableLayout``
+    protocol (``to_sql_tables() -> dict[str, DataFrame]`` and
+    ``from_sql_tables(tables)``) get per-sub-table SQL storage —
+    DataFrames land in real ``ds__{session}__{dataset}__{sub}`` tables and
+    stay externally queryable.
+  - Subclasses that don't implement it fall back to JSON-blob persistence
+    via the abstract ``to_json``/``from_json`` API already required by
+    ``BaseDataSource``. The catalogue grows a nullable ``payload`` column
+    to hold the blob.
+
+  The bundled ``DataSource`` satisfies ``SqlTableLayout`` trivially via
+  its ``tables`` dict, so existing deployments see no behavioural change.
+  Pre-existing ``algomancy_datasets`` tables that are missing the
+  ``payload`` column now raise a clear error on startup directing the user
+  at the manual-rebuild path. See
+  {ref}`Database persistence of custom data sources <fundamentals-data-container-ref>`
+  for the protocol and a worked example.
+:::
+- Added infrastructure to delete sessions. 
+
+  New ``SessionManager.delete_session(id)`` is used by a GUI interface element and
+  the ``DELETE /api/v1/sessions/{session_id}`` API endpoint. 
+
+### Breaking
+- Session identity is now a UUID; new property ``display_name`` is the mutable label.
+
+  :::{dropdown} {octicon}`light-bulb` Details
+  :color: light
+  Previously a session's identifier was its user-facing string (``"main"``,
+  ``"alice_experiment"``), which made renaming impossible and made URLs leak
+  human-readable names. The new set-up features:
+  - Each session has a stable UUID ``id`` and a separate mutable ``display_name``.
+  - API routes use UUIDs: ``/api/v1/sessions/{session_uuid}/...``. The list
+    endpoint returns ``{sessions: [{id, display_name}, ...], default: id}``.
+  - New ``PATCH /api/v1/sessions/{id}`` renames a session (display_name only).
+  - ``CreateSessionRequest.name`` is now ``display_name``;
+    ``CopySessionRequest.new_name`` is now ``new_display_name``.
+  - Filesystem backend writes a small ``meta.json`` into each session
+    directory carrying ``{id, display_name}``. Directories without
+    ``meta.json`` are migrated transparently on first scan.
+  - DB backend changes ``algomancy_sessions`` from ``(name PK)`` to
+    ``(id PK, display_name)``.
+  - ``SessionManager`` API renames: ``sessions_names`` → ``session_ids``,
+    ``start_session_name`` → ``start_session_id``, new ``list_sessions()``,
+    ``get_display_name()``, ``rename_session()``, ``resolve_id_by_display_name()``.
+  - **Migration:** run ``python scripts/migrate_m14_session_ids.py
+    [--data-path DIR] [--database-url URL]`` once per deployment. The
+    filesystem migration is also performed automatically on first scan, so
+    upgrading without running the script will still work — the script just
+    makes the rewrite eager and visible. For API clients, the resolver
+    still accepts the old ``display_name`` in URLs (e.g.
+    ``/sessions/main/...``) as a soft alias, so existing
+    integrations keep working while you migrate them to UUIDs.
+  :::
+- Sessions are now always used
+
+  :::{dropdown} {octicon}`light-bulb` Details
+  :color: light
+  The `CoreConfig.use_sessions` attribute was **removed** (and the same flag on `ApiConfiguration`).
+  `SessionManager` is now always constructed; single-tenant deployments simply
+  get a single auto-created `"main"` session. The `/health` endpoint no longer
+  reports `use_sessions`.
+  - **Migration:** delete `use_sessions=...` from your `CoreConfig` /
+    `ApiConfiguration` / `AppConfig` arguments. If you were using
+    `use_sessions=False` to hide the session picker from the GUI admin page,
+    set `FeatureConfig(show_session_picker=False)` instead — the runtime
+    keeps a session under the hood either way.
+  - The GUI server attribute `app.server.use_sessions` is gone. Code that
+    branched on it should use `app.server.session_manager` unconditionally;
+    code that gated picker visibility should use
+    `app.server.show_session_picker`.
+  :::
+
+## v0.7.0
 ### Added
 - **`algomancy-api` package**: new FastAPI HTTP service that exposes the same
   `ScenarioManager` / `SessionManager` surface used by the Dash GUI and CLI,

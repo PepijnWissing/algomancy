@@ -1,17 +1,17 @@
 # Algomancy
 
-Algomancy is a lightweight framework for building interactive dashboards that visualize the performance of algorithms and/or simulations across scenarios. It brings together ETL, scenario orchestration, KPI computation, and three interchangeable frontends: a Dash-based UI, an interactive shell, and an HTTP API.
+Algomancy is a lightweight framework for building interactive dashboards that visualize the performance of algorithms and/or simulations across scenarios. It brings together ETL, scenario orchestration, KPI computation, and two interchangeable frontends: a Dash-based UI and an HTTP API.
 
 ## Highlights
 - Python 3.14+
 - Dash UI with modular pages and a production-ready server
 - FastAPI HTTP service for remote frontends and headless integrations
-- Batteries-included packages: content, data, scenario, GUI, CLI, API
+- Batteries-included packages: content, data, scenario, GUI, API
 
 
 ## Features and Capabilities
 - **Modular Backend**: Easy to swap algorithms or data models.
-- **Three Frontends, One Backend**: The same `ScenarioManager` is reachable through the Dash GUI, a CLI shell, or a FastAPI HTTP service — choose at startup time.
+- **Two Frontends, One Backend**: The same `ScenarioManager` is reachable through the Dash GUI or a FastAPI HTTP service — choose at startup time.
 - **Automated ETL**: Structured data intake from various file formats.
 - **Parameter Management**: Type-safe, validated parameters with automatic GUI generation.
 - **Asynchronous Execution**: Background processing of scenarios with real-time progress tracking.
