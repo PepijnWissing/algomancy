@@ -5,6 +5,36 @@
 
 ## Prerelease (v0.8.2)
 _Released on XX-06-2026_
+### Added
+- **Database-backed `ScenarioResult` persistence** — `SqlScenarioRepository` now writes results to the database via the same dual-path strategy as `DatabaseDataManager`.
+
+  :::{dropdown} {octicon}`light-bulb` Details
+  :color: light
+  Results whose subclass implements the new
+  `algomancy_scenario.persistence.SqlResultLayout` protocol are written as
+  real, externally queryable SQL tables (one per sub-table, named
+  `result__<session>__<scenario_id>__<sub>`); everything else falls back to
+  a JSON blob in `algomancy_scenario_runs.result_blob` via the new abstract
+  `to_json` / `from_json` contract on `BaseScenarioResult`. Typed
+  rehydration on restart uses the algorithm's `result_class` attribute
+  (defaults to the bundled `ScenarioResult`). `SqlScenarioRepository.delete`
+  cleans up any per-scenario result tables alongside the run/KPI rows.
+  :::
+
+### Changed
+- **`BaseScenarioResult` now requires `to_json` / `from_json`** — abstract on the base, concrete on the bundled `ScenarioResult`. **Breaking** for custom subclasses.
+
+  :::{dropdown} {octicon}`light-bulb` Details
+  :color: light
+  Add `to_json(self) -> str` and a `from_json(cls, json_string) ->
+  BaseScenarioResult` classmethod to existing `BaseScenarioResult`
+  subclasses, or implement
+  `algomancy_scenario.persistence.SqlResultLayout` to land DataFrames in
+  real SQL tables instead of a JSON blob. The contract mirrors
+  `BaseDataSource.to_json` / `from_json` exactly.
+  :::
+- **`BaseAlgorithm.result_class`** — new class attribute (defaults to `ScenarioResult`) used by the repository to rehydrate persisted results into their original type; override on algorithms whose `run()` returns a custom subclass.
+
 ### Fixed
 - Fixed a bug where playwright tests would fail to initialize due to an erroneous version lookup.
 - Added documentation for `DatabaseDataManager`.
