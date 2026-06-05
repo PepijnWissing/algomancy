@@ -22,6 +22,7 @@ _Released on XX-06-2026_
   :::
 
 ### Changed
+- Actualized the quickstart documentation page. 
 - `StatefulDataManager` marked deprecated; `DatabaseDataManager` should be used for persistent deployments; `StatelessDataManager` is the default for in-memory use.
 - **`BaseScenarioResult` now requires `to_json` / `from_json`** — abstract on the base, concrete on the bundled `ScenarioResult`. **Breaking** for custom subclasses.
 
