@@ -5,10 +5,12 @@ DataSources and their metadata. Two persistence paths are supported and
 dispatched on whether the DataSource subclass implements
 :class:`SqlTableLayout`:
 
-* **Per-sub-table SQL** (default for the bundled :class:`DataSource`) — each
-  DataFrame is written via ``DataFrame.to_sql`` to a dedicated table. Data is
-  externally queryable and DataSources are materialised into RAM lazily on
-  ``get_data()``.
+* **Shared per-sub-table SQL** (default for the bundled :class:`DataSource`) —
+  for each sub-table *name* there is exactly one physical SQL table shared by
+  all sessions and datasets (e.g. ``algomancy_ds__customers``). Each row carries
+  ``_algomancy_session_id`` and ``_algomancy_dataset_name`` discriminator
+  columns, so the number of physical tables stays bounded by the project's
+  DataSource shape rather than growing with sessions × datasets.
 * **JSON blob** (fallback) — the DataSource is serialised via its abstract
   ``to_json`` method into a ``payload`` column on the catalogue. Works for any
   ``BaseDataSource`` subclass, regardless of how it represents its state.
@@ -16,6 +18,7 @@ dispatched on whether the DataSource subclass implements
 
 from __future__ import annotations
 
+import json
 import re
 from typing import Dict, List, Optional, TYPE_CHECKING
 
@@ -27,7 +30,13 @@ from ..datamanager import DataManager
 from ..datasource import DataClassification, BASEDATASOURCE
 from ..etl import ETLResult
 from ..schema import Schema
-from .models import metadata as _catalogue_metadata, datasets_table
+from .models import (
+    DATA_TABLE_PREFIX,
+    DATASET_COL,
+    SESSION_COL,
+    datasets_table,
+    metadata as _catalogue_metadata,
+)
 from .protocols import SqlTableLayout
 
 if TYPE_CHECKING:
@@ -39,13 +48,9 @@ def _safe_segment(s: str) -> str:
     return re.sub(r"[^a-zA-Z0-9_]", "_", s)
 
 
-def _data_table_name(session_id: str, dataset_name: str, sub_table: str) -> str:
-    """Deterministic SQL table name for one sub-table of a DataSource."""
-    return f"ds__{_safe_segment(session_id)}__{_safe_segment(dataset_name)}__{_safe_segment(sub_table)}"
-
-
-def _data_table_prefix(session_id: str, dataset_name: str) -> str:
-    return f"ds__{_safe_segment(session_id)}__{_safe_segment(dataset_name)}__"
+def _data_table_name(sub_table: str) -> str:
+    """Shared physical table name for a given DataSource sub-table name."""
+    return f"{DATA_TABLE_PREFIX}{_safe_segment(sub_table)}"
 
 
 class DatabaseDataManager(DataManager):
@@ -55,9 +60,10 @@ class DatabaseDataManager(DataManager):
     materialises a DataSource into RAM on first access and caches it; only
     accessed datasets occupy memory.
 
-    The class works for any :class:`BaseDataSource` subclass: subclasses that
-    implement :class:`SqlTableLayout` get per-sub-table SQL storage, others
-    fall back to a JSON-blob payload on the catalogue.
+    All sessions and datasets share the same set of physical SQL tables — one
+    per DataSource sub-table name — so the table count is bounded by the
+    project's DataSource shape, not by ``sessions × datasets``. Session and
+    dataset are recorded as discriminator columns on every row.
 
     Args:
         etl_factory: ETL factory class (same as for other DataManager variants).
@@ -82,7 +88,7 @@ class DatabaseDataManager(DataManager):
         super().__init__(etl_factory, schemas, "database", data_object_type, logger)
         self._engine = engine
         self._session_id = session_id
-        # Catalogue: dataset_name → metadata dict (id, ds_type, creation_datetime, payload)
+        # Catalogue: dataset_name → metadata dict (id, ds_type, creation_datetime, payload, sub_tables)
         self._db_catalogue: Dict[str, dict] = {}
 
     # ------------------------------------------------------------------
@@ -107,6 +113,7 @@ class DatabaseDataManager(DataManager):
                 "ds_type": row.ds_type,
                 "creation_datetime": row.creation_datetime,
                 "payload": row.payload,
+                "sub_tables": _decode_sub_tables(row.sub_tables),
             }
         self.log(
             f"DatabaseDataManager startup for session '{self._session_id}': "
@@ -117,19 +124,19 @@ class DatabaseDataManager(DataManager):
         """Fail fast if the catalogue table predates a required column.
 
         ``create_all(checkfirst=True)`` does not alter existing tables, so a DB
-        that was created before ``payload`` was introduced will silently miss
-        the column and persist writes will fail in confusing ways. Surface a
-        clear error and direct the user at the manual-rebuild path.
+        that was created before a column was introduced will silently miss the
+        column and persist writes will fail in confusing ways. Surface a clear
+        error and direct the user at the manual-rebuild path.
         """
         inspector = sa.inspect(self._engine)
         existing = {col["name"] for col in inspector.get_columns("algomancy_datasets")}
-        missing = {"payload"} - existing
+        missing = {"payload", "sub_tables"} - existing
         if missing:
             raise RuntimeError(
                 f"algomancy_datasets is missing column(s) {sorted(missing)}. "
                 "This database was created by an older algomancy-data version. "
-                "Drop the algomancy_datasets table (and any ds__... data tables) "
-                "and rebuild — there is no automatic migration."
+                "Drop the algomancy_datasets table (and any algomancy_ds__... "
+                "data tables) and rebuild — there is no automatic migration."
             )
 
     # ------------------------------------------------------------------
@@ -179,12 +186,11 @@ class DatabaseDataManager(DataManager):
         self, data_key: str, prevent_masterdata_removal: bool = False
     ) -> None:
         assert data_key in self.get_data_keys(), f"Data '{data_key}' not found."
-        inspector = sa.inspect(self._engine)
-        prefix = _data_table_prefix(self._session_id, data_key)
+        info = self._db_catalogue.get(data_key, {})
+        sub_tables: List[str] = info.get("sub_tables") or []
+        existing_tables = set(sa.inspect(self._engine).get_table_names())
         with self._engine.begin() as conn:
-            for table_name in inspector.get_table_names():
-                if table_name.startswith(prefix):
-                    conn.execute(sa.text(f'DROP TABLE IF EXISTS "{table_name}"'))
+            self._delete_dataset_rows(conn, data_key, sub_tables, existing_tables)
             conn.execute(
                 datasets_table.delete().where(
                     (datasets_table.c.session_id == self._session_id)
@@ -198,6 +204,35 @@ class DatabaseDataManager(DataManager):
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
+
+    def _delete_dataset_rows(
+        self,
+        conn: sa.Connection,
+        dataset_name: str,
+        sub_tables: List[str],
+        existing_tables: Optional[set[str]] = None,
+    ) -> None:
+        """Remove every row this (session, dataset) wrote to the shared tables.
+
+        ``existing_tables`` should be pre-computed OUTSIDE the surrounding
+        transaction when this is called inside ``engine.begin()``. Calling
+        ``sa.inspect`` inside the transaction borrows a connection and ROLLBACKs
+        on release with SingletonThreadPool sqlite (default for
+        ``sqlite:///:memory:``), undoing the pending DML.
+        """
+        if existing_tables is None:
+            existing_tables = set(sa.inspect(self._engine).get_table_names())
+        for sub in sub_tables:
+            table_name = _data_table_name(sub)
+            if table_name not in existing_tables:
+                continue
+            conn.execute(
+                sa.text(
+                    f'DELETE FROM "{table_name}" '
+                    f'WHERE "{SESSION_COL}" = :sid AND "{DATASET_COL}" = :name'
+                ),
+                {"sid": self._session_id, "name": dataset_name},
+            )
 
     def _load_datasource_from_db(self, dataset_name: str) -> Optional[BASEDATASOURCE]:
         info = self._db_catalogue.get(dataset_name)
@@ -213,7 +248,7 @@ class DatabaseDataManager(DataManager):
             )
             return ds
 
-        # Per-sub-table SQL path: requires SqlTableLayout on the subclass.
+        # Shared per-sub-table SQL path: requires SqlTableLayout on the subclass.
         try:
             ds_type = DataClassification(info["ds_type"])
         except ValueError:
@@ -236,17 +271,29 @@ class DatabaseDataManager(DataManager):
                 "data_object_type or delete and re-persist the dataset."
             )
 
-        prefix = _data_table_prefix(self._session_id, dataset_name)
-        tables: Dict[str, pd.DataFrame] = {}
+        sub_tables: List[str] = info.get("sub_tables") or []
         inspector = sa.inspect(self._engine)
-        for table_name in inspector.get_table_names():
-            if table_name.startswith(prefix):
-                sub_table = table_name[len(prefix) :]
-                with self._engine.connect() as conn:
-                    tables[sub_table] = pd.read_sql_table(table_name, conn)
+        existing = set(inspector.get_table_names())
+        tables: Dict[str, pd.DataFrame] = {}
+        for sub in sub_tables:
+            table_name = _data_table_name(sub)
+            if table_name not in existing:
+                continue
+            with self._engine.connect() as conn:
+                df = pd.read_sql(
+                    sa.text(
+                        f'SELECT * FROM "{table_name}" '
+                        f'WHERE "{SESSION_COL}" = :sid AND "{DATASET_COL}" = :name'
+                    ),
+                    conn,
+                    params={"sid": self._session_id, "name": dataset_name},
+                )
+            df = df.drop(columns=[SESSION_COL, DATASET_COL], errors="ignore")
+            tables[sub] = df
         ds.from_sql_tables(tables)
         self.log(
-            f"Loaded DataSource '{dataset_name}' from database ({len(tables)} tables)."
+            f"Loaded DataSource '{dataset_name}' from database "
+            f"({len(tables)} sub-tables)."
         )
         return ds
 
@@ -254,14 +301,25 @@ class DatabaseDataManager(DataManager):
         self, data_source: BASEDATASOURCE, dataset_name: str
     ) -> None:
         payload: Optional[str] = None
-        sub_table_count = 0
+        sub_table_names: List[str] = []
 
         if isinstance(data_source, SqlTableLayout):
-            for sub_table, df in data_source.to_sql_tables().items():
-                sql_name = _data_table_name(self._session_id, dataset_name, sub_table)
-                with self._engine.begin() as conn:
-                    df.to_sql(sql_name, conn, if_exists="replace", index=False)
-                sub_table_count += 1
+            sql_tables = data_source.to_sql_tables()
+            sub_table_names = list(sql_tables.keys())
+            # Clean up any rows this (session, dataset) wrote previously —
+            # including sub-tables that no longer appear in the current shape.
+            previous = self._db_catalogue.get(dataset_name, {}).get("sub_tables") or []
+            stale = set(previous) - set(sub_table_names)
+            existing_tables = set(sa.inspect(self._engine).get_table_names())
+            with self._engine.begin() as conn:
+                self._delete_dataset_rows(
+                    conn,
+                    dataset_name,
+                    list(stale) + sub_table_names,
+                    existing_tables,
+                )
+                for sub_table, df in sql_tables.items():
+                    self._append_to_shared_table(conn, sub_table, dataset_name, df)
         else:
             payload = data_source.to_json()
 
@@ -274,6 +332,8 @@ class DatabaseDataManager(DataManager):
                 creation_dt = _dt.fromisoformat(creation_dt)
             except ValueError:
                 creation_dt = None
+
+        sub_tables_json = json.dumps(sub_table_names) if payload is None else None
 
         # Upsert catalogue row
         with self._engine.begin() as conn:
@@ -291,6 +351,7 @@ class DatabaseDataManager(DataManager):
                     ds_type=str(data_source._ds_type),
                     creation_datetime=creation_dt,
                     payload=payload,
+                    sub_tables=sub_tables_json,
                 )
             )
 
@@ -301,14 +362,55 @@ class DatabaseDataManager(DataManager):
             "ds_type": str(data_source._ds_type),
             "creation_datetime": data_source.creation_datetime,
             "payload": payload,
+            "sub_tables": sub_table_names if payload is None else None,
         }
         if payload is None:
             self.log(
                 f"Persisted DataSource '{dataset_name}' to database "
-                f"({sub_table_count} tables)."
+                f"({len(sub_table_names)} sub-tables)."
             )
         else:
             self.log(
                 f"Persisted DataSource '{dataset_name}' to database (JSON payload, "
                 f"{len(payload)} chars)."
             )
+
+    def _append_to_shared_table(
+        self,
+        conn: sa.Connection,
+        sub_table: str,
+        dataset_name: str,
+        df: pd.DataFrame,
+    ) -> None:
+        """Append ``df`` to the shared physical table for ``sub_table``.
+
+        Prepends the (session_id, dataset_name) discriminator columns. The
+        physical table is created on first write with column types inferred
+        by pandas — subsequent writes share that schema.
+        """
+        if SESSION_COL in df.columns or DATASET_COL in df.columns:
+            raise ValueError(
+                f"DataFrame for sub-table '{sub_table}' must not contain reserved "
+                f"columns {SESSION_COL!r} / {DATASET_COL!r}."
+            )
+        out = df.copy()
+        out.insert(0, DATASET_COL, dataset_name)
+        out.insert(0, SESSION_COL, self._session_id)
+        out.to_sql(
+            _data_table_name(sub_table),
+            conn,
+            if_exists="append",
+            index=False,
+        )
+
+
+def _decode_sub_tables(raw: Optional[str]) -> Optional[List[str]]:
+    if raw is None:
+        return None
+    try:
+        value = json.loads(raw)
+    except (TypeError, ValueError):
+        return None
+    if isinstance(value, list):
+        return [str(v) for v in value]
+    return None

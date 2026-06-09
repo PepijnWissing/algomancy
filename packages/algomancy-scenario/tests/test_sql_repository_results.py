@@ -33,11 +33,15 @@ from algomancy_scenario import (
     ScenarioResult,
     ScenarioStatus,
 )
-from algomancy_scenario.persistence.models import metadata as scenario_meta
+from algomancy_scenario.persistence.models import (
+    RESULT_TABLE_PREFIX,
+    SCENARIO_COL,
+    SESSION_COL,
+    metadata as scenario_meta,
+)
 from algomancy_scenario.persistence.sql_repository import (
     SqlScenarioRepository,
     _result_table_name,
-    _result_table_prefix,
 )
 
 # Load shared fixtures from conftest
@@ -244,7 +248,7 @@ def test_json_blob_path_persists_and_rehydrates(engine, repo, dm):
     s.status = ScenarioStatus.COMPLETE
     repo.persist_run(s)
 
-    # Verify the row has a non-null result_blob and no result__ tables exist
+    # Verify the row has a non-null result_blob and no shared result tables exist
     with engine.connect() as conn:
         row = conn.execute(
             sa.text(
@@ -256,8 +260,9 @@ def test_json_blob_path_persists_and_rehydrates(engine, repo, dm):
     assert row is not None
     assert row.result_blob is not None
     inspector = sa.inspect(engine)
-    prefix = _result_table_prefix("test_session", s.id)
-    assert not any(t.startswith(prefix) for t in inspector.get_table_names())
+    assert not any(
+        t.startswith(RESULT_TABLE_PREFIX) for t in inspector.get_table_names()
+    )
 
     # Rehydrate
     repo2 = _fresh_repo(engine, dm)
@@ -291,15 +296,27 @@ def test_sql_layout_path_writes_subtables_and_clears_blob(engine, repo, dm):
     assert row is not None
     assert row.result_blob is None
 
-    # Real sub-tables exist
+    # Real shared sub-tables exist
     inspector = sa.inspect(engine)
     expected_tables = {
-        _result_table_name("test_session", s.id, "rows"),
-        _result_table_name("test_session", s.id, "summary"),
-        _result_table_name("test_session", s.id, "_meta"),
+        _result_table_name("rows"),
+        _result_table_name("summary"),
+        _result_table_name("_meta"),
     }
     actual = set(inspector.get_table_names())
     assert expected_tables.issubset(actual)
+
+    # And those tables carry rows tagged with this (session, scenario).
+    with engine.connect() as conn:
+        for sub in ("rows", "summary", "_meta"):
+            count = conn.execute(
+                sa.text(
+                    f'SELECT COUNT(*) FROM "{_result_table_name(sub)}" '
+                    f'WHERE "{SESSION_COL}" = :sid AND "{SCENARIO_COL}" = :scid'
+                ),
+                {"sid": "test_session", "scid": s.id},
+            ).scalar()
+            assert count > 0
 
 
 def test_sql_layout_path_roundtrips_typed_result(engine, repo, dm):
@@ -324,6 +341,19 @@ def test_sql_layout_path_roundtrips_typed_result(engine, repo, dm):
     )
 
 
+def _scenario_row_count(engine, sub_table: str, scenario_id: str) -> int:
+    """Count rows the scenario owns in a given shared result sub-table."""
+    table_name = _result_table_name(sub_table)
+    with engine.connect() as conn:
+        return conn.execute(
+            sa.text(
+                f'SELECT COUNT(*) FROM "{table_name}" '
+                f'WHERE "{SESSION_COL}" = :sid AND "{SCENARIO_COL}" = :scid'
+            ),
+            {"sid": "test_session", "scid": scenario_id},
+        ).scalar()
+
+
 def test_delete_drops_result_subtables(engine, repo, dm):
     s = _make_scenario(dm, TabularAlgorithm, tag="tab_delete")
     repo.add(s)
@@ -331,26 +361,26 @@ def test_delete_drops_result_subtables(engine, repo, dm):
     s.status = ScenarioStatus.COMPLETE
     repo.persist_run(s)
 
-    inspector = sa.inspect(engine)
-    prefix = _result_table_prefix("test_session", s.id)
-    assert any(t.startswith(prefix) for t in inspector.get_table_names())
+    assert _scenario_row_count(engine, "rows", s.id) > 0
 
     assert repo.delete(s.id) is True
 
-    inspector = sa.inspect(engine)
-    assert not any(t.startswith(prefix) for t in inspector.get_table_names())
+    # The shared physical tables stay (other scenarios may use them), but this
+    # scenario's rows are gone.
+    assert _scenario_row_count(engine, "rows", s.id) == 0
+    assert _scenario_row_count(engine, "summary", s.id) == 0
+    assert _scenario_row_count(engine, "_meta", s.id) == 0
 
 
 def test_re_persist_drops_stale_subtables(engine, repo, dm):
-    """A second persist_run should not leave behind sub-tables that the new
-    result schema no longer produces."""
+    """A second persist_run should not leave behind rows from the previous run."""
     s = _make_scenario(dm, TabularAlgorithm, tag="tab_repersist")
     repo.add(s)
     s.result = s._algorithm.run(s._input_data)
     s.status = ScenarioStatus.COMPLETE
     repo.persist_run(s)
 
-    # Simulate a result with a different sub-table set
+    # Simulate a fresh result; persist_run should replace not accumulate.
     s.result = TabularResult(
         data_id=s._input_data.id,
         rows=pd.DataFrame({"item": ["c"], "value": [9]}),
@@ -359,16 +389,98 @@ def test_re_persist_drops_stale_subtables(engine, repo, dm):
     )
     repo.persist_run(s)
 
+    # Only the new run's rows are present (1 in rows, 1 in summary, 1 in _meta).
+    assert _scenario_row_count(engine, "rows", s.id) == 1
+    assert _scenario_row_count(engine, "summary", s.id) == 1
+    assert _scenario_row_count(engine, "_meta", s.id) == 1
+
+
+def test_refresh_drops_result_subtables_and_clears_runs(engine, repo, dm):
+    """``refresh`` must remove run history, KPI rows, and per-result rows from
+    the shared tables, and rewrite the scenario's persisted status so a restart
+    rehydrates it as re-runnable."""
+    s = _make_scenario(dm, TabularAlgorithm, tag="tab_refresh")
+    repo.add(s)
+    s.result = s._algorithm.run(s._input_data)
+    s.status = ScenarioStatus.COMPLETE
+    s.kpis["Delay"].value = 123.0
+    repo.persist_run(s)
+
+    assert _scenario_row_count(engine, "rows", s.id) > 0
+
+    assert repo.refresh(s.id) is True
+
+    # This scenario's rows are gone, run + KPI rows gone, scenario status reset.
+    assert _scenario_row_count(engine, "rows", s.id) == 0
+    assert _scenario_row_count(engine, "summary", s.id) == 0
+    assert _scenario_row_count(engine, "_meta", s.id) == 0
+    with engine.connect() as conn:
+        runs = conn.execute(
+            sa.text(
+                "SELECT COUNT(*) FROM algomancy_scenario_runs WHERE scenario_id = :sid"
+            ),
+            {"sid": s.id},
+        ).scalar()
+        kpi_rows = conn.execute(
+            sa.text(
+                "SELECT COUNT(*) FROM algomancy_kpi_measurements WHERE run_id IN "
+                "(SELECT run_id FROM algomancy_scenario_runs WHERE scenario_id = :sid)"
+            ),
+            {"sid": s.id},
+        ).scalar()
+        scen_status = conn.execute(
+            sa.text("SELECT status FROM algomancy_scenarios WHERE id = :sid"),
+            {"sid": s.id},
+        ).scalar()
+    assert runs == 0
+    assert kpi_rows == 0
+    assert scen_status == str(ScenarioStatus.CREATED)
+
+    # A cold restart sees the reset state — no stale result is rehydrated.
+    repo2 = _fresh_repo(engine, dm)
+    reloaded = repo2.get_by_tag("tab_refresh")
+    assert reloaded is not None
+    assert reloaded.status == ScenarioStatus.CREATED
+    assert reloaded.result is None
+
+
+def test_refresh_unknown_scenario_returns_false(repo):
+    assert repo.refresh("does-not-exist") is False
+
+
+def test_shared_layout_reuses_one_table_per_subname(engine, repo, dm):
+    """Multiple scenarios writing the same sub-table names must share the same
+    physical SQL tables — that's the point of the revision."""
+    scenarios = []
+    for tag in ("alpha", "beta", "gamma"):
+        s = _make_scenario(dm, TabularAlgorithm, tag=tag)
+        repo.add(s)
+        s.result = s._algorithm.run(s._input_data)
+        s.status = ScenarioStatus.COMPLETE
+        repo.persist_run(s)
+        scenarios.append(s)
+
     inspector = sa.inspect(engine)
-    prefix = _result_table_prefix("test_session", s.id)
-    present = {t for t in inspector.get_table_names() if t.startswith(prefix)}
-    # Only the three sub-tables defined by TabularResult, no leftovers
-    expected = {
-        _result_table_name("test_session", s.id, "rows"),
-        _result_table_name("test_session", s.id, "summary"),
-        _result_table_name("test_session", s.id, "_meta"),
-    }
-    assert present == expected
+    result_tables = [
+        t for t in inspector.get_table_names() if t.startswith(RESULT_TABLE_PREFIX)
+    ]
+    # Three sub-tables (rows, summary, _meta) — independent of scenario count.
+    assert sorted(result_tables) == sorted(
+        [
+            _result_table_name("rows"),
+            _result_table_name("summary"),
+            _result_table_name("_meta"),
+        ]
+    )
+
+    # Each scenario contributes exactly one row to ``summary`` and ``_meta``.
+    with engine.connect() as conn:
+        scenario_ids = conn.execute(
+            sa.text(
+                f'SELECT DISTINCT "{SCENARIO_COL}" FROM "{_result_table_name("_meta")}"'
+            )
+        ).fetchall()
+    assert {row[0] for row in scenario_ids} == {s.id for s in scenarios}
 
 
 def test_dict_result_falls_back_to_json_dump(engine, repo, dm):

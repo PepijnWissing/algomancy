@@ -174,11 +174,15 @@ into `CoreConfig`. It chooses between two storage paths per DataSource:
    Any `BaseDataSource` subclass works out of the box — the only requirement
    is the abstract `to_json` / `from_json` pair every subclass already has
    to implement.
-2. **Per-sub-table SQL (opt-in).** Each DataFrame the DataSource exposes
-   becomes its own SQL table, named
-   `ds__{session_id}__{dataset_name}__{sub_table}`. The data stays
-   externally queryable and the DataSource is loaded lazily on
-   `get_data()`. The bundled `DataSource` uses this path automatically.
+2. **Shared per-sub-table SQL (opt-in).** Each DataFrame the DataSource
+   exposes is appended to a single shared SQL table named
+   `algomancy_ds__{sub_table}` — one physical table per sub-table *name*,
+   reused across every session and dataset. Each row carries
+   `_algomancy_session_id` and `_algomancy_dataset_name` discriminator
+   columns, so the table count is bounded by the DataSource shape rather
+   than growing with sessions × datasets. Data stays externally queryable
+   and the DataSource is loaded lazily on `get_data()`. The bundled
+   `DataSource` uses this path automatically.
 
 To opt a custom subclass into the per-table path, implement the
 {ref}`SqlTableLayout <sql-table-layout-ref>` protocol. That is: implement the

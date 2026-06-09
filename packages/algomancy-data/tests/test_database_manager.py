@@ -240,3 +240,93 @@ class TestDatabaseDataManagerRoundTrip:
         loaded_b = m_b.get_data("shared_name")
         assert loaded_a.tables["item"].iloc[0]["id"] == "session_a"
         assert loaded_b.tables["item"].iloc[0]["id"] == "session_b"
+
+
+class TestSharedTableLayout:
+    def test_multiple_sessions_and_datasets_share_one_physical_table(self, engine):
+        """Two sessions × two datasets should still write into a single
+        ``algomancy_ds__item`` table — that's the whole point of the revision."""
+        for sid in ("s1", "s2"):
+            m = DatabaseDataManager(
+                etl_factory=SimpleETLFactory,
+                schemas=[ItemSchema()],
+                engine=engine,
+                session_id=sid,
+                data_object_type=DataSource,
+            )
+            m.startup()
+            for ds_name in ("alpha", "beta"):
+                ds = DataSource(ds_type=DataClassification.MASTER_DATA, name=ds_name)
+                ds.add_table(
+                    "item",
+                    pd.DataFrame(
+                        {
+                            "id": [f"{sid}-{ds_name}"],
+                            "name": [ds_name],
+                            "price": [1.0],
+                        }
+                    ),
+                )
+                m.add_data_source(ds)
+
+        inspector = sa.inspect(engine)
+        data_tables = [
+            t for t in inspector.get_table_names() if t.startswith("algomancy_ds__")
+        ]
+        assert data_tables == ["algomancy_ds__item"], (
+            f"Expected exactly one shared table, got {data_tables}"
+        )
+
+        # Four rows total: 2 sessions × 2 datasets.
+        with engine.connect() as conn:
+            row_count = conn.execute(
+                sa.text("SELECT COUNT(*) FROM algomancy_ds__item")
+            ).scalar()
+        assert row_count == 4
+
+    def test_overwriting_same_dataset_replaces_rows(self, dm):
+        """Re-persisting the same (session, dataset_name) replaces its rows."""
+        ds1 = DataSource(ds_type=DataClassification.MASTER_DATA, name="rep")
+        ds1.add_table(
+            "item", pd.DataFrame({"id": ["a"], "name": ["A"], "price": [1.0]})
+        )
+        dm.add_data_source(ds1)
+
+        ds2 = DataSource(ds_type=DataClassification.DERIVED_DATA, name="rep")
+        ds2.add_table(
+            "item",
+            pd.DataFrame({"id": ["x", "y"], "name": ["X", "Y"], "price": [10.0, 20.0]}),
+        )
+        # bypass the "already exists" assertion on add_data_source by going
+        # through the private persistence path.
+        dm._data["rep"] = ds2
+        dm._persist_datasource(ds2, "rep")
+
+        with dm._engine.connect() as conn:
+            rows = conn.execute(
+                sa.text(
+                    "SELECT COUNT(*) FROM algomancy_ds__item "
+                    'WHERE "_algomancy_dataset_name" = :n'
+                ),
+                {"n": "rep"},
+            ).scalar()
+        assert rows == 2  # not 3 — the original single row was deleted
+
+    def test_delete_data_removes_only_its_rows(self, dm):
+        """Deleting one dataset must not touch rows owned by another."""
+        a = DataSource(ds_type=DataClassification.MASTER_DATA, name="keep_me")
+        a.add_table("item", pd.DataFrame({"id": ["k"], "name": ["K"], "price": [1.0]}))
+        dm.add_data_source(a)
+
+        b = DataSource(ds_type=DataClassification.MASTER_DATA, name="drop_me")
+        b.add_table("item", pd.DataFrame({"id": ["d"], "name": ["D"], "price": [2.0]}))
+        dm.add_data_source(b)
+
+        dm.delete_data("drop_me")
+
+        with dm._engine.connect() as conn:
+            remaining = conn.execute(
+                sa.text('SELECT "_algomancy_dataset_name" FROM algomancy_ds__item')
+            ).fetchall()
+        names = {row[0] for row in remaining}
+        assert names == {"keep_me"}

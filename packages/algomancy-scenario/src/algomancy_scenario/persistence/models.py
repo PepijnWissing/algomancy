@@ -1,13 +1,22 @@
 """Fixed SQLAlchemy table definitions for algomancy-scenario's database backend.
 
 Covers sessions, scenario definitions, per-run execution history, and KPI
-measurements. These tables ARE managed by Alembic migrations (unlike the
-dynamic per-DataSource data tables in algomancy-data).
+measurements. Per-result data rows live in shared per-sub-table tables (one
+physical table per ScenarioResult sub-table *name*, across all sessions and
+scenarios); those tables are created lazily by ``SqlScenarioRepository`` on
+first write because pandas infers their column types from the DataFrame.
 """
 
 import sqlalchemy as sa
 
 metadata = sa.MetaData()
+
+#: Prefix for the shared result tables (one per ScenarioResult sub-table name).
+RESULT_TABLE_PREFIX = "algomancy_result__"
+
+#: Discriminator columns prepended to every shared result table row.
+SESSION_COL = "_algomancy_session_id"
+SCENARIO_COL = "_algomancy_scenario_id"
 
 sessions_table = sa.Table(
     "algomancy_sessions",
@@ -49,6 +58,9 @@ scenario_runs_table = sa.Table(
     sa.Column("status", sa.String, nullable=False),
     sa.Column("result_blob", sa.Text, nullable=True),  # JSON from result.to_dict()
     sa.Column("error", sa.Text, nullable=True),
+    # JSON array of sub-table names this run wrote rows to in the shared
+    # ``algomancy_result__<sub>`` tables. NULL when the JSON-blob path is used.
+    sa.Column("result_sub_tables", sa.Text, nullable=True),
 )
 
 kpi_measurements_table = sa.Table(

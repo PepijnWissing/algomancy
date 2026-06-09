@@ -281,6 +281,21 @@ class ScenarioManager:
     def delete_scenario(self, scenario_id: str) -> bool:
         return self._registry.delete(scenario_id)
 
+    def refresh_scenario(self, scenario_id: str) -> Optional[Scenario]:
+        """Reset one scenario to a re-runnable state, in memory and on disk.
+
+        Returns the in-memory :class:`Scenario` so callers can serialise it
+        directly, or ``None`` if no scenario with that id exists in this
+        session.
+        """
+        scenario = self._registry.get_by_id(scenario_id)
+        if scenario is None:
+            return None
+        scenario.refresh(logger=self.logger)
+        if hasattr(self._registry, "refresh"):
+            self._registry.refresh(scenario_id)
+        return scenario
+
     def list_scenarios(self) -> List[Scenario]:
         return self._registry.list()
 

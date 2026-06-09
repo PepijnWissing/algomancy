@@ -282,7 +282,7 @@ def process_scenario(process_clicks, session_id):
             scenario.cancel(logger=sm.logger)
             return no_update
         elif scenario.status in (ScenarioStatus.COMPLETE, ScenarioStatus.FAILED):
-            scenario.refresh(logger=sm.logger)
+            sm.refresh_scenario(scenario.id)
             return no_update
 
     return no_update
