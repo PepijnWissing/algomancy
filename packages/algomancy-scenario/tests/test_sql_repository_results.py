@@ -371,6 +371,60 @@ def test_re_persist_drops_stale_subtables(engine, repo, dm):
     assert present == expected
 
 
+def test_refresh_drops_result_subtables_and_clears_runs(engine, repo, dm):
+    """``refresh`` must remove run history, KPI rows, and per-result sub-tables,
+    and rewrite the scenario's persisted status so a restart rehydrates it as
+    re-runnable."""
+    s = _make_scenario(dm, TabularAlgorithm, tag="tab_refresh")
+    repo.add(s)
+    s.result = s._algorithm.run(s._input_data)
+    s.status = ScenarioStatus.COMPLETE
+    s.kpis["Delay"].value = 123.0
+    repo.persist_run(s)
+
+    inspector = sa.inspect(engine)
+    prefix = _result_table_prefix("test_session", s.id)
+    assert any(t.startswith(prefix) for t in inspector.get_table_names())
+
+    assert repo.refresh(s.id) is True
+
+    # Sub-tables gone, run + KPI rows gone, scenario row status reset
+    inspector = sa.inspect(engine)
+    assert not any(t.startswith(prefix) for t in inspector.get_table_names())
+    with engine.connect() as conn:
+        runs = conn.execute(
+            sa.text(
+                "SELECT COUNT(*) FROM algomancy_scenario_runs WHERE scenario_id = :sid"
+            ),
+            {"sid": s.id},
+        ).scalar()
+        kpi_rows = conn.execute(
+            sa.text(
+                "SELECT COUNT(*) FROM algomancy_kpi_measurements WHERE run_id IN "
+                "(SELECT run_id FROM algomancy_scenario_runs WHERE scenario_id = :sid)"
+            ),
+            {"sid": s.id},
+        ).scalar()
+        scen_status = conn.execute(
+            sa.text("SELECT status FROM algomancy_scenarios WHERE id = :sid"),
+            {"sid": s.id},
+        ).scalar()
+    assert runs == 0
+    assert kpi_rows == 0
+    assert scen_status == str(ScenarioStatus.CREATED)
+
+    # A cold restart sees the reset state — no stale result is rehydrated.
+    repo2 = _fresh_repo(engine, dm)
+    reloaded = repo2.get_by_tag("tab_refresh")
+    assert reloaded is not None
+    assert reloaded.status == ScenarioStatus.CREATED
+    assert reloaded.result is None
+
+
+def test_refresh_unknown_scenario_returns_false(repo):
+    assert repo.refresh("does-not-exist") is False
+
+
 def test_dict_result_falls_back_to_json_dump(engine, repo, dm):
     """Legacy code paths that set scenario.result to a bare dict must still
     persist (json.dumps) — the contract added in this PR must not break this.

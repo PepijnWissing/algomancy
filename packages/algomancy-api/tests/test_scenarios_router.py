@@ -344,12 +344,21 @@ def test_reset_clears_result_after_complete(client):
     assert client.post(f"/api/v1/sessions/main/scenarios/{sid}/run").status_code == 202
     final = _poll_until_terminal(client, "main", sid)
     assert final["status"] == "complete"
+    # KPIs were computed during the run — confirm we have a real value to clear.
+    pre_reset = client.get(f"/api/v1/sessions/main/scenarios/{sid}").json()
+    pre_value = next(iter(pre_reset["kpis"].values()))["value"]
+    assert pre_value is not None and pre_value > 0
 
     r = client.post(f"/api/v1/sessions/main/scenarios/{sid}/reset")
     assert r.status_code == 200
     body = r.json()
     assert body["status"] == "created"
     assert body["result"] is None
+    # KPI values and progress are reset along with status/result.
+    post_value = next(iter(body["kpis"].values()))["value"]
+    assert post_value != pre_value
+    status_after = client.get(f"/api/v1/sessions/main/scenarios/{sid}/status").json()
+    assert status_after["progress"] == 0.0
 
     # Follow-up /run is now accepted again.
     assert client.post(f"/api/v1/sessions/main/scenarios/{sid}/run").status_code == 202

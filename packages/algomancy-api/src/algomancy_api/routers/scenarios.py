@@ -162,7 +162,7 @@ def reset_scenario(
                 f"'{scenario.status}'."
             ),
         )
-    scenario.refresh()
+    sm.refresh_scenario(scenario_id)
     return scenario.to_dict()
 
 
