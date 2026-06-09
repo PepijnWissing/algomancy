@@ -22,7 +22,7 @@ from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from algomancy_scenario import ScenarioManager
+from algomancy_scenario import ScenarioManager, ScenarioStatus
 from algomancy_utils.baseparameterset import ParameterError
 
 from ..dependencies import get_scenario_manager
@@ -133,7 +133,36 @@ def run_scenario(
     sm: ScenarioManager = Depends(get_scenario_manager),
 ) -> dict:
     scenario = _resolve_scenario_or_404(sm, scenario_id)
+    if scenario.status != ScenarioStatus.CREATED:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                f"Scenario '{scenario_id}' cannot be run from status "
+                f"'{scenario.status}'. Reset it first to re-run."
+            ),
+        )
     sm.process_scenario_async(scenario)
+    return scenario.to_dict()
+
+
+@router.post(
+    "/scenarios/{scenario_id}/reset",
+    summary="Reset a scenario's status and clear its result",
+)
+def reset_scenario(
+    scenario_id: str,
+    sm: ScenarioManager = Depends(get_scenario_manager),
+) -> dict:
+    scenario = _resolve_scenario_or_404(sm, scenario_id)
+    if scenario.status in (ScenarioStatus.QUEUED, ScenarioStatus.PROCESSING):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                f"Scenario '{scenario_id}' cannot be reset while in status "
+                f"'{scenario.status}'."
+            ),
+        )
+    scenario.refresh()
     return scenario.to_dict()
 
 

@@ -134,7 +134,8 @@ CRUD plus the run-and-poll lifecycle. Run is fire-and-forget; clients poll
 | `POST` | `/sessions/{sid}/scenarios` | Create scenario — body `{tag, dataset_key, algo_name, algo_params}` |
 | `GET` | `/sessions/{sid}/scenarios/{id}` | Full scenario including KPIs + result |
 | `DELETE` | `/sessions/{sid}/scenarios/{id}` | Remove scenario |
-| `POST` | `/sessions/{sid}/scenarios/{id}/run` | Enqueue for processing (returns `202`) |
+| `POST` | `/sessions/{sid}/scenarios/{id}/run` | Enqueue for processing (`202`; `409` unless status is `CREATED`) |
+| `POST` | `/sessions/{sid}/scenarios/{id}/reset` | Clear result and return scenario to `CREATED` |
 | `GET` | `/sessions/{sid}/scenarios/{id}/status` | Lightweight `{id, tag, status, progress}` for polling |
 | `GET` | `/sessions/{sid}/processing` | The scenario currently processing, or `null` |
 

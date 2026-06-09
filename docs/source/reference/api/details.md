@@ -266,21 +266,25 @@ KPI values appear on the scenario object after it reaches `COMPLETE` — there i
 
 **Function:** Enqueues the scenario for execution. Returns immediately with `202 Accepted`; actual computation runs on a background worker thread. Clients must poll `GET …/status` to observe progress and completion.
 
+Only scenarios in `CREATED` state may be run. To re-run a scenario that has finished (or failed), call `POST …/reset` first to clear its result and return it to `CREATED`.
+
 **Responses**
 
 | Status | Meaning |
 |---|---|
 | `202` | Accepted. Body: scenario object in `QUEUED` state. |
 | `404` | Session or scenario not found. |
+| `409` | Scenario is not in `CREATED` state (i.e. already `QUEUED`, `PROCESSING`, `COMPLETE`, or `FAILED`). Reset it first. |
 
 The status state machine, in order:
 
 ```
 CREATED  →  QUEUED  →  PROCESSING  →  COMPLETE
-                                  ↘   FAILED
+   ↑                              ↘   FAILED
+   └───────── POST /reset ───────────┘
 ```
 
-`COMPLETE` and `FAILED` are terminal. A subsequent `/run` on a terminal scenario re-enqueues it — the manager allows re-runs. At most one scenario per session is in `PROCESSING` at any moment; check `GET /processing` to see which one.
+`COMPLETE` and `FAILED` are terminal; from either, `POST /reset` returns the scenario to `CREATED` so it can be enqueued again. At most one scenario per session is in `PROCESSING` at any moment; check `GET /processing` to see which one.
 
 :::{tip}
 **Polling pattern** — a complete run-to-completion flow:
@@ -308,6 +312,27 @@ while True:
 result = httpx.get(f"{base}/sessions/{session}/scenarios/{scenario['id']}").json()
 print(result["kpis"])
 ```
+:::
+
+---
+
+(api-reset-scenario-ref)=
+### POST /sessions/{sid}/scenarios/{id}/reset
+
+**Function:** Resets the scenario back to `CREATED` and clears its `result`. Use this to re-run a scenario that has reached `COMPLETE` or `FAILED`, since `/run` only accepts scenarios in `CREATED` state.
+
+The endpoint is a no-op (other than returning the current scenario object) when the scenario is already in `CREATED`. It is **not** allowed while the scenario is in flight: an in-flight reset would race with the background worker, which would overwrite the reset by transitioning the status back to `PROCESSING`/`COMPLETE`.
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `200` | Reset. Body: scenario object with `status = "CREATED"` and `result = null`. |
+| `404` | Session or scenario not found. |
+| `409` | Scenario is `QUEUED` or `PROCESSING`; wait for it to reach a terminal state before resetting. |
+
+:::{tip}
+KPIs computed on the previous run are recomputed the next time the scenario runs — there is no separate "clear KPIs" step.
 :::
 
 ---

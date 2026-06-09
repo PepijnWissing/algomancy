@@ -283,6 +283,96 @@ def test_run_unknown_scenario_returns_404(client):
     assert r.status_code == 404
 
 
+def test_run_rejects_when_complete(client):
+    create = client.post(
+        "/api/v1/sessions/main/scenarios",
+        json={
+            "tag": "rerun-after-complete",
+            "dataset_key": DATASET_KEY,
+            "algo_name": "Slow",
+            "algo_params": {"duration": 1},
+        },
+    ).json()
+    sid = create["id"]
+
+    assert client.post(f"/api/v1/sessions/main/scenarios/{sid}/run").status_code == 202
+    final = _poll_until_terminal(client, "main", sid)
+    assert final["status"] == "complete"
+
+    r = client.post(f"/api/v1/sessions/main/scenarios/{sid}/run")
+    assert r.status_code == 409
+    assert "complete" in r.json()["detail"]
+
+
+def test_run_rejects_when_in_flight(client):
+    create = client.post(
+        "/api/v1/sessions/main/scenarios",
+        json={
+            "tag": "double-run",
+            "dataset_key": DATASET_KEY,
+            "algo_name": "Slow",
+            "algo_params": {"duration": 2},
+        },
+    ).json()
+    sid = create["id"]
+
+    assert client.post(f"/api/v1/sessions/main/scenarios/{sid}/run").status_code == 202
+
+    r = client.post(f"/api/v1/sessions/main/scenarios/{sid}/run")
+    assert r.status_code == 409
+    detail = r.json()["detail"]
+    assert "queued" in detail or "processing" in detail
+
+
+def test_reset_unknown_scenario_returns_404(client):
+    r = client.post("/api/v1/sessions/main/scenarios/nope/reset")
+    assert r.status_code == 404
+
+
+def test_reset_clears_result_after_complete(client):
+    create = client.post(
+        "/api/v1/sessions/main/scenarios",
+        json={
+            "tag": "reset-after-complete",
+            "dataset_key": DATASET_KEY,
+            "algo_name": "Slow",
+            "algo_params": {"duration": 1},
+        },
+    ).json()
+    sid = create["id"]
+
+    assert client.post(f"/api/v1/sessions/main/scenarios/{sid}/run").status_code == 202
+    final = _poll_until_terminal(client, "main", sid)
+    assert final["status"] == "complete"
+
+    r = client.post(f"/api/v1/sessions/main/scenarios/{sid}/reset")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["status"] == "created"
+    assert body["result"] is None
+
+    # Follow-up /run is now accepted again.
+    assert client.post(f"/api/v1/sessions/main/scenarios/{sid}/run").status_code == 202
+
+
+def test_reset_rejects_when_in_flight(client):
+    create = client.post(
+        "/api/v1/sessions/main/scenarios",
+        json={
+            "tag": "reset-while-running",
+            "dataset_key": DATASET_KEY,
+            "algo_name": "Slow",
+            "algo_params": {"duration": 2},
+        },
+    ).json()
+    sid = create["id"]
+
+    assert client.post(f"/api/v1/sessions/main/scenarios/{sid}/run").status_code == 202
+
+    r = client.post(f"/api/v1/sessions/main/scenarios/{sid}/reset")
+    assert r.status_code == 409
+
+
 def test_currently_processing_when_idle(client):
     r = client.get("/api/v1/sessions/main/processing")
     assert r.status_code == 200
@@ -348,5 +438,6 @@ def test_openapi_lists_scenario_routes(client):
     assert "/api/v1/sessions/{session_id}/scenarios" in paths
     assert "/api/v1/sessions/{session_id}/scenarios/{scenario_id}" in paths
     assert "/api/v1/sessions/{session_id}/scenarios/{scenario_id}/run" in paths
+    assert "/api/v1/sessions/{session_id}/scenarios/{scenario_id}/reset" in paths
     assert "/api/v1/sessions/{session_id}/scenarios/{scenario_id}/status" in paths
     assert "/api/v1/sessions/{session_id}/processing" in paths
