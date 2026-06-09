@@ -5,6 +5,12 @@ SQLAlchemy-compatible database (SQLite or Postgres). All scenarios for a
 session are loaded into memory at ``startup()`` and kept in sync with the DB on
 every mutation.
 
+Scenario results that implement :class:`SqlResultLayout` are stored in shared
+per-sub-table SQL tables (``algomancy_result__<sub>``) keyed by session and
+scenario discriminator columns — the table count is bounded by the result
+shape, not by the number of scenarios. Results that do not implement the
+protocol fall back to a JSON blob on ``algomancy_scenario_runs.result_blob``.
+
 The repository reconstructs ``Scenario`` objects on load by matching stored
 ``algorithm_name`` and ``kpi_names`` against the in-process template
 dictionaries. If a referenced template no longer exists, the scenario is
@@ -30,10 +36,13 @@ from ..kpifactory import KpiFactory
 from ..result import BaseScenarioResult
 from ..scenario import Scenario, ScenarioStatus
 from .models import (
-    metadata as _scenario_metadata,
-    scenarios_table,
-    scenario_runs_table,
+    RESULT_TABLE_PREFIX,
+    SCENARIO_COL,
+    SESSION_COL,
     kpi_measurements_table,
+    metadata as _scenario_metadata,
+    scenario_runs_table,
+    scenarios_table,
 )
 from .protocols import SqlResultLayout
 
@@ -43,13 +52,9 @@ def _safe_segment(s: str) -> str:
     return re.sub(r"[^a-zA-Z0-9_]", "_", s)
 
 
-def _result_table_name(session_id: str, scenario_id: str, sub_table: str) -> str:
-    """Deterministic SQL table name for one sub-table of a ScenarioResult."""
-    return f"result__{_safe_segment(session_id)}__{_safe_segment(scenario_id)}__{_safe_segment(sub_table)}"
-
-
-def _result_table_prefix(session_id: str, scenario_id: str) -> str:
-    return f"result__{_safe_segment(session_id)}__{_safe_segment(scenario_id)}__"
+def _result_table_name(sub_table: str) -> str:
+    """Shared physical table name for a given result sub-table name."""
+    return f"{RESULT_TABLE_PREFIX}{_safe_segment(sub_table)}"
 
 
 class SqlScenarioRepository:
@@ -151,15 +156,8 @@ class SqlScenarioRepository:
         if scenario_id not in self._scenarios:
             return False
         tag = self._scenarios[scenario_id].tag
-        # Reflect table names BEFORE entering the transaction (see ``refresh``
-        # for why — Inspector ROLLBACK on the shared sqlite connection would
-        # otherwise undo the DML in this block).
-        result_prefix = _result_table_prefix(self._session_id, scenario_id)
-        stale_tables = [
-            t
-            for t in sa.inspect(self._engine).get_table_names()
-            if t.startswith(result_prefix)
-        ]
+        sub_tables = self._collect_sub_tables(scenario_id)
+        existing_tables = set(sa.inspect(self._engine).get_table_names())
         with self._engine.begin() as conn:
             # Cascade in DB (FK ON DELETE CASCADE) handles scenario_runs and
             # kpi_measurements rows. If the DB doesn't enforce FK constraints
@@ -179,8 +177,7 @@ class SqlScenarioRepository:
             conn.execute(
                 scenarios_table.delete().where(scenarios_table.c.id == scenario_id)
             )
-            for table_name in stale_tables:
-                conn.execute(sa.text(f'DROP TABLE IF EXISTS "{table_name}"'))
+            self._delete_result_rows(conn, scenario_id, sub_tables, existing_tables)
         del self._scenarios[scenario_id]
         if tag in self._tag_index:
             del self._tag_index[tag]
@@ -191,24 +188,16 @@ class SqlScenarioRepository:
         """Drop persisted run state for ``scenario_id``, keeping the scenario row.
 
         Deletes every ``algomancy_scenario_runs`` row for the scenario and every
-        ``algomancy_kpi_measurements`` row hanging off those runs, drops any
-        per-result ``result__<session>__<scenario_id>__*`` sub-tables, and
-        rewrites ``algomancy_scenarios.status`` to ``'created'`` so a
-        subsequent ``startup()`` rehydrates the scenario in its reset state.
-        Returns ``False`` if the scenario isn't in this session's cache.
+        ``algomancy_kpi_measurements`` row hanging off those runs, removes any
+        per-result rows in the shared ``algomancy_result__<sub>`` tables, and
+        rewrites ``algomancy_scenarios.status`` to ``'created'`` so a subsequent
+        ``startup()`` rehydrates the scenario in its reset state. Returns
+        ``False`` if the scenario isn't in this session's cache.
         """
         if scenario_id not in self._scenarios:
             return False
-        # Reflect table names BEFORE entering the transaction — Inspector
-        # borrows a connection and ROLLBACKs on release, which on
-        # SingletonThreadPool sqlite (default for ``sqlite:///:memory:``) would
-        # roll back any DML pending on the engine.begin() conn.
-        result_prefix = _result_table_prefix(self._session_id, scenario_id)
-        stale_tables = [
-            t
-            for t in sa.inspect(self._engine).get_table_names()
-            if t.startswith(result_prefix)
-        ]
+        sub_tables = self._collect_sub_tables(scenario_id)
+        existing_tables = set(sa.inspect(self._engine).get_table_names())
         with self._engine.begin() as conn:
             conn.execute(
                 sa.text(
@@ -227,8 +216,7 @@ class SqlScenarioRepository:
                 .where(scenarios_table.c.id == scenario_id)
                 .values(status=str(ScenarioStatus.CREATED))
             )
-            for table_name in stale_tables:
-                conn.execute(sa.text(f'DROP TABLE IF EXISTS "{table_name}"'))
+            self._delete_result_rows(conn, scenario_id, sub_tables, existing_tables)
         self._log(f"Refreshed scenario '{self._scenarios[scenario_id].tag}'.")
         return True
 
@@ -261,12 +249,18 @@ class SqlScenarioRepository:
         run_id = str(uuid.uuid4())
         result_blob: Optional[str] = None
         error_text: Optional[str] = None
+        sub_tables: List[str] = []
+
+        # Drop any previous run's per-result rows for this scenario before
+        # writing the new ones. Sub-tables that the new shape no longer uses
+        # would otherwise leave stale rows behind.
+        previous_sub_tables = self._collect_sub_tables(scenario.id)
 
         if scenario.status == ScenarioStatus.COMPLETE:
             if scenario.result is not None:
                 try:
-                    result_blob = self._persist_result_payload(
-                        scenario.result, scenario.id
+                    result_blob, sub_tables = self._persist_result_payload(
+                        scenario.result, scenario.id, previous_sub_tables
                     )
                 except (TypeError, ValueError) as exc:
                     self._log(
@@ -278,6 +272,20 @@ class SqlScenarioRepository:
 
         now = datetime.now()
         with self._engine.begin() as conn:
+            # Clear previous run rows for this scenario so per-result rows in
+            # the shared tables remain in sync with run history.
+            conn.execute(
+                sa.text(
+                    "DELETE FROM algomancy_kpi_measurements WHERE run_id IN "
+                    "(SELECT run_id FROM algomancy_scenario_runs WHERE scenario_id = :sid)"
+                ),
+                {"sid": scenario.id},
+            )
+            conn.execute(
+                scenario_runs_table.delete().where(
+                    scenario_runs_table.c.scenario_id == scenario.id
+                )
+            )
             conn.execute(
                 scenario_runs_table.insert().values(
                     run_id=run_id,
@@ -287,6 +295,7 @@ class SqlScenarioRepository:
                     status=str(scenario.status),
                     result_blob=result_blob,
                     error=error_text,
+                    result_sub_tables=json.dumps(sub_tables) if sub_tables else None,
                 )
             )
             # Persist KPI measurements
@@ -396,37 +405,46 @@ class SqlScenarioRepository:
 
         return scenario
 
-    def _persist_result_payload(self, result, scenario_id: str) -> Optional[str]:
-        """Persist a scenario result, returning the ``result_blob`` value to store.
+    def _persist_result_payload(
+        self, result, scenario_id: str, previous_sub_tables: List[str]
+    ) -> tuple[Optional[str], List[str]]:
+        """Persist a scenario result.
 
-        Dispatch mirrors :class:`DatabaseDataManager._persist_datasource`: if the
-        result implements :class:`SqlResultLayout`, each DataFrame is written to
-        a dedicated ``result__<session>__<scenario_id>__<sub>`` table and the
-        catalogue blob is ``None``. Otherwise the result is serialised via
+        Returns a ``(result_blob, sub_tables)`` tuple: ``result_blob`` is the
+        JSON string to store on ``algomancy_scenario_runs.result_blob`` (or
+        ``None`` for the per-table path) and ``sub_tables`` is the list of
+        sub-table names this run wrote to the shared
+        ``algomancy_result__<sub>`` tables (empty for the JSON path).
+
+        Dispatch mirrors :class:`DatabaseDataManager._persist_datasource`: if
+        the result implements :class:`SqlResultLayout`, each DataFrame is
+        appended to a shared per-sub-table SQL table and the catalogue blob is
+        ``None``. Otherwise the result is serialised via
         :meth:`BaseScenarioResult.to_json` and stored as a JSON string. A bare
         ``dict`` is serialised directly via :func:`json.dumps` to preserve
         backward compatibility with code paths that stashed raw dicts as
         ``Scenario.result`` (e.g. failure payloads).
         """
         if isinstance(result, SqlResultLayout):
-            prefix = _result_table_prefix(self._session_id, scenario_id)
-            inspector = sa.inspect(self._engine)
-            # Drop any stale sub-tables left over from a previous run whose
-            # result schema may have differed. Sub-tables we re-write get
-            # replaced anyway via ``if_exists="replace"``, but a removed
-            # sub-table would otherwise linger.
+            sql_tables = result.to_sql_tables()
+            sub_table_names = list(sql_tables.keys())
+            stale = set(previous_sub_tables) - set(sub_table_names)
+            existing_tables = set(sa.inspect(self._engine).get_table_names())
             with self._engine.begin() as conn:
-                for table_name in inspector.get_table_names():
-                    if table_name.startswith(prefix):
-                        conn.execute(sa.text(f'DROP TABLE IF EXISTS "{table_name}"'))
-            for sub_table, df in result.to_sql_tables().items():
-                sql_name = _result_table_name(self._session_id, scenario_id, sub_table)
-                with self._engine.begin() as conn:
-                    df.to_sql(sql_name, conn, if_exists="replace", index=False)
-            return None
+                self._delete_result_rows(
+                    conn,
+                    scenario_id,
+                    list(stale) + sub_table_names,
+                    existing_tables,
+                )
+                for sub_table, df in sql_tables.items():
+                    self._append_to_shared_result_table(
+                        conn, sub_table, scenario_id, df
+                    )
+            return None, sub_table_names
         if isinstance(result, BaseScenarioResult):
-            return result.to_json()
-        return json.dumps(result, default=str)
+            return result.to_json(), []
+        return json.dumps(result, default=str), []
 
     def _load_latest_result(
         self, scenario_id: str, algorithm: ALGORITHM
@@ -435,7 +453,8 @@ class SqlScenarioRepository:
 
         Dispatch mirrors :class:`DatabaseDataManager._load_datasource_from_db`:
         if ``result_blob`` is present, use ``algorithm.result_class.from_json``;
-        otherwise instantiate via ``result_class`` and load sub-tables via
+        otherwise instantiate via ``result_class`` and load rows from the
+        shared ``algomancy_result__<sub>`` tables via
         :class:`SqlResultLayout`.
         """
         with self._engine.connect() as conn:
@@ -477,16 +496,103 @@ class SqlScenarioRepository:
                 "SqlResultLayout. Either restore the original result_class or "
                 "delete and re-run the scenario."
             )
-        prefix = _result_table_prefix(self._session_id, scenario_id)
+        sub_tables = _decode_sub_tables(getattr(row, "result_sub_tables", None)) or []
         inspector = sa.inspect(self._engine)
+        existing = set(inspector.get_table_names())
         tables: Dict[str, pd.DataFrame] = {}
-        for table_name in inspector.get_table_names():
-            if table_name.startswith(prefix):
-                sub_table = table_name[len(prefix) :]
-                with self._engine.connect() as conn:
-                    tables[sub_table] = pd.read_sql_table(table_name, conn)
+        for sub in sub_tables:
+            table_name = _result_table_name(sub)
+            if table_name not in existing:
+                continue
+            with self._engine.connect() as conn:
+                df = pd.read_sql(
+                    sa.text(
+                        f'SELECT * FROM "{table_name}" '
+                        f'WHERE "{SESSION_COL}" = :sid AND "{SCENARIO_COL}" = :scid'
+                    ),
+                    conn,
+                    params={"sid": self._session_id, "scid": scenario_id},
+                )
+            tables[sub] = df.drop(columns=[SESSION_COL, SCENARIO_COL], errors="ignore")
         inst.from_sql_tables(tables)
         return inst
+
+    def _collect_sub_tables(self, scenario_id: str) -> List[str]:
+        """Return the union of result sub-table names recorded for any run."""
+        with self._engine.connect() as conn:
+            rows = conn.execute(
+                sa.text(
+                    "SELECT result_sub_tables FROM algomancy_scenario_runs "
+                    "WHERE scenario_id = :sid"
+                ),
+                {"sid": scenario_id},
+            ).fetchall()
+        names: List[str] = []
+        seen = set()
+        for row in rows:
+            decoded = _decode_sub_tables(row[0]) or []
+            for sub in decoded:
+                if sub not in seen:
+                    seen.add(sub)
+                    names.append(sub)
+        return names
+
+    def _delete_result_rows(
+        self,
+        conn: sa.Connection,
+        scenario_id: str,
+        sub_tables: List[str],
+        existing_tables: Optional[set[str]] = None,
+    ) -> None:
+        """Remove every row this (session, scenario) wrote to the shared tables.
+
+        ``existing_tables`` should be pre-computed OUTSIDE the surrounding
+        transaction when this is called inside ``engine.begin()``. Using
+        ``sa.inspect`` inside the transaction borrows a connection and ROLLBACKs
+        on release with SingletonThreadPool sqlite (default for
+        ``sqlite:///:memory:``), undoing the pending DML.
+        """
+        if existing_tables is None:
+            existing_tables = set(sa.inspect(self._engine).get_table_names())
+        for sub in sub_tables:
+            table_name = _result_table_name(sub)
+            if table_name not in existing_tables:
+                continue
+            conn.execute(
+                sa.text(
+                    f'DELETE FROM "{table_name}" '
+                    f'WHERE "{SESSION_COL}" = :sid AND "{SCENARIO_COL}" = :scid'
+                ),
+                {"sid": self._session_id, "scid": scenario_id},
+            )
+
+    def _append_to_shared_result_table(
+        self,
+        conn: sa.Connection,
+        sub_table: str,
+        scenario_id: str,
+        df: pd.DataFrame,
+    ) -> None:
+        """Append ``df`` to the shared physical result table for ``sub_table``.
+
+        Prepends the (session_id, scenario_id) discriminator columns. The
+        physical table is created on first write with column types inferred
+        by pandas — subsequent writes share that schema.
+        """
+        if SESSION_COL in df.columns or SCENARIO_COL in df.columns:
+            raise ValueError(
+                f"DataFrame for result sub-table '{sub_table}' must not contain "
+                f"reserved columns {SESSION_COL!r} / {SCENARIO_COL!r}."
+            )
+        out = df.copy()
+        out.insert(0, SCENARIO_COL, scenario_id)
+        out.insert(0, SESSION_COL, self._session_id)
+        out.to_sql(
+            _result_table_name(sub_table),
+            conn,
+            if_exists="append",
+            index=False,
+        )
 
     def _log(self, msg: str) -> None:
         if self._logger:
@@ -515,3 +621,15 @@ class SqlScenarioRepository:
                     "ADD COLUMN data_parameter_values TEXT"
                 )
             )
+
+
+def _decode_sub_tables(raw: Optional[str]) -> Optional[List[str]]:
+    if raw is None:
+        return None
+    try:
+        value = json.loads(raw)
+    except (TypeError, ValueError):
+        return None
+    if isinstance(value, list):
+        return [str(v) for v in value]
+    return None
