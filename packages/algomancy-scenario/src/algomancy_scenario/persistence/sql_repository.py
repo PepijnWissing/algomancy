@@ -151,8 +151,15 @@ class SqlScenarioRepository:
         if scenario_id not in self._scenarios:
             return False
         tag = self._scenarios[scenario_id].tag
-        inspector = sa.inspect(self._engine)
+        # Reflect table names BEFORE entering the transaction (see ``refresh``
+        # for why — Inspector ROLLBACK on the shared sqlite connection would
+        # otherwise undo the DML in this block).
         result_prefix = _result_table_prefix(self._session_id, scenario_id)
+        stale_tables = [
+            t
+            for t in sa.inspect(self._engine).get_table_names()
+            if t.startswith(result_prefix)
+        ]
         with self._engine.begin() as conn:
             # Cascade in DB (FK ON DELETE CASCADE) handles scenario_runs and
             # kpi_measurements rows. If the DB doesn't enforce FK constraints
@@ -172,14 +179,57 @@ class SqlScenarioRepository:
             conn.execute(
                 scenarios_table.delete().where(scenarios_table.c.id == scenario_id)
             )
-            # Drop any per-sub-table result tables for this scenario
-            for table_name in inspector.get_table_names():
-                if table_name.startswith(result_prefix):
-                    conn.execute(sa.text(f'DROP TABLE IF EXISTS "{table_name}"'))
+            for table_name in stale_tables:
+                conn.execute(sa.text(f'DROP TABLE IF EXISTS "{table_name}"'))
         del self._scenarios[scenario_id]
         if tag in self._tag_index:
             del self._tag_index[tag]
         self._log(f"Deleted scenario '{tag}'.")
+        return True
+
+    def refresh(self, scenario_id: str) -> bool:
+        """Drop persisted run state for ``scenario_id``, keeping the scenario row.
+
+        Deletes every ``algomancy_scenario_runs`` row for the scenario and every
+        ``algomancy_kpi_measurements`` row hanging off those runs, drops any
+        per-result ``result__<session>__<scenario_id>__*`` sub-tables, and
+        rewrites ``algomancy_scenarios.status`` to ``'created'`` so a
+        subsequent ``startup()`` rehydrates the scenario in its reset state.
+        Returns ``False`` if the scenario isn't in this session's cache.
+        """
+        if scenario_id not in self._scenarios:
+            return False
+        # Reflect table names BEFORE entering the transaction — Inspector
+        # borrows a connection and ROLLBACKs on release, which on
+        # SingletonThreadPool sqlite (default for ``sqlite:///:memory:``) would
+        # roll back any DML pending on the engine.begin() conn.
+        result_prefix = _result_table_prefix(self._session_id, scenario_id)
+        stale_tables = [
+            t
+            for t in sa.inspect(self._engine).get_table_names()
+            if t.startswith(result_prefix)
+        ]
+        with self._engine.begin() as conn:
+            conn.execute(
+                sa.text(
+                    "DELETE FROM algomancy_kpi_measurements WHERE run_id IN "
+                    "(SELECT run_id FROM algomancy_scenario_runs WHERE scenario_id = :sid)"
+                ),
+                {"sid": scenario_id},
+            )
+            conn.execute(
+                scenario_runs_table.delete().where(
+                    scenario_runs_table.c.scenario_id == scenario_id
+                )
+            )
+            conn.execute(
+                scenarios_table.update()
+                .where(scenarios_table.c.id == scenario_id)
+                .values(status=str(ScenarioStatus.CREATED))
+            )
+            for table_name in stale_tables:
+                conn.execute(sa.text(f'DROP TABLE IF EXISTS "{table_name}"'))
+        self._log(f"Refreshed scenario '{self._scenarios[scenario_id].tag}'.")
         return True
 
     def list(self) -> List[Scenario]:

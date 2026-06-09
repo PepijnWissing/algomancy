@@ -12,6 +12,7 @@ from typing import Dict, Generic
 
 from algomancy_utils.logger import Logger
 from algomancy_utils.baseparameterset import BaseParameterSet, EmptyParameters
+from algomancy_utils.unit import Measurement
 from algomancy_data import BASEDATASOURCE
 from .basealgorithm import ALGORITHM
 from .keyperformanceindicator import BASE_KPI
@@ -136,8 +137,18 @@ class Scenario(Generic[BASE_KPI]):
         pass
 
     def refresh(self, logger: Logger = None):
+        """Reset the scenario's in-memory state so it can be re-run.
+
+        Clears ``result``, returns ``status`` to ``CREATED``, resets the
+        algorithm's progress counter, and reverts every KPI's measurement to
+        its uncomputed sentinel (``Measurement.INITIAL_VALUE``). Does NOT touch
+        persisted run history; the repository's ``refresh`` hook handles that.
+        """
         self.status = ScenarioStatus.CREATED
         self.result = None
+        self._algorithm.set_progress(0)
+        for kpi in self._kpis.values():
+            kpi._measurement.value = Measurement.INITIAL_VALUE
         if logger:
             logger.log(f"Refreshed scenario {self.tag}")
 
