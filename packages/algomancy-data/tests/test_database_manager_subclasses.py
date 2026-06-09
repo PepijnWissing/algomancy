@@ -210,9 +210,11 @@ class TestJsonBlobFallback:
         )
         m.add_data_source(ds)
 
-        # Catalogue row carries the JSON payload; no ds__... data tables.
+        # Catalogue row carries the JSON payload; no shared algomancy_ds__... tables.
         inspector = sa.inspect(engine)
-        data_tables = [t for t in inspector.get_table_names() if t.startswith("ds__")]
+        data_tables = [
+            t for t in inspector.get_table_names() if t.startswith("algomancy_ds__")
+        ]
         assert data_tables == []
         assert m._db_catalogue["blob"]["payload"] is not None
 
@@ -254,11 +256,11 @@ class TestSqlLayoutCustomSubclass:
         ds.from_sql_tables({"items": df})
         m1.add_data_source(ds)
 
-        # A real per-sub-table SQL table exists, and the payload column is NULL.
+        # A shared per-sub-table SQL table exists, and the payload column is NULL.
         inspector = sa.inspect(engine)
-        data_tables = [t for t in inspector.get_table_names() if t.startswith("ds__")]
-        assert any("__tab__items" in t for t in data_tables)
+        assert "algomancy_ds__items" in inspector.get_table_names()
         assert m1._db_catalogue["tab"]["payload"] is None
+        assert m1._db_catalogue["tab"]["sub_tables"] == ["items"]
 
         m2 = _make_manager(engine, TabularDataSource)
         loaded = m2.get_data("tab")

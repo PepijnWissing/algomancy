@@ -9,6 +9,32 @@
 
 ### Changed
 - **`POST …/run` now requires `CREATED` status** — previously the endpoint silently re-enqueued a scenario regardless of state. It now returns `409 Conflict` when the scenario is `QUEUED`, `PROCESSING`, `COMPLETE`, or `FAILED`. Call `…/reset` first to re-run a finished scenario.
+- **SQL storage revised to a shared per-sub-table layout.** **Breaking** for existing databases on the `database` backend.
+
+  :::{dropdown} {octicon}`light-bulb` Details
+  :color: light
+  Previously, `DatabaseDataManager` and `SqlScenarioRepository` created a fresh
+  physical SQL table for every `(session, dataset, sub_table)` and
+  `(session, scenario, sub_table)` triple (`ds__…` / `result__…`). The number
+  of tables grew with sessions × datasets / scenarios.
+
+  Now there is one shared physical table per sub-table *name*
+  (`algomancy_ds__<sub>` and `algomancy_result__<sub>`); every row carries
+  `_algomancy_session_id` plus `_algomancy_dataset_name` or
+  `_algomancy_scenario_id` discriminator columns. The table count is bounded
+  by the DataSource / ScenarioResult shape, not by usage volume.
+
+  Catalogue rows now also track which sub-tables a dataset / run wrote to
+  (`algomancy_datasets.sub_tables`, `algomancy_scenario_runs.result_sub_tables`).
+  Custom DataSource sub-tables must not declare columns named
+  `_algomancy_session_id` / `_algomancy_dataset_name` (or
+  `_algomancy_scenario_id` for results); `_persist_datasource` raises if they
+  do.
+
+  There is no automatic migration. Drop any pre-existing
+  `algomancy_datasets`, `algomancy_scenario_runs`, `ds__…`, and `result__…`
+  tables and rebuild from source data.
+  :::
 
 ## v0.8.2
 _Released on 05-06-2026_

@@ -36,19 +36,24 @@ access and caches it, so only accessed datasets occupy memory.
 
 **Persistence path selection** is dispatched automatically per DataSource:
 
-- *Per-sub-table SQL* (used when the subclass implements {ref}`SqlTableLayout <sql-table-layout-ref>`) —
-  each DataFrame becomes a dedicated SQL table (`ds__<session>__<name>__<sub>`),
-  externally queryable.
+- *Shared per-sub-table SQL* (used when the subclass implements {ref}`SqlTableLayout <sql-table-layout-ref>`) —
+  one physical SQL table per sub-table *name* (e.g. `algomancy_ds__customers`),
+  shared across all sessions and datasets. Each row carries
+  `_algomancy_session_id` and `_algomancy_dataset_name` discriminator columns,
+  so the table count is bounded by the DataSource shape rather than growing
+  with sessions × datasets. Data stays externally queryable.
 - *JSON-blob fallback* (used for all other `BaseDataSource` subclasses) — the
   DataSource is serialised via its abstract `to_json()` into a `payload` column
   on the `algomancy_datasets` catalogue table.
 
 The bundled `DataSource` satisfies `SqlTableLayout` via its `tables` dict, so
-it is always stored as real SQL tables.
+it is always stored in the shared per-sub-table tables.
 
-**Schema drift** — if an older database is missing the `payload` column,
-`startup()` raises immediately with a clear message directing you to drop the
-catalogue table and rebuild (there is no automatic migration).
+**Schema drift** — if an older database is missing the `payload` or
+`sub_tables` columns, `startup()` raises immediately with a clear message
+directing you to drop the catalogue table (and any leftover `algomancy_ds__…`
+tables) and rebuild. There is no automatic migration from the older
+per-(session, dataset) table layout.
 
 Requires `sqlalchemy>=2.0`. Install via:
 

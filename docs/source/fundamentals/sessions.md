@@ -90,11 +90,12 @@ The session's scenarios, runs, and KPI measurements live in
 datasets are persisted through one of two paths, chosen per-DataSource
 by `DatabaseDataManager`:
 
-- **Per-sub-table SQL** (default, used by the bundled `DataSource` and
-  any custom subclass that implements the `SqlTableLayout` protocol) —
-  each DataFrame becomes its own table named
-  `ds__{session_id}__{dataset_name}__{sub_table}`. Data stays externally
-  queryable and is loaded lazily on first access.
+- **Shared per-sub-table SQL** (default, used by the bundled `DataSource`
+  and any custom subclass that implements the `SqlTableLayout` protocol)
+  — each DataFrame is appended to a single shared physical table named
+  `algomancy_ds__{sub_table}`, with `_algomancy_session_id` and
+  `_algomancy_dataset_name` discriminator columns on every row. Data
+  stays externally queryable and is loaded lazily on first access.
 - **JSON blob** (fallback, used by any other `BaseDataSource` subclass)
   — the DataSource is serialised via `to_json()` into a `payload`
   column on the catalogue.
@@ -131,10 +132,12 @@ one frontend per backend process unless the second one is read-only.
 | Resolve display name → id | `resolve_id_by_display_name(name)` | (use the list response) |
 
 Deleting a session cascades through all of its scenarios, runs, KPI
-measurements, and uploaded data — on the database backend the dynamic
-`ds__{id}__*` tables are dropped. Deleting the last remaining session is
-never an empty state: a fresh `"main"` session is auto-created in its
-place.
+measurements, and uploaded data — on the database backend the session's
+rows are deleted from the shared `algomancy_ds__*` and
+`algomancy_result__*` tables (the physical tables themselves stay,
+because other sessions may still own rows in them). Deleting the last
+remaining session is never an empty state: a fresh `"main"` session is
+auto-created in its place.
 
 ## When to create a session
 
