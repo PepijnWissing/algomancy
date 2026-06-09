@@ -73,7 +73,14 @@ def _api_cmd(port: int, backend: str, database_url: str | None = None) -> list[s
 def _create_and_run_scenario(
     base_url: str, session_id: str, dataset_key: str, tag: str
 ) -> str:
-    """Create a scenario, enqueue it, poll until complete. Return scenario id."""
+    """Create a scenario, enqueue it, poll until complete. Return scenario id.
+
+    The example wires the ScenarioManager with ``autorun=True``, which means
+    ``create_scenario`` already enqueues the scenario for processing — with a
+    fast algorithm it can even finish before the next HTTP call. So we only
+    issue an explicit ``/run`` when the scenario is still in ``created``
+    status; otherwise we rely on the autorun pipeline and poll for completion.
+    """
     create = httpx.post(
         f"{base_url}/api/v1/sessions/{session_id}/scenarios",
         json={
@@ -86,12 +93,14 @@ def _create_and_run_scenario(
     assert create.status_code == 201, (
         f"create-scenario failed: {create.status_code} {create.text}"
     )
-    scenario_id = create.json()["id"]
+    created = create.json()
+    scenario_id = created["id"]
 
-    run = httpx.post(
-        f"{base_url}/api/v1/sessions/{session_id}/scenarios/{scenario_id}/run"
-    )
-    assert run.status_code == 202, f"run failed: {run.status_code} {run.text}"
+    if created.get("status") == "created":
+        run = httpx.post(
+            f"{base_url}/api/v1/sessions/{session_id}/scenarios/{scenario_id}/run"
+        )
+        assert run.status_code == 202, f"run failed: {run.status_code} {run.text}"
 
     deadline = time.monotonic() + _RUN_TIMEOUT
     last_status: str | None = None
