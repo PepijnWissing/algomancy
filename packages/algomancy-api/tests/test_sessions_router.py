@@ -30,6 +30,17 @@ def app_sessions(api_core_kwargs, tmp_path) -> FastAPI:
     return ApiLauncher.build(cfg)
 
 
+@pytest.fixture
+def app_sessions_create_disabled(api_core_kwargs, tmp_path) -> FastAPI:
+    """Same setup as ``app_sessions`` but with ``allow_session_create=False``."""
+    (tmp_path / "alpha").mkdir(exist_ok=True)
+    (tmp_path / "beta").mkdir(exist_ok=True)
+    kwargs = dict(api_core_kwargs)
+    kwargs["data_path"] = str(tmp_path)
+    cfg = ApiConfiguration(allow_session_create=False, **kwargs)
+    return ApiLauncher.build(cfg)
+
+
 def _ids_by_display_name(client: TestClient) -> dict[str, str]:
     body = client.get("/api/v1/sessions").json()
     return {s["display_name"]: s["id"] for s in body["sessions"]}
@@ -195,6 +206,48 @@ def test_delete_last_session_creates_default_replacement(app_empty_sessions):
     assert refreshed["sessions"][0]["display_name"] == "main"
     # The replacement session has a fresh UUID — id is not reused.
     assert refreshed["sessions"][0]["id"] != only_id
+
+
+def test_create_session_forbidden_when_disabled(app_sessions_create_disabled):
+    client = TestClient(app_sessions_create_disabled)
+    r = client.post("/api/v1/sessions", json={"display_name": "gamma"})
+    assert r.status_code == 403
+    assert "disabled" in r.json()["detail"].lower()
+
+    # List still works; nothing was added.
+    names = {
+        s["display_name"] for s in client.get("/api/v1/sessions").json()["sessions"]
+    }
+    assert "gamma" not in names
+
+
+def test_copy_session_forbidden_when_disabled(app_sessions_create_disabled):
+    client = TestClient(app_sessions_create_disabled)
+    ids = _ids_by_display_name(client)
+    r = client.post(
+        f"/api/v1/sessions/{ids['alpha']}/copy",
+        json={"new_display_name": "alpha-copy"},
+    )
+    assert r.status_code == 403
+
+
+def test_rename_and_delete_still_work_when_create_disabled(
+    app_sessions_create_disabled,
+):
+    """Disabling create only blocks new-session ingress — existing sessions
+    remain fully manageable (rename, delete)."""
+    client = TestClient(app_sessions_create_disabled)
+    ids = _ids_by_display_name(client)
+    alpha_id = ids["alpha"]
+
+    r = client.patch(
+        f"/api/v1/sessions/{alpha_id}",
+        json={"display_name": "alpha-renamed"},
+    )
+    assert r.status_code == 200
+
+    r = client.delete(f"/api/v1/sessions/{ids['beta']}")
+    assert r.status_code == 200
 
 
 def test_openapi_lists_session_routes(app_sessions):

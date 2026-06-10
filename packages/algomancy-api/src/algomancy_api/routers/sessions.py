@@ -15,7 +15,11 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from algomancy_scenario import SessionManager
 
-from ..dependencies import get_session_manager, resolve_session_id
+from ..dependencies import (
+    get_session_manager,
+    require_session_create_allowed,
+    resolve_session_id,
+)
 from ..schemas import (
     CopySessionRequest,
     CreateSessionRequest,
@@ -51,6 +55,7 @@ def list_sessions(
     status_code=status.HTTP_201_CREATED,
     response_model=SessionsListResponse,
     summary="Create a new empty session",
+    dependencies=[Depends(require_session_create_allowed)],
 )
 def create_session(
     body: CreateSessionRequest,
@@ -68,6 +73,7 @@ def create_session(
     status_code=status.HTTP_201_CREATED,
     response_model=SessionsListResponse,
     summary="Copy an existing session under a new display name",
+    dependencies=[Depends(require_session_create_allowed)],
 )
 def copy_session(
     session_id: str,

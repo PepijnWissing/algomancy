@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import HTTPException, Path, Request
+from fastapi import HTTPException, Path, Request, status
 
 from algomancy_scenario import ScenarioManager, SessionManager
 
@@ -12,6 +12,22 @@ def get_session_manager(request: Request) -> SessionManager:
         # Shouldn't happen unless the app was constructed outside ApiLauncher.build.
         raise HTTPException(status_code=500, detail="SessionManager not configured")
     return sm
+
+
+def require_session_create_allowed(request: Request) -> None:
+    """403 when the server is configured to disallow new-session creation.
+
+    Mirrors the GUI's ``FeatureConfig.show_session_picker=False`` flag: useful
+    for single-tenant deployments where the operator has provisioned the
+    session(s) up front and wants the HTTP surface to reject create / copy
+    attempts rather than letting clients quietly add new sessions.
+    """
+    cfg = getattr(request.app.state, "config", None)
+    if cfg is not None and not getattr(cfg, "allow_session_create", True):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Session creation is disabled on this server",
+        )
 
 
 def resolve_session_id(sm: SessionManager, session_id_or_name: str) -> str | None:

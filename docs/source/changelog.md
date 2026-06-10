@@ -3,6 +3,9 @@
 > Migrating from v0.5 or earlier? See the [migration guide](migration-ref)
 > for before/after snippets covering every breaking change in v0.6–v0.7.
 ## v0.8.4
+### Added
+- **`ApiConfiguration.allow_session_create`** — when `False`, the HTTP API rejects `POST /sessions` and `POST /sessions/{id}/copy` with `403 Forbidden`. Mirrors the GUI's `FeatureConfig.show_session_picker=False` for single-tenant deployments where the operator has provisioned the session(s) up front. List / rename / delete on existing sessions, and all per-session routes, are unaffected.
+
 ### Fixed
 - **GUI landing smoke test** — wait for `document.title` to settle on the configured app title before asserting on `page.content()`; previously a `domcontentloaded` race could capture HTML while Dash had swapped the title to `update_title` ("Updating…").
 - **Persistence smoke `_create_and_run_scenario` helper** — only issue an explicit `POST …/run` when the scenario is still in `CREATED` status after create; under `autorun=True` the scenario may already be queued/complete, which previously caused a spurious `409` against the new strict `/run` contract.
