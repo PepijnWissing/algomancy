@@ -94,7 +94,15 @@ def test_landing_page_renders_dashboard_title(gui_base_url):
         browser = pw.chromium.launch()
         page = browser.new_page()
         try:
+            # The dashboard title lives in <title>, which Dash may temporarily
+            # swap to "Updating..." while initial-load callbacks are in flight.
+            # Wait until the title settles on the configured value before
+            # asserting on the served HTML.
             page.goto(gui_base_url, wait_until="domcontentloaded")
+            page.wait_for_function(
+                "document.title.toLowerCase().includes('algomancy dashboard')",
+                timeout=30000,
+            )
             page.screenshot(path=str(_screenshot_dir() / "gui_landing.png"))
             content = page.content().lower()
             # The example's StylingConfig sets title="Example implementation of
