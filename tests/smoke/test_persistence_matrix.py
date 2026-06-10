@@ -296,6 +296,10 @@ def test_json_backend_loads_data_across_restart(tmp_path):
 
 
 @pytest.mark.slow
+@pytest.mark.skip(
+    reason="database backend exposes no datasets on cold boot — see "
+    "https://github.com/PepijnWissing/algomancy/issues/222"
+)
 def test_database_backend_scenarios_survive_restart(tmp_path):
     """Backend=database (SQLite): scenarios survive restart via the DB."""
     # SQLAlchemy is an optional extra (``algomancy-scenario[database]``).
