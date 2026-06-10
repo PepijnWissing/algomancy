@@ -9,6 +9,10 @@
 
 ### Changed
 - **`POST …/run` now requires `CREATED` status** — previously the endpoint silently re-enqueued a scenario regardless of state. It now returns `409 Conflict` when the scenario is `QUEUED`, `PROCESSING`, `COMPLETE`, or `FAILED`. Call `…/reset` first to re-run a finished scenario.
+
+### Fixed
+- **GUI landing smoke test** — wait for `document.title` to settle on the configured app title before asserting on `page.content()`; previously a `domcontentloaded` race could capture HTML while Dash had swapped the title to `update_title` ("Updating…").
+- **Persistence smoke `_create_and_run_scenario` helper** — only issue an explicit `POST …/run` when the scenario is still in `CREATED` status after create; under `autorun=True` the scenario may already be queued/complete, which previously caused a spurious `409` against the new strict `/run` contract.
 - **SQL storage revised to a shared per-sub-table layout.** **Breaking** for existing databases on the `database` backend.
 
   :::{dropdown} {octicon}`light-bulb` Details
