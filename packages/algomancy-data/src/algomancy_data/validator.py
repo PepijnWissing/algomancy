@@ -333,7 +333,7 @@ class SchemaValidator(Validator):
         return self.messages
 
 
-def _schema_table_map(schemas: List[Schema]) -> Dict[str, Schema]:
+def schema_table_map(schemas: List[Schema]) -> Dict[str, Schema]:
     """Map every expected table name (incl. multi-sheet keys) to its schema class.
 
     For SINGLE schemas the table key equals the file name. For MULTI schemas
@@ -349,6 +349,10 @@ def _schema_table_map(schemas: List[Schema]) -> Dict[str, Schema]:
                     sub_name
                 )
     return table_map
+
+
+# Back-compat alias; prefer ``schema_table_map``.
+_schema_table_map = schema_table_map
 
 
 class RequiredColumnsValidator(Validator):

@@ -330,3 +330,137 @@ class TestSharedTableLayout:
             ).fetchall()
         names = {row[0] for row in remaining}
         assert names == {"keep_me"}
+
+
+# ------------------------------------------------------------------ #
+# Regression tests for issue #221: dtype coercion on SQL round-trip
+# ------------------------------------------------------------------ #
+
+
+class TypedSchema(Schema):
+    """Schema exercising the dtypes that drift across the SQLite round-trip."""
+
+    _FILENAME = "typed"
+    _EXTENSION = FileExtension.CSV
+    _SCHEMA_TYPE = SchemaType.SINGLE
+
+    ID = Column(name="id", dtype=DataType.STRING, primary_key=True)
+    FLAG = Column(name="flag", dtype=DataType.BOOLEAN)
+    COUNT = Column(name="count", dtype=DataType.INTEGER, nullable=True)
+    WHEN = Column(name="when", dtype=DataType.DATETIME, nullable=True)
+
+
+@pytest.fixture
+def typed_dm(engine):
+    manager = DatabaseDataManager(
+        etl_factory=SimpleETLFactory,
+        schemas=[TypedSchema()],
+        engine=engine,
+        session_id="typed",
+        data_object_type=DataSource,
+    )
+    manager.startup()
+    return manager
+
+
+class TestDatabaseDataManagerDtypeRoundTrip:
+    """Issue #221 — DataFrames returned by ``get_data`` must match the dtypes
+    declared by the registered Schema, even though SQLite normalises them
+    across the round-trip."""
+
+    def _reload(self, dm: DatabaseDataManager, name: str) -> pd.DataFrame:
+        dm._data.clear()
+        ds = dm.get_data(name)
+        assert ds is not None
+        return ds.tables["typed"]
+
+    def test_boolean_column_survives_roundtrip(self, typed_dm):
+        ds = DataSource(ds_type=DataClassification.MASTER_DATA, name="bools")
+        ds.add_table(
+            "typed",
+            pd.DataFrame(
+                {
+                    "id": ["a", "b"],
+                    "flag": [True, False],
+                    "count": [1, 2],
+                    "when": pd.to_datetime(["2026-01-01", "2026-01-02"]),
+                }
+            ),
+        )
+        typed_dm.add_data_source(ds)
+
+        df = self._reload(typed_dm, "bools")
+        assert str(df["flag"].dtype) == "boolean", (
+            f"BOOLEAN must round-trip as nullable boolean, got {df['flag'].dtype}"
+        )
+        assert df["flag"].tolist() == [True, False]
+
+    def test_integer_with_nan_survives_roundtrip(self, typed_dm):
+        ds = DataSource(ds_type=DataClassification.MASTER_DATA, name="ints")
+        ds.add_table(
+            "typed",
+            pd.DataFrame(
+                {
+                    "id": ["a", "b", "c"],
+                    "flag": [True, False, True],
+                    # pandas stores this as float64 because of the None
+                    "count": [1, None, 3],
+                    "when": pd.to_datetime(["2026-01-01", "2026-01-02", "2026-01-03"]),
+                }
+            ),
+        )
+        typed_dm.add_data_source(ds)
+
+        df = self._reload(typed_dm, "ints")
+        assert str(df["count"].dtype) == "Int64", (
+            f"INTEGER must round-trip as nullable Int64, got {df['count'].dtype}"
+        )
+        assert df["count"].iloc[0] == 1
+        assert pd.isna(df["count"].iloc[1])
+        assert df["count"].iloc[2] == 3
+
+    def test_datetime_survives_roundtrip(self, typed_dm):
+        ds = DataSource(ds_type=DataClassification.MASTER_DATA, name="times")
+        ds.add_table(
+            "typed",
+            pd.DataFrame(
+                {
+                    "id": ["a"],
+                    "flag": [True],
+                    "count": [1],
+                    "when": pd.to_datetime(["2026-06-10 12:34:56"]),
+                }
+            ),
+        )
+        typed_dm.add_data_source(ds)
+
+        df = self._reload(typed_dm, "times")
+        assert str(df["when"].dtype) == "datetime64[ns]", (
+            f"DATETIME must round-trip as datetime64[ns], got {df['when'].dtype}"
+        )
+        assert df["when"].iloc[0] == pd.Timestamp("2026-06-10 12:34:56")
+
+    def test_unknown_subtable_skipped_silently(self, engine):
+        """A sub-table with no matching Schema must load without coercion or
+        raising — preserves behaviour for ad-hoc / test DataSources."""
+        dm = DatabaseDataManager(
+            etl_factory=SimpleETLFactory,
+            schemas=[ItemSchema()],  # only knows "item"
+            engine=engine,
+            session_id="unknown",
+            data_object_type=DataSource,
+        )
+        dm.startup()
+        ds = DataSource(ds_type=DataClassification.MASTER_DATA, name="ad_hoc")
+        ds.add_table(
+            "ad_hoc_table",  # not declared in any schema
+            pd.DataFrame({"x": [1, 2, 3]}),
+        )
+        dm.add_data_source(ds)
+
+        dm._data.clear()
+        reloaded = dm.get_data("ad_hoc")
+        assert reloaded is not None
+        assert "ad_hoc_table" in reloaded.tables
+        # No coercion applied — pandas-inferred dtype passes through.
+        assert reloaded.tables["ad_hoc_table"]["x"].tolist() == [1, 2, 3]

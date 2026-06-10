@@ -9,6 +9,7 @@
 ### Fixed
 - **GUI landing smoke test** — wait for `document.title` to settle on the configured app title before asserting on `page.content()`; previously a `domcontentloaded` race could capture HTML while Dash had swapped the title to `update_title` ("Updating…").
 - **Persistence smoke `_create_and_run_scenario` helper** — only issue an explicit `POST …/run` when the scenario is still in `CREATED` status after create; under `autorun=True` the scenario may already be queued/complete, which previously caused a spurious `409` against the new strict `/run` contract.
+- **`DatabaseDataManager` dtype round-trip** — DataFrames returned from `get_data` now match the dtypes declared by the registered `Schema` for that sub-table. Previously, SQLite-backed `BOOLEAN` columns came back as `int64`, `INTEGER` columns with nulls as `float64`, and `DATETIME` columns as `object` — downstream code that relied on the declared dtype (e.g. constructing dataclasses with `bool` fields) silently received the wrong type. Coercion is keyed on `Schema.file_name()` (with `<file>.<sub>` for MULTI schemas); sub-tables without a matching schema are unaffected.
 
 ## v0.8.3
 ### Added
