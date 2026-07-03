@@ -14,7 +14,7 @@ masked.
 
 from __future__ import annotations
 
-from abc import ABC
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Dict, List, Literal, Optional, Type
 
@@ -296,6 +296,68 @@ class ETLFactory(ABC):
 
         return schema
 
+    @abstractmethod
+    def create_extraction_sequence(
+        self, files: Dict[str, File] | None = None
+    ) -> ExtractionSequence: ...
+
+    @abstractmethod
+    def create_validation_sequence(self) -> ValidationSequence: ...
+
+    @abstractmethod
+    def create_transformation_sequence(self) -> TransformationSequence: ...
+
+    @abstractmethod
+    def create_loader(self) -> Loader: ...
+
+    def build_pipeline(
+        self, dataset_name: str, files: Dict[str, File], logger: Optional[Logger] = None
+    ) -> ETLPipeline:
+        """Assemble and return an ``ETLPipeline`` instance.
+
+        Args:
+            dataset_name: Destination dataset name.
+            files: Mapping of logical file names to ``File`` objects.
+            logger: Logger for the pipeline; falls back to ``self.logger``.
+
+        Returns:
+            ETLPipeline ready to run.
+        """
+        logger = logger if logger is not None else self.logger
+        e_seq = self.create_extraction_sequence(files)
+        v_seq = self.create_validation_sequence()
+        t_seq = self.create_transformation_sequence()
+        loader = self.create_loader()
+        return ETLPipeline(dataset_name, e_seq, v_seq, t_seq, loader, logger)
+
+
+class SimpleETLFactory(ETLFactory):
+    """Concrete factory for the common zero-subclass case.
+
+    Lets users build a working pipeline by simply pointing schemas at
+    files. Custom transformers and/or a custom loader can be supplied
+    without subclassing; everything else is inherited from
+    :class:`ETLFactory`'s defaults.
+
+    Args:
+        schemas: List of ``Schema`` classes describing the input files.
+        transformers: Optional ordered list of ``Transformer`` instances.
+            Defaults to ``[NoopTransformer()]``.
+        loader: Optional custom ``Loader``. Defaults to ``DataSourceLoader``.
+        logger: Optional logger forwarded to extractors/validators.
+    """
+
+    def __init__(
+        self,
+        schemas: List[Type[Schema]],
+        transformers: Optional[List[Transformer]] = None,
+        loader: Optional[Loader] = None,
+        logger: Optional[Logger] = None,
+    ) -> None:
+        super().__init__(schemas, logger)
+        self._transformers = transformers
+        self._loader = loader
+
     def create_extraction_sequence(
         self, files: Dict[str, File] | None = None
     ) -> ExtractionSequence:
@@ -349,61 +411,3 @@ class ETLFactory(ABC):
     def create_loader(self) -> Loader:
         """Default loader materialises a ``DataSource``."""
         return DataSourceLoader(logger=self.logger)
-
-    def build_pipeline(
-        self, dataset_name: str, files: Dict[str, File], logger: Optional[Logger] = None
-    ) -> ETLPipeline:
-        """Assemble and return an ``ETLPipeline`` instance.
-
-        Args:
-            dataset_name: Destination dataset name.
-            files: Mapping of logical file names to ``File`` objects.
-            logger: Logger for the pipeline; falls back to ``self.logger``.
-
-        Returns:
-            ETLPipeline ready to run.
-        """
-        logger = logger if logger is not None else self.logger
-        e_seq = self.create_extraction_sequence(files)
-        v_seq = self.create_validation_sequence()
-        t_seq = self.create_transformation_sequence()
-        loader = self.create_loader()
-        return ETLPipeline(dataset_name, e_seq, v_seq, t_seq, loader, logger)
-
-
-class SimpleETLFactory(ETLFactory):
-    """Concrete factory for the common zero-subclass case.
-
-    Lets users build a working pipeline by simply pointing schemas at
-    files. Custom transformers and/or a custom loader can be supplied
-    without subclassing; everything else is inherited from
-    :class:`ETLFactory`'s defaults.
-
-    Args:
-        schemas: List of ``Schema`` classes describing the input files.
-        transformers: Optional ordered list of ``Transformer`` instances.
-            Defaults to ``[NoopTransformer()]``.
-        loader: Optional custom ``Loader``. Defaults to ``DataSourceLoader``.
-        logger: Optional logger forwarded to extractors/validators.
-    """
-
-    def __init__(
-        self,
-        schemas: List[Type[Schema]],
-        transformers: Optional[List[Transformer]] = None,
-        loader: Optional[Loader] = None,
-        logger: Optional[Logger] = None,
-    ) -> None:
-        super().__init__(schemas, logger)
-        self._transformers = transformers
-        self._loader = loader
-
-    def create_transformation_sequence(self) -> TransformationSequence:
-        if self._transformers is None:
-            return super().create_transformation_sequence()
-        return TransformationSequence(self._transformers, logger=self.logger)
-
-    def create_loader(self) -> Loader:
-        if self._loader is None:
-            return super().create_loader()
-        return self._loader
