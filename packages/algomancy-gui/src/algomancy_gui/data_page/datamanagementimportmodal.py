@@ -327,7 +327,7 @@ def process_imports(
     sm: ScenarioManager = get_scenario_manager(get_app().server, session_id)
 
     try:
-        sm.log(f"Loading {filenames} into {dataset_name}")
+        sm.logger.log(f"Loading {filenames} into {dataset_name}")
 
         # Process the files
         files = prepare_files_from_upload(sm, filenames, contents)
