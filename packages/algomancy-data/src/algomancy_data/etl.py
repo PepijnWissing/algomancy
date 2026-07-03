@@ -405,9 +405,18 @@ class SimpleETLFactory(ETLFactory):
         return ValidationSequence(validators, logger=self.logger)
 
     def create_transformation_sequence(self) -> TransformationSequence:
-        """Default to a no-op transformation step. Override to customise."""
-        return TransformationSequence([NoopTransformer(logger=self.logger)])
+        """Return a sequence using any transformers supplied at construction, else a no-op."""
+        transformers = (
+            self._transformers
+            if self._transformers is not None
+            else [NoopTransformer(logger=self.logger)]
+        )
+        return TransformationSequence(transformers)
 
     def create_loader(self) -> Loader:
-        """Default loader materialises a ``DataSource``."""
-        return DataSourceLoader(logger=self.logger)
+        """Return the loader supplied at construction, else the default ``DataSourceLoader``."""
+        return (
+            self._loader
+            if self._loader is not None
+            else DataSourceLoader(logger=self.logger)
+        )
