@@ -167,6 +167,15 @@ useful for single-tenant deployments where the user shouldn't be
 switching contexts. Sessions still exist underneath, the UI just doesn't
 expose the controls.
 
+The HTTP API has an equivalent switch:
+`ApiConfiguration(allow_session_create=False)`. When set, the
+`POST /sessions` and `POST /sessions/{id}/copy` routes return `403
+Forbidden`; listing, renaming, and deleting existing sessions still
+work, and per-session routes (scenarios, data, algorithms, KPIs) are
+unaffected. Use this in single-tenant deployments where the operator
+has provisioned the session(s) up front and clients should not be able
+to add new ones.
+
 See also: {ref}`Frontends <fundamentals-frontends-ref>` for how the
 GUI and API consume the SessionManager, and {ref}`HTTP API
 reference <api-ref>` for the full session route shape.

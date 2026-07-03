@@ -2,6 +2,17 @@
 
 > Migrating from v0.5 or earlier? See the [migration guide](migration-ref)
 > for before/after snippets covering every breaking change in v0.6–v0.7.
+## v0.8.4
+### Added
+- **`ApiConfiguration.allow_session_create`** — when `False`, the HTTP API rejects `POST /sessions` and `POST /sessions/{id}/copy` with `403 Forbidden`. Mirrors the GUI's `FeatureConfig.show_session_picker=False` for single-tenant deployments where the operator has provisioned the session(s) up front. List / rename / delete on existing sessions, and all per-session routes, are unaffected.
+
+### Changed
+- **Quickstart color presets refreshed** — the styling wizard now offers seven curated palettes (`CQM`, `Ocean`, `Crimson`, `Forest`, `Sunset`, `Slate Dark`, `Monochrome`) tuned for cohesive primary/secondary gradients and readable card surfaces. The corporate CQM palette is unchanged; the previous `blue` / `red` / `dark` / `minimal` presets have been replaced with more polished defaults.
+
+### Fixed
+- **GUI landing smoke test** — wait for `document.title` to settle on the configured app title before asserting on `page.content()`; previously a `domcontentloaded` race could capture HTML while Dash had swapped the title to `update_title` ("Updating…").
+- **Persistence smoke `_create_and_run_scenario` helper** — only issue an explicit `POST …/run` when the scenario is still in `CREATED` status after create; under `autorun=True` the scenario may already be queued/complete, which previously caused a spurious `409` against the new strict `/run` contract.
+- **`DatabaseDataManager` dtype round-trip** — DataFrames returned from `get_data` now match the dtypes declared by the registered `Schema` for that sub-table. Previously, SQLite-backed `BOOLEAN` columns came back as `int64`, `INTEGER` columns with nulls as `float64`, and `DATETIME` columns as `object` — downstream code that relied on the declared dtype (e.g. constructing dataclasses with `bool` fields) silently received the wrong type. Coercion is keyed on `Schema.file_name()` (with `<file>.<sub>` for MULTI schemas); sub-tables without a matching schema are unaffected.
 
 ## v0.8.3
 ### Added
@@ -9,6 +20,8 @@
 
 ### Changed
 - **`POST …/run` now requires `CREATED` status** — previously the endpoint silently re-enqueued a scenario regardless of state. It now returns `409 Conflict` when the scenario is `QUEUED`, `PROCESSING`, `COMPLETE`, or `FAILED`. Call `…/reset` first to re-run a finished scenario.
+
+### Fixed
 - **SQL storage revised to a shared per-sub-table layout.** **Breaking** for existing databases on the `database` backend.
 
   :::{dropdown} {octicon}`light-bulb` Details

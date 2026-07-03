@@ -11,6 +11,7 @@ def test_defaults(api_core_kwargs):
     assert cfg.port == 8051
     assert cfg.prefix == "/api/v1"
     assert cfg.cors_origins == []
+    assert cfg.allow_session_create is True
 
 
 def test_overrides(api_core_kwargs):
@@ -37,6 +38,13 @@ def test_as_dict_includes_api_fields(api_core_kwargs):
     assert d["port"] == 8052
     assert d["prefix"] == "/api/v1"
     assert d["cors_origins"] == []
+    assert d["allow_session_create"] is True
+
+
+def test_allow_session_create_can_be_disabled(api_core_kwargs):
+    cfg = ApiConfiguration(allow_session_create=False, **api_core_kwargs)
+    assert cfg.allow_session_create is False
+    assert cfg.as_dict()["allow_session_create"] is False
 
 
 @pytest.mark.parametrize(
@@ -51,6 +59,8 @@ def test_as_dict_includes_api_fields(api_core_kwargs):
         {"prefix": 123},
         {"cors_origins": [""]},
         {"cors_origins": [42]},
+        {"allow_session_create": "yes"},
+        {"allow_session_create": None},
     ],
 )
 def test_invalid_api_fields_rejected(api_core_kwargs, kwarg):

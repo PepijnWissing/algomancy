@@ -14,7 +14,7 @@ masked.
 
 from __future__ import annotations
 
-from abc import ABC
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Dict, List, Literal, Optional, Type
 
@@ -296,59 +296,19 @@ class ETLFactory(ABC):
 
         return schema
 
+    @abstractmethod
     def create_extraction_sequence(
         self, files: Dict[str, File] | None = None
-    ) -> ExtractionSequence:
-        """Default extractor wiring keyed off the registry.
+    ) -> ExtractionSequence: ...
 
-        For each ``File`` in ``files`` looks up the matching schema by
-        name and selects an extractor class via ``get_extractor_class``
-        on ``(extension, schema_type)``. Override only when you need
-        non-default extractor parameters (e.g. CSV separator).
+    @abstractmethod
+    def create_validation_sequence(self) -> ValidationSequence: ...
 
-        Raises:
-            ETLConstructionError: If no extractor is registered for a
-                schema's ``(extension, schema_type)`` pair.
-        """
-        if files is None:
-            return ExtractionSequence(logger=self.logger)
+    @abstractmethod
+    def create_transformation_sequence(self) -> TransformationSequence: ...
 
-        extractors = []
-        for name, file in files.items():
-            schema = self.get_schema(name)
-            ext_cls = get_extractor_class(schema.extension(), schema.schema_type())
-            if ext_cls is None:
-                raise ETLConstructionError(
-                    "No extractor registered for "
-                    f"({schema.extension()}, {schema.schema_type()})."
-                )
-            extractors.append(ext_cls(file, schema, logger=self.logger))
-        return ExtractionSequence(extractors=extractors, logger=self.logger)
-
-    def create_validation_sequence(self) -> ValidationSequence:
-        """Default validation sequence using the new built-in validators.
-
-        Includes (in order): ``RequiredColumnsValidator``, ``SchemaValidator``,
-        and ``PrimaryKeyValidator``. The PK validator skips schemas with no
-        declared primary key internally (and decomposes MULTI schemas into
-        per-group synthetic SINGLE schemas via ``_schema_table_map``), so it
-        is safe to append unconditionally. Subclasses can override to add
-        domain-specific validators.
-        """
-        validators: List[Validator] = [
-            RequiredColumnsValidator(self.schemas),
-            SchemaValidator(self.schemas),
-            PrimaryKeyValidator(self.schemas),
-        ]
-        return ValidationSequence(validators, logger=self.logger)
-
-    def create_transformation_sequence(self) -> TransformationSequence:
-        """Default to a no-op transformation step. Override to customise."""
-        return TransformationSequence([NoopTransformer(logger=self.logger)])
-
-    def create_loader(self) -> Loader:
-        """Default loader materialises a ``DataSource``."""
-        return DataSourceLoader(logger=self.logger)
+    @abstractmethod
+    def create_loader(self) -> Loader: ...
 
     def build_pipeline(
         self, dataset_name: str, files: Dict[str, File], logger: Optional[Logger] = None
@@ -398,12 +358,65 @@ class SimpleETLFactory(ETLFactory):
         self._transformers = transformers
         self._loader = loader
 
+    def create_extraction_sequence(
+        self, files: Dict[str, File] | None = None
+    ) -> ExtractionSequence:
+        """Default extractor wiring keyed off the registry.
+
+        For each ``File`` in ``files`` looks up the matching schema by
+        name and selects an extractor class via ``get_extractor_class``
+        on ``(extension, schema_type)``. Override only when you need
+        non-default extractor parameters (e.g. CSV separator).
+
+        Raises:
+            ETLConstructionError: If no extractor is registered for a
+                schema's ``(extension, schema_type)`` pair.
+        """
+        if files is None:
+            return ExtractionSequence(logger=self.logger)
+
+        extractors = []
+        for name, file in files.items():
+            schema = self.get_schema(name)
+            ext_cls = get_extractor_class(schema.extension(), schema.schema_type())
+            if ext_cls is None:
+                raise ETLConstructionError(
+                    "No extractor registered for "
+                    f"({schema.extension()}, {schema.schema_type()})."
+                )
+            extractors.append(ext_cls(file, schema, logger=self.logger))
+        return ExtractionSequence(extractors=extractors, logger=self.logger)
+
+    def create_validation_sequence(self) -> ValidationSequence:
+        """Default validation sequence using the new built-in validators.
+
+        Includes (in order): ``RequiredColumnsValidator``, ``SchemaValidator``,
+        and ``PrimaryKeyValidator``. The PK validator skips schemas with no
+        declared primary key internally (and decomposes MULTI schemas into
+        per-group synthetic SINGLE schemas via ``_schema_table_map``), so it
+        is safe to append unconditionally. Subclasses can override to add
+        domain-specific validators.
+        """
+        validators: List[Validator] = [
+            RequiredColumnsValidator(self.schemas),
+            SchemaValidator(self.schemas),
+            PrimaryKeyValidator(self.schemas),
+        ]
+        return ValidationSequence(validators, logger=self.logger)
+
     def create_transformation_sequence(self) -> TransformationSequence:
-        if self._transformers is None:
-            return super().create_transformation_sequence()
-        return TransformationSequence(self._transformers, logger=self.logger)
+        """Return a sequence using any transformers supplied at construction, else a no-op."""
+        transformers = (
+            self._transformers
+            if self._transformers is not None
+            else [NoopTransformer(logger=self.logger)]
+        )
+        return TransformationSequence(transformers)
 
     def create_loader(self) -> Loader:
-        if self._loader is None:
-            return super().create_loader()
-        return self._loader
+        """Return the loader supplied at construction, else the default ``DataSourceLoader``."""
+        return (
+            self._loader
+            if self._loader is not None
+            else DataSourceLoader(logger=self.logger)
+        )

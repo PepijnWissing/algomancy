@@ -9,7 +9,7 @@ class ApiConfiguration(CoreConfig):
     """Configuration for the HTTP API server.
 
     Extends :class:`CoreConfig` with HTTP-specific options: bind host/port,
-    URL prefix, and CORS origins.
+    URL prefix, CORS origins, and session-creation policy.
     """
 
     def __init__(
@@ -33,6 +33,7 @@ class ApiConfiguration(CoreConfig):
         port: int = 8051,
         prefix: str = "/api/v1",
         cors_origins: List[str] | None = None,
+        allow_session_create: bool = True,
         **kwargs: Any,
     ) -> None:
         super().__init__(
@@ -55,6 +56,7 @@ class ApiConfiguration(CoreConfig):
         self.port = port
         self.prefix = prefix
         self.cors_origins = list(cors_origins) if cors_origins else []
+        self.allow_session_create = allow_session_create
         self._validate_api()
 
     def as_dict(self) -> Dict[str, Any]:
@@ -65,6 +67,7 @@ class ApiConfiguration(CoreConfig):
                 "port": self.port,
                 "prefix": self.prefix,
                 "cors_origins": list(self.cors_origins),
+                "allow_session_create": self.allow_session_create,
             }
         )
         return base
@@ -78,3 +81,5 @@ class ApiConfiguration(CoreConfig):
             raise ValueError("prefix must be a string starting with '/'")
         if any(not isinstance(o, str) or not o for o in self.cors_origins):
             raise ValueError("cors_origins entries must be non-empty strings")
+        if not isinstance(self.allow_session_create, bool):
+            raise ValueError("allow_session_create must be a bool")

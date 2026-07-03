@@ -11,7 +11,6 @@ from algomancy_data import (
     Column,
     DataFrameExtractor,
     DataType,
-    ETLFactory,
     FileExtension,
     ForeignKeyValidator,
     Schema,
@@ -289,7 +288,7 @@ class TestDataFrameExtractor:
 
 class TestCustomFactoryFK:
     def test_simple_factory_plus_fk_check(self):
-        class _FKFactory(ETLFactory):
+        class _FKFactory(SimpleETLFactory):
             def create_validation_sequence(self):
                 seq = super().create_validation_sequence()
                 seq.add_validator(

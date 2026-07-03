@@ -16,9 +16,9 @@ from typing import Dict, TypeVar, cast
 
 from algomancy_data import (
     CSVFile,
-    ETLFactory,
     File,
     OptionalColumnGuard,
+    SimpleETLFactory,
 )
 from algomancy_data.extractor import (
     CSVSingleExtractor,
@@ -32,7 +32,7 @@ from algomancy_data.transformer import (
 F = TypeVar("F", bound=File)
 
 
-class ExampleETLFactory(ETLFactory):
+class ExampleETLFactory(SimpleETLFactory):
     """Minimal factory wiring two ``;``-separated CSV files.
 
     Inherits default loader and validators

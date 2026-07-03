@@ -30,6 +30,7 @@ from ..datamanager import DataManager
 from ..datasource import DataClassification, BASEDATASOURCE
 from ..etl import ETLResult
 from ..schema import Schema
+from ..validator import schema_table_map
 from .models import (
     DATA_TABLE_PREFIX,
     DATASET_COL,
@@ -38,6 +39,7 @@ from .models import (
     metadata as _catalogue_metadata,
 )
 from .protocols import SqlTableLayout
+from .schema_translator import coerce_dataframe_to_schema
 
 if TYPE_CHECKING:
     pass
@@ -234,6 +236,17 @@ class DatabaseDataManager(DataManager):
                 {"sid": self._session_id, "name": dataset_name},
             )
 
+    def _schema_for_subtable(self, sub_table: str) -> Optional[Schema]:
+        """Return the registered Schema whose ``file_name()`` matches *sub_table*.
+
+        For MULTI schemas the lookup key is ``<file_name>.<sub_name>``, in which
+        case a synthetic SINGLE sub-schema is returned. ``None`` is returned
+        when no registered schema matches — coercion is then skipped.
+        """
+        if not self._schemas:
+            return None
+        return schema_table_map(self._schemas).get(sub_table)
+
     def _load_datasource_from_db(self, dataset_name: str) -> Optional[BASEDATASOURCE]:
         info = self._db_catalogue.get(dataset_name)
         if not info:
@@ -289,6 +302,9 @@ class DatabaseDataManager(DataManager):
                     params={"sid": self._session_id, "name": dataset_name},
                 )
             df = df.drop(columns=[SESSION_COL, DATASET_COL], errors="ignore")
+            schema = self._schema_for_subtable(sub)
+            if schema is not None:
+                df = coerce_dataframe_to_schema(df, schema)
             tables[sub] = df
         ds.from_sql_tables(tables)
         self.log(
@@ -409,7 +425,7 @@ def _decode_sub_tables(raw: Optional[str]) -> Optional[List[str]]:
         return None
     try:
         value = json.loads(raw)
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return None
     if isinstance(value, list):
         return [str(v) for v in value]
