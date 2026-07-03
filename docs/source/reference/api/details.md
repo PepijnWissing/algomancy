@@ -16,9 +16,9 @@ All paths are relative to the configured `prefix` (default `/api/v1`).  The full
 
 **Responses**
 
-| Status | Meaning |
-|---|---|
-| `200` | Always. Body: `{"status": "ok", "title": "<cfg.title>", "sessions": ["main", ...]}` |
+| Status   | Meaning                                                                             |
+|----------|-------------------------------------------------------------------------------------|
+| `200`    | Always. Body: `{"status": "ok", "title": "<cfg.title>", "sessions": ["main", ...]}` |
 
 :::{tip}
 Use this as a readiness check before sending any domain requests — if the server isn't up yet, this endpoint is the cheapest one to poll.

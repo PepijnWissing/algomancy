@@ -1,6 +1,6 @@
 [project]
 name = "algomancy-gui"
-version = "0.8.4"
+version = "0.8.5"
 description = "Dash components for the Algomancy library"
 readme = "README.md"
 authors = [
