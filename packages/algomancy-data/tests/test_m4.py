@@ -65,6 +65,15 @@ def _csv(tmp_path, rows="id;name;price\nw1;A;1.0\n"):
     return CSVFile(name="widget", path=str(p))
 
 
+def _schemas_dict(*schemas):
+    """Adapter: SimpleETLFactory's classmethods take a name→Schema mapping.
+
+    ``file_name()`` is a classmethod on ``Schema`` so it works whether the
+    caller passes classes or instances.
+    """
+    return {s.file_name(): s for s in schemas}
+
+
 # ------------------------------------------------------------------ #
 # Issue #92 — registry shipped pre-populated
 # ------------------------------------------------------------------ #
@@ -120,8 +129,9 @@ class TestRegistry:
 
 class TestDefaultExtractionSequence:
     def test_default_uses_registry(self, tmp_path):
-        factory = SimpleETLFactory([WidgetSchema])
-        seq = factory.create_extraction_sequence({"widget": _csv(tmp_path)})
+        seq = SimpleETLFactory.create_extraction_sequence(
+            {"widget": _csv(tmp_path)}, _schemas_dict(WidgetSchema)
+        )
         assert len(seq._extractors) == 1
         assert isinstance(seq._extractors[0], CSVSingleExtractor)
 
@@ -133,7 +143,6 @@ class TestDefaultExtractionSequence:
 
             _DATATYPES = {"a": {"x": DataType.STRING}}
 
-        factory = SimpleETLFactory([WeirdSchema])
         # Provide a CSV file-like to satisfy schemas_dct lookup
         csv_path = tmp_path / "weird.csv"
         csv_path.write_text("x\n1\n", encoding="utf-8")
@@ -141,7 +150,9 @@ class TestDefaultExtractionSequence:
 
         file = CSVFile(name="weird", path=str(csv_path))
         with pytest.raises(ETLConstructionError, match="No extractor registered"):
-            factory.create_extraction_sequence({"weird": file})
+            SimpleETLFactory.create_extraction_sequence(
+                {"weird": file}, _schemas_dict(WeirdSchema)
+            )
 
 
 # ------------------------------------------------------------------ #
@@ -151,8 +162,7 @@ class TestDefaultExtractionSequence:
 
 class TestDefaultValidationSequence:
     def test_includes_required_and_schema_validators(self):
-        factory = SimpleETLFactory([WidgetSchema])
-        seq = factory.create_validation_sequence()
+        seq = SimpleETLFactory.create_validation_sequence(_schemas_dict(WidgetSchema))
         v_types = [type(v) for v in seq._validators]
         assert RequiredColumnsValidator in v_types
         assert SchemaValidator in v_types
@@ -163,14 +173,14 @@ class TestDefaultValidationSequence:
         # construction. PrimaryKeyValidator self-skips per-table when no
         # PK is declared, so its presence is harmless for NoPK schemas.
         for schema in (WidgetSchema, NoPKSchema):
-            seq = SimpleETLFactory([schema]).create_validation_sequence()
+            seq = SimpleETLFactory.create_validation_sequence(_schemas_dict(schema))
             assert PrimaryKeyValidator in [type(v) for v in seq._validators]
 
     def test_pk_validator_self_skips_when_no_pk(self):
         # NoPKSchema has no primary_key declared. Running validation against
         # an empty data dict should produce no PK-related messages — the
         # validator iterates _schema_table_map and short-circuits per table.
-        seq = SimpleETLFactory([NoPKSchema]).create_validation_sequence()
+        seq = SimpleETLFactory.create_validation_sequence(_schemas_dict(NoPKSchema))
         result = seq.run_validation({})
         assert all(m.code != "MISSING_PK_COLUMN" for m in result.messages)
         assert all(m.code != "PK_NULL" for m in result.messages)
@@ -183,9 +193,10 @@ class TestDefaultValidationSequence:
 
 class TestSimpleETLFactory:
     def test_runs_pipeline_without_subclassing(self, tmp_path):
-        factory = SimpleETLFactory([WidgetSchema])
-        result = factory.build_pipeline(
-            "widgets", {"widget": _csv(tmp_path)}, None
+        result = SimpleETLFactory.build_pipeline(
+            "widgets",
+            {"widget": _csv(tmp_path)},
+            _schemas_dict(WidgetSchema),
         ).run()
         assert result.is_success
         assert isinstance(result.datasource, DataSource)
