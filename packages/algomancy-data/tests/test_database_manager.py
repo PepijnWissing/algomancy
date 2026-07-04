@@ -47,20 +47,24 @@ class ItemSchema(Schema):
 
 
 class SimpleETLFactory(ETLFactory):
-    def create_extraction_sequence(self, files):
+    @classmethod
+    def create_extraction_sequence(cls, files=None, schemas=None, logger=None):
         return ExtractionSequence(
             extractors=[CSVSingleExtractor(files[name], ItemSchema) for name in files]
         )
 
-    def create_validation_sequence(self):
+    @classmethod
+    def create_validation_sequence(cls, schemas=None, logger=None):
         return ValidationSequence(
             [RequiredColumnsValidator([ItemSchema]), SchemaValidator([ItemSchema])]
         )
 
-    def create_transformation_sequence(self):
+    @classmethod
+    def create_transformation_sequence(cls, schemas=None, logger=None):
         return TransformationSequence([NoopTransformer()])
 
-    def create_loader(self):
+    @classmethod
+    def create_loader(cls, logger=None):
         return DataSourceLoader(logger=None)
 
 

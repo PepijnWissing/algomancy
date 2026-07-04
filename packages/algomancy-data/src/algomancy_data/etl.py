@@ -1,10 +1,11 @@
 """ETL pipeline composition and abstract factory.
 
 This module defines ``ETLPipeline`` which orchestrates the Extract-Validate-
-Transform-Load steps, and ``ETLFactory`` that builds the pipeline components
-for a concrete dataset configuration.
+Transform-Load steps, and ``ETLFactory``, a classmethod-based abstract factory
+whose subclasses wire up the four pipeline components for a given dataset
+configuration.
 
-ETLPipeline.run() returns an ``ETLResult`` describing the outcome of the
+``ETLPipeline.run()`` returns an ``ETLResult`` describing the outcome of the
 job. Data-quality failures (validation, missing/malformed inputs) are
 reported via ``status='failed'`` rather than as exceptions. Programmer
 errors (unexpected ``KeyError``/``AttributeError``/``TypeError`` etc. from
@@ -16,14 +17,13 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Dict, List, Literal, Optional, Type
+from typing import Dict, List, Literal, Optional
 
 from algomancy_utils import Logger
 
 from algomancy_data.transformer import (
     NoopTransformer,
     TransformationSequence,
-    Transformer,
 )
 from .schema import Schema
 from .datasource import BASEDATASOURCE, DataClassification
@@ -42,7 +42,6 @@ from .validator import (
     ValidationSeverity,
     Validator,
 )
-
 
 # Exceptions originating in the ETL machinery itself that represent
 # *expected* data-quality failures (missing files, malformed contents,
@@ -251,6 +250,28 @@ def _augment_with_messages(
     )
 
 
+def get_schema(file_name: str, schemas: dict[str, Schema]) -> Schema:
+    """Return schema(s) for the given file name based on configuration.
+
+    Args:
+        schemas:
+        file_name: Logical file name as defined in a schema.
+
+    Returns:
+        Schema or mapping of sub-name to Schema depending on the
+        configuration type (single or multi).
+
+    Raises:
+        ETLConstructionError: If no configuration exists or it is invalid.
+    """
+    try:
+        schema = schemas[file_name]
+    except KeyError:
+        raise ETLConstructionError(f"No Schema available for {file_name}.")
+
+    return schema
+
+
 class ETLConstructionError(Exception):
     """Raised when the ETL pipeline cannot be constructed."""
 
@@ -259,107 +280,85 @@ class ETLConstructionError(Exception):
 
 
 class ETLFactory(ABC):
-    """Factory that constructs ETL sequences and loader.
+    """Abstract classmethod-based factory for ETL pipeline components.
 
-    Provides sensible defaults so that subclasses can override only the
-    pieces they need to customise. The previous fully-abstract contract
-    is preserved by the fact that all four ``create_*`` methods are still
-    overridable — they are simply no longer ``@abstractmethod``.
+    Subclasses implement the four ``create_*`` classmethods to wire up
+    extraction, validation, transformation, and loading for a dataset.
+    ``build_pipeline`` orchestrates them in order and is the only entry
+    point callers need.
+
+    Because the factory carries no instance state, it is always passed
+    and used as a *class* (``type[ETLFactory]``), never instantiated.
     """
 
-    def __init__(self, schemas: List[Type[Schema]], logger: Optional[Logger] = None):
-        self.schemas = schemas
-        self.logger = logger
-
-    @property
-    def schemas_dct(self) -> Dict[str, Schema]:
-        """Return a mapping from file name to its schema."""
-        return {schema.file_name(): schema for schema in self.schemas}
-
-    def get_schema(self, file_name: str) -> Dict[str, Schema] | Schema:
-        """Return schema(s) for the given file name based on configuration.
-
-        Args:
-            file_name: Logical file name as defined in a schema.
-
-        Returns:
-            Schema or mapping of sub-name to Schema depending on the
-            configuration type (single or multi).
-
-        Raises:
-            ETLConstructionError: If no configuration exists or it is invalid.
-        """
-        try:
-            schema = self.schemas_dct[file_name]
-        except KeyError:
-            raise ETLConstructionError(f"No Schema available for {file_name}.")
-
-        return schema
-
+    @classmethod
     @abstractmethod
     def create_extraction_sequence(
-        self, files: Dict[str, File] | None = None
+        cls,
+        files: Dict[str, File] | None = None,
+        schemas: Dict[str, Schema] | None = None,
+        logger: Optional[Logger] = None,
     ) -> ExtractionSequence: ...
 
+    @classmethod
     @abstractmethod
-    def create_validation_sequence(self) -> ValidationSequence: ...
+    def create_validation_sequence(
+        cls, schemas: Dict[str, Schema], logger: Optional[Logger] = None
+    ) -> ValidationSequence: ...
 
+    @classmethod
     @abstractmethod
-    def create_transformation_sequence(self) -> TransformationSequence: ...
+    def create_transformation_sequence(
+        cls,
+        schemas: Optional[Dict[str, Schema]] = None,
+        logger: Optional[Logger] = None,
+    ) -> TransformationSequence: ...
 
+    @classmethod
     @abstractmethod
-    def create_loader(self) -> Loader: ...
+    def create_loader(cls, logger: Optional[Logger] = None) -> Loader: ...
 
+    @classmethod
     def build_pipeline(
-        self, dataset_name: str, files: Dict[str, File], logger: Optional[Logger] = None
+        cls,
+        dataset_name: str,
+        files: Dict[str, File],
+        schemas: Dict[str, Schema],
+        logger: Optional[Logger] = None,
     ) -> ETLPipeline:
         """Assemble and return an ``ETLPipeline`` instance.
 
         Args:
             dataset_name: Destination dataset name.
             files: Mapping of logical file names to ``File`` objects.
-            logger: Logger for the pipeline; falls back to ``self.logger``.
+            schemas: Mapping of logical schema names to ``Schema`` objects.
+            logger: Optional logger forwarded to each pipeline step.
 
         Returns:
             ETLPipeline ready to run.
         """
-        logger = logger if logger is not None else self.logger
-        e_seq = self.create_extraction_sequence(files)
-        v_seq = self.create_validation_sequence()
-        t_seq = self.create_transformation_sequence()
-        loader = self.create_loader()
+        e_seq = cls.create_extraction_sequence(files, schemas, logger)
+        v_seq = cls.create_validation_sequence(schemas, logger)
+        t_seq = cls.create_transformation_sequence(schemas, logger)
+        loader = cls.create_loader(logger)
         return ETLPipeline(dataset_name, e_seq, v_seq, t_seq, loader, logger)
 
 
 class SimpleETLFactory(ETLFactory):
-    """Concrete factory for the common zero-subclass case.
+    """Concrete factory for the common case where no custom wiring is needed.
 
-    Lets users build a working pipeline by simply pointing schemas at
-    files. Custom transformers and/or a custom loader can be supplied
-    without subclassing; everything else is inherited from
-    :class:`ETLFactory`'s defaults.
-
-    Args:
-        schemas: List of ``Schema`` classes describing the input files.
-        transformers: Optional ordered list of ``Transformer`` instances.
-            Defaults to ``[NoopTransformer()]``.
-        loader: Optional custom ``Loader``. Defaults to ``DataSourceLoader``.
-        logger: Optional logger forwarded to extractors/validators.
+    All four ``create_*`` methods have sensible defaults: registry-driven
+    extraction, the three standard validators, a no-op transformation, and
+    ``DataSourceLoader``. Subclass and override only the methods that need
+    non-default behaviour (e.g. a different CSV separator or extra validators).
     """
 
-    def __init__(
-        self,
-        schemas: List[Type[Schema]],
-        transformers: Optional[List[Transformer]] = None,
-        loader: Optional[Loader] = None,
-        logger: Optional[Logger] = None,
-    ) -> None:
-        super().__init__(schemas, logger)
-        self._transformers = transformers
-        self._loader = loader
-
+    @classmethod
     def create_extraction_sequence(
-        self, files: Dict[str, File] | None = None
+        cls,
+        files: Dict[str, File] | None = None,
+        schemas: Dict[str, Schema] | None = None,
+        logger: Optional[Logger] = None,
     ) -> ExtractionSequence:
         """Default extractor wiring keyed off the registry.
 
@@ -373,21 +372,24 @@ class SimpleETLFactory(ETLFactory):
                 schema's ``(extension, schema_type)`` pair.
         """
         if files is None:
-            return ExtractionSequence(logger=self.logger)
+            return ExtractionSequence(logger=logger)
 
         extractors = []
         for name, file in files.items():
-            schema = self.get_schema(name)
+            schema = get_schema(name, schemas)
             ext_cls = get_extractor_class(schema.extension(), schema.schema_type())
             if ext_cls is None:
                 raise ETLConstructionError(
                     "No extractor registered for "
                     f"({schema.extension()}, {schema.schema_type()})."
                 )
-            extractors.append(ext_cls(file, schema, logger=self.logger))
-        return ExtractionSequence(extractors=extractors, logger=self.logger)
+            extractors.append(ext_cls(file, schema, logger=logger))
+        return ExtractionSequence(extractors=extractors, logger=logger)
 
-    def create_validation_sequence(self) -> ValidationSequence:
+    @classmethod
+    def create_validation_sequence(
+        cls, schemas: Dict[str, Schema], logger: Optional[Logger] = None
+    ) -> ValidationSequence:
         """Default validation sequence using the new built-in validators.
 
         Includes (in order): ``RequiredColumnsValidator``, ``SchemaValidator``,
@@ -397,26 +399,26 @@ class SimpleETLFactory(ETLFactory):
         is safe to append unconditionally. Subclasses can override to add
         domain-specific validators.
         """
-        validators: List[Validator] = [
-            RequiredColumnsValidator(self.schemas),
-            SchemaValidator(self.schemas),
-            PrimaryKeyValidator(self.schemas),
-        ]
-        return ValidationSequence(validators, logger=self.logger)
+        lst = list(schemas.values())
 
-    def create_transformation_sequence(self) -> TransformationSequence:
-        """Return a sequence using any transformers supplied at construction, else a no-op."""
-        transformers = (
-            self._transformers
-            if self._transformers is not None
-            else [NoopTransformer(logger=self.logger)]
-        )
+        validators: List[Validator] = [
+            RequiredColumnsValidator(lst),
+            SchemaValidator(lst),
+            PrimaryKeyValidator(lst),
+        ]
+        return ValidationSequence(validators, logger=logger)
+
+    @classmethod
+    def create_transformation_sequence(
+        cls,
+        schemas: Optional[Dict[str, Schema]] = None,
+        logger: Optional[Logger] = None,
+    ) -> TransformationSequence:
+        """Return a no-op transformation sequence."""
+        transformers = [NoopTransformer(logger=logger)]
         return TransformationSequence(transformers)
 
-    def create_loader(self) -> Loader:
-        """Return the loader supplied at construction, else the default ``DataSourceLoader``."""
-        return (
-            self._loader
-            if self._loader is not None
-            else DataSourceLoader(logger=self.logger)
-        )
+    @classmethod
+    def create_loader(cls, logger: Optional[Logger] = None) -> Loader:
+        """Return the default ``DataSourceLoader``."""
+        return DataSourceLoader(logger=logger)

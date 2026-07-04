@@ -86,22 +86,17 @@ class TestPublicRegisterExtractor:
 
         register_extractor(_FakeExt.FOO, SchemaType.SINGLE, _FakeExtractor)
 
-        class _FactoryWithFakeFile(SimpleETLFactory):
-            # Bypass real files: provide a fake one with the attributes
-            # _FakeExtractor cares about.
-            pass
-
         # We do not run the full pipeline here; just confirm the factory
         # produces an extractor of the registered class for the schema.
-        factory = SimpleETLFactory([_IdSchema])
-
         class _Fake:
             def __init__(self):
                 self.name = "ids"
                 self.path = None
                 self.content = "id\nx\n"
 
-        seq = factory.create_extraction_sequence({"ids": _Fake()})
+        seq = SimpleETLFactory.create_extraction_sequence(
+            {"ids": _Fake()}, {"ids": _IdSchema}
+        )
         assert isinstance(seq._extractors[0], _FakeExtractor)
 
 
@@ -289,14 +284,15 @@ class TestDataFrameExtractor:
 class TestCustomFactoryFK:
     def test_simple_factory_plus_fk_check(self):
         class _FKFactory(SimpleETLFactory):
-            def create_validation_sequence(self):
-                seq = super().create_validation_sequence()
+            @classmethod
+            def create_validation_sequence(cls, schemas, logger=None):
+                seq = super().create_validation_sequence(schemas, logger)
                 seq.add_validator(
                     ForeignKeyValidator("order", "product_id", "product", "id")
                 )
                 return seq
 
-        factory = _FKFactory([OrderSchema, ProductSchema])
-        seq = factory.create_validation_sequence()
+        schemas = {s.file_name(): s for s in (OrderSchema, ProductSchema)}
+        seq = _FKFactory.create_validation_sequence(schemas)
         assert any(isinstance(v, ForeignKeyValidator) for v in seq._validators)
         assert any(isinstance(v, SchemaValidator) for v in seq._validators)

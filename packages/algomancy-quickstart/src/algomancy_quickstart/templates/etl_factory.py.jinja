@@ -13,10 +13,11 @@ This module wires the data-processing pipeline:
    override if you need a custom container.
 """
 
-from typing import Dict
+from typing import Dict, Optional
 
-from algomancy_data import ETLFactory, File, ValidationSequence
+from algomancy_data import File, Schema, SimpleETLFactory, ValidationSequence
 from algomancy_data.extractor import ExtractionSequence
+from algomancy_utils import Logger
 
 # Uncomment the imports you actually use below.
 # from algomancy_data import (
@@ -32,19 +33,24 @@ from algomancy_data.extractor import ExtractionSequence
 # )
 
 
-class {{ class_name }}ETLFactory(ETLFactory):
+class {{ class_name }}ETLFactory(SimpleETLFactory):
     """
     Factory for the {{ project_name }} ETL pipeline.
 
-    Demonstrates the post-M4 minimal pattern: call ``super()`` for each
-    stage to inherit the framework defaults, and only customise the bits
-    that are specific to this project.
+    Classmethod-based factory: every ``create_*`` hook is a classmethod so
+    the factory carries no instance state. Delegate to ``super()`` for the
+    framework defaults and only customise the bits that are specific to
+    this project.
 
     TODO: Adapt each stage to your data.
     """
 
+    @classmethod
     def create_extraction_sequence(
-        self, files: Dict[str, File]
+        cls,
+        files: Dict[str, File] | None = None,
+        schemas: Dict[str, Schema] | None = None,
+        logger: Optional[Logger] = None,
     ) -> ExtractionSequence:
         """
         Default extraction defers to the schema registry: each registered
@@ -54,28 +60,33 @@ class {{ class_name }}ETLFactory(ETLFactory):
         Override only for files that need non-default extractor parameters
         (custom CSV separator, explicit XLSX sheet, …):
 
-            sequence = super().create_extraction_sequence(default_files)
+            sequence = super().create_extraction_sequence(default_files, schemas, logger)
             sequence.add_extractor(
                 CSVSingleExtractor(
                     file=files["my_file"],
-                    schema=self.get_schema("my_file"),
+                    schema=schemas["my_file"],
                     separator=";",
-                    logger=self.logger,
+                    logger=logger,
                 )
             )
             return sequence
         """
-        return super().create_extraction_sequence(files)
+        return super().create_extraction_sequence(files, schemas, logger)
 
-    def create_validation_sequence(self) -> ValidationSequence:
+    @classmethod
+    def create_validation_sequence(
+        cls,
+        schemas: Dict[str, Schema],
+        logger: Optional[Logger] = None,
+    ) -> ValidationSequence:
         """
         ``super()`` already adds ``RequiredColumnsValidator`` +
-        ``SchemaValidator`` (+ ``PrimaryKeyValidator`` when any schema
-        declares a primary key). Add project-specific validators here.
+        ``SchemaValidator`` + ``PrimaryKeyValidator``. Add project-specific
+        validators here.
 
         Example:
 
-            sequence = super().create_validation_sequence()
+            sequence = super().create_validation_sequence(schemas, logger)
             sequence.add_validator(
                 MissingValueValidator(
                     table="my_table",
@@ -85,24 +96,30 @@ class {{ class_name }}ETLFactory(ETLFactory):
             )
             return sequence
         """
-        return super().create_validation_sequence()
+        return super().create_validation_sequence(schemas, logger)
 
-    # def create_transformation_sequence(self) -> TransformationSequence:
+    # @classmethod
+    # def create_transformation_sequence(
+    #     cls,
+    #     schemas: Dict[str, Schema] | None = None,
+    #     logger: Optional[Logger] = None,
+    # ) -> TransformationSequence:
     #     """Default is a single ``NoopTransformer``. Override to add
     #     project-specific transformations.
     #
-    #     Example with the M7 cascade-drop transformer (use together with
+    #     Example with the cascade-drop transformer (use together with
     #     ``foreign_key=("parent", "id")`` on the child schema column —
     #     orphan child rows and, with ``parent_requires_child=True``,
     #     childless parent rows are dropped):
     #
-    #         sequence = TransformationSequence(logger=self.logger)
-    #         sequence.add_transformer(CleanTransformer(self.logger))
+    #         sequence = TransformationSequence(logger=logger)
+    #         sequence.add_transformer(CleanTransformer(logger))
     #         sequence.add_transformer(
     #             CascadeDropTransformer(
-    #                 schemas=self.schemas, logger=self.logger
+    #                 schemas=list(schemas.values()) if schemas else [],
+    #                 logger=logger,
     #             )
     #         )
     #         return sequence
     #     """
-    #     return super().create_transformation_sequence()
+    #     return super().create_transformation_sequence(schemas, logger)

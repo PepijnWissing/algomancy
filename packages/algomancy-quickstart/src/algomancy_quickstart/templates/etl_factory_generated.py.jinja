@@ -7,11 +7,12 @@ via ``super().create_extraction_sequence(...)``; files needing custom
 extractor parameters (CSV separator, XLSX sheet name) are hand-wired.
 """
 
-from typing import Dict
+from typing import Dict, Optional
 
 from algomancy_data import (
-    ETLFactory,
     File,
+    Schema,
+    SimpleETLFactory,
     ValidationSequence,
 )
 from algomancy_data.extractor import (
@@ -19,12 +20,13 @@ from algomancy_data.extractor import (
 {% if needs_csv_extractor %}    CSVSingleExtractor,
 {% endif %}{% if needs_xlsx_single_extractor %}    XLSXSingleExtractor,
 {% endif %})
+from algomancy_utils import Logger
 
 # Import generated schemas
 from src.data_handling.generated_schemas import all_schemas  # noqa: F401
 
 
-class {{ class_name }}ETLFactory(ETLFactory):
+class {{ class_name }}ETLFactory(SimpleETLFactory):
     """
     ETL Factory with auto-generated extractors for detected data files.
 
@@ -34,21 +36,27 @@ class {{ class_name }}ETLFactory(ETLFactory):
     {% endfor %}
     """
 
+    @classmethod
     def create_extraction_sequence(
-        self, files: Dict[str, File]
+        cls,
+        files: Dict[str, File] | None = None,
+        schemas: Dict[str, Schema] | None = None,
+        logger: Optional[Logger] = None,
     ) -> ExtractionSequence:
         """Wire extractors for every detected file.
 
         Files that match the registry's default ``(extension, schema_type)``
         extractor are delegated to ``super()``; the rest are hand-wired.
         """
+        files = files or {}
+        schemas = schemas or {}
         # Registry-default extractors handle these files via ``super()``.
         default_files = {
             {% for file_info in default_files %}
             "{{ file_info.file_name }}": files["{{ file_info.file_name }}"],
             {% endfor %}
         }
-        sequence = super().create_extraction_sequence(default_files)
+        sequence = super().create_extraction_sequence(default_files, schemas, logger)
         {% for file_info in custom_files %}
 
         # {{ file_info.file_name }} — non-default extractor parameters.
@@ -56,27 +64,32 @@ class {{ class_name }}ETLFactory(ETLFactory):
         sequence.add_extractor(
             CSVSingleExtractor(
                 file=files["{{ file_info.file_name }}"],
-                schema=self.get_schema("{{ file_info.file_name }}"),
+                schema=schemas["{{ file_info.file_name }}"],
                 separator="{{ file_info.csv_separator }}",
-                logger=self.logger,
+                logger=logger,
             )
         )
         {% elif file_info.extension.name == 'XLSX' %}
         sequence.add_extractor(
             XLSXSingleExtractor(
                 file=files["{{ file_info.file_name }}"],
-                schema=self.get_schema("{{ file_info.file_name }}"),
+                schema=schemas["{{ file_info.file_name }}"],
                 sheet_name="{{ file_info.sheets_to_extract[0] }}",
-                logger=self.logger,
+                logger=logger,
             )
         )
         {% endif %}
         {% endfor %}
         return sequence
 
-    def create_validation_sequence(self) -> ValidationSequence:
-        """Inherit ``RequiredColumnsValidator + SchemaValidator
-        (+ PrimaryKeyValidator``) from the base class. Add custom validators
+    @classmethod
+    def create_validation_sequence(
+        cls,
+        schemas: Dict[str, Schema],
+        logger: Optional[Logger] = None,
+    ) -> ValidationSequence:
+        """Inherit ``RequiredColumnsValidator + SchemaValidator +
+        PrimaryKeyValidator`` from the base class. Add custom validators
         here, e.g. ``MissingValueValidator`` or ``UniqueValueValidator``.
         """
-        return super().create_validation_sequence()
+        return super().create_validation_sequence(schemas, logger)

@@ -103,12 +103,26 @@ class TestCascadeChainOnDisk:
         }
 
     def test_cascade_drops_orphans_and_childless_parents(self):
+        from algomancy_data.transformer import TransformationSequence
+
         schemas = [CategorySchema, ProductSchema, OrderItemSchema]
-        factory = SimpleETLFactory(
-            schemas=schemas,
-            transformers=[CascadeDropTransformer(schemas=schemas)],
-        )
-        result = factory.build_pipeline("cascade_demo", self._build_files()).run()
+
+        class _CascadeFactory(SimpleETLFactory):
+            @classmethod
+            def create_transformation_sequence(cls, schemas=None, logger=None):
+                seq = TransformationSequence(logger=logger)
+                seq.add_transformer(
+                    CascadeDropTransformer(
+                        schemas=[CategorySchema, ProductSchema, OrderItemSchema]
+                    )
+                )
+                return seq
+
+        result = _CascadeFactory.build_pipeline(
+            "cascade_demo",
+            self._build_files(),
+            {s.file_name(): s for s in schemas},
+        ).run()
 
         assert result.is_success
 
@@ -215,16 +229,16 @@ class TestPicksJSONMultiOnDiskFullETL:
         # Before the #172 fix, this call raised because the gate at
         # ``etl.py:339`` invoked ``schema.primary_key()`` on a MULTI schema,
         # which delegates to the SINGLE-only ``columns()`` accessor.
-        factory = SimpleETLFactory(schemas=[PickLoadCarrierSchema])
-        v_seq = factory.create_validation_sequence()
+        schemas = {PickLoadCarrierSchema.file_name(): PickLoadCarrierSchema}
+        v_seq = SimpleETLFactory.create_validation_sequence(schemas)
         # Construction succeeded; PK validation should now run without error
         # against an empty data dict (no tables → no per-row checks fire).
         result = v_seq.run_validation({})
         assert result.is_valid
 
     def test_full_pipeline_run_succeeds(self):
-        factory = SimpleETLFactory(schemas=[PickLoadCarrierSchema])
-        result = factory.build_pipeline("picks", self._files()).run()
+        schemas = {PickLoadCarrierSchema.file_name(): PickLoadCarrierSchema}
+        result = SimpleETLFactory.build_pipeline("picks", self._files(), schemas).run()
 
         assert result.is_success, [m.message for m in result.messages]
 
