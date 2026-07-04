@@ -8,7 +8,7 @@ validators are in place.
 
 from __future__ import annotations
 
-import pytest
+import pytest  # noqa: F401  # kept so ``pytest`` runs cleanly on empty additions
 
 from algomancy_data import ETLFactory
 
@@ -20,17 +20,16 @@ from src.data_handling.schemas import all_schemas
 {% endif %}
 
 
-@pytest.fixture
-def factory() -> {{ class_name }}ETLFactory:
-    # NOTE: The factory's constructor is provided by the base class —
-    # override below if your factory needs custom init wiring.
-    return {{ class_name }}ETLFactory(schemas=all_schemas)
+def _schemas_by_name() -> dict:
+    return {s.file_name(): s for s in all_schemas}
 
 
-def test_factory_subclasses_etlfactory(factory: {{ class_name }}ETLFactory) -> None:
-    assert isinstance(factory, ETLFactory)
+def test_factory_subclasses_etlfactory() -> None:
+    # ``ETLFactory`` is classmethod-based: subclasses are used as the class
+    # itself, never instantiated. ``issubclass`` is the correct check.
+    assert issubclass({{ class_name }}ETLFactory, ETLFactory)
 
 
-def test_validation_sequence_builds(factory: {{ class_name }}ETLFactory) -> None:
-    sequence = factory.create_validation_sequence()
+def test_validation_sequence_builds() -> None:
+    sequence = {{ class_name }}ETLFactory.create_validation_sequence(_schemas_by_name())
     assert sequence is not None

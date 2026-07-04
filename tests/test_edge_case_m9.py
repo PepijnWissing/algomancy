@@ -288,7 +288,6 @@ class TestDataDirectories:
             encoding="utf-8",
         )
 
-        factory = ExampleETLFactory(schemas=example_schemas)
         files = {
             "sku_data": CSVFile(
                 name="sku_data", path=str(dataset_dir / "sku_data.csv")
@@ -298,7 +297,8 @@ class TestDataDirectories:
                 path=str(dataset_dir / "warehouse_layout.csv"),
             ),
         }
-        result = factory.build_pipeline("tiny_data", files).run()
+        schemas = {s.file_name(): s for s in example_schemas}
+        result = ExampleETLFactory.build_pipeline("tiny_data", files, schemas).run()
 
         assert result.is_success
         assert set(result.datasource.tables) == {"sku_data", "warehouse_layout"}

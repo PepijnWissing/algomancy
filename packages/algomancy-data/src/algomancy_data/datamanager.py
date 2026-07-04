@@ -36,7 +36,7 @@ class DataManager(ABC):
         logger: Logger | None = None,
     ) -> None:
         self.logger = logger
-        self._etl_factory = etl_factory(schemas, self.logger)
+        self._etl_factory = etl_factory
         self._schemas = schemas
         self._data: Dict[str, BASEDATASOURCE] = {}
         self._save_type = save_type
@@ -176,7 +176,10 @@ class DataManager(ABC):
             Exception: Programmer errors from user-supplied components are
                 allowed to propagate unchanged.
         """
-        etl = self._etl_factory.build_pipeline(dataset_name, files, self.logger)
+        schemas_dct = {s.file_name(): s for s in self._schemas}
+        etl = self._etl_factory.build_pipeline(
+            dataset_name, files, schemas_dct, self.logger
+        )
         self.log(f"ETL pipeline for dataset '{dataset_name}' created.")
         result = etl.run()
         if result.is_success:
@@ -194,7 +197,8 @@ class DataManager(ABC):
         return result
 
     def create_validation_sequence(self) -> ValidationSequence:
-        return self._etl_factory.create_validation_sequence()
+        schemas_dct = {s.file_name(): s for s in self._schemas}
+        return self._etl_factory.create_validation_sequence(schemas_dct, self.logger)
 
 
 class StatelessDataManager(DataManager):

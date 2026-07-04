@@ -135,13 +135,13 @@ from src.data_handling.generated_schemas import all_schemas
 from src.data_handling.generated_schemas import dc_schema, otherlocations_schema, stores_schema
 
 
-class TSPETLFactory(de.ETLFactory):
+class TSPETLFactory(de.SimpleETLFactory):
 
-    def __init__(self, schemas, logger: Logger = None):
-        super().__init__(schemas, logger)
-
-    def create_extraction_sequence(self, files: Dict[str, File]) -> ExtractionSequence:
-        sequence = ExtractionSequence(logger=self.logger)
+    @classmethod
+    def create_extraction_sequence(
+        cls, files=None, schemas=None, logger: Logger = None,
+    ) -> ExtractionSequence:
+        sequence = ExtractionSequence(logger=logger)
 
         # Extract dc
         sequence.add_extractor(
@@ -149,7 +149,7 @@ class TSPETLFactory(de.ETLFactory):
                 file=files["dc"],
                 schema=dc_schema,
                 sheet_name="Sheet1",
-                logger=self.logger,
+                logger=logger,
             )
         )
 
@@ -158,7 +158,7 @@ class TSPETLFactory(de.ETLFactory):
             XLSXMultiExtractor(
                 file=files["otherlocations"],
                 schema=otherlocations_schema,
-                logger=self.logger,
+                logger=logger,
             )
         )
 
@@ -167,31 +167,38 @@ class TSPETLFactory(de.ETLFactory):
             CSVSingleExtractor(
                 file=files["stores"],
                 schema=stores_schema,
-                logger=self.logger,
+                logger=logger,
                 separator=",",
             )
         )
 
         return sequence
 
-    def create_transformation_sequence(self) -> TransformationSequence:
+    @classmethod
+    def create_transformation_sequence(
+        cls, schemas=None, logger: Logger = None,
+    ) -> TransformationSequence:
         # TODO: Add transformers to process your data.
-        return TransformationSequence(logger=self.logger)
+        return TransformationSequence(logger=logger)
 
-    def create_validation_sequence(self) -> de.ValidationSequence:
-        vs = de.ValidationSequence(logger=self.logger)
+    @classmethod
+    def create_validation_sequence(
+        cls, schemas, logger: Logger = None,
+    ) -> de.ValidationSequence:
+        vs = de.ValidationSequence(logger=logger)
         vs.add_validator(de.ExtractionSuccessVerification())
         vs.add_validator(
             de.SchemaValidator(
-                schemas=self.schemas,
+                schemas=list(schemas.values()),
                 severity=de.ValidationSeverity.CRITICAL,
             )
         )
         return vs
 
-    def create_loader(self) -> de.Loader:
+    @classmethod
+    def create_loader(cls, logger: Logger = None) -> de.Loader:
         # TODO: Customize if you need a custom data container.
-        return de.DataSourceLoader(self.logger)
+        return de.DataSourceLoader(logger)
 ```
 :::
 
@@ -388,19 +395,20 @@ class TransformLocationToRoutes(Transformer):
 :color: info
 
 ```python
-def create_transformation_sequence(self) -> TransformationSequence:
+@classmethod
+def create_transformation_sequence(cls, schemas=None, logger=None) -> TransformationSequence:
     sequence = TransformationSequence()
     location_df_name = 'transform_locations'
     routes_df_name = 'transform_routes'
-    sequence.add_transformer(TransformCreateLocations(location_df_name=location_df_name, logger=self.logger))
-    sequence.add_transformer(TransformCustomerToLocation(location_df_name=location_df_name, logger=self.logger))
-    sequence.add_transformer(TransformXDockToLocation(location_df_name=location_df_name, logger=self.logger))
-    sequence.add_transformer(TransformStoresToLocation(location_df_name=location_df_name, logger=self.logger))
-    sequence.add_transformer(TransformDCToLocation(location_df_name=location_df_name, logger=self.logger))
+    sequence.add_transformer(TransformCreateLocations(location_df_name=location_df_name, logger=logger))
+    sequence.add_transformer(TransformCustomerToLocation(location_df_name=location_df_name, logger=logger))
+    sequence.add_transformer(TransformXDockToLocation(location_df_name=location_df_name, logger=logger))
+    sequence.add_transformer(TransformStoresToLocation(location_df_name=location_df_name, logger=logger))
+    sequence.add_transformer(TransformDCToLocation(location_df_name=location_df_name, logger=logger))
     sequence.add_transformer(TransformLocationToRoutes(
         location_df_name=location_df_name,
         routes_df_name=routes_df_name,
-        logger=self.logger
+        logger=logger,
     ))
     return sequence
 ```
@@ -636,8 +644,9 @@ class DataModelLoader(Loader):
 Register the loader in `etl_factory.py` by replacing `DataSourceLoader` with `DataModelLoader`:
 
 ```python
-def create_loader(self) -> Loader:
-    return DataModelLoader(self.logger)
+@classmethod
+def create_loader(cls, logger=None) -> Loader:
+    return DataModelLoader(logger)
 ```
 
 Also update `main.py` to use `DataModel` as the data object type:

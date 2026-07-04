@@ -153,6 +153,48 @@ def test_generated_schemas_multi_emits_columngroup(jinja_env: Environment) -> No
     assert "_defined_datatypes" not in rendered
 
 
+def _assert_classmethod_factory_shape(rendered: str) -> None:
+    """The new ETLFactory contract is classmethod-only and stateless.
+
+    Emitted create_* hooks must:
+      * be decorated with @classmethod (first arg ``cls``, not ``self``)
+      * not reference ``self.`` inside their bodies (no instance state)
+      * not declare an ``__init__`` — the abstract base takes no schemas kwarg
+    """
+    tree = ast.parse(rendered)
+    factory_classes = [
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.ClassDef) and node.name.endswith("ETLFactory")
+    ]
+    assert factory_classes, "expected an ETLFactory subclass in the rendered output"
+
+    for cls in factory_classes:
+        for item in cls.body:
+            if isinstance(item, ast.FunctionDef) and item.name.startswith("create_"):
+                assert any(
+                    isinstance(d, ast.Name) and d.id == "classmethod"
+                    for d in item.decorator_list
+                ), f"{item.name} must be @classmethod"
+                assert item.args.args and item.args.args[0].arg == "cls", (
+                    f"{item.name} first arg must be ``cls``, got "
+                    f"{item.args.args[0].arg if item.args.args else '<none>'}"
+                )
+                for sub in ast.walk(item):
+                    if (
+                        isinstance(sub, ast.Attribute)
+                        and isinstance(sub.value, ast.Name)
+                        and sub.value.id == "self"
+                    ):
+                        raise AssertionError(
+                            f"{item.name} body references ``self.{sub.attr}`` — "
+                            "classmethod factories have no instance state"
+                        )
+            assert not (
+                isinstance(item, ast.FunctionDef) and item.name == "__init__"
+            ), "ETLFactory subclasses must not declare __init__"
+
+
 def test_etl_factory_template_uses_super(jinja_env: Environment) -> None:
     tmpl = jinja_env.get_template("etl_factory.py.jinja")
     rendered = tmpl.render(project_name="Demo", class_name="Demo")
@@ -160,10 +202,9 @@ def test_etl_factory_template_uses_super(jinja_env: Environment) -> None:
 
     assert "super().create_extraction_sequence" in rendered
     assert "super().create_validation_sequence" in rendered
-    # Should not redeclare an explicit __init__ — base class handles it
-    assert "def __init__" not in rendered
     # Should not override the loader (default is fine)
     assert "def create_loader" not in rendered
+    _assert_classmethod_factory_shape(rendered)
 
 
 def test_etl_factory_generated_with_all_default_files(jinja_env: Environment) -> None:
@@ -183,7 +224,7 @@ def test_etl_factory_generated_with_all_default_files(jinja_env: Environment) ->
     assert "super().create_extraction_sequence" in rendered
     assert "super().create_validation_sequence" in rendered
     assert "ExtractionSuccessVerification" not in rendered
-    assert "def __init__" not in rendered
+    _assert_classmethod_factory_shape(rendered)
 
 
 def test_etl_factory_generated_with_custom_xlsx_single(
@@ -204,7 +245,10 @@ def test_etl_factory_generated_with_custom_xlsx_single(
 
     assert "XLSXSingleExtractor" in rendered
     assert 'sheet_name="Sheet1"' in rendered
-    assert 'self.get_schema("inventory")' in rendered
+    # Custom extractors now look up schemas from the passed-in mapping,
+    # not from an instance attribute.
+    assert 'schemas["inventory"]' in rendered
+    _assert_classmethod_factory_shape(rendered)
 
 
 def test_main_custom_uses_all_schemas(jinja_env: Environment) -> None:
@@ -359,6 +403,11 @@ def test_pytest_etl_skeleton_parses(
         assert "generated_schemas" in rendered
     else:
         assert "from src.data_handling.schemas import all_schemas" in rendered
+    # Regression: the classmethod ETLFactory can't be instantiated, so the
+    # generated tests must call it as a class and use ``issubclass`` for
+    # identity checks.
+    assert "ETLFactory(schemas=" not in rendered
+    assert "issubclass(" in rendered
 
 
 def test_pytest_conftest_parses(jinja_env: Environment) -> None:

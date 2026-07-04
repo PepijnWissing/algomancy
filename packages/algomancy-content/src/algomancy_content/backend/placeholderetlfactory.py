@@ -1,26 +1,41 @@
-from typing import Dict
+from typing import Dict, Optional
 
 import algomancy_data as de
-from algomancy_data import File
+from algomancy_data import File, Schema
 from algomancy_data.extractor import ExtractionSequence
 from algomancy_data.transformer import TransformationSequence
+from algomancy_utils import Logger
 
 
 class PlaceholderETLFactory(de.ETLFactory):
-    def __init__(self, configs, logger=None):
-        super().__init__(configs, logger)
+    @classmethod
+    def create_extraction_sequence(
+        cls,
+        files: Dict[str, File] | None = None,
+        schemas: Dict[str, Schema] | None = None,
+        logger: Optional[Logger] = None,
+    ) -> ExtractionSequence:
+        return ExtractionSequence(logger=logger)
 
-    def create_extraction_sequence(self, files: Dict[str, File]) -> ExtractionSequence:
-        # return the empty sequence
-        return ExtractionSequence(logger=self.logger)
+    @classmethod
+    def create_transformation_sequence(
+        cls,
+        schemas: Dict[str, Schema] | None = None,
+        logger: Optional[Logger] = None,
+    ) -> TransformationSequence:
+        return TransformationSequence(logger=logger)
 
-    def create_transformation_sequence(self) -> TransformationSequence:
-        # return the empty sequence
-        return TransformationSequence(logger=self.logger)
+    @classmethod
+    def create_validation_sequence(
+        cls,
+        schemas: Dict[str, Schema],
+        logger: Optional[Logger] = None,
+    ) -> de.ValidationSequence:
+        return de.ValidationSequence(logger=logger)
 
-    def create_validation_sequence(self) -> de.ValidationSequence:
-        # return the empty sequence
-        return de.ValidationSequence(logger=self.logger)
-
-    def create_loader(self) -> de.Loader:
-        return de.DataSourceLoader(self.logger)
+    @classmethod
+    def create_loader(
+        cls,
+        logger: Optional[Logger] = None,
+    ) -> de.Loader:
+        return de.DataSourceLoader(logger)

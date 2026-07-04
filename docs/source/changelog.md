@@ -2,6 +2,47 @@
 
 > Migrating from v0.5 or earlier? See the [migration guide](migration-ref)
 > for before/after snippets covering every breaking change in v0.6–v0.7.
+## v0.9.0
+### Changed
+- **`ETLFactory` reverted to a classmethod-based abstract factory.** **Breaking** for code written against the transient instance-based API (`SimpleETLFactory(schemas=..., transformers=[...])`).
+
+  :::{dropdown} {octicon}`light-bulb` Details
+  :color: light
+  `ETLFactory` and its concrete `SimpleETLFactory` subclass carry no instance state — every `create_*` hook is a `@classmethod` and the factory is used as the class itself, never instantiated. `SimpleETLFactory(schemas=...)` and the `transformers=` constructor kwarg are gone; wire custom transformers by overriding `create_transformation_sequence` in a subclass.
+
+  Migration:
+
+  ```python
+  # Before
+  factory = SimpleETLFactory(
+      schemas=[ProductSchema, OrderSchema],
+      transformers=[CascadeDropTransformer(schemas=[ProductSchema, OrderSchema])],
+  )
+  pipeline = factory.build_pipeline("orders", files)
+  result = pipeline.run()
+
+  # After
+  class CleanFactory(SimpleETLFactory):
+      @classmethod
+      def create_transformation_sequence(cls, schemas=None, logger=None):
+          seq = TransformationSequence(logger=logger)
+          seq.add_transformer(
+              CascadeDropTransformer(schemas=[ProductSchema, OrderSchema])
+          )
+          return seq
+
+  schemas = {s.file_name(): s for s in (ProductSchema, OrderSchema)}
+  pipeline = CleanFactory.build_pipeline("orders", files, schemas)
+  result = pipeline.run()
+  ```
+
+  `build_pipeline` now takes `schemas` as the third positional argument (a `Dict[str, Schema]` keyed by `schema.file_name()`). Framework callers (`DataManager.etl_data`, `StatefulDataManager.load_data_from_dir`, `DatabaseDataManager`) handle this automatically.
+  :::
+
+### Fixed
+- **`DataFrameExtractor` logger dropped on construction** — the extractor now correctly forwards the passed-in logger to the base `Extractor` after the `schema` argument was added upstream. Previously the logger positional collided with the new `schema` slot and was silently set to `None`.
+- **`ETLFactory.build_pipeline` logger not forwarded to extractors** — extraction now receives the caller's logger; previously only validation, transformation, and the loader saw it.
+
 ## v0.8.4
 ### Added
 - **`ApiConfiguration.allow_session_create`** — when `False`, the HTTP API rejects `POST /sessions` and `POST /sessions/{id}/copy` with `403 Forbidden`. Mirrors the GUI's `FeatureConfig.show_session_picker=False` for single-tenant deployments where the operator has provisioned the session(s) up front. List / rename / delete on existing sessions, and all per-session routes, are unaffected.

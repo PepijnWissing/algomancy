@@ -296,12 +296,10 @@ class DataTypeConverter:
 
 
 class Extractor(ABC):
-    def __init__(self, file: File, logger: Logger = None) -> None:
+    def __init__(self, file: File, schema: Schema, logger: Logger = None) -> None:
         self.file = file
         self.logger = logger
-        # Buffer for dtype conversion failures detected during extract().
-        # The owning ExtractionSequence drains this list after each extractor
-        # runs so the validation step can surface them as messages.
+        self.schema = schema
         self.conversion_issues: List[ConversionIssue] = []
 
     def _extraction_message(self):
@@ -319,8 +317,7 @@ class Extractor(ABC):
 
 class SingleExtractor(Extractor):
     def __init__(self, file: File, schema: Schema, logger: Logger = None) -> None:
-        super().__init__(file, logger)
-        self.schema = schema
+        super().__init__(file, schema, logger)
 
     def extract(self) -> Dict[str, pd.DataFrame]:
         """Returns Dict[name, dataframe], so each dataset is identifiable"""
@@ -349,11 +346,10 @@ class SingleExtractor(Extractor):
 
 class MultiExtractor(Extractor):
     def __init__(self, files: File, schema: Schema, logger: Logger = None) -> None:
-        super().__init__(files, logger)
+        super().__init__(files, schema, logger)
         assert schema.is_multi(), (
             f"MultiExtractor for {schema.file_name()} requires a multi-schema"
         )
-        self.schema = schema
 
     def _check_schemas(self, dfs: Dict[str, pd.DataFrame]):
         missing_keys = set(dfs.keys()) - set(
@@ -785,14 +781,13 @@ class DataFrameExtractor(Extractor):
             def __init__(self, n: str) -> None:
                 self.name = n
 
-        super().__init__(_MemoryFile(name), logger)
         if not schema.is_single():
             raise ValueError(
                 "DataFrameExtractor only supports SINGLE schemas; "
                 f"got {schema.schema_type()}."
             )
+        super().__init__(_MemoryFile(name), schema, logger)
         self._df = df
-        self.schema = schema
 
     def extract(self) -> Dict[str, pd.DataFrame]:
         self._extraction_message()

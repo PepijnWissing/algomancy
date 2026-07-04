@@ -34,7 +34,7 @@ from algomancy_scenario import (
     IntegerParameter,
 )
 
-from typing import Dict, TypeVar, cast
+from typing import Dict, Optional, TypeVar, cast
 
 from algomancy_data import Schema, FileExtension, DataType
 from algomancy_data.schema import SchemaType
@@ -213,87 +213,91 @@ F = TypeVar("F", bound=File)
 
 
 class ExampleETLFactory(ETLFactory):
-    def __init__(self, configs, logger=None):
-        super().__init__(configs, logger)
-
+    @classmethod
     def create_extraction_sequence(
-        self,
-        files: Dict[str, F],  # name to path format
+        cls,
+        files: Dict[str, F] | None = None,
+        schemas: Dict[str, Schema] | None = None,
+        logger: Optional[Logger] = None,
     ) -> ExtractionSequence:
-        """
-        Input:
-            files: A dictionary mapping file names to file paths.
-
-        Output:
-            An extraction sequence object
-
-        raises:
-            ETLConstructionError: If any of the expected files or configurations are missing.
-        """
         sequence = ExtractionSequence()
 
         sequence.add_extractor(
             CSVSingleExtractor(
                 file=cast(CSVFile, files["sku_data"]),
-                schema=self.get_schema("sku_data"),
-                logger=self.logger,
+                schema=schemas["sku_data"],
+                logger=logger,
                 separator=";",
             )
         )
         sequence.add_extractor(
             CSVSingleExtractor(
                 file=cast(CSVFile, files["warehouse_layout"]),
-                schema=self.get_schema("warehouse_layout"),
-                logger=self.logger,
+                schema=schemas["warehouse_layout"],
+                logger=logger,
                 separator=";",
             )
         )
         sequence.add_extractor(
             JSONSingleExtractor(
                 file=cast(JSONFile, files["employees"]),
-                schema=self.get_schema("employees"),
-                logger=self.logger,
+                schema=schemas["employees"],
+                logger=logger,
             )
         )
         sequence.add_extractor(
             XLSXSingleExtractor(
                 file=cast(XLSXFile, files["inventory"]),
-                schema=self.get_schema("inventory"),
+                schema=schemas["inventory"],
                 sheet_name=1,
-                logger=self.logger,
+                logger=logger,
             )
         )
         sequence.add_extractor(
             XLSXMultiExtractor(
                 file=cast(XLSXFile, files["multisheet"]),
-                schema=self.get_schema("multisheet"),
-                logger=self.logger,
+                schema=schemas["multisheet"],
+                logger=logger,
             )
         )
 
         return sequence
 
-    def create_validation_sequence(self) -> ValidationSequence:
-        vs = ValidationSequence(logger=self.logger)
+    @classmethod
+    def create_validation_sequence(
+        cls,
+        schemas: Dict[str, Schema],
+        logger: Optional[Logger] = None,
+    ) -> ValidationSequence:
+        vs = ValidationSequence(logger=logger)
 
         vs.add_validator(ExtractionSuccessVerification())
 
         vs.add_validator(
             SchemaValidator(
-                schemas=self.schemas,
+                schemas=list(schemas.values()),
                 severity=ValidationSeverity.CRITICAL,
             )
         )
 
         return vs
 
-    def create_transformation_sequence(self) -> TransformationSequence:
+    @classmethod
+    def create_transformation_sequence(
+        cls,
+        schemas: Dict[str, Schema] | None = None,
+        logger: Optional[Logger] = None,
+    ) -> TransformationSequence:
         sequence = TransformationSequence()
-        sequence.add_transformer(CleanTransformer(self.logger))
+        sequence.add_transformer(CleanTransformer(logger))
         return sequence
 
-    def create_loader(self) -> Loader:
-        return DataSourceLoader(self.logger)
+    @classmethod
+    def create_loader(
+        cls,
+        logger: Optional[Logger] = None,
+    ) -> Loader:
+        return DataSourceLoader(logger)
 
 
 class SlowAlgorithmParams(BaseParameterSet):

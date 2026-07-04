@@ -213,9 +213,9 @@ class TestTemplate:
         SchemaCls = ns["PicksSchema"]
 
         files = {"picks": JSONFile(name="picks", path=str(info.file_path))}
-        result = (
-            SimpleETLFactory(schemas=[SchemaCls]).build_pipeline("picks", files).run()
-        )
+        result = SimpleETLFactory.build_pipeline(
+            "picks", files, {SchemaCls.file_name(): SchemaCls}
+        ).run()
 
         assert result.is_success, [m.message for m in result.messages]
         parent = result.datasource.get_table("picks.PickLoadCarriers")

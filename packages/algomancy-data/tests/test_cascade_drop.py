@@ -353,6 +353,7 @@ class TestPipelineIntegration:
             CascadeDropTransformer,
             SimpleETLFactory,
         )
+        from algomancy_data.transformer import TransformationSequence
 
         product_csv = tmp_path / "product.csv"
         order_csv = tmp_path / "order.csv"
@@ -360,16 +361,24 @@ class TestPipelineIntegration:
         product_csv.write_text("id;name\nP1;a\nP2;b\n", encoding="utf-8")
         order_csv.write_text("id;product_id\nO1;P1\nO2;P_GONE\n", encoding="utf-8")
 
-        factory = SimpleETLFactory(
-            schemas=[ProductSchema, OrderSchema],
-            transformers=[CascadeDropTransformer(schemas=[ProductSchema, OrderSchema])],
-        )
-        result = factory.build_pipeline(
+        schemas = {s.file_name(): s for s in (ProductSchema, OrderSchema)}
+
+        class _CascadeFactory(SimpleETLFactory):
+            @classmethod
+            def create_transformation_sequence(cls, schemas=None, logger=None):
+                seq = TransformationSequence(logger=logger)
+                seq.add_transformer(
+                    CascadeDropTransformer(schemas=[ProductSchema, OrderSchema])
+                )
+                return seq
+
+        result = _CascadeFactory.build_pipeline(
             "test_orders",
-            files={
+            {
                 "product": CSVFile(name="product", path=str(product_csv)),
                 "order": CSVFile(name="order", path=str(order_csv)),
             },
+            schemas,
         ).run()
 
         assert result.is_success

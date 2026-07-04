@@ -50,12 +50,14 @@ class WidgetSchema(Schema):
 class _GoodETLFactory(ETLFactory):
     """Factory that produces a passing pipeline for in-memory ``files``."""
 
-    def create_extraction_sequence(self, files):
+    @classmethod
+    def create_extraction_sequence(cls, files=None, schemas=None, logger=None):
         return ExtractionSequence(
             extractors=[CSVSingleExtractor(files[name], WidgetSchema) for name in files]
         )
 
-    def create_validation_sequence(self):
+    @classmethod
+    def create_validation_sequence(cls, schemas=None, logger=None):
         return ValidationSequence(
             [
                 RequiredColumnsValidator([WidgetSchema]),
@@ -64,10 +66,12 @@ class _GoodETLFactory(ETLFactory):
             ]
         )
 
-    def create_transformation_sequence(self):
+    @classmethod
+    def create_transformation_sequence(cls, schemas=None, logger=None):
         return TransformationSequence([NoopTransformer()])
 
-    def create_loader(self):
+    @classmethod
+    def create_loader(cls, logger=None):
         return DataSourceLoader(logger=None)
 
 
@@ -88,9 +92,8 @@ def _csv_file(
 
 class TestETLResult:
     def test_success_returns_etl_result(self, tmp_path):
-        factory = _GoodETLFactory([WidgetSchema], None)
-        pipeline = factory.build_pipeline(
-            "widgets", {"widget": _csv_file(tmp_path)}, None
+        pipeline = _GoodETLFactory.build_pipeline(
+            "widgets", {"widget": _csv_file(tmp_path)}, {}, None
         )
         result = pipeline.run()
         assert isinstance(result, ETLResult)
@@ -103,7 +106,8 @@ class TestETLResult:
         # PK duplicates → PrimaryKeyValidator emits ERROR. We bump halt_on to
         # ERROR so the pipeline fails instead of letting them slide.
         class StrictFactory(_GoodETLFactory):
-            def create_validation_sequence(self):
+            @classmethod
+            def create_validation_sequence(cls, schemas=None, logger=None):
                 return ValidationSequence(
                     [
                         RequiredColumnsValidator([WidgetSchema]),
@@ -113,9 +117,8 @@ class TestETLResult:
                 )
 
         bad = "id;name;price\nw1;A;1.0\nw1;B;2.0\n"  # duplicate PK
-        factory = StrictFactory([WidgetSchema], None)
-        result = factory.build_pipeline(
-            "widgets", {"widget": _csv_file(tmp_path, bad)}, None
+        result = StrictFactory.build_pipeline(
+            "widgets", {"widget": _csv_file(tmp_path, bad)}, {}, None
         ).run()
         assert result.is_failure
         assert result.datasource is None
@@ -149,11 +152,11 @@ class TestExpectedErrors:
                 raise FileNotFoundError(f"missing: {missing_path}")
 
         class MissingFactory(_GoodETLFactory):
-            def create_extraction_sequence(self, files):
+            @classmethod
+            def create_extraction_sequence(cls, files=None, schemas=None, logger=None):
                 return ExtractionSequence(extractors=[MissingExtractor()])
 
-        factory = MissingFactory([WidgetSchema], None)
-        pipeline = factory.build_pipeline("widgets", {}, None)
+        pipeline = MissingFactory.build_pipeline("widgets", {}, {}, None)
         result = pipeline.run()
         assert result.is_failure
         assert isinstance(result.raised, FileNotFoundError)
@@ -162,9 +165,8 @@ class TestExpectedErrors:
 
     def test_malformed_csv_routed_to_messages(self, tmp_path):
         bad = "id;name;price\nw1;A;not-a-number\nw2;B;also-bad\n"
-        factory = _GoodETLFactory([WidgetSchema], None)
-        result = factory.build_pipeline(
-            "widgets", {"widget": _csv_file(tmp_path, bad)}, None
+        result = _GoodETLFactory.build_pipeline(
+            "widgets", {"widget": _csv_file(tmp_path, bad)}, {}, None
         ).run()
         assert any(m.code == "CONVERSION_FAILED" for m in result.messages)
 
@@ -185,19 +187,20 @@ class _BuggyTransformer(Transformer):
 class TestProgrammerErrors:
     def test_keyerror_in_transformer_propagates(self, tmp_path):
         class BuggyFactory(_GoodETLFactory):
-            def create_transformation_sequence(self):
+            @classmethod
+            def create_transformation_sequence(cls, schemas=None, logger=None):
                 return TransformationSequence([_BuggyTransformer()])
 
-        factory = BuggyFactory([WidgetSchema], None)
-        pipeline = factory.build_pipeline(
-            "widgets", {"widget": _csv_file(tmp_path)}, None
+        pipeline = BuggyFactory.build_pipeline(
+            "widgets", {"widget": _csv_file(tmp_path)}, {}, None
         )
         with pytest.raises(KeyError, match="intentional bug"):
             pipeline.run()
 
     def test_attributeerror_propagates(self, tmp_path):
         class AEFactory(_GoodETLFactory):
-            def create_transformation_sequence(self):
+            @classmethod
+            def create_transformation_sequence(cls, schemas=None, logger=None):
                 class AETransformer(Transformer):
                     def __init__(self):
                         super().__init__(name="ae")
@@ -207,10 +210,9 @@ class TestProgrammerErrors:
 
                 return TransformationSequence([AETransformer()])
 
-        factory = AEFactory([WidgetSchema], None)
         with pytest.raises((AttributeError, KeyError)):
-            factory.build_pipeline(
-                "widgets", {"widget": _csv_file(tmp_path)}, None
+            AEFactory.build_pipeline(
+                "widgets", {"widget": _csv_file(tmp_path)}, {}, None
             ).run()
 
 
@@ -222,9 +224,8 @@ class TestProgrammerErrors:
 class TestConversionMessages:
     def test_conversion_failure_no_silent_nans(self, tmp_path):
         bad = "id;name;price\nw1;A;abc\n"
-        factory = _GoodETLFactory([WidgetSchema], None)
-        result = factory.build_pipeline(
-            "widgets", {"widget": _csv_file(tmp_path, bad)}, None
+        result = _GoodETLFactory.build_pipeline(
+            "widgets", {"widget": _csv_file(tmp_path, bad)}, {}, None
         ).run()
         conv = [m for m in result.messages if m.code == "CONVERSION_FAILED"]
         assert conv, "expected a CONVERSION_FAILED validation message"
@@ -263,16 +264,20 @@ class TestStatefulStartup:
         bad.write_text("not valid json", encoding="utf-8")
 
         class _NoopETL(ETLFactory):
-            def create_extraction_sequence(self, files):
+            @classmethod
+            def create_extraction_sequence(cls, files=None, schemas=None, logger=None):
                 return ExtractionSequence()
 
-            def create_validation_sequence(self):
+            @classmethod
+            def create_validation_sequence(cls, schemas=None, logger=None):
                 return ValidationSequence()
 
-            def create_transformation_sequence(self):
+            @classmethod
+            def create_transformation_sequence(cls, schemas=None, logger=None):
                 return TransformationSequence()
 
-            def create_loader(self):
+            @classmethod
+            def create_loader(cls, logger=None):
                 return DataSourceLoader(logger=None)
 
         dm = StatefulDataManager(
@@ -302,16 +307,20 @@ class TestStatefulStartup:
         (data_folder / "scenarios.json").write_text("[]", encoding="utf-8")
 
         class _NoopETL(ETLFactory):
-            def create_extraction_sequence(self, files):
+            @classmethod
+            def create_extraction_sequence(cls, files=None, schemas=None, logger=None):
                 return ExtractionSequence()
 
-            def create_validation_sequence(self):
+            @classmethod
+            def create_validation_sequence(cls, schemas=None, logger=None):
                 return ValidationSequence()
 
-            def create_transformation_sequence(self):
+            @classmethod
+            def create_transformation_sequence(cls, schemas=None, logger=None):
                 return TransformationSequence()
 
-            def create_loader(self):
+            @classmethod
+            def create_loader(cls, logger=None):
                 return DataSourceLoader(logger=None)
 
         dm = StatefulDataManager(

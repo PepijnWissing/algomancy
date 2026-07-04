@@ -176,8 +176,8 @@ populated `table`/`column`/`row`.
 These are not breaking changes — old subclasses keep working — but you
 can now delete a lot of plumbing:
 
-- `SimpleETLFactory(schemas)` replaces full `ETLFactory` subclasses for the common case.
-- `ETLFactory` ships with default `create_extraction_sequence` / `create_validation_sequence` / `create_transformation_sequence` / `create_loader` implementations; only override the ones you need.
+- `SimpleETLFactory` replaces full `ETLFactory` subclasses for the common case — it is a concrete classmethod-based factory used directly as a class (`SimpleETLFactory.build_pipeline(name, files, schemas)`), never instantiated.
+- `ETLFactory` is a classmethod-based abstract factory. Subclass `SimpleETLFactory` to inherit sensible defaults and override only the `@classmethod` `create_*` hooks you need.
 - `DataManager.prepare_files` now drives file-type dispatch off the schema-declared `_EXTENSION`.
 
 See [Extending file types and data types](extending-ref) for the public
@@ -223,11 +223,21 @@ class OrderSchema(Schema):
 ```{code-block} python
 :caption: Opt-in cleanup
 from algomancy_data import CascadeDropTransformer, SimpleETLFactory
+from algomancy_data.transformer import TransformationSequence
 
-factory = SimpleETLFactory(
-    schemas=[ProductSchema, OrderSchema],
-    transformers=[CascadeDropTransformer(schemas=[ProductSchema, OrderSchema])],
-)
+
+class CleanFactory(SimpleETLFactory):
+    @classmethod
+    def create_transformation_sequence(cls, schemas=None, logger=None):
+        seq = TransformationSequence(logger=logger)
+        seq.add_transformer(
+            CascadeDropTransformer(schemas=[ProductSchema, OrderSchema])
+        )
+        return seq
+
+
+schemas = {s.file_name(): s for s in (ProductSchema, OrderSchema)}
+result = CleanFactory.build_pipeline("orders", files, schemas).run()
 ```
 
 See [Relational cascade cleanup](cascade-cleanup-ref) for the full feature
