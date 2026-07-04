@@ -337,7 +337,7 @@ class ETLFactory(ABC):
         Returns:
             ETLPipeline ready to run.
         """
-        e_seq = cls.create_extraction_sequence(files, schemas)
+        e_seq = cls.create_extraction_sequence(files, schemas, logger)
         v_seq = cls.create_validation_sequence(schemas, logger)
         t_seq = cls.create_transformation_sequence(schemas, logger)
         loader = cls.create_loader(logger)

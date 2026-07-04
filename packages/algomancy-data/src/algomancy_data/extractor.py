@@ -781,14 +781,13 @@ class DataFrameExtractor(Extractor):
             def __init__(self, n: str) -> None:
                 self.name = n
 
-        super().__init__(_MemoryFile(name), logger)
         if not schema.is_single():
             raise ValueError(
                 "DataFrameExtractor only supports SINGLE schemas; "
                 f"got {schema.schema_type()}."
             )
+        super().__init__(_MemoryFile(name), schema, logger)
         self._df = df
-        self.schema = schema
 
     def extract(self) -> Dict[str, pd.DataFrame]:
         self._extraction_message()
