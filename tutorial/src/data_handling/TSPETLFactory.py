@@ -1,10 +1,11 @@
-from typing import Dict, TypeVar, cast
+from typing import Dict, Optional, TypeVar, cast
 
 from algomancy_data import (
     File,
     CSVFile,
     XLSXFile,
     ETLFactory,
+    Schema,
     ValidationSequence,
     ExtractionSuccessVerification,
     SchemaValidator,
@@ -18,6 +19,7 @@ from algomancy_data.extractor import (
     XLSXMultiExtractor,
 )
 from algomancy_data.transformer import TransformationSequence
+from algomancy_utils import Logger
 
 from data_handling.loaders.loader import DataModelLoader
 from data_handling.transformers.transform_create_locations import (
@@ -41,100 +43,98 @@ F = TypeVar("F", bound=File)
 
 
 class TSPETLFactory(ETLFactory):
-    def __init__(self, configs, logger=None):
-        super().__init__(configs, logger)
-
+    @classmethod
     def create_extraction_sequence(
-        self,
-        files: Dict[str, F],  # name to path format
+        cls,
+        files: Dict[str, F] | None = None,
+        schemas: Dict[str, Schema] | None = None,
+        logger: Optional[Logger] = None,
     ) -> ExtractionSequence:
-        """
-        Input:
-            files: A dictionary mapping file names to file paths.
-
-        Output:
-            An extraction sequence object
-
-        raises:
-            ETLConstructionError: If any of the expected files or configurations are missing.
-        """
         sequence = ExtractionSequence()
 
         sequence.add_extractor(
             CSVSingleExtractor(
                 file=cast(CSVFile, files["stores"]),
-                schema=self.get_schema("stores"),
-                logger=self.logger,
+                schema=schemas["stores"],
+                logger=logger,
                 separator=",",
             )
         )
         sequence.add_extractor(
             XLSXSingleExtractor(
                 file=cast(XLSXFile, files["dc"]),
-                schema=self.get_schema("dc"),
+                schema=schemas["dc"],
                 sheet_name=0,
-                logger=self.logger,
+                logger=logger,
             )
         )
         sequence.add_extractor(
             XLSXMultiExtractor(
                 file=cast(XLSXFile, files["otherlocations"]),
-                schema=self.get_schema("otherlocations"),
-                logger=self.logger,
+                schema=schemas["otherlocations"],
+                logger=logger,
             )
         )
 
         return sequence
 
-    def create_validation_sequence(self) -> ValidationSequence:
-        vs = ValidationSequence(logger=self.logger)
+    @classmethod
+    def create_validation_sequence(
+        cls,
+        schemas: Dict[str, Schema],
+        logger: Optional[Logger] = None,
+    ) -> ValidationSequence:
+        vs = ValidationSequence(logger=logger)
 
         vs.add_validator(ExtractionSuccessVerification())
 
         vs.add_validator(
             SchemaValidator(
-                schemas=self.schemas,
+                schemas=list(schemas.values()),
                 severity=ValidationSeverity.CRITICAL,
             )
         )
 
         return vs
 
-    def create_transformation_sequence(self) -> TransformationSequence:
+    @classmethod
+    def create_transformation_sequence(
+        cls,
+        schemas: Optional[Dict[str, Schema]] = None,
+        logger: Optional[Logger] = None,
+    ) -> TransformationSequence:
         sequence = TransformationSequence()
         location_df_name = "transform_locations"
         routes_df_name = "transform_routes"
         sequence.add_transformer(
-            TransformCreateLocations(
-                location_df_name=location_df_name, logger=self.logger
-            )
+            TransformCreateLocations(location_df_name=location_df_name, logger=logger)
         )
         sequence.add_transformer(
             TransformCustomerToLocation(
-                location_df_name=location_df_name, logger=self.logger
+                location_df_name=location_df_name, logger=logger
             )
         )
         sequence.add_transformer(
-            TransformXDockToLocation(
-                location_df_name=location_df_name, logger=self.logger
-            )
+            TransformXDockToLocation(location_df_name=location_df_name, logger=logger)
         )
         sequence.add_transformer(
-            TransformStoresToLocation(
-                location_df_name=location_df_name, logger=self.logger
-            )
+            TransformStoresToLocation(location_df_name=location_df_name, logger=logger)
         )
         sequence.add_transformer(
-            TransformDCToLocation(location_df_name=location_df_name, logger=self.logger)
+            TransformDCToLocation(location_df_name=location_df_name, logger=logger)
         )
         sequence.add_transformer(
             TransformLocationToRoutes(
                 location_df_name=location_df_name,
                 routes_df_name=routes_df_name,
-                logger=self.logger,
+                logger=logger,
             )
         )
         return sequence
 
-    def create_loader(self) -> Loader:
-        return DataModelLoader(self.logger)
+    @classmethod
+    def create_loader(
+        cls,
+        logger: Optional[Logger] = None,
+    ) -> Loader:
+        return DataModelLoader(logger)

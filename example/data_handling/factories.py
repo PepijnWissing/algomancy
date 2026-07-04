@@ -12,12 +12,13 @@ XLSX, JSON-multi parent/child extraction, custom validators), see
 in-memory unit tests in the same directory.
 """
 
-from typing import Dict, TypeVar, cast
+from typing import Dict, Optional, TypeVar, cast
 
 from algomancy_data import (
     CSVFile,
     File,
     OptionalColumnGuard,
+    Schema,
     SimpleETLFactory,
 )
 from algomancy_data.extractor import (
@@ -28,6 +29,7 @@ from algomancy_data.transformer import (
     CleanTransformer,
     TransformationSequence,
 )
+from algomancy_utils import Logger
 
 F = TypeVar("F", bound=File)
 
@@ -41,27 +43,38 @@ class ExampleETLFactory(SimpleETLFactory):
     both schemas declare a primary key).
     """
 
+    @classmethod
     def create_extraction_sequence(
-        self,
-        files: Dict[str, F],
+        cls,
+        files: Dict[str, F] | None = None,
+        schemas: Dict[str, Schema] | None = None,
+        logger: Optional[Logger] = None,
     ) -> ExtractionSequence:
-        sequence = ExtractionSequence(logger=self.logger)
+        sequence = ExtractionSequence(logger=logger)
         for name in ("sku_data", "warehouse_layout"):
             if name in files:
                 sequence.add_extractor(
                     CSVSingleExtractor(
                         file=cast(CSVFile, files[name]),
-                        schema=self.get_schema(name),
+                        schema=schemas[name],
                         separator=";",
-                        logger=self.logger,
+                        logger=logger,
                     )
                 )
         return sequence
 
-    def create_transformation_sequence(self) -> TransformationSequence:
-        sequence = TransformationSequence(logger=self.logger)
+    @classmethod
+    def create_transformation_sequence(
+        cls,
+        schemas: Dict[str, Schema] | None = None,
+        logger: Optional[Logger] = None,
+    ) -> TransformationSequence:
+        sequence = TransformationSequence()
         sequence.add_transformer(
-            OptionalColumnGuard(schemas=self.schemas, logger=self.logger)
+            OptionalColumnGuard(
+                schemas=list(schemas.values()) if schemas else [],
+                logger=logger,
+            )
         )
-        sequence.add_transformer(CleanTransformer(self.logger))
+        sequence.add_transformer(CleanTransformer(logger))
         return sequence
