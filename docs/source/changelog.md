@@ -2,6 +2,33 @@
 
 > Migrating from v0.5 or earlier? See the [migration guide](migration-ref)
 > for before/after snippets covering every breaking change in v0.6–v0.7.
+## v0.9.1
+### Added
+- **`ApiConfiguration.forwarded_allow_ips`** — opt-in support for `X-Forwarded-Proto` / `X-Forwarded-For`.
+  Intended for when the API sits behind a TLS-terminating reverse proxy, such as Azure Container Apps. 
+  
+  :::{dropdown} {octicon}`light-bulb` Details
+  :color: light
+  When unset (the default), behavior is unchanged. 
+  When set to `"*"` or a list of trusted proxy IPs, `request.url.scheme` and `request.client.host` reflect the client-
+  facing values, fixing spurious `http://` URLs in FastAPI slash-redirects and any URL-builder that reads `request.url`.
+
+  Registered at the ASGI-app level (via `uvicorn.middleware.proxy_headers.ProxyHeadersMiddleware`), so the setting also 
+  takes effect under gunicorn/hypercorn or a `uvicorn` CLI invocation. `ApiLauncher.run()` disables uvicorn's built-in copy
+  to avoid double-wrapping.
+
+  ```python
+  ApiConfiguration(
+      forwarded_allow_ips="*",           # Container Apps / Cloud Run / App Runner
+      # or ["10.0.0.5", "10.0.0.6"]      # explicit ingress IPs — safer
+      ...
+  )
+  ```
+
+  Security note: `"*"` trusts every hop and lets a client that can reach the app directly spoof source IP and scheme. 
+  Only use it when the platform guarantees the app is unreachable except through its ingress; otherwise pin to specific IPs.
+  :::
+
 ## v0.9.0
 ### Changed
 - **`ETLFactory` reverted to a classmethod-based abstract factory.** **Breaking** for code written against the transient instance-based API (`SimpleETLFactory(schemas=..., transformers=[...])`).
