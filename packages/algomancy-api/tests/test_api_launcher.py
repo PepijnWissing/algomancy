@@ -75,3 +75,49 @@ def test_cors_middleware_active_when_origins_configured(api_core_kwargs):
     r = client.get("/health", headers={"Origin": "http://example.com"})
     assert r.status_code == 200
     assert r.headers.get("access-control-allow-origin") == "http://example.com"
+
+
+def _add_echo_scheme_route(app: FastAPI) -> None:
+    from fastapi import Request
+
+    @app.get("/_test/echo-scheme")
+    def echo_scheme(request: Request) -> dict:
+        return {"scheme": request.url.scheme, "client": request.client.host}
+
+
+def test_forwarded_proto_ignored_by_default(api_core_kwargs):
+    cfg = ApiConfiguration(**api_core_kwargs)
+    app = ApiLauncher.build(cfg)
+    _add_echo_scheme_route(app)
+    client = TestClient(app)
+    r = client.get("/_test/echo-scheme", headers={"X-Forwarded-Proto": "https"})
+    assert r.status_code == 200
+    # Without forwarded_allow_ips configured, the proxy header must not be trusted.
+    assert r.json()["scheme"] == "http"
+
+
+def test_forwarded_proto_honored_when_configured(api_core_kwargs):
+    cfg = ApiConfiguration(forwarded_allow_ips="*", **api_core_kwargs)
+    app = ApiLauncher.build(cfg)
+    _add_echo_scheme_route(app)
+    client = TestClient(app)
+    r = client.get(
+        "/_test/echo-scheme",
+        headers={"X-Forwarded-Proto": "https", "X-Forwarded-For": "203.0.113.42"},
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["scheme"] == "https"
+    assert body["client"] == "203.0.113.42"
+
+
+def test_forwarded_proto_ignored_when_client_not_in_trusted_list(api_core_kwargs):
+    # TestClient's synthetic client is 'testclient' (not an IP); restricting the
+    # trusted list to a specific IP must cause the proxy header to be ignored.
+    cfg = ApiConfiguration(forwarded_allow_ips="10.0.0.1", **api_core_kwargs)
+    app = ApiLauncher.build(cfg)
+    _add_echo_scheme_route(app)
+    client = TestClient(app)
+    r = client.get("/_test/echo-scheme", headers={"X-Forwarded-Proto": "https"})
+    assert r.status_code == 200
+    assert r.json()["scheme"] == "http"

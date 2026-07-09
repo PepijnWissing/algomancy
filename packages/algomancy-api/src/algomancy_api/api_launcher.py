@@ -63,6 +63,7 @@ class ApiLauncher:
             app,
             host=host or cfg.host,
             port=port or cfg.port,
+            proxy_headers=False,  # Disable uvicorn's own copy to avoid double-wrapping with middleware.
         )
 
     # ---- internals -------------------------------------------------------
@@ -84,6 +85,16 @@ class ApiLauncher:
 
     @staticmethod
     def _install_middleware(app: FastAPI, cfg: ApiConfiguration) -> None:
+        if cfg.forwarded_allow_ips is not None:
+            # Applied at the ASGI-app level, so windows and linux deployers get the same behavior. Set when the app is
+            # only reachable through a trusted reverse proxy that terminates TLS, like Azure Container Apps.
+            from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
+
+            app.add_middleware(
+                ProxyHeadersMiddleware,
+                trusted_hosts=cfg.forwarded_allow_ips,
+            )
+
         if cfg.cors_origins:
             from fastapi.middleware.cors import CORSMiddleware
 

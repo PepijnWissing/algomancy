@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
 from algomancy_scenario.core_configuration import CoreConfig
 
@@ -34,6 +34,7 @@ class ApiConfiguration(CoreConfig):
         prefix: str = "/api/v1",
         cors_origins: List[str] | None = None,
         allow_session_create: bool = True,
+        forwarded_allow_ips: Union[str, List[str], None] = None,
         **kwargs: Any,
     ) -> None:
         super().__init__(
@@ -57,6 +58,9 @@ class ApiConfiguration(CoreConfig):
         self.prefix = prefix
         self.cors_origins = list(cors_origins) if cors_origins else []
         self.allow_session_create = allow_session_create
+        self.forwarded_allow_ips = self._normalize_forwarded_allow_ips(
+            forwarded_allow_ips
+        )
         self._validate_api()
 
     def as_dict(self) -> Dict[str, Any]:
@@ -68,9 +72,24 @@ class ApiConfiguration(CoreConfig):
                 "prefix": self.prefix,
                 "cors_origins": list(self.cors_origins),
                 "allow_session_create": self.allow_session_create,
+                "forwarded_allow_ips": self.forwarded_allow_ips,
             }
         )
         return base
+
+    @staticmethod
+    def _normalize_forwarded_allow_ips(
+        value: Union[str, List[str], None],
+    ) -> Union[str, List[str], None]:
+        if value is None:
+            return None
+        if isinstance(value, str):
+            return value
+        if isinstance(value, list):
+            return list(value)
+        raise ValueError(
+            "forwarded_allow_ips must be None, a string, or a list of strings"
+        )
 
     def _validate_api(self) -> None:
         if not isinstance(self.host, str) or not self.host:
@@ -83,3 +102,21 @@ class ApiConfiguration(CoreConfig):
             raise ValueError("cors_origins entries must be non-empty strings")
         if not isinstance(self.allow_session_create, bool):
             raise ValueError("allow_session_create must be a bool")
+        if self.forwarded_allow_ips is not None:
+            if isinstance(self.forwarded_allow_ips, str):
+                if not self.forwarded_allow_ips.strip():
+                    raise ValueError(
+                        "forwarded_allow_ips must be a non-empty string when provided"
+                    )
+            elif isinstance(self.forwarded_allow_ips, list):
+                if not self.forwarded_allow_ips or any(
+                    not isinstance(o, str) or not o.strip()
+                    for o in self.forwarded_allow_ips
+                ):
+                    raise ValueError(
+                        "forwarded_allow_ips list entries must be non-empty strings"
+                    )
+            else:
+                raise ValueError(
+                    "forwarded_allow_ips must be None, a string, or a list of strings"
+                )
