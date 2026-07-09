@@ -39,6 +39,21 @@ def test_as_dict_includes_api_fields(api_core_kwargs):
     assert d["prefix"] == "/api/v1"
     assert d["cors_origins"] == []
     assert d["allow_session_create"] is True
+    assert d["forwarded_allow_ips"] is None
+
+
+def test_forwarded_allow_ips_accepts_string(api_core_kwargs):
+    cfg = ApiConfiguration(forwarded_allow_ips="*", **api_core_kwargs)
+    assert cfg.forwarded_allow_ips == "*"
+    assert cfg.as_dict()["forwarded_allow_ips"] == "*"
+
+
+def test_forwarded_allow_ips_accepts_list(api_core_kwargs):
+    cfg = ApiConfiguration(
+        forwarded_allow_ips=["10.0.0.1", "10.0.0.2"], **api_core_kwargs
+    )
+    assert cfg.forwarded_allow_ips == ["10.0.0.1", "10.0.0.2"]
+    assert cfg.as_dict()["forwarded_allow_ips"] == ["10.0.0.1", "10.0.0.2"]
 
 
 def test_allow_session_create_can_be_disabled(api_core_kwargs):
@@ -61,6 +76,12 @@ def test_allow_session_create_can_be_disabled(api_core_kwargs):
         {"cors_origins": [42]},
         {"allow_session_create": "yes"},
         {"allow_session_create": None},
+        {"forwarded_allow_ips": ""},
+        {"forwarded_allow_ips": "  "},
+        {"forwarded_allow_ips": []},
+        {"forwarded_allow_ips": [""]},
+        {"forwarded_allow_ips": [42]},
+        {"forwarded_allow_ips": 42},
     ],
 )
 def test_invalid_api_fields_rejected(api_core_kwargs, kwarg):
