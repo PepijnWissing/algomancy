@@ -2,6 +2,13 @@
 
 > Migrating from v0.5 or earlier? See the [migration guide](migration-ref)
 > for before/after snippets covering every breaking change in v0.6–v0.7.
+ 
+
+## v0.9.2
+### Fixed
+- The new-scenario parameters window now resolves algorithm/data parameter templates through the active session's 
+   `ScenarioManager` instead of a nonexistent `SessionManager` method.
+
 ## v0.9.1
 ### Added
 - **`ApiConfiguration.forwarded_allow_ips`** — opt-in support for `X-Forwarded-Proto` / `X-Forwarded-For`.

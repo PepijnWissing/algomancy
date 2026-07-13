@@ -1,5 +1,4 @@
-from algomancy_gui.managers.managergetters import get_manager
-from algomancy_gui.managers.sessionmanager import SessionManager
+from algomancy_gui.managers.managergetters import get_scenario_manager
 from algomancy_gui.managers.settingsmanager import SettingsManager
 import dash_bootstrap_components as dbc
 from dash import html, get_app, dcc
@@ -127,9 +126,13 @@ def create_input_group(
     return form_groups
 
 
-def create_algo_parameters_entry_card_body(template_name: str) -> dbc.CardBody:
-    session_manager: SessionManager | ScenarioManager = get_manager(get_app().server)
-    algo_params: BaseParameterSet = session_manager.get_algorithm_parameters(
+def create_algo_parameters_entry_card_body(
+    template_name: str, session_id: str
+) -> dbc.CardBody:
+    scenario_manager: ScenarioManager = get_scenario_manager(
+        get_app().server, session_id
+    )
+    algo_params: BaseParameterSet = scenario_manager.get_algorithm_parameters(
         template_name
     )
     assert algo_params.has_inputs(), "No parameters found for algorithm template."
@@ -145,9 +148,13 @@ def create_algo_parameters_entry_card_body(template_name: str) -> dbc.CardBody:
     )
 
 
-def create_data_parameters_entry_card_body(dataset_key: str) -> dbc.CardBody:
-    session_manager: SessionManager | ScenarioManager = get_manager(get_app().server)
-    data_params: BaseParameterSet = session_manager.get_data_parameters(dataset_key)
+def create_data_parameters_entry_card_body(
+    dataset_key: str, session_id: str
+) -> dbc.CardBody:
+    scenario_manager: ScenarioManager = get_scenario_manager(
+        get_app().server, session_id
+    )
+    data_params: BaseParameterSet = scenario_manager.get_data_parameters(dataset_key)
     assert data_params.has_inputs(), "No data parameters declared by this dataset."
     input_group = create_input_group(
         data_params.get_parameters(),
