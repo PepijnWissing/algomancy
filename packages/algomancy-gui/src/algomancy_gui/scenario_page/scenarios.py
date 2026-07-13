@@ -365,7 +365,7 @@ def refresh_on_close(is_open):
 def open_algo_params_window(algo_name, session_id):
     if algo_name:
         try:
-            return True, create_algo_parameters_entry_card_body(algo_name)
+            return True, create_algo_parameters_entry_card_body(algo_name, session_id)
         except AssertionError:
             return no_update, ""
     return no_update, ""
@@ -381,7 +381,7 @@ def open_algo_params_window(algo_name, session_id):
 def populate_data_params_card(dataset_key, session_id):
     if dataset_key:
         try:
-            return True, create_data_parameters_entry_card_body(dataset_key)
+            return True, create_data_parameters_entry_card_body(dataset_key, session_id)
         except AssertionError:
             return no_update, ""
     return no_update, ""
