@@ -126,6 +126,8 @@ class SessionManager:
             autorun=core.autorun,
             persistence_backend=core.persistence_backend,
             database_url=core.database_url,
+            hydrated_cache_size=core.hydrated_cache_size,
+            eager_startup=core.eager_startup,
         )
 
     def __init__(
@@ -146,6 +148,8 @@ class SessionManager:
         autorun: bool = False,
         persistence_backend: str = "none",
         database_url: str | None = None,
+        hydrated_cache_size: int | None = None,
+        eager_startup: bool = False,
     ) -> None:
         self.logger = logger if logger else Logger()
         self._etl_factory = etl_factory
@@ -162,6 +166,8 @@ class SessionManager:
         self._default_param_values = default_param_values
         self._persistence_backend = persistence_backend
         self._database_url = database_url
+        self._hydrated_cache_size = hydrated_cache_size
+        self._eager_startup = eager_startup
 
         assert save_type in ["json"], "Save type must be parquet or json."
         self._save_type = save_type
@@ -364,6 +370,7 @@ class SessionManager:
             engine=self._db_engine,
             session_id=session_id,
             data_object_type=self._data_object_type,
+            datasource_cache_size=self._hydrated_cache_size,
             logger=self.logger,
         )
         repo = SqlScenarioRepository(
@@ -372,6 +379,8 @@ class SessionManager:
             algorithms=self._algorithms,
             kpis=self._kpis,
             data_manager=dm,
+            hydrated_cache_size=self._hydrated_cache_size,
+            eager_startup=self._eager_startup,
             logger=self.logger,
         )
         return ScenarioManager(

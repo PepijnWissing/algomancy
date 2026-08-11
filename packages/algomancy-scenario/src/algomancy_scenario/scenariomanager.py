@@ -14,6 +14,7 @@ from algomancy_utils.baseparameterset import BASE_PARAMS_BOUND
 
 from .core_configuration import CoreConfig
 from .keyperformanceindicator import BASE_KPI
+from .records import ScenarioRecord
 from .scenario import Scenario
 from .scenarioregistry import ScenarioRegistry
 from .scenariofactory import ScenarioFactory
@@ -227,6 +228,11 @@ class ScenarioManager:
 
     # Processing operations (delegated)
     def process_scenario_async(self, scenario):
+        # Pin the scenario in the repository's hydration cache (if it has one)
+        # so the live instance stays resident — and is the one polled — from
+        # enqueue until its run is persisted. No-op for in-memory backends.
+        if hasattr(self._registry, "pin"):
+            self._registry.pin(scenario.id)
         self._processor.enqueue(scenario)
 
     def wait_for_processing(self):
@@ -269,6 +275,8 @@ class ScenarioManager:
         self._registry.add(scenario)
 
         if self._processor.auto_run_scenarios:
+            if hasattr(self._registry, "pin"):
+                self._registry.pin(scenario.id)
             self._processor.enqueue(scenario)
         return scenario
 
@@ -298,6 +306,53 @@ class ScenarioManager:
 
     def list_scenarios(self) -> List[Scenario]:
         return self._registry.list()
+
+    def list_summaries(self) -> List[ScenarioRecord]:
+        """Return lightweight metadata records for every scenario.
+
+        Prefers the repository's metadata-only path (no hydration); falls back
+        to deriving records from fully hydrated scenarios for repositories that
+        don't implement it.
+        """
+        if hasattr(self._registry, "list_records"):
+            return self._registry.list_records()
+        return [ScenarioRecord.from_scenario(s) for s in self._registry.list()]
+
+    def get_record(self, scenario_id: str) -> Optional[ScenarioRecord]:
+        """Return one scenario's metadata record without hydrating it."""
+        if hasattr(self._registry, "get_record"):
+            return self._registry.get_record(scenario_id)
+        scenario = self._registry.get_by_id(scenario_id)
+        return ScenarioRecord.from_scenario(scenario) if scenario else None
+
+    def get_status(self, scenario_id: str) -> Optional[dict]:
+        """Return ``{id, tag, status, progress}`` for polling, without hydrating.
+
+        Uses live status/progress when the scenario is resident (accurate
+        mid-run), else the metadata record. Returns ``None`` for unknown ids.
+        """
+        record = self.get_record(scenario_id)
+        if record is None:
+            scenario = self._registry.get_by_id(scenario_id)
+            if scenario is None:
+                return None
+            return {
+                "id": scenario.id,
+                "tag": scenario.tag,
+                "status": str(scenario.status),
+                "progress": float(scenario.progress or 0.0),
+            }
+        status, progress = record.status, record.progress
+        if hasattr(self._registry, "status_of"):
+            live = self._registry.status_of(scenario_id)
+            if live is not None:
+                status, progress = live
+        return {
+            "id": record.id,
+            "tag": record.tag,
+            "status": str(status),
+            "progress": float(progress or 0.0),
+        }
 
     def list_ids(self):
         return self._registry.list_ids()

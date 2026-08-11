@@ -26,22 +26,17 @@ from algomancy_scenario import ScenarioManager, ScenarioStatus
 from algomancy_utils.baseparameterset import ParameterError
 
 from ..dependencies import get_scenario_manager
-from ..schemas import CreateScenarioRequest, ScenarioStatusResponse
+from ..schemas import (
+    CreateScenarioRequest,
+    ScenarioStatusResponse,
+    ScenarioSummary,
+)
 
 
 router = APIRouter(
     prefix="/sessions/{session_id}",
     tags=["scenarios"],
 )
-
-
-def _to_status_response(scenario) -> ScenarioStatusResponse:
-    return ScenarioStatusResponse(
-        id=scenario.id,
-        tag=scenario.tag,
-        status=str(scenario.status),
-        progress=float(scenario.progress or 0.0),
-    )
 
 
 def _resolve_scenario_or_404(sm: ScenarioManager, scenario_id: str):
@@ -54,11 +49,17 @@ def _resolve_scenario_or_404(sm: ScenarioManager, scenario_id: str):
     return scenario
 
 
-@router.get("/scenarios", summary="List scenarios in this session")
+@router.get(
+    "/scenarios",
+    response_model=List[ScenarioSummary],
+    summary="List scenarios in this session (lightweight summaries)",
+)
 def list_scenarios(
     sm: ScenarioManager = Depends(get_scenario_manager),
 ) -> List[dict]:
-    return [s.to_dict() for s in sm.list_scenarios()]
+    # Metadata-only: no dataset or result hydration. Use the per-id endpoint
+    # for the fully hydrated payload.
+    return [record.to_summary_dict() for record in sm.list_summaries()]
 
 
 @router.post(
@@ -175,8 +176,15 @@ def scenario_status(
     scenario_id: str,
     sm: ScenarioManager = Depends(get_scenario_manager),
 ) -> ScenarioStatusResponse:
-    scenario = _resolve_scenario_or_404(sm, scenario_id)
-    return _to_status_response(scenario)
+    # Metadata-only path: polling never forces hydration of the input dataset
+    # or run result. Live status/progress is used when the scenario is resident.
+    info = sm.get_status(scenario_id)
+    if info is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Scenario '{scenario_id}' not found",
+        )
+    return ScenarioStatusResponse(**info)
 
 
 @router.get(

@@ -20,6 +20,8 @@ from __future__ import annotations
 
 import json
 import re
+import threading
+from collections import OrderedDict
 from typing import Dict, List, Optional, TYPE_CHECKING
 
 import pandas as pd
@@ -75,6 +77,11 @@ class DatabaseDataManager(DataManager):
         data_object_type: ``BaseDataSource`` subclass to instantiate when
             loading DataSources from the DB. Must implement ``from_json`` when
             the JSON-blob fallback path is in use.
+        datasource_cache_size: Maximum number of hydrated DataSources to keep in
+            RAM. ``None`` (the default) is unbounded. When set, ``get_data``
+            maintains an LRU and evicts the least-recently-used datasource once
+            the bound is exceeded; eviction only drops the manager's cached
+            reference, never data held live elsewhere.
         logger: Optional logger.
     """
 
@@ -85,6 +92,7 @@ class DatabaseDataManager(DataManager):
         engine: sa.Engine,
         session_id: str,
         data_object_type: type[BASEDATASOURCE],
+        datasource_cache_size: int | None = None,
         logger: Logger | None = None,
     ) -> None:
         super().__init__(etl_factory, schemas, "database", data_object_type, logger)
@@ -92,6 +100,10 @@ class DatabaseDataManager(DataManager):
         self._session_id = session_id
         # Catalogue: dataset_name → metadata dict (id, ds_type, creation_datetime, payload, sub_tables)
         self._db_catalogue: Dict[str, dict] = {}
+        # Bounded LRU of hydrated DataSources (unbounded when size is None).
+        self._cache_size = datasource_cache_size
+        self._cache_lock = threading.Lock()
+        self._data: "OrderedDict[str, BASEDATASOURCE]" = OrderedDict()
 
     # ------------------------------------------------------------------
     # Lifecycle
@@ -150,14 +162,32 @@ class DatabaseDataManager(DataManager):
         return list(known)
 
     def get_data(self, data_key: str) -> Optional[BASEDATASOURCE]:
-        if data_key in self._data:
-            return self._data[data_key]
+        with self._cache_lock:
+            if data_key in self._data:
+                self._data.move_to_end(data_key)
+                return self._data[data_key]
         if data_key in self._db_catalogue:
+            # Load outside the lock (DB read can be slow); a concurrent load of
+            # the same key just recomputes identical data — last write wins.
             ds = self._load_datasource_from_db(data_key)
             if ds is not None:
-                self._data[data_key] = ds
+                with self._cache_lock:
+                    self._data[data_key] = ds
+                    self._data.move_to_end(data_key)
+                    self._evict_if_needed()
             return ds
         return None
+
+    def _evict_if_needed(self) -> None:
+        """Evict least-recently-used datasources beyond the cache bound.
+
+        Must be called while holding ``self._cache_lock``. Eviction only drops
+        the manager's cached reference; live holders keep their own reference.
+        """
+        if self._cache_size is None:
+            return
+        while len(self._data) > self._cache_size:
+            self._data.popitem(last=False)
 
     # ------------------------------------------------------------------
     # Write operations (override to persist to DB)
