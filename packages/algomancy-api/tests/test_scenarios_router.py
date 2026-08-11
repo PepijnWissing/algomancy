@@ -64,6 +64,53 @@ def test_list_scenarios_starts_empty(client):
     assert r.json() == []
 
 
+def test_list_returns_lightweight_summaries(client):
+    client.post(
+        "/api/v1/sessions/main/scenarios",
+        json={
+            "tag": "summary",
+            "dataset_key": DATASET_KEY,
+            "algo_name": "Slow",
+            "algo_params": {"duration": 1},
+        },
+    )
+    r = client.get("/api/v1/sessions/main/scenarios")
+    assert r.status_code == 200
+    items = r.json()
+    assert len(items) == 1
+    item = items[0]
+    # Summary shape (no full "result" payload).
+    assert set(item) == {
+        "id",
+        "tag",
+        "input_data_key",
+        "algorithm",
+        "data_parameters",
+        "status",
+        "progress",
+        "created_at",
+        "run_started_at",
+        "run_finished_at",
+        "result_available",
+        "kpis",
+    }
+    assert item["tag"] == "summary"
+    assert item["input_data_key"] == DATASET_KEY
+    assert item["algorithm"]["name"] == "Slow"
+    assert item["algorithm"]["parameters"]["duration"] == 1
+    assert item["status"] == "created"
+    assert item["result_available"] is False
+    # KPIs are keyed by registry name and carry the BaseKPI.to_dict shape.
+    assert "Delay" in item["kpis"]
+    assert set(item["kpis"]["Delay"]) == {
+        "name",
+        "better_when",
+        "unit",
+        "value",
+        "threshold",
+    }
+
+
 def test_create_scenario_succeeds(client):
     r = client.post(
         "/api/v1/sessions/main/scenarios",

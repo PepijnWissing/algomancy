@@ -468,3 +468,79 @@ class TestDatabaseDataManagerDtypeRoundTrip:
         assert "ad_hoc_table" in reloaded.tables
         # No coercion applied — pandas-inferred dtype passes through.
         assert reloaded.tables["ad_hoc_table"]["x"].tolist() == [1, 2, 3]
+
+
+class TestDatasourceCacheBound:
+    def _seed(self, engine, name):
+        m = DatabaseDataManager(
+            etl_factory=SimpleETLFactory,
+            schemas=[ItemSchema()],
+            engine=engine,
+            session_id="test",
+            data_object_type=DataSource,
+        )
+        m.startup()
+        ds = DataSource(ds_type=DataClassification.MASTER_DATA, name=name)
+        ds.add_table(
+            "item", pd.DataFrame({"id": [name], "name": [name], "price": [1.0]})
+        )
+        m.add_data_source(ds)
+
+    def test_get_data_evicts_lru_beyond_bound(self, engine):
+        for name in ("d0", "d1", "d2"):
+            self._seed(engine, name)
+
+        dm = DatabaseDataManager(
+            etl_factory=SimpleETLFactory,
+            schemas=[ItemSchema()],
+            engine=engine,
+            session_id="test",
+            data_object_type=DataSource,
+            datasource_cache_size=2,
+        )
+        dm.startup()  # metadata only — nothing hydrated yet
+        assert len(dm._data) == 0
+
+        dm.get_data("d0")
+        dm.get_data("d1")
+        dm.get_data("d2")  # evicts the LRU (d0)
+        assert len(dm._data) == 2
+        assert "d0" not in dm._data
+        assert set(dm._data.keys()) == {"d1", "d2"}
+
+    def test_evicted_datasource_still_reachable_via_live_reference(self, engine):
+        for name in ("d0", "d1", "d2"):
+            self._seed(engine, name)
+
+        dm = DatabaseDataManager(
+            etl_factory=SimpleETLFactory,
+            schemas=[ItemSchema()],
+            engine=engine,
+            session_id="test",
+            data_object_type=DataSource,
+            datasource_cache_size=1,
+        )
+        dm.startup()
+
+        held = dm.get_data("d0")  # a live holder keeps its own reference
+        dm.get_data("d1")
+        dm.get_data("d2")
+        assert "d0" not in dm._data  # evicted from the manager's cache
+        # …but the live reference is intact and usable.
+        assert held is not None
+        assert held.tables["item"]["id"].tolist() == ["d0"]
+
+    def test_unbounded_by_default(self, engine):
+        for name in ("d0", "d1", "d2"):
+            self._seed(engine, name)
+        dm = DatabaseDataManager(
+            etl_factory=SimpleETLFactory,
+            schemas=[ItemSchema()],
+            engine=engine,
+            session_id="test",
+            data_object_type=DataSource,
+        )
+        dm.startup()
+        for name in ("d0", "d1", "d2"):
+            dm.get_data(name)
+        assert len(dm._data) == 3

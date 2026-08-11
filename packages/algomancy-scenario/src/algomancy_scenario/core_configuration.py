@@ -52,6 +52,8 @@ class CoreConfig:
         # === persistence backend ===
         persistence_backend: str | None = None,
         database_url: str | None = None,
+        hydrated_cache_size: int | None = None,
+        eager_startup: bool = False,
         # === scenario manager configuration ===
         etl_factory: Any | None = None,
         kpis: Dict[str, Type[BASE_KPI]] | None = None,
@@ -110,6 +112,13 @@ class CoreConfig:
         else:
             self.persistence_backend = persistence_backend
         self.database_url = database_url
+        # Bounds the SQL backend's hydrated-scenario LRU and its matching
+        # datasource cache. None = unbounded (framework default).
+        self.hydrated_cache_size = hydrated_cache_size
+        # When True, the SQL backend hydrates every scenario at startup instead
+        # of lazily on first access — reproducing the pre-0.10 "all scenarios
+        # ready in memory" behaviour. Only meaningful with an unbounded cache.
+        self.eager_startup = eager_startup
 
         # misc
         self.title = title
@@ -134,6 +143,8 @@ class CoreConfig:
             "title": self.title,
             "persistence_backend": self.persistence_backend,
             "database_url": self.database_url,
+            "hydrated_cache_size": self.hydrated_cache_size,
+            "eager_startup": self.eager_startup,
         }
 
     # ----- validation -----
@@ -189,6 +200,24 @@ class CoreConfig:
         if self.persistence_backend == "database" and not self.database_url:
             raise ValueError(
                 "database_url must be provided when persistence_backend='database'"
+            )
+
+        # hydrated cache size: None (unbounded) or a positive integer
+        if self.hydrated_cache_size is not None:
+            if (
+                not isinstance(self.hydrated_cache_size, int)
+                or isinstance(self.hydrated_cache_size, bool)
+                or self.hydrated_cache_size <= 0
+            ):
+                raise ValueError(
+                    "hydrated_cache_size must be None or a positive integer; "
+                    f"got {self.hydrated_cache_size!r}"
+                )
+
+        # eager startup flag
+        if not isinstance(self.eager_startup, bool):
+            raise ValueError(
+                f"eager_startup must be a boolean; got {self.eager_startup!r}"
             )
 
         # save type
