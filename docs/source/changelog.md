@@ -4,6 +4,24 @@
 > for before/after snippets covering every breaking change in v0.6–v0.7.
  
 
+## v0.10.0
+### Changed
+- **Lazy SQL startup + bounded scenario hydration.** The database backend now loads only scenario *metadata* at startup and hydrates full scenarios on demand behind a bounded cache; the API scenario-list endpoint returns lightweight summaries. **Wire change**: `GET /sessions/{id}/scenarios` now returns summary objects, not full scenario payloads.
+
+  :::{dropdown} {octicon}`light-bulb` Details
+  :color: light
+  Previously `SqlScenarioRepository.startup()` fully rehydrated every scenario for every session — reconstructing each algorithm and KPI set, loading the whole input dataset, and reading the entire result payload for completed scenarios — before the manager was ready. On large databases this made startup slow and memory-heavy.
+
+  Now startup loads one lightweight `ScenarioRecord` per scenario (definition, latest-run metadata, and persisted KPI values) with no dataset or result reads. Full `Scenario` objects are materialised lazily, per id, only when a detail / run / reset path calls `get_by_id`, and are held in a thread-safe bounded LRU. An actively-running scenario is pinned (kept resident, outside the size limit) from enqueue until its run is persisted; failed hydrations are left uncached so later requests can retry.
+
+  - **New config `hydrated_cache_size`** (on `CoreConfig`, inherited by `ApiConfiguration`): bounds both the hydrated-scenario LRU and a matching `DatabaseDataManager` datasource cache. Defaults to `None` (unbounded) — behaviour-compatible with earlier releases.
+  - **New config `eager_startup`** (default `False`): set to `True` to hydrate every scenario at startup instead of lazily, reproducing the pre-0.10 "all scenarios ready in memory" behaviour. Only meaningful with an unbounded cache.
+  - **`GET /sessions/{id}/scenarios`** returns `ScenarioSummary[]`: `id`, `tag`, `input_data_key`, `algorithm` (name + parameters), `data_parameters`, `status`, `progress`, scenario/run timestamps, `result_available`, and `kpis` keyed by registry name. `GET .../scenarios/{id}` stays wire-compatible (fully hydrated); `GET .../scenarios/{id}/status` now answers from metadata without hydrating.
+  - **Fix**: persisted KPI measurements are now restored when a completed scenario is rehydrated. Previously a restarted completed scenario exposed the uncomputed KPI sentinel despite having persisted values.
+
+  The minor bump reflects the lighter scenario-list contract.
+  :::
+
 ## v0.9.2
 ### Fixed
 - The new-scenario parameters window now resolves algorithm/data parameter templates through the active session's 
