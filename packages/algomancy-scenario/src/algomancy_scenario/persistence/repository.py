@@ -3,11 +3,20 @@
 Defines the storage contract for scenarios. Both ``ScenarioRegistry``
 (in-memory) and ``SqlScenarioRepository`` (database-backed) conform to this
 interface, so ``ScenarioManager`` can accept either without branching.
+
+Beyond the core CRUD contract, repositories also expose *metadata-only*
+methods (``list_records`` / ``get_record`` / ``status_of``) that answer list,
+detail-summary, and status-polling queries without fully hydrating a
+``Scenario``, plus ``pin`` / ``unpin`` hooks the manager uses to keep an
+actively-running scenario resident in a bounded hydration cache. The in-memory
+registry implements the metadata methods by deriving from its full scenarios
+and treats ``pin`` / ``unpin`` as no-ops.
 """
 
-from typing import List, Optional, Protocol, runtime_checkable
+from typing import List, Optional, Protocol, Tuple, runtime_checkable
 
-from ..scenario import Scenario
+from ..scenario import Scenario, ScenarioStatus
+from ..records import ScenarioRecord
 
 
 @runtime_checkable
@@ -21,3 +30,12 @@ class ScenarioRepository(Protocol):
     def list_tags(self) -> List[str]: ...
     def has_tag(self, tag: str) -> bool: ...
     def used_datasets(self) -> List[str]: ...
+
+    # --- metadata-only (no hydration) ---
+    def list_records(self) -> List[ScenarioRecord]: ...
+    def get_record(self, scenario_id: str) -> Optional[ScenarioRecord]: ...
+    def status_of(self, scenario_id: str) -> Optional[Tuple[ScenarioStatus, float]]: ...
+
+    # --- hydration-cache pinning (no-op for in-memory backends) ---
+    def pin(self, scenario_id: str) -> None: ...
+    def unpin(self, scenario_id: str) -> None: ...

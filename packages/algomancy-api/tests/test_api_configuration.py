@@ -14,6 +14,23 @@ def test_defaults(api_core_kwargs):
     assert cfg.allow_session_create is True
 
 
+def test_hydrated_cache_size_defaults_none(api_core_kwargs):
+    cfg = ApiConfiguration(**api_core_kwargs)
+    assert cfg.hydrated_cache_size is None
+    assert cfg.as_dict()["hydrated_cache_size"] is None
+
+
+def test_hydrated_cache_size_accepts_positive_int(api_core_kwargs):
+    cfg = ApiConfiguration(hydrated_cache_size=4, **api_core_kwargs)
+    assert cfg.hydrated_cache_size == 4
+
+
+@pytest.mark.parametrize("bad", [0, -1, 2.5, "4", True])
+def test_hydrated_cache_size_rejects_invalid(api_core_kwargs, bad):
+    with pytest.raises(ValueError):
+        ApiConfiguration(hydrated_cache_size=bad, **api_core_kwargs)
+
+
 def test_overrides(api_core_kwargs):
     cfg = ApiConfiguration(
         host="0.0.0.0",

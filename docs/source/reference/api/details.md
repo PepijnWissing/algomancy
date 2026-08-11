@@ -195,15 +195,21 @@ KPI values appear on the scenario object after it reaches `COMPLETE` — there i
 
 ## Scenarios
 
+(api-list-scenarios-ref)=
 ### GET /sessions/{sid}/scenarios
 
-**Function:** Returns the full `Scenario.to_dict()` payload for every scenario in the session.
+**Function:** Returns a lightweight **summary** for every scenario in the session — metadata plus persisted KPI values, without the input dataset or the run result. On the database backend this answers from in-memory metadata and never triggers scenario hydration, so it stays cheap even with many scenarios. For the full payload of a single scenario, call `GET /scenarios/{id}`.
+
+```{versionchanged} 0.10.0
+This endpoint previously returned the full `Scenario.to_dict()` payload for
+every scenario. It now returns the smaller summary shape below.
+```
 
 **Responses**
 
 | Status | Meaning |
 |---|---|
-| `200` | Body: array of scenario objects (see [scenario response shape](#scenario-response-shape)). |
+| `200` | Body: array of scenario **summary** objects (see [scenario summary shape](#scenario-summary-shape)). |
 | `404` | Session not found. |
 
 ---
@@ -237,7 +243,7 @@ KPI values appear on the scenario object after it reaches `COMPLETE` — there i
 
 ### GET /sessions/{sid}/scenarios/{id}
 
-**Function:** Returns the full `Scenario.to_dict()` payload for one scenario, including KPI values and the algorithm result after execution completes.
+**Function:** Returns the full `Scenario.to_dict()` payload for one scenario, including KPI values and the algorithm result after execution completes. On the database backend this hydrates the scenario on demand (loading its dataset and result) if it is not already resident.
 
 **Responses**
 
@@ -339,7 +345,7 @@ KPIs computed on the previous run are recomputed the next time the scenario runs
 
 ### GET /sessions/{sid}/scenarios/{id}/status
 
-**Function:** Lightweight poll endpoint. Returns only `id`, `tag`, `status`, and `progress` — intentionally small so it is safe to call at high frequency without serializing the full scenario payload.
+**Function:** Lightweight poll endpoint. Returns only `id`, `tag`, `status`, and `progress` — intentionally small so it is safe to call at high frequency without serializing the full scenario payload. It answers from scenario metadata and never triggers hydration; when the scenario is resident (e.g. mid-run) the live `status`/`progress` are reported.
 
 **Responses**
 
@@ -368,7 +374,7 @@ KPIs computed on the previous run are recomputed the next time the scenario runs
 (api-scenario-shape-ref)=
 ### Scenario response shape
 
-`GET /scenarios`, `GET /scenarios/{id}`, and the create/run endpoints all return `Scenario.to_dict()`:
+`GET /scenarios/{id}` and the create/run/reset endpoints all return the full `Scenario.to_dict()` (the **list** endpoint returns the smaller [summary shape](#scenario-summary-shape) instead):
 
 ```{code-block} json
 {
@@ -394,6 +400,37 @@ KPIs computed on the previous run are recomputed the next time the scenario runs
 - `kpis` is keyed by the KPI template name registered in `cfg.kpis`.
 - `algorithm.parameters` uses the same descriptor shape as `GET /algorithms/{name}/parameters`, plus the `value` chosen for this scenario.
 - `result` is whatever your `BaseResult.to_dict()` returns — the framework imposes no shape.
+
+(scenario-summary-shape)=
+### Scenario summary shape
+
+`GET /scenarios` returns an array of these lightweight summaries — metadata plus persisted KPI values, no input dataset and no run result:
+
+```{code-block} json
+{
+  "id": "01HZX...",
+  "tag": "slow-5s",
+  "input_data_key": "Master data",
+  "algorithm": {"name": "Slow", "parameters": {"duration": 5}},
+  "data_parameters": {},
+  "status": "complete",
+  "progress": 100.0,
+  "created_at": "2026-08-11T12:00:00",
+  "run_started_at": "2026-08-11T12:00:03",
+  "run_finished_at": "2026-08-11T12:00:08",
+  "result_available": true,
+  "kpis": {
+    "throughput": {"name": "throughput", "better_when": "HIGHER",
+                   "unit": "items/s", "value": 42.0, "threshold": null}
+  }
+}
+```
+
+- `input_data_key` is the dataset name (the summary omits the full-payload `input_data_id`).
+- `algorithm.parameters` is a plain values dict (not the descriptor shape used by the full payload).
+- `kpis` is keyed by the KPI template name registered in `cfg.kpis`; each value carries the persisted measurement. Values are the framework's uncomputed sentinel until the scenario has run.
+- `result_available` is `true` once a completed run's result is persisted; fetch it with `GET /scenarios/{id}`.
+- `created_at` / `run_started_at` / `run_finished_at` are ISO-8601 timestamps (`run_*` are `null` until the first run).
 
 ---
 

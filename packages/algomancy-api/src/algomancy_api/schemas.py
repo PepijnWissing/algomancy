@@ -8,6 +8,7 @@ the OpenAPI schema useful for frontend codegen — not to mirror the domain.
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
@@ -93,6 +94,47 @@ class ScenarioStatusResponse(BaseModel):
     tag: str
     status: str
     progress: float
+
+
+class KpiSummary(BaseModel):
+    """A KPI's serialized value in a scenario summary.
+
+    Mirrors ``BaseKPI.to_dict()``. ``value`` carries the persisted measurement
+    (or the framework's uncomputed sentinel when the scenario has not run).
+    """
+
+    name: str
+    better_when: str
+    unit: str
+    value: Optional[float] = None
+    threshold: Optional[float] = None
+
+
+class AlgorithmSummary(BaseModel):
+    name: str
+    parameters: Dict[str, Any] = Field(default_factory=dict)
+
+
+class ScenarioSummary(BaseModel):
+    """Lightweight scenario metadata for the list view.
+
+    Returned by ``GET /sessions/{id}/scenarios`` without hydrating the input
+    dataset or the run result. KPI values come from persisted measurements. Use
+    ``GET .../scenarios/{id}`` for the fully hydrated payload.
+    """
+
+    id: str
+    tag: str
+    input_data_key: str
+    algorithm: AlgorithmSummary
+    data_parameters: Dict[str, Any] = Field(default_factory=dict)
+    status: str
+    progress: float = 0.0
+    created_at: Optional[datetime] = None
+    run_started_at: Optional[datetime] = None
+    run_finished_at: Optional[datetime] = None
+    result_available: bool = False
+    kpis: Dict[str, KpiSummary] = Field(default_factory=dict)
 
 
 # ---- Data management -------------------------------------------------------

@@ -1,7 +1,8 @@
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from algomancy_utils.logger import Logger
-from .scenario import Scenario
+from .scenario import Scenario, ScenarioStatus
+from .records import ScenarioRecord
 
 
 class ScenarioRegistry:
@@ -67,3 +68,24 @@ class ScenarioRegistry:
         Returns a list of scenario tag strings by retrieving the keys from the scenario _tag_index dictionary.
         """
         return list(self._tag_index.keys())
+
+    # --- metadata-only views (derived from the full scenarios held here) ---
+    def list_records(self) -> List[ScenarioRecord]:
+        return [ScenarioRecord.from_scenario(s) for s in self._scenarios.values()]
+
+    def get_record(self, scenario_id: str) -> Optional[ScenarioRecord]:
+        scenario = self._scenarios.get(scenario_id)
+        return ScenarioRecord.from_scenario(scenario) if scenario else None
+
+    def status_of(self, scenario_id: str) -> Optional[Tuple[ScenarioStatus, float]]:
+        scenario = self._scenarios.get(scenario_id)
+        if scenario is None:
+            return None
+        return scenario.status, float(scenario.progress or 0.0)
+
+    # --- hydration-cache pinning: no-op for the in-memory backend ---
+    def pin(self, scenario_id: str) -> None:
+        return None
+
+    def unpin(self, scenario_id: str) -> None:
+        return None

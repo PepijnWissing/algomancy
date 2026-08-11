@@ -108,6 +108,31 @@ for the opt-in protocol.
 To choose the database backend pass `persistence_backend="database"`
 and `database_url=...` to `CoreConfig` / `ApiConfiguration`.
 
+### Startup and hydration
+
+On the database backend, startup is **lazy**: it loads only scenario
+*metadata* — each scenario's definition, its latest-run metadata, and its
+persisted KPI values — with no dataset reads and no result-payload reads. A
+full scenario (its input `DataSource` and run result) is *hydrated* only when
+something asks for it by id — a detail/run/reset call, or an eager pass over
+the whole list. This keeps startup fast and memory-light on large databases,
+where the previous behaviour rehydrated every scenario up front.
+
+Two `CoreConfig` / `ApiConfiguration` options tune this (both inherited by
+`ApiConfiguration`):
+
+| Option | Default | Effect |
+|---|---|---|
+| `hydrated_cache_size` | `None` (unbounded) | Bounds an LRU of fully hydrated scenarios and a matching `DatabaseDataManager` datasource cache. When set (e.g. `4`), only that many non-pinned scenarios stay resident; a scenario being processed is *pinned* and kept resident until its run is persisted. Evicted scenarios rehydrate on next access. |
+| `eager_startup` | `False` | When `True`, hydrate **every** scenario at startup instead of lazily — reproducing the pre-0.10 "all scenarios ready in memory" behaviour. Only meaningful with an unbounded cache; with a bounded cache only the last `hydrated_cache_size` warmed scenarios stay resident. |
+
+The framework default (`hydrated_cache_size=None`, `eager_startup=False`)
+never evicts, so once a scenario is hydrated it stays in memory — the only
+change from earlier releases is that hydration is deferred to first access
+rather than done at startup. The HTTP scenario-**list** endpoint answers from
+metadata alone and never triggers hydration; see
+{ref}`the scenario list contract <api-list-scenarios-ref>`.
+
 ## Isolation guarantees
 
 Within a single backend process, sessions are mutually isolated at the
